@@ -215,3 +215,31 @@ Copy `.env.example` files and configure:
 - `PORT`, `NODE_ENV`, `FRONTEND_URL`
 - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
 - `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`
+
+## Deployment
+
+**Production URL**: https://mirora.cloud
+
+**Stack**:
+- Frontend: Vite build → `/dist` served by Nginx
+- Backend: Express.js managed by PM2
+- Database: MySQL
+- SSL: Cloudflare
+
+**Commands**:
+```bash
+# Deploy frontend
+npm run build
+
+# Backend (PM2)
+pm2 restart nora-api      # Restart
+pm2 logs nora-api         # View logs
+pm2 save                  # Save for reboot
+
+# Nginx
+sudo systemctl reload nginx
+```
+
+**Nginx config**: `/etc/nginx/sites-available/mirora.cloud`
+- Serves `/dist` for frontend
+- Proxies `/api` → `localhost:5000`
