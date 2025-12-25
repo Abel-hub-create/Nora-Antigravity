@@ -1,20 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, RotateCw, ChevronRight, ChevronLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ArrowLeft, RotateCw, ChevronRight, ChevronLeft, Loader2, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
 import useActiveTimer from '../hooks/useActiveTimer';
+import * as syntheseService from '../services/syntheseService';
 
-const Flashcards = () => {
+const StudyFlashcards = () => {
     useActiveTimer('flashcards');
+    const { id } = useParams();
+    const [cards, setCards] = useState([]);
+    const [syntheseTitle, setSyntheseTitle] = useState('');
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
     const [direction, setDirection] = useState(0);
+    const [isLoading, setIsLoading] = useState(true);
+    const [stats, setStats] = useState({ correct: 0, incorrect: 0 });
 
-    const cards = [
-        { id: 1, front: "Qu'est-ce que la Photosynthèse ?", back: "Le processus par lequel les plantes vertes utilisent la lumière du soleil pour synthétiser des nutriments à partir de dioxyde de carbone et d'eau." },
-        { id: 2, front: "Qu'est-ce que la Chlorophylle ?", back: "Un pigment vert, présent dans toutes les plantes vertes, responsable de l'absorption de la lumière pour fournir de l'énergie pour la photosynthèse." },
-        { id: 3, front: "Qu'est-ce qu'un Stomate ?", back: "De minuscules ouvertures ou pores dans le tissu végétal qui permettent les échanges gazeux." },
-    ];
+    useEffect(() => {
+        const loadFlashcards = async () => {
+            try {
+                setIsLoading(true);
+                const response = await syntheseService.getFlashcards(id);
+                setCards(response.flashcards || []);
+                setSyntheseTitle(response.syntheseTitle || 'Flashcards');
+            } catch (error) {
+                console.error('Erreur chargement flashcards:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        loadFlashcards();
+    }, [id]);
 
     const handleNext = () => {
         if (currentCardIndex < cards.length - 1) {
@@ -36,6 +52,25 @@ const Flashcards = () => {
         setIsFlipped(!isFlipped);
     };
 
+    const handleFeedback = async (isCorrect) => {
+        try {
+            await syntheseService.updateFlashcardProgress(cards[currentCardIndex].id, isCorrect);
+            setStats(prev => ({
+                correct: prev.correct + (isCorrect ? 1 : 0),
+                incorrect: prev.incorrect + (isCorrect ? 0 : 1)
+            }));
+
+            // Auto advance after feedback
+            if (currentCardIndex < cards.length - 1) {
+                setTimeout(() => {
+                    handleNext();
+                }, 300);
+            }
+        } catch (error) {
+            console.error('Erreur mise à jour progression:', error);
+        }
+    };
+
     const variants = {
         enter: (direction) => ({
             x: direction > 0 ? 1000 : -1000,
@@ -53,13 +88,66 @@ const Flashcards = () => {
         })
     };
 
+    if (isLoading) {
+        return (
+            <div className="min-h-full bg-background flex items-center justify-center">
+                <div className="text-center">
+                    <Loader2 className="animate-spin text-primary mx-auto mb-3" size={32} />
+                    <p className="text-text-muted">Chargement...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (cards.length === 0) {
+        return (
+            <div className="min-h-full bg-background p-6">
+                <Link to={`/study/${id}`} className="inline-flex items-center gap-2 text-text-muted hover:text-text-main mb-6">
+                    <ArrowLeft size={20} />
+                    Retour
+                </Link>
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <p className="text-text-muted">Aucune flashcard pour cette synthèse</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Completed all cards
+    if (currentCardIndex >= cards.length) {
+        return (
+            <div className="min-h-full bg-background flex flex-col items-center justify-center p-6 text-center">
+                <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="w-24 h-24 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center mb-6"
+                >
+                    <span className="text-3xl">🎉</span>
+                </motion.div>
+                <h2 className="text-2xl font-bold text-text-main mb-2">Session terminée !</h2>
+                <p className="text-text-muted mb-6">
+                    {stats.correct} correct{stats.correct !== 1 ? 's' : ''} · {stats.incorrect} à revoir
+                </p>
+                <Link
+                    to={`/study/${id}`}
+                    className="bg-primary text-white px-8 py-3 rounded-xl font-medium hover:bg-primary-dark transition-colors"
+                >
+                    Retour à la synthèse
+                </Link>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-full bg-background p-6 pb-24 flex flex-col">
-            <header className="flex items-center gap-4 mb-8">
-                <Link to="/" className="p-2 -ml-2 text-text-muted hover:text-text-main transition-colors">
+            <header className="flex items-center gap-4 mb-6">
+                <Link to={`/study/${id}`} className="p-2 -ml-2 text-text-muted hover:text-text-main transition-colors">
                     <ArrowLeft size={24} />
                 </Link>
-                <h1 className="text-2xl font-bold text-text-main">Flashcards</h1>
+                <div className="flex-1 min-w-0">
+                    <h1 className="text-lg font-bold text-text-main truncate">{syntheseTitle}</h1>
+                    <p className="text-xs text-text-muted">Flashcards</p>
+                </div>
             </header>
 
             <div className="flex-1 flex flex-col items-center justify-center relative">
@@ -114,10 +202,34 @@ const Flashcards = () => {
                         </motion.div>
                     </AnimatePresence>
                 </div>
+
+                {/* Feedback buttons (only when flipped) */}
+                {isFlipped && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex gap-4 mt-6"
+                    >
+                        <button
+                            onClick={() => handleFeedback(false)}
+                            className="flex items-center gap-2 px-6 py-3 bg-error/20 text-error rounded-xl font-medium hover:bg-error/30 transition-colors"
+                        >
+                            <ThumbsDown size={18} />
+                            À revoir
+                        </button>
+                        <button
+                            onClick={() => handleFeedback(true)}
+                            className="flex items-center gap-2 px-6 py-3 bg-success/20 text-success rounded-xl font-medium hover:bg-success/30 transition-colors"
+                        >
+                            <ThumbsUp size={18} />
+                            Compris
+                        </button>
+                    </motion.div>
+                )}
             </div>
 
             {/* Controls */}
-            <div className="mt-8 flex items-center justify-between px-4">
+            <div className="mt-6 flex items-center justify-between px-4">
                 <button
                     onClick={handlePrev}
                     disabled={currentCardIndex === 0}
@@ -142,4 +254,4 @@ const Flashcards = () => {
     );
 };
 
-export default Flashcards;
+export default StudyFlashcards;

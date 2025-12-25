@@ -13,9 +13,10 @@ import ResetPassword from './features/auth/pages/ResetPassword';
 // Pages
 import Home from './pages/Home';
 import Import from './pages/Import';
-import Summary from './pages/Summary';
-import Flashcards from './pages/Flashcards';
-import Quiz from './pages/Quiz';
+import Study from './pages/Study';
+import StudyDetail from './pages/StudyDetail';
+import StudyFlashcards from './pages/StudyFlashcards';
+import StudyQuiz from './pages/StudyQuiz';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Collection from './pages/Collection';
@@ -43,9 +44,10 @@ function App() {
                     <Routes>
                       <Route path="/" element={<Home />} />
                       <Route path="/import" element={<Import />} />
-                      <Route path="/summary" element={<Summary />} />
-                      <Route path="/flashcards" element={<Flashcards />} />
-                      <Route path="/quiz" element={<Quiz />} />
+                      <Route path="/study" element={<Study />} />
+                      <Route path="/study/:id" element={<StudyDetail />} />
+                      <Route path="/study/:id/flashcards" element={<StudyFlashcards />} />
+                      <Route path="/study/:id/quiz" element={<StudyQuiz />} />
                       <Route path="/profile" element={<Profile />} />
                       <Route path="/settings" element={<Settings />} />
                       <Route path="/collection" element={<Collection />} />

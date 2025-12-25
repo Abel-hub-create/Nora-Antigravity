@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 
 import authRoutes from './routes/authRoutes.js';
+import syntheseRoutes from './routes/syntheseRoutes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
 dotenv.config();
@@ -27,6 +28,7 @@ app.use(cookieParser());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/syntheses', syntheseRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

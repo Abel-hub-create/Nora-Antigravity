@@ -2,6 +2,32 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Vision Produit
+
+**NORA** est une app mobile sombre, calme et fluide. Son but n'est pas "d'apprendre plus", mais d'avancer sans s'en rendre compte. Pas d'école. Pas de pression.
+
+### Concept
+L'utilisateur peut prendre en photo ou expliquer à l'oral ce qu'il veut comprendre, et l'app transforme ce contenu en :
+- **Résumé clair**
+- **Flashcards**
+- **Quiz simples**
+
+### Progression
+- Barre quotidienne montrant l'avancement du jour
+- Chaque action fait gagner de l'EXP
+- L'EXP débloque des récompenses visuelles via un système de collection (gacha) purement cosmétique
+- Contenus organisés en dossiers
+
+### Philosophie
+- Interface sombre, calme, pensée pour le mobile
+- Pas de compétition, pas de notes scolaires
+- Sensation de progression continue
+- Motiver sans créer de dépendance
+
+> *L'objectif de NORA est simple : aider l'utilisateur à avancer un peu chaque jour, sans avoir l'impression d'étudier.*
+
+---
+
 ## Commands
 
 ```bash
@@ -53,9 +79,10 @@ npm start          # Start Express server (production)
 |------|------|-------------|
 | `/` | Home | Dashboard with daily progress and quick actions |
 | `/import` | Import | Add content via text or voice |
-| `/summary` | Summary | Course summaries |
-| `/flashcards` | Flashcards | Spaced repetition review |
-| `/quiz` | Quiz | Knowledge testing |
+| `/study` | Study | Central hub for all syntheses (search, rename) |
+| `/study/:id` | StudyDetail | View synthese with flashcards/quiz access |
+| `/study/:id/flashcards` | StudyFlashcards | Flashcards for a specific synthese |
+| `/study/:id/quiz` | StudyQuiz | Quiz for a specific synthese |
 | `/collection` | Collection | Creature collection with egg hatching |
 | `/profile` | Profile | User stats and achievements |
 | `/settings` | Settings | App preferences |
@@ -120,9 +147,71 @@ backend/
 ├── src/
 │   ├── app.js                  # Express app setup
 │   ├── routes/authRoutes.js    # Auth endpoint handlers
+│   ├── routes/syntheseRoutes.js # Synthese CRUD endpoints
 │   ├── services/authService.js # Auth business logic
 │   ├── services/userRepository.js # User data access
+│   ├── services/syntheseRepository.js # Synthese data access
 │   ├── middlewares/auth.js     # JWT verification middleware
 │   ├── middlewares/rateLimiter.js # Rate limiting config
-│   └── validators/authValidators.js # Request validation schemas
+│   ├── validators/authValidators.js # Auth validation schemas
+│   └── validators/syntheseValidators.js # Synthese validation schemas
 ```
+
+## Syntheses System
+
+Central system for managing user content. A synthese groups: original content, summary, flashcards, and quiz (indissociable).
+
+### Database Schema
+
+```sql
+-- syntheses: Main content table
+syntheses (id, user_id, title, original_content, summary_content, source_type, is_archived, created_at)
+
+-- flashcards: Linked to synthese, supports spaced repetition
+flashcards (id, synthese_id, front, back, difficulty, times_reviewed, times_correct, next_review_at)
+
+-- quiz_questions: Linked to synthese
+quiz_questions (id, synthese_id, question, options JSON, correct_answer, explanation, times_answered, times_correct)
+```
+
+### API Endpoints (`/api/syntheses/`)
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/` | List all syntheses (search, pagination) |
+| GET | `/:id` | Get synthese with flashcards and quiz |
+| POST | `/` | Create synthese with flashcards and quiz |
+| PATCH | `/:id/title` | Rename synthese |
+| PATCH | `/:id/archive` | Soft delete synthese |
+| DELETE | `/:id` | Permanently delete synthese |
+| GET | `/:id/flashcards` | Get flashcards for synthese |
+| POST | `/flashcards/:id/progress` | Update flashcard progress |
+| GET | `/:id/quiz` | Get quiz questions for synthese |
+| POST | `/:id/quiz/progress` | Update quiz progress |
+
+### Frontend Service (`/src/services/syntheseService.js`)
+
+```javascript
+getAllSyntheses({ search, limit, offset })
+getSynthese(id)
+createSynthese(data)
+updateTitle(id, title)
+archiveSynthese(id)
+deleteSynthese(id)
+getFlashcards(syntheseId)
+updateFlashcardProgress(flashcardId, isCorrect)
+getQuizQuestions(syntheseId)
+updateQuizProgress(syntheseId, questionId, isCorrect)
+```
+
+## Environment Variables
+
+Copy `.env.example` files and configure:
+
+**Frontend** (`.env`):
+- `VITE_API_URL` - Backend API URL
+
+**Backend** (`backend/.env`):
+- `PORT`, `NODE_ENV`, `FRONTEND_URL`
+- `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
+- `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`

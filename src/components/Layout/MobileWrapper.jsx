@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, BookOpen, PlusCircle, User, Battery, Wifi, Signal, Gift } from 'lucide-react';
+import { Home, GraduationCap, PlusCircle, User, Battery, Wifi, Signal, Gift } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 
@@ -8,7 +8,7 @@ const MobileWrapper = ({ children }) => {
 
     const navItems = [
         { icon: Home, label: 'Accueil', path: '/' },
-        { icon: BookOpen, label: 'Cours', path: '/summary' }, // Placeholder for learning/summary
+        { icon: GraduationCap, label: 'Étude', path: '/study' },
         { icon: Gift, label: 'Collection', path: '/collection' },
         { icon: PlusCircle, label: 'Importer', path: '/import' },
         { icon: User, label: 'Profil', path: '/profile' },
