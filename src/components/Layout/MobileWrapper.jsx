@@ -2,6 +2,7 @@ import React from 'react';
 import { Home, GraduationCap, PlusCircle, User, Battery, Wifi, Signal, Gift } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
+import NotificationStack from '../UI/NotificationStack';
 
 const MobileWrapper = ({ children }) => {
     const location = useLocation();
@@ -28,6 +29,9 @@ const MobileWrapper = ({ children }) => {
                         <Battery size={20} />
                     </div>
                 </div>
+
+                {/* Notifications */}
+                <NotificationStack />
 
                 {/* Content Area */}
                 <div className="flex-1 overflow-y-auto scrollbar-hide relative">

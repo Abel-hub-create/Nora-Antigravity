@@ -69,6 +69,76 @@ npm start          # Start Express server (production)
 
 **Time Tracking**: `useActiveTimer` hook tracks active time per activity, pausing when tab loses focus.
 
+## Daily Goals & Progress System
+
+Personalized daily objectives system with global progress tracking and XP rewards.
+
+### Core Concepts
+
+**Multiple Custom Goals**: Users can define multiple daily goals simultaneously, each targeting a specific activity type (summary, quiz, flashcards) with a custom time target (5-60 minutes).
+
+**Global Progress Bar**: The daily progress percentage represents completion across ALL defined goals, not individual ones. Each goal has equal weight.
+
+```
+Progress = (Completed Goals / Total Goals) × 100%
+
+Example: 2 goals defined, 1 completed = 50%
+Example: 4 goals defined, 2 completed = 50%
+```
+
+### State Management (`UserContext.jsx`)
+
+```javascript
+// Daily Goals State
+dailyGoals: [
+  { id: 1, type: 'summary', targetMinutes: 30, completed: false },
+  { id: 2, type: 'quiz', targetMinutes: 20, completed: false }
+]
+
+// Reward tracking (persists independently of goals)
+dailyGoalsRewardClaimed: boolean  // 10 XP bonus, once per day
+
+// Progress calculation
+dailyProgressPercentage = (completedGoals.length / totalGoals.length) * 100
+```
+
+### Key Functions
+
+| Function | Description |
+|----------|-------------|
+| `updateDailyGoals(goals)` | Replace all goals, resets progress to 0% |
+| `addDailyGoal(type, minutes)` | Add new goal, resets progress to 0% |
+| `removeDailyGoal(goalId)` | Remove goal, resets progress to 0% |
+| `updateGoalTarget(goalId, minutes)` | Modify target time, resets progress to 0% |
+
+### Business Rules
+
+1. **Equal Weight**: Each goal contributes `100% / totalGoals` to the progress bar
+2. **Immediate Update**: Progress bar updates instantly when a goal is completed
+3. **Completion Reward**: 10 XP awarded when ALL goals are completed (100%)
+4. **Once Per Day**: The 10 XP reward can only be claimed ONCE per day
+5. **Modification Reset**: ANY modification to goals resets progress to 0%
+6. **Reward Protection**: If reward was claimed, modifying goals does NOT allow re-claiming
+7. **Warning Modal**: Users are warned before modifying goals with active progress
+8. **Daily Reset**: At midnight, all goal completion statuses reset (new day)
+9. **No Goals = No Reward**: If no goals are defined, progress stays at 0%
+10. **Independent Bonus**: Daily goals bonus is separate from study time XP bonuses
+
+### Components
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| `DailyProgress` | `/src/components/Home/DailyProgress.jsx` | Main progress bar with individual goal cards |
+| `Settings` | `/src/pages/Settings.jsx` | Goal management (add, edit, remove) |
+| `NotificationStack` | `/src/components/UI/NotificationStack.jsx` | Toast notifications for achievements |
+
+### Notification Types
+
+- `goal`: Individual goal completed ("Objectif Synthèse complété !")
+- `reward`: All goals completed (+10 XP)
+- `warning`: User warnings (duplicate goal type, etc.)
+- `success`: General success messages
+
 ### Key Components
 
 - `MobileWrapper` - Phone frame UI with status bar and bottom navigation
