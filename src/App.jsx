@@ -20,6 +20,7 @@ import StudyQuiz from './pages/StudyQuiz';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Collection from './pages/Collection';
+import Process from './pages/Process';
 
 import { UserProvider } from './context/UserContext';
 
@@ -51,6 +52,7 @@ function App() {
                       <Route path="/profile" element={<Profile />} />
                       <Route path="/settings" element={<Settings />} />
                       <Route path="/collection" element={<Collection />} />
+                      <Route path="/process" element={<Process />} />
                     </Routes>
                   </MobileWrapper>
                 </UserProvider>

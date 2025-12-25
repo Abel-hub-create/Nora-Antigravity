@@ -148,7 +148,8 @@ dailyProgressPercentage = (completedGoals.length / totalGoals.length) * 100
 | Path | Page | Description |
 |------|------|-------------|
 | `/` | Home | Dashboard with daily progress and quick actions |
-| `/import` | Import | Add content via text or voice |
+| `/import` | Import | Add content via text, voice, or photo |
+| `/process` | Process | AI content generation with progress |
 | `/study` | Study | Central hub for all syntheses (search, rename) |
 | `/study/:id` | StudyDetail | View synthese with flashcards/quiz access |
 | `/study/:id/flashcards` | StudyFlashcards | Flashcards for a specific synthese |
@@ -313,3 +314,78 @@ sudo systemctl reload nginx
 **Nginx config**: `/etc/nginx/sites-available/mirora.cloud`
 - Serves `/dist` for frontend
 - Proxies `/api` → `localhost:5000`
+
+## Import System
+
+Multi-modal content import system supporting text, voice, and photo input.
+
+### Input Methods
+
+| Method | Component | Technology |
+|--------|-----------|------------|
+| Text | `Import.jsx` | Direct text input/paste |
+| Voice | `VoiceRecorder.jsx` | Web Speech API (Chrome/Edge) |
+| Photo | `PhotoCapture.jsx` | Camera + Tesseract.js OCR |
+
+### Flow
+
+```
+Import Page (text/voice/photo)
+       ↓
+   /process (AI generation)
+       ↓
+   POST /api/syntheses
+       ↓
+   /study/:id
+```
+
+### Components
+
+**`/src/pages/Import.jsx`**
+- Mode switcher (Text/Vocal/Photo)
+- Text: Textarea with "Simplifier" button
+- Voice: Triggers VoiceRecorder
+- Photo: Opens PhotoCapture modal
+
+**`/src/components/Import/VoiceRecorder.jsx`**
+- Web Speech API integration
+- Real-time transcription (French)
+- Microphone permission handling
+- Visual feedback with animations
+
+**`/src/components/Import/PhotoCapture.jsx`**
+- Camera access via getUserMedia
+- Multi-photo capture
+- OCR via Tesseract.js (French)
+- Combined text extraction
+
+**`/src/pages/Process.jsx`**
+- Step-by-step AI generation progress
+- Steps: Title → Summary → Flashcards → Quiz → Save
+- Error handling with retry
+- Auto-redirect on success
+
+### OpenAI Service (`/src/services/openaiService.js`)
+
+Prepared for GPT-4o-mini integration (currently mock mode).
+
+```javascript
+// API Configuration
+VITE_OPENAI_API_KEY=sk-...  // Set to enable real AI
+VITE_OPENAI_MODEL=gpt-4o-mini
+
+// Functions
+generateTitle(content)       // Auto-generate title
+generateSummary(content)     // Create educational summary
+generateFlashcards(content)  // Generate 6 flashcards
+generateQuizQuestions(content) // Generate 4 MCQ
+generateComplete(content)    // All in one (parallel)
+isMockMode()                 // Check if using mock data
+```
+
+**Mock Mode**: When `VITE_OPENAI_API_KEY` is not set, the service returns demo data for testing.
+
+### Dependencies
+
+- `tesseract.js` - Client-side OCR
+- Web Speech API - Browser-native speech recognition (Chrome, Edge, Safari)
