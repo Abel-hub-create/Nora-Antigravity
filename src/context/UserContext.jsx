@@ -1,19 +1,42 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../features/auth/hooks/useAuth';
 
 const UserContext = createContext();
 
 export const useUser = () => useContext(UserContext);
 
 export const UserProvider = ({ children }) => {
+    const { user: authUser, syncUserData } = useAuth();
+
     const [user, setUser] = useState({
-        name: "Alex",
-        level: 4,
-        exp: 850,
-        nextLevelExp: 1000,
-        streak: 12,
-        eggs: 2,
-        collection: []
+        id: authUser?.id || null,
+        email: authUser?.email || null,
+        name: authUser?.name || "Utilisateur",
+        level: authUser?.level || 1,
+        exp: authUser?.exp || 0,
+        nextLevelExp: authUser?.next_level_exp || 1000,
+        streak: authUser?.streak || 0,
+        eggs: authUser?.eggs || 0,
+        collection: authUser?.collection || []
     });
+
+    // Sync with auth user on mount and when authUser changes
+    useEffect(() => {
+        if (authUser) {
+            setUser(prev => ({
+                ...prev,
+                id: authUser.id,
+                email: authUser.email,
+                name: authUser.name,
+                level: authUser.level || prev.level,
+                exp: authUser.exp || prev.exp,
+                nextLevelExp: authUser.next_level_exp || prev.nextLevelExp,
+                streak: authUser.streak || prev.streak,
+                eggs: authUser.eggs || prev.eggs,
+                collection: authUser.collection || prev.collection
+            }));
+        }
+    }, [authUser]);
 
     // Daily Stats State
     const [dailyStats, setDailyStats] = useState({
@@ -56,9 +79,27 @@ export const UserProvider = ({ children }) => {
             // Reset daily goals completion status
             setDailyGoals(prev => prev.map(g => ({ ...g, completed: false })));
         }
-    }, []);
+    }, [dailyStats.date]);
 
-    const addExp = (amount) => {
+    // Sync user data to backend periodically
+    const syncToBackend = useCallback(async (userData) => {
+        if (syncUserData && authUser?.id) {
+            try {
+                await syncUserData({
+                    level: userData.level,
+                    exp: userData.exp,
+                    next_level_exp: userData.nextLevelExp,
+                    streak: userData.streak,
+                    eggs: userData.eggs,
+                    collection: userData.collection
+                });
+            } catch (error) {
+                console.error('Failed to sync user data:', error);
+            }
+        }
+    }, [syncUserData, authUser?.id]);
+
+    const addExp = useCallback((amount) => {
         setUser(prev => {
             let newExp = prev.exp + amount;
             let newLevel = prev.level;
@@ -72,19 +113,24 @@ export const UserProvider = ({ children }) => {
                 newNextLevelExp = Math.floor(newNextLevelExp * 1.2);
             }
 
-            return {
+            const newUser = {
                 ...prev,
                 level: newLevel,
                 exp: newExp,
                 eggs: newEggs,
                 nextLevelExp: newNextLevelExp
             };
+
+            // Sync to backend
+            syncToBackend(newUser);
+
+            return newUser;
         });
-    };
+    }, [syncToBackend]);
 
     const updateTime = (activityType, seconds) => {
         const today = new Date().toDateString();
-        if (dailyStats.date !== today) return; // Should trigger reset in useEffect, but safety check
+        if (dailyStats.date !== today) return;
 
         setDailyStats(prev => {
             const newStats = { ...prev };
@@ -146,24 +192,30 @@ export const UserProvider = ({ children }) => {
             }));
             addExp(10);
         }
-    }, [dailyGoals, dailyStats.xpAwarded.dailyGoals]);
+    }, [dailyGoals, dailyStats.xpAwarded.dailyGoals, addExp]);
 
-    const unlockCreature = (creatureId) => {
+    const unlockCreature = useCallback((creatureId) => {
         setUser(prev => {
             if (!prev.collection.includes(creatureId)) {
-                return { ...prev, collection: [...prev.collection, creatureId] };
+                const newUser = { ...prev, collection: [...prev.collection, creatureId] };
+                syncToBackend(newUser);
+                return newUser;
             }
             return prev;
         });
-    };
+    }, [syncToBackend]);
 
-    const useEgg = () => {
+    const useEgg = useCallback(() => {
         if (user.eggs > 0) {
-            setUser(prev => ({ ...prev, eggs: prev.eggs - 1 }));
+            setUser(prev => {
+                const newUser = { ...prev, eggs: prev.eggs - 1 };
+                syncToBackend(newUser);
+                return newUser;
+            });
             return true;
         }
         return false;
-    };
+    }, [user.eggs, syncToBackend]);
 
     return (
         <UserContext.Provider value={{

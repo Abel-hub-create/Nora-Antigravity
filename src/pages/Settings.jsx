@@ -1,14 +1,20 @@
-import React from 'react';
-import { ArrowLeft, User, CreditCard, Bell, Moon, LogOut, BarChart2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { ArrowLeft, User, CreditCard, Bell, Moon, LogOut } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
+import { useAuth } from '../features/auth/hooks/useAuth';
 
 const Settings = () => {
+    const { user, logout } = useAuth();
+    const { dailyGoals, setDailyGoals } = useUser();
+    const navigate = useNavigate();
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+
     const sections = [
         {
             title: "Compte",
             items: [
-                { icon: User, label: "Modifier le Profil", value: "Alex" },
+                { icon: User, label: "Modifier le Profil", value: user?.name || "Utilisateur" },
                 { icon: CreditCard, label: "Abonnement", value: "Plan Gratuit" },
             ]
         },
@@ -21,12 +27,22 @@ const Settings = () => {
         }
     ];
 
-    const { dailyGoals, setDailyGoals } = useUser();
-
     const handleGoalChange = (type, value) => {
         setDailyGoals(prev => prev.map(g =>
             g.type === type ? { ...g, targetMinutes: parseInt(value) } : g
         ));
+    };
+
+    const handleLogout = async () => {
+        setIsLoggingOut(true);
+        try {
+            await logout();
+            navigate('/login');
+        } catch (error) {
+            console.error('Logout failed:', error);
+        } finally {
+            setIsLoggingOut(false);
+        }
     };
 
     return (
@@ -60,7 +76,7 @@ const Settings = () => {
                         </div>
                     ))}
                     <p className="text-xs text-text-muted italic">
-                        ⚠️ Modifier vos objectifs réinitialisera votre progression quotidienne.
+                        Modifier vos objectifs réinitialisera votre progression quotidienne.
                     </p>
                 </div>
             </div>
@@ -93,9 +109,13 @@ const Settings = () => {
                     </div>
                 ))}
 
-                <button className="w-full p-4 rounded-2xl bg-error/10 text-error font-medium flex items-center justify-center gap-2 hover:bg-error/20 transition-colors">
+                <button
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                    className="w-full p-4 rounded-2xl bg-error/10 text-error font-medium flex items-center justify-center gap-2 hover:bg-error/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                     <LogOut size={20} />
-                    Se Déconnecter
+                    {isLoggingOut ? 'Déconnexion...' : 'Se Déconnecter'}
                 </button>
             </div>
         </div>

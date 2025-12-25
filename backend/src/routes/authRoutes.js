@@ -1,0 +1,128 @@
+import express from 'express';
+import * as authService from '../services/authService.js';
+import { validate } from '../middlewares/validation.js';
+import { authenticate } from '../middlewares/auth.js';
+import { loginLimiter, registerLimiter, forgotPasswordLimiter } from '../middlewares/rateLimiter.js';
+import * as validators from '../validators/authValidators.js';
+
+const router = express.Router();
+
+// Register
+router.post('/register', registerLimiter, validate(validators.registerSchema), async (req, res, next) => {
+  try {
+    const user = await authService.register(req.body);
+
+    // Generate tokens
+    const { accessToken, refreshToken } = await authService.generateTokens(
+      user.id,
+      req.headers['user-agent'],
+      req.ip
+    );
+
+    // Set cookie (30 days)
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 60 * 60 * 1000
+    });
+
+    res.status(201).json({ user, accessToken });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Login
+router.post('/login', loginLimiter, validate(validators.loginSchema), async (req, res, next) => {
+  try {
+    const user = await authService.login(req.body);
+
+    // Generate tokens
+    const { accessToken, refreshToken } = await authService.generateTokens(
+      user.id,
+      req.headers['user-agent'],
+      req.ip
+    );
+
+    // Set cookie (30 days if rememberMe, session otherwise)
+    const cookieMaxAge = req.body.rememberMe ? 30 * 24 * 60 * 60 * 1000 : undefined;
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: cookieMaxAge
+    });
+
+    res.json({ user, accessToken });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Logout
+router.post('/logout', async (req, res, next) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    await authService.logout(refreshToken);
+
+    res.clearCookie('refreshToken');
+    res.json({ message: 'Déconnexion réussie' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Refresh token
+router.post('/refresh', async (req, res, next) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+      return res.status(401).json({ error: 'Token de rafraîchissement requis' });
+    }
+
+    const { accessToken } = await authService.verifyAndRefreshToken(refreshToken);
+    res.json({ accessToken });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get current user
+router.get('/me', authenticate, async (req, res) => {
+  res.json({ user: req.user });
+});
+
+// Forgot password
+router.post('/forgot-password', forgotPasswordLimiter, validate(validators.forgotPasswordSchema), async (req, res, next) => {
+  try {
+    await authService.forgotPassword(req.body.email);
+    // Always return success (security - don't reveal if email exists)
+    res.json({ message: 'Si cet email existe, un lien de réinitialisation a été envoyé' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Reset password
+router.post('/reset-password', validate(validators.resetPasswordSchema), async (req, res, next) => {
+  try {
+    await authService.resetPassword(req.body.token, req.body.password);
+    res.json({ message: 'Mot de passe réinitialisé avec succès' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Sync user data (save progress from frontend)
+router.post('/sync', authenticate, validate(validators.syncUserDataSchema), async (req, res, next) => {
+  try {
+    const updatedUser = await authService.syncUserData(req.user.id, req.body);
+    res.json({ user: updatedUser });
+  } catch (error) {
+    next(error);
+  }
+});
+
+export default router;
