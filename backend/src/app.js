@@ -13,6 +13,9 @@ dotenv.config();
 
 const app = express();
 
+// Trust proxy (required when behind Nginx/Cloudflare)
+app.set('trust proxy', 1);
+
 // Security headers
 app.use(helmet());
 
