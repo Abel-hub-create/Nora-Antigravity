@@ -119,7 +119,7 @@ const PhotoCapture = ({ onComplete, onClose }) => {
             }, 500);
 
             // Envoyer au backend
-            const response = await fetch(`${API_URL}/api/ai/ocr`, {
+            const response = await fetch(`${API_URL}/ai/ocr`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

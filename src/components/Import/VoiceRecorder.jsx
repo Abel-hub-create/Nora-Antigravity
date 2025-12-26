@@ -105,7 +105,7 @@ const VoiceRecorder = ({ onComplete }) => {
             formData.append('audio', audioBlob, 'recording.webm');
 
             // Envoyer au backend
-            const response = await fetch(`${API_URL}/api/ai/transcribe`, {
+            const response = await fetch(`${API_URL}/ai/transcribe`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${accessToken}`

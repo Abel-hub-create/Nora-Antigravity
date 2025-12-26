@@ -323,7 +323,7 @@ export async function generateComplete(content) {
       throw new Error('Non authentifie');
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/ai/generate-content`, {
+    const response = await fetch(`${BACKEND_URL}/ai/generate-content`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
