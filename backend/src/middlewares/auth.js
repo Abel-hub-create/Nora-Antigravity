@@ -3,15 +3,21 @@ import * as userRepository from '../services/userRepository.js';
 
 export const authenticate = async (req, res, next) => {
   try {
-    // Get token from cookie
-    const refreshToken = req.cookies.refreshToken;
+    let payload;
 
-    if (!refreshToken) {
-      return res.status(401).json({ error: 'Authentification requise' });
+    // Try Bearer token first (from Authorization header)
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const accessToken = authHeader.substring(7);
+      payload = tokenService.verifyAccessToken(accessToken);
+    } else {
+      // Fallback to refresh token from cookie
+      const refreshToken = req.cookies.refreshToken;
+      if (!refreshToken) {
+        return res.status(401).json({ error: 'Authentification requise' });
+      }
+      payload = tokenService.verifyRefreshToken(refreshToken);
     }
-
-    // Verify token
-    const payload = tokenService.verifyRefreshToken(refreshToken);
 
     // Get user
     const user = await userRepository.findById(payload.userId);

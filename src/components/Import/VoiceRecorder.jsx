@@ -127,7 +127,12 @@ const VoiceRecorder = ({ onComplete }) => {
             }
         } catch (err) {
             console.error('Erreur transcription:', err);
-            setError(err.message || 'Erreur lors de la transcription.');
+            // Afficher plus de détails sur l'erreur
+            if (err.message === 'Failed to fetch') {
+                setError('Impossible de contacter le serveur. Vérifiez votre connexion.');
+            } else {
+                setError(err.message || 'Erreur lors de la transcription.');
+            }
         } finally {
             setIsProcessing(false);
         }
