@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Check, Loader2, AlertCircle, Sparkles, BookOpen, Brain, HelpCircle, Save, ArrowLeft } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 import { createSynthese } from '../services/syntheseService';
-import { generateTitle, generateSummary, generateFlashcards, generateQuizQuestions, isMockMode } from '../services/openaiService';
+import { generateComplete, isMockMode } from '../services/openaiService';
 
 const STEPS = [
   { id: 'title', label: 'Titre', icon: Sparkles, description: 'Génération du titre' },
@@ -39,33 +39,28 @@ const Process = () => {
     }
   }, [content, navigate]);
 
-  // Processus de génération
+  // Processus de generation - un seul appel backend
   useEffect(() => {
     if (!content) return;
 
     const processContent = async () => {
+      // Animation des etapes pendant la generation
+      // Le backend genere tout en un seul appel
+      setCurrentStep(0);
+
+      // Simuler la progression des etapes pour le feedback visuel
+      const stepInterval = setInterval(() => {
+        setCurrentStep(prev => prev < 3 ? prev + 1 : prev);
+      }, 1500);
+
       try {
-        // Étape 1: Générer le titre
-        setCurrentStep(0);
-        const title = await generateTitle(content);
-        setGeneratedData(prev => ({ ...prev, title }));
+        // Appel unique au backend qui genere tout
+        const { title, summary, flashcards, quizQuestions } = await generateComplete(content);
 
-        // Étape 2: Générer la synthèse
-        setCurrentStep(1);
-        const summary = await generateSummary(content);
-        setGeneratedData(prev => ({ ...prev, summary }));
+        clearInterval(stepInterval);
+        setGeneratedData({ title, summary, flashcards, quizQuestions });
 
-        // Étape 3: Générer les flashcards
-        setCurrentStep(2);
-        const flashcards = await generateFlashcards(content, 6);
-        setGeneratedData(prev => ({ ...prev, flashcards }));
-
-        // Étape 4: Générer le quiz
-        setCurrentStep(3);
-        const quizQuestions = await generateQuizQuestions(content, 4);
-        setGeneratedData(prev => ({ ...prev, quizQuestions }));
-
-        // Étape 5: Sauvegarder dans la base de données
+        // Etape 5: Sauvegarder dans la base de donnees
         setCurrentStep(4);
         const synthese = await createSynthese({
           title,
@@ -76,25 +71,27 @@ const Process = () => {
           quizQuestions
         });
 
-        // Succès !
+        // Succes !
         setStatus('success');
 
         // Notification
         if (isMockMode()) {
-          addNotification('Synthèse créée (mode démo)', 'success');
+          addNotification('Synthese creee (mode demo)', 'success');
         } else {
-          addNotification('Synthèse créée avec succès !', 'success');
+          addNotification('Synthese creee avec succes !', 'success');
         }
 
-        // Rediriger vers la synthèse créée après un court délai
+        // Rediriger vers la synthese creee apres un court delai
         setTimeout(() => {
           navigate(`/study/${synthese.id}`);
         }, 1500);
 
       } catch (err) {
+        clearInterval(stepInterval);
         console.error('Erreur lors du traitement:', err);
         setStatus('error');
-        setError(err.message || 'Une erreur est survenue');
+        const errorMessage = err?.message || err?.error || 'Une erreur est survenue';
+        setError(errorMessage);
       }
     };
 

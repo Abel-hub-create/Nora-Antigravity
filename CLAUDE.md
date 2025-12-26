@@ -219,11 +219,12 @@ backend/
 │   ├── app.js                  # Express app setup
 │   ├── routes/authRoutes.js    # Auth endpoint handlers
 │   ├── routes/syntheseRoutes.js # Synthese CRUD endpoints
-│   ├── routes/aiRoutes.js      # AI endpoints (Whisper, Vision)
+│   ├── routes/aiRoutes.js      # AI endpoints (Whisper, Vision, Content Gen)
 │   ├── services/authService.js # Auth business logic
 │   ├── services/userRepository.js # User data access
 │   ├── services/syntheseRepository.js # Synthese data access
-│   ├── services/openaiService.js # OpenAI API integration
+│   ├── services/openaiService.js # OpenAI Whisper & Vision
+│   ├── services/contentGenerationService.js # ChatGPT content generation
 │   ├── middlewares/auth.js     # JWT verification middleware
 │   ├── middlewares/rateLimiter.js # Rate limiting config
 │   ├── validators/authValidators.js # Auth validation schemas
@@ -366,8 +367,8 @@ Import Page (text/voice/photo)
 - Combined text extraction from multiple photos
 
 **`/src/pages/Process.jsx`**
-- Step-by-step AI generation progress
-- Steps: Title → Summary → Flashcards → Quiz → Save
+- Single backend call generates all content (title, summary, flashcards, quiz)
+- Animated step progression for visual feedback
 - Error handling with retry
 - Auto-redirect on success
 
@@ -377,6 +378,7 @@ Import Page (text/voice/photo)
 |--------|-------|-------------|---------------|
 | POST | `/transcribe` | Audio transcription via Whisper | Yes |
 | POST | `/ocr` | Text extraction via GPT-4 Vision | Yes |
+| POST | `/generate-content` | Generate complete educational content | Yes |
 
 **POST /api/ai/transcribe**
 - Accepts: `multipart/form-data` with `audio` file (webm, mp3, wav, etc.)
@@ -388,29 +390,75 @@ Import Page (text/voice/photo)
 - Returns: `{ text: "..." }`
 - Supports multiple images, text is combined
 
-### Backend AI Service (`/backend/src/services/openaiService.js`)
+**POST /api/ai/generate-content**
+- Accepts: `{ content: "course text..." }`
+- Returns: `{ title, summary, flashcards[], quizQuestions[] }`
+- Single API call generates all educational content
+- Model: gpt-4o-mini
 
-Server-side OpenAI integration (API key never exposed to client).
+### Content Generation Service (`/backend/src/services/contentGenerationService.js`)
+
+Centralized educational content generation with the Nora personality.
+
+**Nora Prompt Characteristics**:
+- Calm, structured, pedagogical tone
+- Simple and accessible language (no jargon)
+- Neutral and supportive (no emojis)
+- Faithful to original course content
+- Coherent output: summary, flashcards, and quiz are linked
+
+**Output Structure**:
+```javascript
+{
+  title: "Short title (max 50 chars)",
+  summary: "200-400 words structured summary",
+  flashcards: [
+    { front: "Question", back: "Answer", difficulty: "easy|medium|hard" }
+    // 6 flashcards: 2 easy, 3 medium, 1 hard
+  ],
+  quizQuestions: [
+    {
+      question: "MCQ question",
+      options: ["A", "B", "C", "D"],
+      correctAnswer: 0, // index 0-3
+      explanation: "Why this answer"
+    }
+    // 4 questions
+  ]
+}
+```
+
+**Benefits**:
+- Single API call instead of 4 (75% cost reduction)
+- Coherent content (generated together)
+- API key secured server-side only
+
+### Backend AI Services
+
+**`/backend/src/services/openaiService.js`** - Whisper & Vision
 
 ```javascript
-// Functions
 transcribeAudio(filePath)        // Whisper transcription
 extractTextFromImage(base64)     // GPT-4 Vision OCR
 extractTextFromImages(base64[])  // Multi-image OCR
 ```
 
-### Frontend OpenAI Service (`/src/services/openaiService.js`)
-
-Content generation for syntheses (title, summary, flashcards, quiz).
+**`/backend/src/services/contentGenerationService.js`** - Content Generation
 
 ```javascript
-// Functions
-generateTitle(content)           // Auto-generate title
-generateSummary(content)         // Create educational summary
-generateFlashcards(content)      // Generate 6 flashcards
-generateQuizQuestions(content)   // Generate 4 MCQ
-generateComplete(content)        // All in one (parallel)
-isMockMode()                     // Check if using mock data
+generateEducationalContent(content)  // Generate title + summary + flashcards + quiz
+```
+
+### Frontend OpenAI Service (`/src/services/openaiService.js`)
+
+Calls backend for content generation, with mock mode fallback.
+
+```javascript
+// Main function (calls backend /api/ai/generate-content)
+generateComplete(content)        // Returns { title, summary, flashcards, quizQuestions }
+
+// Utilities
+isMockMode()                     // Check if using mock data (no API key)
 ```
 
 ### Security
@@ -418,3 +466,4 @@ isMockMode()                     // Check if using mock data
 - **API Key Protection**: OpenAI API key stored only in `backend/.env`, never exposed to frontend
 - **Authentication Required**: All AI endpoints require valid JWT token
 - **File Validation**: Audio uploads validated for type and size
+- **Content Validation**: Min 50 chars, max 100,000 chars for content generation

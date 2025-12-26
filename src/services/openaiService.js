@@ -1,15 +1,19 @@
 /**
- * OpenAI Service - Génération de contenu éducatif
+ * OpenAI Service - Generation de contenu educatif
  *
- * Ce service prépare l'infrastructure pour l'API OpenAI.
- * Mode mock activé tant que VITE_OPENAI_API_KEY n'est pas défini.
+ * Ce service gere la generation de contenu pedagogique via le backend.
+ * L'appel principal generateComplete() utilise /api/ai/generate-content
+ * qui genere titre, synthese, flashcards et quiz en un seul appel.
  */
 
+const BACKEND_URL = import.meta.env.VITE_API_URL || '';
+
+// Les fonctions individuelles sont conservees pour le mode mock uniquement
 const API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 const MODEL = import.meta.env.VITE_OPENAI_MODEL || 'gpt-4o-mini';
 const API_URL = 'https://api.openai.com/v1/chat/completions';
 
-// Vérifier si l'API est configurée
+// Verifier si l'API est configuree (mode mock si pas de cle)
 const isApiConfigured = () => !!API_KEY && API_KEY !== '';
 
 /**
@@ -293,28 +297,65 @@ export async function generateQuizQuestions(content, count = 4) {
 }
 
 /**
- * Génère tout le contenu en une fois (titre, synthèse, flashcards, quiz)
- * Utilisé pour des générations complètes optimisées
+ * Genere tout le contenu en une fois via le backend
+ * Appel centralise cote serveur pour securite et optimisation
+ *
+ * @param {string} content - Le contenu du cours
+ * @returns {Promise<Object>} - { title, summary, flashcards, quizQuestions }
  */
-export async function generateComplete(content, options = {}) {
-  const { flashcardCount = 6, quizCount = 4 } = options;
+export async function generateComplete(content) {
+  // Mode mock si VITE_OPENAI_API_KEY n'est pas defini
+  if (!isApiConfigured()) {
+    console.log('[OpenAI] Mode mock - Generation complete simulee');
+    await simulateDelay(2000);
+    return {
+      title: MOCK_DATA.title(content),
+      summary: MOCK_DATA.summary(content),
+      flashcards: MOCK_DATA.flashcards,
+      quizQuestions: MOCK_DATA.quizQuestions
+    };
+  }
 
-  // Générer le titre d'abord (rapide)
-  const title = await generateTitle(content);
+  try {
+    // Recuperer le token d'authentification
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) {
+      throw new Error('Non authentifie');
+    }
 
-  // Générer le reste en parallèle pour gagner du temps
-  const [summary, flashcards, quizQuestions] = await Promise.all([
-    generateSummary(content),
-    generateFlashcards(content, flashcardCount),
-    generateQuizQuestions(content, quizCount)
-  ]);
+    const response = await fetch(`${BACKEND_URL}/api/ai/generate-content`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      credentials: 'include',
+      body: JSON.stringify({ content })
+    });
 
-  return {
-    title,
-    summary,
-    flashcards,
-    quizQuestions
-  };
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Erreur serveur: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    return {
+      title: data.title,
+      summary: data.summary,
+      flashcards: data.flashcards,
+      quizQuestions: data.quizQuestions
+    };
+
+  } catch (error) {
+    console.error('[OpenAI] Erreur generation complete:', error);
+
+    if (error.message === 'Failed to fetch') {
+      throw new Error('Impossible de contacter le serveur');
+    }
+
+    throw error;
+  }
 }
 
 /**

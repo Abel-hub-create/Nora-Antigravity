@@ -8,6 +8,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { transcribeAudio, extractTextFromImage, extractTextFromImages } from '../services/openaiService.js';
+import { generateEducationalContent } from '../services/contentGenerationService.js';
 import { authenticate } from '../middlewares/auth.js';
 
 const router = express.Router();
@@ -109,6 +110,25 @@ router.post('/ocr', authenticate, express.json({ limit: '50mb' }), async (req, r
   } catch (error) {
     console.error('Erreur OCR:', error);
     res.status(500).json({ error: error.message || 'Erreur lors de l\'extraction du texte' });
+  }
+});
+
+/**
+ * POST /api/ai/generate-content
+ * Generation complete de contenu pedagogique (titre + synthese + flashcards + quiz)
+ * Body: { content: "texte du cours..." }
+ */
+router.post('/generate-content', authenticate, express.json({ limit: '10mb' }), async (req, res) => {
+  try {
+    const result = await generateEducationalContent(req.body.content);
+    res.json(result);
+  } catch (error) {
+    console.error('Erreur generation contenu:', error);
+    // Erreurs de validation retournent 400, erreurs serveur retournent 500
+    const statusCode = error.message.includes('trop court') ||
+                       error.message.includes('trop long') ||
+                       error.message.includes('invalide') ? 400 : 500;
+    res.status(statusCode).json({ error: error.message || 'Erreur lors de la generation du contenu' });
   }
 });
 
