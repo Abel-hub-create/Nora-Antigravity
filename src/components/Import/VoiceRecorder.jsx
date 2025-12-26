@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, Square, AlertCircle, Loader2 } from 'lucide-react';
-import { useAuth } from '../../features/auth/hooks/useAuth';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -14,7 +13,6 @@ const VoiceRecorder = ({ onComplete }) => {
     const mediaRecorderRef = useRef(null);
     const audioChunksRef = useRef([]);
     const timerRef = useRef(null);
-    const { accessToken } = useAuth();
 
     // Formater le temps d'enregistrement
     const formatTime = (seconds) => {
@@ -105,6 +103,7 @@ const VoiceRecorder = ({ onComplete }) => {
             formData.append('audio', audioBlob, 'recording.webm');
 
             // Envoyer au backend
+            const accessToken = localStorage.getItem('accessToken');
             const response = await fetch(`${API_URL}/ai/transcribe`, {
                 method: 'POST',
                 headers: {

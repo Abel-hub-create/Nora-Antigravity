@@ -29,6 +29,7 @@ export const authenticate = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    return res.status(401).json({ error: 'Token invalide' });
+    console.error('[Auth] Token error:', error.message);
+    return res.status(401).json({ error: 'Token invalide', details: error.message });
   }
 };

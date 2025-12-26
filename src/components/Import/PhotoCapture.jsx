@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, X, Check, Loader2, AlertCircle, Image, RotateCcw } from 'lucide-react';
-import { useAuth } from '../../features/auth/hooks/useAuth';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -16,7 +15,6 @@ const PhotoCapture = ({ onComplete, onClose }) => {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const streamRef = useRef(null);
-    const { accessToken } = useAuth();
 
     // Initialiser la caméra
     const startCamera = useCallback(async () => {
@@ -119,6 +117,7 @@ const PhotoCapture = ({ onComplete, onClose }) => {
             }, 500);
 
             // Envoyer au backend
+            const accessToken = localStorage.getItem('accessToken');
             const response = await fetch(`${API_URL}/ai/ocr`, {
                 method: 'POST',
                 headers: {
