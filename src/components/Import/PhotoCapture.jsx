@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, X, Trash2, Check, Loader2, AlertCircle, Image, RotateCcw } from 'lucide-react';
-import { createWorker } from 'tesseract.js';
+import { Camera, X, Check, Loader2, AlertCircle, Image, RotateCcw } from 'lucide-react';
+import { useAuth } from '../../features/auth/hooks/useAuth';
+
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 const PhotoCapture = ({ onComplete, onClose }) => {
     const [photos, setPhotos] = useState([]);
@@ -14,6 +16,7 @@ const PhotoCapture = ({ onComplete, onClose }) => {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const streamRef = useRef(null);
+    const { accessToken } = useAuth();
 
     // Initialiser la caméra
     const startCamera = useCallback(async () => {
@@ -22,7 +25,7 @@ const PhotoCapture = ({ onComplete, onClose }) => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: {
-                    facingMode: 'environment', // Caméra arrière sur mobile
+                    facingMode: 'environment',
                     width: { ideal: 1920 },
                     height: { ideal: 1080 }
                 }
@@ -73,22 +76,17 @@ const PhotoCapture = ({ onComplete, onClose }) => {
         const canvas = canvasRef.current;
         const context = canvas.getContext('2d');
 
-        // Définir la taille du canvas
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-
-        // Dessiner la frame vidéo sur le canvas
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Convertir en data URL
         const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
 
-        // Ajouter à la liste des photos
         const newPhoto = {
             id: Date.now(),
             dataUrl,
-            text: '',
             isProcessing: false,
+            success: false,
             error: null
         };
 
@@ -100,7 +98,7 @@ const PhotoCapture = ({ onComplete, onClose }) => {
         setPhotos(prev => prev.filter(p => p.id !== id));
     };
 
-    // Traiter toutes les photos avec OCR
+    // Traiter toutes les photos avec Vision API
     const processPhotos = async () => {
         if (photos.length === 0) return;
 
@@ -109,63 +107,60 @@ const PhotoCapture = ({ onComplete, onClose }) => {
         setOcrProgress(0);
 
         try {
-            // Créer un worker Tesseract
-            const worker = await createWorker('fra', 1, {
-                logger: (m) => {
-                    if (m.status === 'recognizing text') {
-                        setOcrProgress(Math.round(m.progress * 100));
-                    }
-                }
+            // Marquer toutes les photos comme en traitement
+            setPhotos(prev => prev.map(p => ({ ...p, isProcessing: true })));
+
+            // Préparer les images en base64
+            const images = photos.map(p => p.dataUrl);
+
+            // Progression simulée pendant l'envoi
+            const progressInterval = setInterval(() => {
+                setOcrProgress(prev => Math.min(prev + 10, 90));
+            }, 500);
+
+            // Envoyer au backend
+            const response = await fetch(`${API_URL}/api/ai/ocr`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                body: JSON.stringify({ images })
             });
 
-            const extractedTexts = [];
+            clearInterval(progressInterval);
+            setOcrProgress(100);
 
-            // Traiter chaque photo
-            for (let i = 0; i < photos.length; i++) {
-                const photo = photos[i];
-
-                // Mettre à jour le statut de cette photo
-                setPhotos(prev => prev.map(p =>
-                    p.id === photo.id ? { ...p, isProcessing: true } : p
-                ));
-
-                try {
-                    const { data: { text } } = await worker.recognize(photo.dataUrl);
-
-                    // Mettre à jour avec le texte extrait
-                    setPhotos(prev => prev.map(p =>
-                        p.id === photo.id ? { ...p, isProcessing: false, text } : p
-                    ));
-
-                    if (text.trim()) {
-                        extractedTexts.push(text.trim());
-                    }
-                } catch (ocrError) {
-                    console.error('Erreur OCR photo:', ocrError);
-                    setPhotos(prev => prev.map(p =>
-                        p.id === photo.id ? { ...p, isProcessing: false, error: 'Erreur OCR' } : p
-                    ));
-                }
-
-                // Mettre à jour la progression globale
-                setOcrProgress(Math.round(((i + 1) / photos.length) * 100));
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                throw new Error(data.error || 'Erreur lors de l\'extraction du texte');
             }
 
-            // Terminer le worker
-            await worker.terminate();
+            const data = await response.json();
 
-            // Combiner tous les textes
-            const combinedText = extractedTexts.join('\n\n');
+            // Marquer toutes les photos comme réussies
+            setPhotos(prev => prev.map(p => ({
+                ...p,
+                isProcessing: false,
+                success: true
+            })));
 
-            if (combinedText.trim()) {
+            if (data.text && data.text.trim()) {
                 stopCamera();
-                onComplete(combinedText);
+                onComplete(data.text.trim());
             } else {
                 setError('Aucun texte n\'a pu être extrait des photos. Essayez avec des images plus nettes.');
             }
         } catch (err) {
-            console.error('Erreur traitement OCR:', err);
-            setError('Erreur lors du traitement des photos.');
+            console.error('Erreur OCR:', err);
+            setError(err.message || 'Erreur lors du traitement des photos.');
+
+            // Marquer les photos comme en erreur
+            setPhotos(prev => prev.map(p => ({
+                ...p,
+                isProcessing: false,
+                error: 'Erreur'
+            })));
         } finally {
             setIsProcessing(false);
         }
@@ -200,7 +195,7 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                 <h2 className="text-white font-medium">
                     {photos.length > 0 ? `${photos.length} photo${photos.length > 1 ? 's' : ''}` : 'Prendre une photo'}
                 </h2>
-                <div className="w-10" /> {/* Spacer pour centrer le titre */}
+                <div className="w-10" />
             </div>
 
             {/* Zone de caméra ou erreur */}
@@ -265,7 +260,7 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                                 )}
 
                                 {/* Indicateur de succès */}
-                                {photo.text && !photo.isProcessing && (
+                                {photo.success && !photo.isProcessing && (
                                     <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
                                         <Check className="w-6 h-6 text-green-400" />
                                     </div>
@@ -310,7 +305,7 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                 {isProcessing && (
                     <div className="mb-4">
                         <div className="flex justify-between text-sm text-white/70 mb-1">
-                            <span>Extraction du texte...</span>
+                            <span>Extraction du texte par l'IA...</span>
                             <span>{ocrProgress}%</span>
                         </div>
                         <div className="h-2 bg-white/20 rounded-full overflow-hidden">
@@ -363,7 +358,7 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                 {/* Instructions */}
                 <p className="text-center text-white/60 text-sm mt-4">
                     {isProcessing
-                        ? 'Extraction du texte en cours...'
+                        ? 'L\'IA analyse vos photos...'
                         : photos.length > 0
                             ? 'Appuie sur ✓ pour extraire le texte'
                             : 'Prends des photos de ton cours'}

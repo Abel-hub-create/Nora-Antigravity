@@ -1,158 +1,146 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, Square, AlertCircle } from 'lucide-react';
+import { Mic, Square, AlertCircle, Loader2 } from 'lucide-react';
+import { useAuth } from '../../features/auth/hooks/useAuth';
+
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 const VoiceRecorder = ({ onComplete }) => {
     const [isRecording, setIsRecording] = useState(false);
-    const [transcript, setTranscript] = useState('');
+    const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState(null);
-    const [isSupported, setIsSupported] = useState(true);
+    const [recordingTime, setRecordingTime] = useState(0);
 
-    const recognitionRef = useRef(null);
-    const finalTranscriptRef = useRef('');
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
+    const timerRef = useRef(null);
+    const { accessToken } = useAuth();
 
-    // Initialiser la reconnaissance vocale
-    useEffect(() => {
-        // Vérifier le support du navigateur
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    // Formater le temps d'enregistrement
+    const formatTime = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
 
-        if (!SpeechRecognition) {
-            setIsSupported(false);
-            setError('La reconnaissance vocale n\'est pas supportée par votre navigateur. Utilisez Chrome ou Edge.');
-            return;
-        }
-
-        // Créer l'instance de reconnaissance
-        const recognition = new SpeechRecognition();
-        recognition.lang = 'fr-FR';
-        recognition.continuous = true;
-        recognition.interimResults = true;
-
-        // Gestion des résultats
-        recognition.onresult = (event) => {
-            let interimTranscript = '';
-            let finalTranscript = finalTranscriptRef.current;
-
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const transcriptPart = event.results[i][0].transcript;
-                if (event.results[i].isFinal) {
-                    finalTranscript += transcriptPart + ' ';
-                    finalTranscriptRef.current = finalTranscript;
-                } else {
-                    interimTranscript += transcriptPart;
-                }
-            }
-
-            setTranscript(finalTranscript + interimTranscript);
-        };
-
-        // Gestion des erreurs
-        recognition.onerror = (event) => {
-            console.error('Erreur reconnaissance vocale:', event.error);
-
-            switch (event.error) {
-                case 'not-allowed':
-                    setError('Accès au microphone refusé. Veuillez autoriser l\'accès.');
-                    break;
-                case 'no-speech':
-                    // Pas d'erreur visible, juste pas de parole détectée
-                    break;
-                case 'network':
-                    setError('Erreur réseau. Vérifiez votre connexion.');
-                    break;
-                default:
-                    setError(`Erreur: ${event.error}`);
-            }
-
-            setIsRecording(false);
-        };
-
-        // Quand la reconnaissance s'arrête
-        recognition.onend = () => {
-            // Si on est encore en mode enregistrement, redémarrer (gestion du timeout auto)
-            if (isRecording && recognitionRef.current) {
-                try {
-                    recognitionRef.current.start();
-                } catch (e) {
-                    // Ignorer si déjà démarré
-                }
-            }
-        };
-
-        recognitionRef.current = recognition;
-
-        // Cleanup
-        return () => {
-            if (recognitionRef.current) {
-                try {
-                    recognitionRef.current.stop();
-                } catch (e) {
-                    // Ignorer
-                }
-            }
-        };
-    }, [isRecording]);
-
-    // Démarrer/Arrêter l'enregistrement
-    const handleToggle = async () => {
+    // Démarrer l'enregistrement
+    const startRecording = async () => {
         setError(null);
+        audioChunksRef.current = [];
 
-        if (isRecording) {
-            // Arrêter l'enregistrement
-            setIsRecording(false);
-            if (recognitionRef.current) {
-                try {
-                    recognitionRef.current.stop();
-                } catch (e) {
-                    // Ignorer
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            const mediaRecorder = new MediaRecorder(stream, {
+                mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
+            });
+
+            mediaRecorderRef.current = mediaRecorder;
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data);
                 }
-            }
+            };
 
-            // Envoyer le transcript final
-            const finalText = finalTranscriptRef.current.trim() || transcript.trim();
-            if (finalText) {
-                setTimeout(() => onComplete(finalText), 500);
-            }
-        } else {
-            // Demander la permission du microphone et démarrer
-            try {
-                // Demander l'accès au micro pour déclencher la popup de permission
-                await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder.onstop = async () => {
+                // Arrêter le stream
+                stream.getTracks().forEach(track => track.stop());
 
-                // Réinitialiser
-                setTranscript('');
-                finalTranscriptRef.current = '';
-                setIsRecording(true);
+                // Traiter l'audio
+                await processAudio();
+            };
 
-                // Démarrer la reconnaissance
-                if (recognitionRef.current) {
-                    recognitionRef.current.start();
-                }
-            } catch (err) {
-                console.error('Erreur accès microphone:', err);
-                setError('Impossible d\'accéder au microphone. Veuillez autoriser l\'accès.');
+            // Démarrer l'enregistrement
+            mediaRecorder.start(1000); // Collecter les données toutes les secondes
+            setIsRecording(true);
+            setRecordingTime(0);
+
+            // Timer pour afficher la durée
+            timerRef.current = setInterval(() => {
+                setRecordingTime(prev => prev + 1);
+            }, 1000);
+
+        } catch (err) {
+            console.error('Erreur accès microphone:', err);
+            if (err.name === 'NotAllowedError') {
+                setError('Accès au microphone refusé. Veuillez autoriser l\'accès.');
+            } else {
+                setError('Impossible d\'accéder au microphone.');
             }
         }
     };
 
-    // Affichage si non supporté
-    if (!isSupported) {
-        return (
-            <div className="flex flex-col items-center justify-center h-full space-y-6 p-6">
-                <div className="w-20 h-20 rounded-full bg-error/20 flex items-center justify-center">
-                    <AlertCircle className="w-10 h-10 text-error" />
-                </div>
-                <div className="text-center">
-                    <h3 className="text-lg font-medium text-text-main mb-2">
-                        Non supporté
-                    </h3>
-                    <p className="text-text-muted text-sm max-w-[280px]">
-                        {error}
-                    </p>
-                </div>
-            </div>
-        );
-    }
+    // Arrêter l'enregistrement
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+
+            if (timerRef.current) {
+                clearInterval(timerRef.current);
+                timerRef.current = null;
+            }
+        }
+    };
+
+    // Traiter l'audio avec Whisper via le backend
+    const processAudio = async () => {
+        if (audioChunksRef.current.length === 0) {
+            setError('Aucun audio enregistré.');
+            return;
+        }
+
+        setIsProcessing(true);
+        setError(null);
+
+        try {
+            // Créer le blob audio
+            const audioBlob = new Blob(audioChunksRef.current, {
+                type: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
+            });
+
+            // Créer le FormData
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.webm');
+
+            // Envoyer au backend
+            const response = await fetch(`${API_URL}/api/ai/transcribe`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                throw new Error(data.error || 'Erreur lors de la transcription');
+            }
+
+            const data = await response.json();
+
+            if (data.transcript && data.transcript.trim()) {
+                onComplete(data.transcript.trim());
+            } else {
+                setError('Aucun texte n\'a pu être transcrit. Réessayez en parlant plus clairement.');
+            }
+        } catch (err) {
+            console.error('Erreur transcription:', err);
+            setError(err.message || 'Erreur lors de la transcription.');
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    // Toggle enregistrement
+    const handleToggle = () => {
+        if (isRecording) {
+            stopRecording();
+        } else {
+            startRecording();
+        }
+    };
 
     return (
         <div className="flex flex-col items-center justify-center h-full space-y-8">
@@ -176,15 +164,29 @@ const VoiceRecorder = ({ onComplete }) => {
                     </>
                 )}
 
+                {/* Animation de traitement */}
+                {isProcessing && (
+                    <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                        className="absolute inset-0 border-4 border-transparent border-t-primary rounded-full"
+                    />
+                )}
+
                 <button
                     onClick={handleToggle}
-                    className={`relative z-10 w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    disabled={isProcessing}
+                    className={`relative z-10 w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 disabled:opacity-50 ${
                         isRecording
                             ? 'bg-error shadow-lg shadow-error/30'
-                            : 'bg-primary shadow-lg shadow-primary/30 hover:bg-primary-dark'
+                            : isProcessing
+                                ? 'bg-surface'
+                                : 'bg-primary shadow-lg shadow-primary/30 hover:bg-primary-dark'
                     }`}
                 >
-                    {isRecording ? (
+                    {isProcessing ? (
+                        <Loader2 size={32} className="text-primary animate-spin" />
+                    ) : isRecording ? (
                         <Square size={32} className="text-white fill-current" />
                     ) : (
                         <Mic size={32} className="text-white" />
@@ -192,11 +194,27 @@ const VoiceRecorder = ({ onComplete }) => {
                 </button>
             </div>
 
-            {/* Instructions et transcript */}
+            {/* Instructions et statut */}
             <div className="text-center space-y-2 min-h-[100px]">
                 <h3 className="text-xl font-medium text-text-main">
-                    {isRecording ? "J'écoute..." : "Appuie pour parler"}
+                    {isProcessing
+                        ? "Transcription en cours..."
+                        : isRecording
+                            ? "J'écoute..."
+                            : "Appuie pour parler"
+                    }
                 </h3>
+
+                {/* Temps d'enregistrement */}
+                {isRecording && (
+                    <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="text-2xl font-mono text-primary"
+                    >
+                        {formatTime(recordingTime)}
+                    </motion.p>
+                )}
 
                 {/* Erreur */}
                 <AnimatePresence>
@@ -213,38 +231,25 @@ const VoiceRecorder = ({ onComplete }) => {
                     )}
                 </AnimatePresence>
 
-                {/* Transcript en cours */}
-                <AnimatePresence>
-                    {transcript && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="mt-4"
-                        >
-                            <p className="text-text-muted text-sm max-w-[280px] mx-auto line-clamp-4">
-                                "{transcript}"
-                            </p>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Indicateur d'enregistrement */}
-                {isRecording && !transcript && (
+                {/* Indicateur de traitement */}
+                {isProcessing && (
                     <motion.p
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="text-primary text-sm"
+                        className="text-text-muted text-sm"
                     >
-                        Parlez maintenant...
+                        Envoi à l'IA pour transcription...
                     </motion.p>
                 )}
             </div>
 
             {/* Instructions supplémentaires */}
             <p className="text-text-muted text-xs text-center max-w-[250px]">
-                {isRecording
-                    ? "Appuie sur le bouton rouge pour terminer"
-                    : "Dicte ton cours et il sera retranscrit automatiquement"
+                {isProcessing
+                    ? "La transcription peut prendre quelques secondes"
+                    : isRecording
+                        ? "Appuie sur le bouton rouge pour terminer"
+                        : "Dicte ton cours et il sera retranscrit par l'IA"
                 }
             </p>
         </div>

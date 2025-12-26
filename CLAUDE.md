@@ -219,13 +219,16 @@ backend/
 │   ├── app.js                  # Express app setup
 │   ├── routes/authRoutes.js    # Auth endpoint handlers
 │   ├── routes/syntheseRoutes.js # Synthese CRUD endpoints
+│   ├── routes/aiRoutes.js      # AI endpoints (Whisper, Vision)
 │   ├── services/authService.js # Auth business logic
 │   ├── services/userRepository.js # User data access
 │   ├── services/syntheseRepository.js # Synthese data access
+│   ├── services/openaiService.js # OpenAI API integration
 │   ├── middlewares/auth.js     # JWT verification middleware
 │   ├── middlewares/rateLimiter.js # Rate limiting config
 │   ├── validators/authValidators.js # Auth validation schemas
 │   └── validators/syntheseValidators.js # Synthese validation schemas
+├── uploads/                    # Temporary audio files (auto-cleaned)
 ```
 
 ## Syntheses System
@@ -286,6 +289,7 @@ Copy `.env.example` files and configure:
 - `PORT`, `NODE_ENV`, `FRONTEND_URL`
 - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
 - `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`
+- `OPENAI_API_KEY` - OpenAI API key (for Whisper, Vision, GPT)
 
 ## Deployment
 
@@ -317,15 +321,15 @@ sudo systemctl reload nginx
 
 ## Import System
 
-Multi-modal content import system supporting text, voice, and photo input.
+Multi-modal content import system supporting text, voice, and photo input. All AI features are powered by OpenAI APIs with the API key secured server-side.
 
 ### Input Methods
 
 | Method | Component | Technology |
 |--------|-----------|------------|
 | Text | `Import.jsx` | Direct text input/paste |
-| Voice | `VoiceRecorder.jsx` | Web Speech API (Chrome/Edge) |
-| Photo | `PhotoCapture.jsx` | Camera + Tesseract.js OCR |
+| Voice | `VoiceRecorder.jsx` | OpenAI Whisper API (via backend) |
+| Photo | `PhotoCapture.jsx` | OpenAI GPT-4 Vision API (via backend) |
 
 ### Flow
 
@@ -348,16 +352,18 @@ Import Page (text/voice/photo)
 - Photo: Opens PhotoCapture modal
 
 **`/src/components/Import/VoiceRecorder.jsx`**
-- Web Speech API integration
-- Real-time transcription (French)
+- Records audio via MediaRecorder API
+- Sends audio to backend for Whisper transcription
+- Displays recording time and processing status
 - Microphone permission handling
 - Visual feedback with animations
 
 **`/src/components/Import/PhotoCapture.jsx`**
 - Camera access via getUserMedia
 - Multi-photo capture
-- OCR via Tesseract.js (French)
-- Combined text extraction
+- Sends images to backend for GPT-4 Vision OCR
+- Progress indicator during processing
+- Combined text extraction from multiple photos
 
 **`/src/pages/Process.jsx`**
 - Step-by-step AI generation progress
@@ -365,27 +371,50 @@ Import Page (text/voice/photo)
 - Error handling with retry
 - Auto-redirect on success
 
-### OpenAI Service (`/src/services/openaiService.js`)
+### AI API Endpoints (`/api/ai/`)
 
-Prepared for GPT-4o-mini integration (currently mock mode).
+| Method | Route | Description | Auth Required |
+|--------|-------|-------------|---------------|
+| POST | `/transcribe` | Audio transcription via Whisper | Yes |
+| POST | `/ocr` | Text extraction via GPT-4 Vision | Yes |
+
+**POST /api/ai/transcribe**
+- Accepts: `multipart/form-data` with `audio` file (webm, mp3, wav, etc.)
+- Returns: `{ transcript: "..." }`
+- Max file size: 25MB
+
+**POST /api/ai/ocr**
+- Accepts: `{ image: "base64..." }` or `{ images: ["base64...", ...] }`
+- Returns: `{ text: "..." }`
+- Supports multiple images, text is combined
+
+### Backend AI Service (`/backend/src/services/openaiService.js`)
+
+Server-side OpenAI integration (API key never exposed to client).
 
 ```javascript
-// API Configuration
-VITE_OPENAI_API_KEY=sk-...  // Set to enable real AI
-VITE_OPENAI_MODEL=gpt-4o-mini
-
 // Functions
-generateTitle(content)       // Auto-generate title
-generateSummary(content)     // Create educational summary
-generateFlashcards(content)  // Generate 6 flashcards
-generateQuizQuestions(content) // Generate 4 MCQ
-generateComplete(content)    // All in one (parallel)
-isMockMode()                 // Check if using mock data
+transcribeAudio(filePath)        // Whisper transcription
+extractTextFromImage(base64)     // GPT-4 Vision OCR
+extractTextFromImages(base64[])  // Multi-image OCR
 ```
 
-**Mock Mode**: When `VITE_OPENAI_API_KEY` is not set, the service returns demo data for testing.
+### Frontend OpenAI Service (`/src/services/openaiService.js`)
 
-### Dependencies
+Content generation for syntheses (title, summary, flashcards, quiz).
 
-- `tesseract.js` - Client-side OCR
-- Web Speech API - Browser-native speech recognition (Chrome, Edge, Safari)
+```javascript
+// Functions
+generateTitle(content)           // Auto-generate title
+generateSummary(content)         // Create educational summary
+generateFlashcards(content)      // Generate 6 flashcards
+generateQuizQuestions(content)   // Generate 4 MCQ
+generateComplete(content)        // All in one (parallel)
+isMockMode()                     // Check if using mock data
+```
+
+### Security
+
+- **API Key Protection**: OpenAI API key stored only in `backend/.env`, never exposed to frontend
+- **Authentication Required**: All AI endpoints require valid JWT token
+- **File Validation**: Audio uploads validated for type and size
