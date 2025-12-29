@@ -307,14 +307,19 @@ Copy `.env.example` files and configure:
 # Deploy frontend
 npm run build
 
-# Backend (PM2)
-pm2 restart nora-api      # Restart
-pm2 logs nora-api         # View logs
-pm2 save                  # Save for reboot
+# Backend (PM2) - uses ecosystem.config.cjs
+pm2 start ecosystem.config.cjs   # First start (from backend/)
+pm2 restart nora-api             # Restart
+pm2 logs nora-api                # View logs
+pm2 save                         # Save for reboot
 
 # Nginx
 sudo systemctl reload nginx
 ```
+
+**PM2 Config** (`backend/ecosystem.config.cjs`):
+- Watch mode enabled with `ignore_watch: ['uploads', 'node_modules', 'logs']`
+- Important: uploads folder must be ignored to prevent restart during audio transcription
 
 **Nginx config**: `/etc/nginx/sites-available/mirora.cloud`
 - Serves `/dist` for frontend
