@@ -12,6 +12,64 @@ export const ACTIVITY_TYPES = {
     flashcards: { label: 'Flashcards', key: 'flashcardsTime' }
 };
 
+// XP Thresholds for daily study time rewards
+export const XP_THRESHOLDS = {
+    flashcards: { timeMinutes: 10, xp: 40 },
+    quiz: { timeMinutes: 20, xp: 70 },
+    summary: { timeMinutes: 30, xp: 100 }
+};
+
+// Bonus XP when all thresholds are reached
+export const ALL_BONUS_XP = 100;
+
+// Daily goals completion bonus
+export const DAILY_GOALS_BONUS_XP = 10;
+
+// Helper to get today's date string
+const getTodayString = () => new Date().toDateString();
+
+// Helper to load from localStorage with default value
+const loadFromStorage = (key, defaultValue) => {
+    try {
+        const stored = localStorage.getItem(key);
+        if (stored) {
+            return JSON.parse(stored);
+        }
+    } catch (e) {
+        console.error(`Error loading ${key} from localStorage:`, e);
+    }
+    return defaultValue;
+};
+
+// Helper to save to localStorage
+const saveToStorage = (key, value) => {
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+        console.error(`Error saving ${key} to localStorage:`, e);
+    }
+};
+
+// Default daily stats
+const getDefaultDailyStats = () => ({
+    date: getTodayString(),
+    quizTime: 0,
+    flashcardsTime: 0,
+    summaryTime: 0,
+    xpAwarded: {
+        quiz: false,
+        flashcards: false,
+        summary: false,
+        allBonus: false
+    }
+});
+
+// Default daily goals
+const getDefaultDailyGoals = () => [
+    { id: 1, type: 'summary', targetMinutes: 30, completed: false },
+    { id: 2, type: 'quiz', targetMinutes: 20, completed: false }
+];
+
 export const UserProvider = ({ children }) => {
     const { user: authUser, syncUserData } = useAuth();
 
@@ -45,31 +103,39 @@ export const UserProvider = ({ children }) => {
         }
     }, [authUser]);
 
-    // Daily Stats State
-    const [dailyStats, setDailyStats] = useState({
-        date: new Date().toDateString(),
-        quizTime: 0,
-        flashcardsTime: 0,
-        summaryTime: 0,
-        xpAwarded: {
-            quiz: false,
-            flashcards: false,
-            summary: false,
-            allBonus: false
+    // Daily Stats State - Load from localStorage or use defaults
+    const [dailyStats, setDailyStats] = useState(() => {
+        const stored = loadFromStorage('nora_dailyStats', null);
+        if (stored && stored.date === getTodayString()) {
+            return stored;
         }
+        return getDefaultDailyStats();
     });
 
-    // Daily Goals State - Multiple customizable goals
-    const [dailyGoals, setDailyGoalsState] = useState([
-        { id: 1, type: 'summary', targetMinutes: 30, completed: false },
-        { id: 2, type: 'quiz', targetMinutes: 20, completed: false }
-    ]);
+    // Daily Goals State - Load from localStorage or use defaults
+    const [dailyGoals, setDailyGoalsState] = useState(() => {
+        const stored = loadFromStorage('nora_dailyGoals', null);
+        if (stored) {
+            // Reset completed status if it's a new day
+            const statsDate = loadFromStorage('nora_dailyStats', {})?.date;
+            if (statsDate !== getTodayString()) {
+                return stored.map(g => ({ ...g, completed: false }));
+            }
+            return stored;
+        }
+        return getDefaultDailyGoals();
+    });
 
-    // Track if daily goals reward has been claimed today (separate from goals completion)
-    // This persists even if user modifies goals after claiming reward
-    const [dailyGoalsRewardClaimed, setDailyGoalsRewardClaimed] = useState(false);
+    // Track if daily goals reward has been claimed today
+    const [dailyGoalsRewardClaimed, setDailyGoalsRewardClaimed] = useState(() => {
+        const stored = loadFromStorage('nora_dailyGoalsRewardClaimed', null);
+        if (stored && stored.date === getTodayString()) {
+            return stored.claimed;
+        }
+        return false;
+    });
 
-    // Notifications state for goal completions
+    // Notifications state for goal completions and XP gains
     const [notifications, setNotifications] = useState([]);
     const notificationIdRef = useRef(0);
 
@@ -88,28 +154,68 @@ export const UserProvider = ({ children }) => {
         setNotifications(prev => prev.filter(n => n.id !== id));
     }, []);
 
-    // Check for day change - Reset daily stats and goals completion
+    // Persist dailyStats to localStorage
     useEffect(() => {
-        const today = new Date().toDateString();
+        saveToStorage('nora_dailyStats', dailyStats);
+    }, [dailyStats]);
+
+    // Persist dailyGoals to localStorage
+    useEffect(() => {
+        saveToStorage('nora_dailyGoals', dailyGoals);
+    }, [dailyGoals]);
+
+    // Persist dailyGoalsRewardClaimed to localStorage
+    useEffect(() => {
+        saveToStorage('nora_dailyGoalsRewardClaimed', {
+            date: getTodayString(),
+            claimed: dailyGoalsRewardClaimed
+        });
+    }, [dailyGoalsRewardClaimed]);
+
+    // Check for day change - robust implementation with interval
+    const checkAndResetForNewDay = useCallback(() => {
+        const today = getTodayString();
+
         if (dailyStats.date !== today) {
-            setDailyStats({
-                date: today,
-                quizTime: 0,
-                flashcardsTime: 0,
-                summaryTime: 0,
-                xpAwarded: {
-                    quiz: false,
-                    flashcards: false,
-                    summary: false,
-                    allBonus: false
-                }
-            });
+            console.log('[NORA] New day detected, resetting daily stats');
+
+            // Reset daily stats
+            setDailyStats(getDefaultDailyStats());
+
             // Reset daily goals completion status
             setDailyGoalsState(prev => prev.map(g => ({ ...g, completed: false })));
-            // Reset daily goals reward claimed status for new day
+
+            // Reset daily goals reward claimed status
             setDailyGoalsRewardClaimed(false);
+
+            return true;
         }
+        return false;
     }, [dailyStats.date]);
+
+    // Check for day change on mount and set up interval
+    useEffect(() => {
+        // Check immediately
+        checkAndResetForNewDay();
+
+        // Check every minute for day change
+        const interval = setInterval(() => {
+            checkAndResetForNewDay();
+        }, 60000);
+
+        // Also check when visibility changes (user comes back to app)
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                checkAndResetForNewDay();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            clearInterval(interval);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [checkAndResetForNewDay]);
 
     // Sync user data to backend periodically
     const syncToBackend = useCallback(async (userData) => {
@@ -129,7 +235,7 @@ export const UserProvider = ({ children }) => {
         }
     }, [syncUserData, authUser?.id]);
 
-    const addExp = useCallback((amount) => {
+    const addExp = useCallback((amount, showNotification = false, notificationMessage = '') => {
         setUser(prev => {
             let newExp = prev.exp + amount;
             let newLevel = prev.level;
@@ -156,11 +262,20 @@ export const UserProvider = ({ children }) => {
 
             return newUser;
         });
-    }, [syncToBackend]);
+
+        // Show notification if requested
+        if (showNotification && notificationMessage) {
+            addNotification(notificationMessage, 'xp');
+        }
+    }, [syncToBackend, addNotification]);
 
     const updateTime = useCallback((activityType, seconds) => {
-        const today = new Date().toDateString();
-        if (dailyStats.date !== today) return;
+        // First check if it's a new day
+        const today = getTodayString();
+        if (dailyStats.date !== today) {
+            checkAndResetForNewDay();
+            return; // Don't update time, will be called again on next tick
+        }
 
         // Store the updated time values for goal checking
         let updatedTimes = {
@@ -183,36 +298,39 @@ export const UserProvider = ({ children }) => {
                 summaryTime: newStats.summaryTime
             };
 
-            // Check XP Thresholds
-            const thresholds = {
-                flashcards: { time: 10 * 60, xp: 40 },
-                quiz: { time: 20 * 60, xp: 70 },
-                summary: { time: 30 * 60, xp: 100 }
-            };
+            // Check XP Thresholds and award XP
+            const timeKey = `${activityType}Time`;
+            const threshold = XP_THRESHOLDS[activityType];
 
-            // Award XP for specific activity
-            if (activityType in thresholds && !newStats.xpAwarded[activityType]) {
-                const type = activityType;
-                if (newStats[`${type}Time`] >= thresholds[type].time) {
-                    newStats.xpAwarded[type] = true;
-                    addExp(thresholds[type].xp);
+            if (threshold && !newStats.xpAwarded[activityType]) {
+                const timeInSeconds = newStats[timeKey];
+                const thresholdInSeconds = threshold.timeMinutes * 60;
+
+                if (timeInSeconds >= thresholdInSeconds) {
+                    newStats.xpAwarded[activityType] = true;
+                    const label = ACTIVITY_TYPES[activityType]?.label || activityType;
+                    // Use setTimeout to call addExp outside of setState
+                    setTimeout(() => {
+                        addExp(threshold.xp, true, `+${threshold.xp} XP - ${label} (${threshold.timeMinutes}min)`);
+                    }, 0);
                 }
             }
 
-            // Check All Bonus (100 XP)
+            // Check All Bonus (100 XP) - awarded when all three thresholds are reached
             if (!newStats.xpAwarded.allBonus &&
                 newStats.xpAwarded.flashcards &&
                 newStats.xpAwarded.quiz &&
                 newStats.xpAwarded.summary) {
                 newStats.xpAwarded.allBonus = true;
-                addExp(100);
+                setTimeout(() => {
+                    addExp(ALL_BONUS_XP, true, `+${ALL_BONUS_XP} XP - Bonus journalier complet !`);
+                }, 100);
             }
 
             return newStats;
         });
 
         // Update Daily Goals Progress with notifications
-        // Use updated times calculated above
         setDailyGoalsState(prev => {
             const goalsToNotify = [];
 
@@ -242,49 +360,41 @@ export const UserProvider = ({ children }) => {
 
             return updatedGoals;
         });
-    }, [dailyStats, addExp, addNotification]);
+    }, [dailyStats, checkAndResetForNewDay, addExp, addNotification]);
 
     // Check Daily Goals Completion Bonus (10 XP) - only once per day
     useEffect(() => {
         // Only award if:
         // 1. There are goals defined
         // 2. All goals are completed
-        // 3. Reward hasn't been claimed today (independent of goal modifications)
+        // 3. Reward hasn't been claimed today
         if (dailyGoals.length > 0 &&
             dailyGoals.every(g => g.completed) &&
             !dailyGoalsRewardClaimed) {
             setDailyGoalsRewardClaimed(true);
-            addExp(10);
-            addNotification('Tous les objectifs complétés ! +10 XP', 'reward');
+            addExp(DAILY_GOALS_BONUS_XP, true, `+${DAILY_GOALS_BONUS_XP} XP - Tous les objectifs complétés !`);
         }
-    }, [dailyGoals, dailyGoalsRewardClaimed, addExp, addNotification]);
+    }, [dailyGoals, dailyGoalsRewardClaimed, addExp]);
 
     // Function to update daily goals with reset of progress
-    // IMPORTANT: Modifying goals resets progress to 0% but does NOT reset the reward claimed status
     const updateDailyGoals = useCallback((newGoals, skipWarning = false) => {
-        // Reset all goals to not completed (progress goes to 0%)
         const resetGoals = newGoals.map((goal, index) => ({
             ...goal,
             id: goal.id || index + 1,
             completed: false
         }));
         setDailyGoalsState(resetGoals);
-
-        // Note: dailyGoalsRewardClaimed is NOT reset here
-        // This prevents users from regaining the 10 XP reward by modifying goals
     }, []);
 
     // Add a new goal
     const addDailyGoal = useCallback((type, targetMinutes) => {
         setDailyGoalsState(prev => {
-            // Check if this type already exists
             if (prev.some(g => g.type === type)) {
                 addNotification('Un objectif de ce type existe déjà', 'warning');
                 return prev;
             }
             const newId = Math.max(...prev.map(g => g.id), 0) + 1;
             const newGoals = [...prev, { id: newId, type, targetMinutes, completed: false }];
-            // Reset all progress when adding a new goal
             return newGoals.map(g => ({ ...g, completed: false }));
         });
     }, [addNotification]);
@@ -293,7 +403,6 @@ export const UserProvider = ({ children }) => {
     const removeDailyGoal = useCallback((goalId) => {
         setDailyGoalsState(prev => {
             const newGoals = prev.filter(g => g.id !== goalId);
-            // Reset all progress when removing a goal
             return newGoals.map(g => ({ ...g, completed: false }));
         });
     }, []);
@@ -305,7 +414,6 @@ export const UserProvider = ({ children }) => {
                 if (g.id === goalId) {
                     return { ...g, targetMinutes: newTargetMinutes, completed: false };
                 }
-                // Reset all goals completion when any goal is modified
                 return { ...g, completed: false };
             });
         });
@@ -315,6 +423,25 @@ export const UserProvider = ({ children }) => {
     const dailyProgressPercentage = dailyGoals.length > 0
         ? Math.round((dailyGoals.filter(g => g.completed).length / dailyGoals.length) * 100)
         : 0;
+
+    // Get formatted study times (in minutes)
+    const getStudyTimeMinutes = useCallback((activityType) => {
+        const timeKey = ACTIVITY_TYPES[activityType]?.key;
+        if (!timeKey) return 0;
+        return Math.floor(dailyStats[timeKey] / 60);
+    }, [dailyStats]);
+
+    // Get XP progress for an activity type (percentage to threshold)
+    const getXpProgress = useCallback((activityType) => {
+        const threshold = XP_THRESHOLDS[activityType];
+        if (!threshold) return 0;
+
+        const timeKey = ACTIVITY_TYPES[activityType]?.key;
+        if (!timeKey) return 0;
+
+        const currentMinutes = dailyStats[timeKey] / 60;
+        return Math.min(100, (currentMinutes / threshold.timeMinutes) * 100);
+    }, [dailyStats]);
 
     const unlockCreature = useCallback((creatureId) => {
         setUser(prev => {
@@ -354,9 +481,13 @@ export const UserProvider = ({ children }) => {
             removeDailyGoal,
             updateGoalTarget,
             updateTime,
+            getStudyTimeMinutes,
+            getXpProgress,
             notifications,
             addNotification,
-            removeNotification
+            removeNotification,
+            XP_THRESHOLDS,
+            ALL_BONUS_XP
         }}>
             {children}
         </UserContext.Provider>

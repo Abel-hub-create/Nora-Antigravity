@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, Target, Gift, AlertTriangle, X } from 'lucide-react';
+import { CheckCircle, Target, Gift, AlertTriangle, X, Sparkles } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 
 const NotificationStack = () => {
@@ -12,6 +12,8 @@ const NotificationStack = () => {
                 return <Target className="w-5 h-5 text-primary" />;
             case 'reward':
                 return <Gift className="w-5 h-5 text-yellow-400" />;
+            case 'xp':
+                return <Sparkles className="w-5 h-5 text-purple-400" />;
             case 'warning':
                 return <AlertTriangle className="w-5 h-5 text-orange-400" />;
             case 'success':
@@ -26,6 +28,8 @@ const NotificationStack = () => {
                 return 'border-primary/30';
             case 'reward':
                 return 'border-yellow-400/30';
+            case 'xp':
+                return 'border-purple-400/30';
             case 'warning':
                 return 'border-orange-400/30';
             case 'success':
@@ -40,6 +44,8 @@ const NotificationStack = () => {
                 return 'shadow-primary/20';
             case 'reward':
                 return 'shadow-yellow-400/20';
+            case 'xp':
+                return 'shadow-purple-400/20';
             case 'warning':
                 return 'shadow-orange-400/20';
             case 'success':

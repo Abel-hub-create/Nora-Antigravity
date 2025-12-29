@@ -13,7 +13,7 @@ const Home = () => {
             <header className="flex justify-between items-center mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-text-main">Bonjour, {user.name?.split(' ')[0] || 'Alex'}</h1>
-                    <p className="text-text-muted">Prêt à apprendre quelque chose de nouveau ?</p>
+                    <p className="text-text-muted italic">Nora : puissante, utile, et à un prix que les étudiants peuvent se permettre</p>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary p-[2px]">
                     <div className="w-full h-full rounded-full bg-surface flex items-center justify-center overflow-hidden">

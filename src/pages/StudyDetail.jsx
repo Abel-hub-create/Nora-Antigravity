@@ -3,8 +3,11 @@ import { ArrowLeft, Layers, Brain, Calendar, Trash2, Loader2, AlertCircle } from
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import * as syntheseService from '../services/syntheseService';
+import useActiveTimer from '../hooks/useActiveTimer';
 
 const StudyDetail = () => {
+    // Track time spent reading the summary
+    useActiveTimer('summary');
     const { id } = useParams();
     const navigate = useNavigate();
     const [synthese, setSynthese] = useState(null);

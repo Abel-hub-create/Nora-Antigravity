@@ -69,6 +69,75 @@ npm start          # Start Express server (production)
 
 **Time Tracking**: `useActiveTimer` hook tracks active time per activity, pausing when tab loses focus.
 
+## Study Time & XP System
+
+Comprehensive daily study time tracking with XP rewards. Data persists in localStorage and resets at midnight.
+
+### XP Thresholds (Once per day)
+
+| Activity | Time Required | XP Reward |
+|----------|---------------|-----------|
+| Flashcards | 10 minutes | 40 XP |
+| Quiz | 20 minutes | 70 XP |
+| Synthèse | 30 minutes | 100 XP |
+| **Bonus** | All 3 thresholds | **+100 XP** |
+
+### How It Works
+
+1. **Time Tracking**: Timer starts when user enters a study page, stops when:
+   - User navigates away
+   - Tab loses focus (visibility change)
+   - App goes to background
+
+2. **XP Awards**: Once a threshold is reached:
+   - XP is awarded immediately with notification
+   - Cannot be re-earned same day
+   - Tracked in `dailyStats.xpAwarded`
+
+3. **Daily Reset**: At midnight (or when new day detected):
+   - All time counters reset to 0
+   - XP earning opportunities reset
+   - Goals completion status resets
+   - Total XP/levels/eggs NEVER reset
+
+### State Structure (`UserContext.jsx`)
+
+```javascript
+dailyStats: {
+  date: "Sun Dec 29 2024",
+  quizTime: 0,           // seconds
+  flashcardsTime: 0,     // seconds
+  summaryTime: 0,        // seconds
+  xpAwarded: {
+    quiz: false,
+    flashcards: false,
+    summary: false,
+    allBonus: false
+  }
+}
+```
+
+### Key Functions
+
+| Function | Description |
+|----------|-------------|
+| `updateTime(activityType, seconds)` | Add time and check XP thresholds |
+| `getStudyTimeMinutes(activityType)` | Get time in minutes for display |
+| `getXpProgress(activityType)` | Get % progress to threshold |
+
+### Timer Integration
+
+Pages using the timer:
+- `StudyDetail.jsx` → `useActiveTimer('summary')`
+- `StudyFlashcards.jsx` → `useActiveTimer('flashcards')`
+- `StudyQuiz.jsx` → `useActiveTimer('quiz')`
+
+### localStorage Keys
+
+- `nora_dailyStats` - Daily time counters and XP flags
+- `nora_dailyGoals` - User's daily goal configuration
+- `nora_dailyGoalsRewardClaimed` - Whether 10XP goals bonus was claimed
+
 ## Daily Goals & Progress System
 
 Personalized daily objectives system with global progress tracking and XP rewards.
@@ -136,6 +205,7 @@ dailyProgressPercentage = (completedGoals.length / totalGoals.length) * 100
 
 - `goal`: Individual goal completed ("Objectif Synthèse complété !")
 - `reward`: All goals completed (+10 XP)
+- `xp`: XP gained from study time thresholds (+40 XP, +70 XP, etc.)
 - `warning`: User warnings (duplicate goal type, etc.)
 - `success`: General success messages
 
