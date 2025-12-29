@@ -39,10 +39,13 @@ const upload = multer({
     fileSize: 25 * 1024 * 1024 // 25MB max (limite Whisper)
   },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = ['audio/webm', 'audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/mp4'];
-    if (allowedTypes.includes(file.mimetype) || file.mimetype.startsWith('audio/')) {
+    // Accept any audio type or common audio extensions
+    const isAudio = file.mimetype.startsWith('audio/') ||
+                    file.originalname.match(/\.(webm|mp3|wav|ogg|m4a|mp4|mpeg|opus)$/i);
+    if (isAudio) {
       cb(null, true);
     } else {
+      console.log('[Upload] Rejected file:', file.mimetype, file.originalname);
       cb(new Error('Type de fichier audio non supporté'), false);
     }
   }
