@@ -55,15 +55,27 @@ const upload = multer({
  * POST /api/ai/transcribe
  * Transcription audio avec Whisper
  */
-router.post('/transcribe', authenticate, upload.single('audio'), async (req, res) => {
+router.post('/transcribe', authenticate, (req, res, next) => {
+  upload.single('audio')(req, res, (err) => {
+    if (err) {
+      console.error('[Transcribe] Upload error:', err.message);
+      return res.status(400).json({ error: err.message || 'Erreur upload audio' });
+    }
+    next();
+  });
+}, async (req, res) => {
+  console.log('[Transcribe] File received:', req.file ? req.file.originalname : 'none');
+
   if (!req.file) {
     return res.status(400).json({ error: 'Aucun fichier audio fourni' });
   }
 
   const filePath = req.file.path;
+  console.log('[Transcribe] Processing file:', filePath);
 
   try {
     const transcript = await transcribeAudio(filePath);
+    console.log('[Transcribe] Success, length:', transcript?.length);
 
     // Nettoyer le fichier après traitement
     fs.unlink(filePath, (err) => {
@@ -75,7 +87,7 @@ router.post('/transcribe', authenticate, upload.single('audio'), async (req, res
     // Nettoyer le fichier en cas d'erreur aussi
     fs.unlink(filePath, () => {});
 
-    console.error('Erreur transcription:', error);
+    console.error('[Transcribe] Error:', error.message);
     res.status(500).json({ error: error.message || 'Erreur lors de la transcription' });
   }
 });

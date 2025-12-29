@@ -123,7 +123,9 @@ class ApiClient {
     }
 
     try {
+      console.log('[API Upload] Sending to:', url);
       const response = await fetch(url, config);
+      console.log('[API Upload] Response status:', response.status);
 
       // Handle 401 - try to refresh token
       if (response.status === 401) {
@@ -144,7 +146,17 @@ class ApiClient {
         throw new Error('Session expired');
       }
 
-      const data = await response.json();
+      // Try to parse response as JSON
+      const text = await response.text();
+      console.log('[API Upload] Response text:', text.substring(0, 200));
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.error('[API Upload] JSON parse error:', parseError);
+        throw { response: { status: response.status, data: { error: 'Réponse invalide du serveur' } } };
+      }
 
       if (!response.ok) {
         throw { response: { status: response.status, data } };
@@ -152,10 +164,11 @@ class ApiClient {
 
       return data;
     } catch (error) {
+      console.error('[API Upload] Error:', error);
       if (error.response) {
         throw error;
       }
-      throw { response: { status: 500, data: { error: 'Erreur de connexion au serveur' } } };
+      throw { response: { status: 500, data: { error: 'Erreur de connexion au serveur: ' + (error.message || 'Unknown') } } };
     }
   }
 }
