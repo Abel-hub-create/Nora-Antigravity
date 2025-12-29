@@ -451,15 +451,15 @@ generateEducationalContent(content)  // Generate title + summary + flashcards + 
 
 ### Frontend OpenAI Service (`/src/services/openaiService.js`)
 
-Calls backend for content generation, with mock mode fallback.
+Calls backend for content generation (no mock mode - always uses real API).
 
 ```javascript
 // Main function (calls backend /api/ai/generate-content)
 generateComplete(content)        // Returns { title, summary, flashcards, quizQuestions }
-
-// Utilities
-isMockMode()                     // Check if using mock data (no API key)
 ```
+
+**Environment Variables** (frontend `.env`):
+- `VITE_API_URL=https://mirora.cloud/api` - Backend API URL
 
 ### Security
 

@@ -304,18 +304,6 @@ export async function generateQuizQuestions(content, count = 4) {
  * @returns {Promise<Object>} - { title, summary, flashcards, quizQuestions }
  */
 export async function generateComplete(content) {
-  // Mode mock si VITE_OPENAI_API_KEY n'est pas defini
-  if (!isApiConfigured()) {
-    console.log('[OpenAI] Mode mock - Generation complete simulee');
-    await simulateDelay(2000);
-    return {
-      title: MOCK_DATA.title(content),
-      summary: MOCK_DATA.summary(content),
-      flashcards: MOCK_DATA.flashcards,
-      quizQuestions: MOCK_DATA.quizQuestions
-    };
-  }
-
   try {
     // Recuperer le token d'authentification
     const accessToken = localStorage.getItem('accessToken');
@@ -389,9 +377,10 @@ export async function checkApiStatus() {
 
 /**
  * Retourne si le mode mock est actif
+ * Toujours false car on utilise le backend
  */
 export function isMockMode() {
-  return !isApiConfigured();
+  return false;
 }
 
 /**
