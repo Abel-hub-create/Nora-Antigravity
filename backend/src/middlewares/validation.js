@@ -1,7 +1,18 @@
 export const validate = (schema) => {
   return async (req, res, next) => {
     try {
-      await schema.parseAsync(req.body);
+      // Pass full request context for body, query, params validation
+      const result = await schema.parseAsync({
+        body: req.body,
+        query: req.query,
+        params: req.params
+      });
+
+      // Update req with parsed/transformed values
+      if (result.body) req.body = result.body;
+      if (result.query) req.query = result.query;
+      if (result.params) req.params = result.params;
+
       next();
     } catch (error) {
       const errors = error.errors?.map(e => ({

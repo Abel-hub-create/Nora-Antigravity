@@ -17,7 +17,11 @@ export const pool = mysql.createPool({
 });
 
 export const query = async (sql, params) => {
-  const [rows] = await pool.execute(sql, params);
+  // Use pool.query for bulk inserts (VALUES ?), execute for prepared statements
+  const isBulkInsert = sql.includes('VALUES ?');
+  const [rows] = isBulkInsert
+    ? await pool.query(sql, params)
+    : await pool.execute(sql, params);
   return rows;
 };
 
