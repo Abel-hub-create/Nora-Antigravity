@@ -273,7 +273,7 @@ const PhotoCapture = ({ onComplete, onClose }) => {
             )}
 
             {/* Contrôles en bas */}
-            <div className="p-6 bg-gradient-to-t from-black via-black/90 to-transparent">
+            <div className="p-6 pb-10 bg-gradient-to-t from-black via-black/90 to-transparent" style={{ paddingBottom: 'max(2.5rem, env(safe-area-inset-bottom, 1rem))' }}>
                 {/* Message d'erreur global */}
                 {error && (
                     <motion.div
