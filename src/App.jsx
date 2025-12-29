@@ -21,6 +21,7 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Collection from './pages/Collection';
 import Process from './pages/Process';
+import FolderDetail from './pages/FolderDetail';
 
 import { UserProvider } from './context/UserContext';
 
@@ -50,6 +51,7 @@ function App() {
                       <Route path="/study/:id/flashcards" element={<StudyFlashcards />} />
                       <Route path="/study/:id/quiz" element={<StudyQuiz />} />
                       <Route path="/profile" element={<Profile />} />
+                      <Route path="/folders/:id" element={<FolderDetail />} />
                       <Route path="/settings" element={<Settings />} />
                       <Route path="/collection" element={<Collection />} />
                       <Route path="/process" element={<Process />} />

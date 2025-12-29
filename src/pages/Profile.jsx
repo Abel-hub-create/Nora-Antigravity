@@ -1,9 +1,15 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, Folder, Clock, Star, ChevronRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Settings, Folder, Clock, Star, ChevronRight, Plus, Loader2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import * as folderService from '../services/folderService';
+import FolderCard from '../components/Folders/FolderCard';
+import CreateFolderModal from '../components/Folders/CreateFolderModal';
 
 const Profile = () => {
+    const navigate = useNavigate();
+
+    // User data (à remplacer par données réelles plus tard)
     const user = {
         name: "Alex",
         level: 4,
@@ -12,12 +18,39 @@ const Profile = () => {
         streak: 12
     };
 
-    const folders = [
-        { name: "Biology", items: 12, color: "bg-emerald-500" },
-        { name: "History", items: 8, color: "bg-amber-500" },
-        { name: "Physics", items: 5, color: "bg-purple-500" },
-        { name: "Literature", items: 3, color: "bg-pink-500" },
-    ];
+    // Folders state
+    const [folders, setFolders] = useState([]);
+    const [isLoadingFolders, setIsLoadingFolders] = useState(true);
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
+
+    // Fetch folders on mount
+    useEffect(() => {
+        const fetchFolders = async () => {
+            try {
+                setIsLoadingFolders(true);
+                const data = await folderService.getAllFolders();
+                setFolders(data);
+            } catch (error) {
+                console.error('Error fetching folders:', error);
+            } finally {
+                setIsLoadingFolders(false);
+            }
+        };
+
+        fetchFolders();
+    }, []);
+
+    // Create folder handler
+    const handleCreateFolder = async ({ name, color }) => {
+        setIsCreating(true);
+        try {
+            const newFolder = await folderService.createFolder({ name, color });
+            setFolders((prev) => [...prev, newFolder]);
+        } finally {
+            setIsCreating(false);
+        }
+    };
 
     return (
         <div className="min-h-full bg-background p-6 pb-24">
@@ -88,33 +121,48 @@ const Profile = () => {
             <div>
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-bold text-text-main">Mes Dossiers</h3>
-                    <button className="text-xs text-primary font-medium">Voir Tout</button>
+                    <button
+                        onClick={() => setShowCreateModal(true)}
+                        className="flex items-center gap-1 text-xs text-primary font-medium"
+                    >
+                        <Plus size={16} />
+                        Créer
+                    </button>
                 </div>
 
-                <div className="space-y-3">
-                    {folders.map((folder, index) => (
-                        <motion.div
-                            key={folder.name}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            className="p-4 bg-surface rounded-2xl border border-white/5 flex items-center justify-between group cursor-pointer hover:bg-surface/80 transition-colors"
-                        >
-                            <div className="flex items-center gap-4">
-                                <div className={`w-10 h-10 rounded-xl ${folder.color} bg-opacity-20 flex items-center justify-center`}>
-                                    <Folder size={20} className={folder.color.replace('bg-', 'text-')} />
-                                </div>
-                                <div>
-                                    <h4 className="font-medium text-text-main">{folder.name}</h4>
-                                    <p className="text-xs text-text-muted">{folder.items} éléments</p>
-                                </div>
-                            </div>
-                            <ChevronRight size={18} className="text-text-muted group-hover:text-text-main transition-colors" />
-                        </motion.div>
-                    ))}
-                </div>
+                {isLoadingFolders ? (
+                    <div className="flex items-center justify-center py-8">
+                        <Loader2 size={24} className="animate-spin text-primary" />
+                    </div>
+                ) : folders.length === 0 ? (
+                    <div className="text-center py-8">
+                        <Folder size={40} className="mx-auto text-text-muted mb-3 opacity-50" />
+                        <p className="text-text-muted text-sm">Aucun dossier</p>
+                        <p className="text-text-muted text-xs mt-1">
+                            Créez un dossier pour organiser vos synthèses
+                        </p>
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {folders.map((folder, index) => (
+                            <FolderCard
+                                key={folder.id}
+                                folder={folder}
+                                index={index}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
-        </div >
+
+            {/* Create Folder Modal */}
+            <CreateFolderModal
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                onSubmit={handleCreateFolder}
+                isLoading={isCreating}
+            />
+        </div>
     );
 };
 

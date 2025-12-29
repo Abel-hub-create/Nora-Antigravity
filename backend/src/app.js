@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
 import syntheseRoutes from './routes/syntheseRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
+import folderRoutes from './routes/folderRoutes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
 dotenv.config();
@@ -34,6 +35,7 @@ app.use(cookieParser());
 app.use('/api/auth', authRoutes);
 app.use('/api/syntheses', syntheseRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/folders', folderRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

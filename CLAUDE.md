@@ -155,7 +155,8 @@ dailyProgressPercentage = (completedGoals.length / totalGoals.length) * 100
 | `/study/:id/flashcards` | StudyFlashcards | Flashcards for a specific synthese |
 | `/study/:id/quiz` | StudyQuiz | Quiz for a specific synthese |
 | `/collection` | Collection | Creature collection with egg hatching |
-| `/profile` | Profile | User stats and achievements |
+| `/profile` | Profile | User stats, achievements, and folders |
+| `/folders/:id` | FolderDetail | View/manage folder contents |
 | `/settings` | Settings | App preferences |
 
 ### Tailwind Theme
@@ -336,6 +337,8 @@ mysql -u $DB_USER -p$DB_PASSWORD $DB_NAME < backend/src/database/migrations/003_
 mysql -u $DB_USER -p$DB_PASSWORD $DB_NAME < backend/src/database/migrations/004_create_syntheses.sql
 mysql -u $DB_USER -p$DB_PASSWORD $DB_NAME < backend/src/database/migrations/005_create_flashcards.sql
 mysql -u $DB_USER -p$DB_PASSWORD $DB_NAME < backend/src/database/migrations/006_create_quiz_questions.sql
+mysql -u $DB_USER -p$DB_PASSWORD $DB_NAME < backend/src/database/migrations/007_create_folders.sql
+mysql -u $DB_USER -p$DB_PASSWORD $DB_NAME < backend/src/database/migrations/008_create_folder_syntheses.sql
 ```
 
 ## Import System
@@ -485,3 +488,67 @@ generateComplete(content)        // Returns { title, summary, flashcards, quizQu
 - **Authentication Required**: All AI endpoints require valid JWT token
 - **File Validation**: Audio uploads validated for type and size
 - **Content Validation**: Min 50 chars, max 100,000 chars for content generation
+
+## Folders System
+
+Organizational system for grouping syntheses into folders. Accessible from Profile page.
+
+### Database Schema
+
+```sql
+-- folders: User-created folders with custom colors
+folders (id, user_id, name, color, created_at, updated_at)
+
+-- folder_syntheses: Many-to-many relationship
+folder_syntheses (folder_id, synthese_id, added_at)
+```
+
+### API Endpoints (`/api/folders/`)
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/` | List all folders for current user |
+| POST | `/` | Create new folder (name, color) |
+| GET | `/:id` | Get single folder |
+| PATCH | `/:id` | Update folder name/color |
+| DELETE | `/:id` | Delete folder (syntheses kept) |
+| GET | `/:id/syntheses` | Get syntheses in folder |
+| POST | `/:id/syntheses` | Add syntheses to folder |
+| DELETE | `/:id/syntheses/:syntheseId` | Remove synthese from folder |
+| GET | `/:id/available-syntheses` | Get syntheses not in folder |
+
+### Frontend Components
+
+**`/src/components/Folders/`**
+- `FolderCard.jsx` - Folder item with color, name, syntheses count
+- `CreateFolderModal.jsx` - Modal to create folder with color picker
+- `AddSynthesesModal.jsx` - Modal to select and add syntheses
+
+**`/src/pages/FolderDetail.jsx`**
+- View folder contents
+- Add/remove syntheses
+- Rename/delete folder
+
+**`/src/services/folderService.js`**
+```javascript
+getAllFolders()
+getFolder(id)
+createFolder({ name, color })
+updateFolder(id, { name, color })
+deleteFolder(id)
+getSynthesesInFolder(folderId)
+addSynthesesToFolder(folderId, syntheseIds)
+removeSyntheseFromFolder(folderId, syntheseId)
+getAvailableSyntheses(folderId)
+```
+
+### Routes
+
+| Path | Page | Description |
+|------|------|-------------|
+| `/profile` | Profile | Shows folder list with create button |
+| `/folders/:id` | FolderDetail | View/manage folder contents |
+
+### Preset Colors
+
+8 preset colors available: Indigo (#6366f1), Rose (#f43f5e), Emerald (#10b981), Amber (#f59e0b), Violet (#8b5cf6), Cyan (#06b6d4), Pink (#ec4899), Lime (#84cc16)
