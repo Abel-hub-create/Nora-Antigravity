@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, X, Check, Loader2, AlertCircle, Image, RotateCcw } from 'lucide-react';
-
-const API_URL = import.meta.env.VITE_API_URL || '';
+import api from '../../lib/api';
 
 const PhotoCapture = ({ onComplete, onClose }) => {
     const [photos, setPhotos] = useState([]);
@@ -116,26 +115,11 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                 setOcrProgress(prev => Math.min(prev + 10, 90));
             }, 500);
 
-            // Envoyer au backend
-            const accessToken = localStorage.getItem('accessToken');
-            const response = await fetch(`${API_URL}/ai/ocr`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${accessToken}`
-                },
-                body: JSON.stringify({ images })
-            });
+            // Envoyer au backend via le client API centralisé
+            const data = await api.post('/ai/ocr', { images });
 
             clearInterval(progressInterval);
             setOcrProgress(100);
-
-            if (!response.ok) {
-                const data = await response.json().catch(() => ({}));
-                throw new Error(data.error || 'Erreur lors de l\'extraction du texte');
-            }
-
-            const data = await response.json();
 
             // Marquer toutes les photos comme réussies
             setPhotos(prev => prev.map(p => ({
@@ -152,7 +136,8 @@ const PhotoCapture = ({ onComplete, onClose }) => {
             }
         } catch (err) {
             console.error('Erreur OCR:', err);
-            setError(err.message || 'Erreur lors du traitement des photos.');
+            const errorMessage = err?.response?.data?.error || err?.message || 'Erreur lors du traitement des photos';
+            setError(errorMessage);
 
             // Marquer les photos comme en erreur
             setPhotos(prev => prev.map(p => ({

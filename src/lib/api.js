@@ -104,6 +104,60 @@ class ApiClient {
   delete(endpoint) {
     return this.request(endpoint, { method: 'DELETE' });
   }
+
+  // Upload avec FormData (pour audio, images, etc.)
+  async upload(endpoint, formData) {
+    const url = `${this.baseURL}${endpoint}`;
+
+    const config = {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+      // Pas de Content-Type header pour FormData (le navigateur le gère)
+    };
+
+    // Add access token if available
+    const accessToken = localStorage.getItem('accessToken');
+    if (accessToken) {
+      config.headers = { Authorization: `Bearer ${accessToken}` };
+    }
+
+    try {
+      const response = await fetch(url, config);
+
+      // Handle 401 - try to refresh token
+      if (response.status === 401) {
+        const refreshed = await this.refreshToken();
+        if (refreshed) {
+          // Update token in headers and retry
+          config.headers = { Authorization: `Bearer ${localStorage.getItem('accessToken')}` };
+          const retryResponse = await fetch(url, config);
+          const data = await retryResponse.json();
+          if (!retryResponse.ok) {
+            throw { response: { status: retryResponse.status, data } };
+          }
+          return data;
+        }
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        throw new Error('Session expired');
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw { response: { status: response.status, data } };
+      }
+
+      return data;
+    } catch (error) {
+      if (error.response) {
+        throw error;
+      }
+      throw { response: { status: 500, data: { error: 'Erreur de connexion au serveur' } } };
+    }
+  }
 }
 
 export const api = new ApiClient(API_URL);

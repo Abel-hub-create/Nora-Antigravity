@@ -1,8 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, Square, AlertCircle, Loader2 } from 'lucide-react';
-
-const API_URL = import.meta.env.VITE_API_URL || '';
+import api from '../../lib/api';
 
 const VoiceRecorder = ({ onComplete }) => {
     const [isRecording, setIsRecording] = useState(false);
@@ -102,22 +101,8 @@ const VoiceRecorder = ({ onComplete }) => {
             const formData = new FormData();
             formData.append('audio', audioBlob, 'recording.webm');
 
-            // Envoyer au backend
-            const accessToken = localStorage.getItem('accessToken');
-            const response = await fetch(`${API_URL}/ai/transcribe`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`
-                },
-                body: formData
-            });
-
-            if (!response.ok) {
-                const data = await response.json().catch(() => ({}));
-                throw new Error(data.error || 'Erreur lors de la transcription');
-            }
-
-            const data = await response.json();
+            // Envoyer au backend via le client API centralisé
+            const data = await api.upload('/ai/transcribe', formData);
 
             if (data.transcript && data.transcript.trim()) {
                 onComplete(data.transcript.trim());
@@ -126,12 +111,8 @@ const VoiceRecorder = ({ onComplete }) => {
             }
         } catch (err) {
             console.error('Erreur transcription:', err);
-            // Afficher plus de détails sur l'erreur
-            if (err.message === 'Failed to fetch') {
-                setError('Impossible de contacter le serveur. Vérifiez votre connexion.');
-            } else {
-                setError(err.message || 'Erreur lors de la transcription.');
-            }
+            const errorMessage = err?.response?.data?.error || err?.message || 'Erreur lors de la transcription';
+            setError(errorMessage);
         } finally {
             setIsProcessing(false);
         }

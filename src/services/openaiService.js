@@ -6,7 +6,7 @@
  * qui genere titre, synthese, flashcards et quiz en un seul appel.
  */
 
-const BACKEND_URL = import.meta.env.VITE_API_URL || '';
+import api from '../lib/api';
 
 // Les fonctions individuelles sont conservees pour le mode mock uniquement
 const API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
@@ -305,28 +305,7 @@ export async function generateQuizQuestions(content, count = 4) {
  */
 export async function generateComplete(content) {
   try {
-    // Recuperer le token d'authentification
-    const accessToken = localStorage.getItem('accessToken');
-    if (!accessToken) {
-      throw new Error('Non authentifie');
-    }
-
-    const response = await fetch(`${BACKEND_URL}/ai/generate-content`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
-      },
-      credentials: 'include',
-      body: JSON.stringify({ content })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Erreur serveur: ${response.status}`);
-    }
-
-    const data = await response.json();
+    const data = await api.post('/ai/generate-content', { content });
 
     return {
       title: data.title,
@@ -338,11 +317,9 @@ export async function generateComplete(content) {
   } catch (error) {
     console.error('[OpenAI] Erreur generation complete:', error);
 
-    if (error.message === 'Failed to fetch') {
-      throw new Error('Impossible de contacter le serveur');
-    }
-
-    throw error;
+    // Extraire le message d'erreur
+    const errorMessage = error?.response?.data?.error || error?.message || 'Erreur lors de la génération';
+    throw new Error(errorMessage);
   }
 }
 
