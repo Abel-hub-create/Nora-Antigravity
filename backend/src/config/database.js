@@ -17,12 +17,9 @@ export const pool = mysql.createPool({
 });
 
 export const query = async (sql, params) => {
-  // Use pool.query for bulk inserts and LIMIT/OFFSET queries
-  // execute() doesn't support these with placeholders
-  const needsQuery = sql.includes('VALUES ?') || sql.includes('LIMIT ?');
-  const [rows] = needsQuery
-    ? await pool.query(sql, params)
-    : await pool.execute(sql, params);
+  // Always use pool.query() - more flexible with parameter types
+  // pool.execute() has issues with LIMIT, bulk inserts, and type coercion
+  const [rows] = await pool.query(sql, params);
   return rows;
 };
 
