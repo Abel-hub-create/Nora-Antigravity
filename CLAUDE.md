@@ -245,7 +245,7 @@ Full-stack authentication with JWT tokens and secure cookie-based refresh tokens
 
 **Context & Hooks**:
 - `AuthContext` - Global auth state (user, isAuthenticated, isLoading)
-- `useAuth` hook - Access auth context with login, register, logout, forgotPassword, resetPassword
+- `useAuth` hook - Access auth context with login, register, logout, forgotPassword, resetPassword, updateProfile
 
 **Pages**:
 | Path | Page | Description |
@@ -274,6 +274,7 @@ Full-stack authentication with JWT tokens and secure cookie-based refresh tokens
 | GET | `/me` | Get current user (requires auth) | No |
 | POST | `/forgot-password` | Send password reset email | Yes |
 | POST | `/reset-password` | Reset password with token | No |
+| PATCH | `/profile` | Update user name and avatar (requires auth) | No |
 | POST | `/sync` | Sync user progress data (requires auth) | No |
 
 **Security**:
