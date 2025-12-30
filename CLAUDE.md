@@ -69,6 +69,52 @@ npm start          # Start Express server (production)
 
 **Time Tracking**: `useActiveTimer` hook tracks active time per activity, pausing when tab loses focus.
 
+## Home Page (`/`)
+
+The home page is the main dashboard showing daily progress and quick actions.
+
+### Header
+- Greeting: "Bonjour, [prenom]" - uses first word of user's name
+- Tagline: *"Un prix pense pour ceux qui etudient, pas pour les gros budgets."* (italic, in quotes)
+
+### Quick Actions
+Three action cards for fast navigation:
+
+| Action | Subtitle | Destination |
+|--------|----------|-------------|
+| Voir mes syntheses | Toutes mes etudes | `/study` |
+| Voir la collection | Mes creatures | `/collection` |
+| Nouvel Import | Texte ou Vocal | `/import` |
+
+### Components
+- `DailyProgress` - Shows daily goals progress bar with individual goal cards
+- `QuickActionCard` - Reusable action button with icon, title, subtitle
+
+## Profile Management
+
+Users can edit their profile (name and avatar) from Settings.
+
+### How It Works
+1. Go to Settings → Click "Modifier le Profil"
+2. Modal opens with:
+   - Avatar preview (current photo or initial letter)
+   - Camera button to upload new photo from gallery
+   - Name input field
+3. Save updates both frontend state and backend database
+
+### Technical Details
+- Avatar stored as base64 in `users.avatar` column (MEDIUMTEXT)
+- Max file size: 2MB
+- Supported formats: all image types
+- API: `PATCH /api/auth/profile` with `{ name, avatar }`
+- Frontend: `useAuth().updateProfile({ name, avatar })`
+
+### Database
+```sql
+-- Migration 011_add_avatar.sql
+ALTER TABLE users ADD COLUMN avatar MEDIUMTEXT NULL AFTER name;
+```
+
 ## Study Time & XP System
 
 Comprehensive daily study time tracking with XP rewards. Data persists in localStorage and resets at midnight.
