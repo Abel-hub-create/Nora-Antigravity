@@ -1,7 +1,7 @@
 import React from 'react';
 import DailyProgress from '../components/Home/DailyProgress';
 import QuickActionCard from '../components/Home/QuickActionCard';
-import { Plus, Brain, Zap } from 'lucide-react';
+import { Plus, BookOpen, Sparkles } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 
 const Home = () => {
@@ -10,17 +10,9 @@ const Home = () => {
     return (
         <div className="p-6 pt-8 pb-24 space-y-6">
             {/* Header */}
-            <header className="flex justify-between items-center mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-text-main">Bonjour, {user.name?.split(' ')[0] || 'Alex'}</h1>
-                    <p className="text-text-muted italic">"Nora : puissante, utile, et à un prix que les étudiants peuvent se permettre"</p>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary p-[2px]">
-                    <div className="w-full h-full rounded-full bg-surface flex items-center justify-center overflow-hidden">
-                        {/* Placeholder Avatar */}
-                        <span className="text-lg font-bold text-white">{user.name?.charAt(0)?.toUpperCase() || 'A'}</span>
-                    </div>
-                </div>
+            <header className="mb-6">
+                <h1 className="text-2xl font-bold text-text-main">Bonjour, {user.name?.split(' ')[0] || 'Utilisateur'}</h1>
+                <p className="text-text-muted italic">"Un prix pense pour ceux qui etudient, pas pour les gros budgets."</p>
             </header>
 
             {/* Daily Progress */}
@@ -31,17 +23,17 @@ const Home = () => {
                 <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider">Actions Rapides</h3>
 
                 <QuickActionCard
-                    title="Quiz"
-                    subtitle="Teste-toi"
-                    icon={Brain}
-                    to="/quiz" // We'll create this route
+                    title="Voir mes syntheses"
+                    subtitle="Toutes mes etudes"
+                    icon={BookOpen}
+                    to="/study"
                 />
 
                 <QuickActionCard
-                    title="Flashcards"
-                    subtitle="Révision rapide"
-                    icon={Zap}
-                    to="/flashcards" // We'll create this route
+                    title="Voir la collection"
+                    subtitle="Mes creatures"
+                    icon={Sparkles}
+                    to="/collection"
                 />
 
                 <QuickActionCard

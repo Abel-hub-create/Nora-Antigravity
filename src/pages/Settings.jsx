@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, User, CreditCard, Bell, Moon, LogOut, Plus, Trash2, AlertTriangle, Check, Trophy, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ArrowLeft, User, CreditCard, Bell, LogOut, Plus, Trash2, AlertTriangle, Check, Trophy, Loader2, Camera, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUser, ACTIVITY_TYPES } from '../context/UserContext';
@@ -7,7 +7,7 @@ import { useAuth } from '../features/auth/hooks/useAuth';
 import * as notificationService from '../services/notificationService';
 
 const Settings = () => {
-    const { user, logout } = useAuth();
+    const { user, logout, updateProfile } = useAuth();
     const {
         dailyGoals,
         dailyProgressPercentage,
@@ -29,6 +29,13 @@ const Settings = () => {
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
     const [notificationsLoading, setNotificationsLoading] = useState(true);
     const [notificationsSupported, setNotificationsSupported] = useState(true);
+
+    // Profile edit state
+    const [showProfileModal, setShowProfileModal] = useState(false);
+    const [newName, setNewName] = useState(user?.name || '');
+    const [newAvatar, setNewAvatar] = useState(user?.avatar || null);
+    const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+    const fileInputRef = useRef(null);
 
     // Load notification settings on mount
     useEffect(() => {
@@ -82,11 +89,66 @@ const Settings = () => {
         }
     };
 
+    // Handle profile photo selection
+    const handlePhotoSelect = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            addNotification('Veuillez selectionner une image', 'warning');
+            return;
+        }
+
+        // Validate file size (max 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            addNotification('L\'image ne doit pas depasser 2MB', 'warning');
+            return;
+        }
+
+        // Convert to base64
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            setNewAvatar(event.target.result);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    // Handle profile update
+    const handleProfileUpdate = async () => {
+        if (!newName.trim()) {
+            addNotification('Le nom ne peut pas etre vide', 'warning');
+            return;
+        }
+
+        setIsUpdatingProfile(true);
+
+        try {
+            await updateProfile({
+                name: newName.trim(),
+                avatar: newAvatar
+            });
+            addNotification('Profil mis a jour', 'success');
+            setShowProfileModal(false);
+        } catch (error) {
+            addNotification('Erreur lors de la mise a jour', 'warning');
+        } finally {
+            setIsUpdatingProfile(false);
+        }
+    };
+
+    // Open profile modal
+    const openProfileModal = () => {
+        setNewName(user?.name || '');
+        setNewAvatar(user?.avatar || null);
+        setShowProfileModal(true);
+    };
+
     const sections = [
         {
             title: "Compte",
             items: [
-                { icon: User, label: "Modifier le Profil", value: user?.name || "Utilisateur" },
+                { icon: User, label: "Modifier le Profil", value: user?.name || "Utilisateur", onClick: openProfileModal },
                 { icon: CreditCard, label: "Abonnement", value: "Plan Gratuit" },
             ]
         }
@@ -387,30 +449,127 @@ const Settings = () => {
                 )}
             </AnimatePresence>
 
+            {/* Profile Edit Modal */}
+            <AnimatePresence>
+                {showProfileModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-6"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-surface rounded-2xl p-6 max-w-sm w-full border border-white/10"
+                        >
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-lg font-bold text-text-main">Modifier le profil</h3>
+                                <button
+                                    onClick={() => setShowProfileModal(false)}
+                                    className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                                >
+                                    <X size={20} className="text-text-muted" />
+                                </button>
+                            </div>
+
+                            {/* Avatar */}
+                            <div className="flex justify-center mb-6">
+                                <div className="relative">
+                                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-secondary p-[2px]">
+                                        <div className="w-full h-full rounded-full bg-surface flex items-center justify-center overflow-hidden">
+                                            {newAvatar ? (
+                                                <img src={newAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="text-3xl font-bold text-white">
+                                                    {newName?.charAt(0)?.toUpperCase() || 'U'}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center hover:bg-primary-dark transition-colors"
+                                    >
+                                        <Camera size={16} className="text-white" />
+                                    </button>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handlePhotoSelect}
+                                        className="hidden"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Name input */}
+                            <div className="mb-6">
+                                <label className="block text-sm text-text-muted mb-2">Nom</label>
+                                <input
+                                    type="text"
+                                    value={newName}
+                                    onChange={(e) => setNewName(e.target.value)}
+                                    placeholder="Votre nom"
+                                    className="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/10 text-text-main placeholder-text-muted focus:outline-none focus:border-primary transition-colors"
+                                    maxLength={50}
+                                />
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setShowProfileModal(false)}
+                                    className="flex-1 p-3 rounded-xl bg-white/5 text-text-main hover:bg-white/10 transition-colors"
+                                >
+                                    Annuler
+                                </button>
+                                <button
+                                    onClick={handleProfileUpdate}
+                                    disabled={isUpdatingProfile}
+                                    className="flex-1 p-3 rounded-xl bg-primary text-white hover:bg-primary-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {isUpdatingProfile ? (
+                                        <Loader2 size={18} className="animate-spin" />
+                                    ) : (
+                                        'Enregistrer'
+                                    )}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <div className="space-y-8">
                 {sections.map((section) => (
                     <div key={section.title}>
                         <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">{section.title}</h3>
                         <div className="bg-surface rounded-2xl overflow-hidden border border-white/5">
-                            {section.items.map((item, index) => (
-                                <div
-                                    key={item.label}
-                                    className={`p-4 flex items-center justify-between ${index !== section.items.length - 1 ? 'border-b border-white/5' : ''}`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <item.icon size={20} className="text-text-muted" />
-                                        <span className="text-text-main">{item.label}</span>
-                                    </div>
-                                    {item.value && (
-                                        <span className="text-sm text-text-muted">{item.value}</span>
-                                    )}
-                                    {item.toggle && (
-                                        <div className={`w-10 h-6 rounded-full relative transition-colors ${item.active ? 'bg-primary' : 'bg-white/10'}`}>
-                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${item.active ? 'left-5' : 'left-1'}`} />
+                            {section.items.map((item, index) => {
+                                const ItemWrapper = item.onClick ? 'button' : 'div';
+                                return (
+                                    <ItemWrapper
+                                        key={item.label}
+                                        onClick={item.onClick}
+                                        className={`w-full p-4 flex items-center justify-between ${index !== section.items.length - 1 ? 'border-b border-white/5' : ''} ${item.onClick ? 'hover:bg-white/5 transition-colors' : ''}`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <item.icon size={20} className="text-text-muted" />
+                                            <span className="text-text-main">{item.label}</span>
                                         </div>
-                                    )}
-                                </div>
-                            ))}
+                                        {item.value && (
+                                            <span className="text-sm text-text-muted">{item.value}</span>
+                                        )}
+                                        {item.toggle && (
+                                            <div className={`w-10 h-6 rounded-full relative transition-colors ${item.active ? 'bg-primary' : 'bg-white/10'}`}>
+                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${item.active ? 'left-5' : 'left-1'}`} />
+                                            </div>
+                                        )}
+                                    </ItemWrapper>
+                                );
+                            })}
                         </div>
                     </div>
                 ))}

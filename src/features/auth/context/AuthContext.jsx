@@ -104,6 +104,19 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const updateProfile = useCallback(async ({ name, avatar }) => {
+    try {
+      setError(null);
+      const updatedUser = await authService.updateProfile({ name, avatar });
+      setUser(updatedUser);
+      return updatedUser;
+    } catch (err) {
+      const message = err.response?.data?.error || 'Echec de la mise a jour du profil';
+      setError(message);
+      throw new Error(message);
+    }
+  }, []);
+
   const value = {
     user,
     isAuthenticated: !!user,
@@ -115,7 +128,8 @@ export const AuthProvider = ({ children }) => {
     forgotPassword,
     resetPassword,
     clearError,
-    syncUserData
+    syncUserData,
+    updateProfile
   };
 
   return (

@@ -49,3 +49,12 @@ export const syncUserData = async (userData) => {
   const data = await api.post('/auth/sync', userData);
   return data.user;
 };
+
+export const updateProfile = async ({ name, avatar }) => {
+  const data = await api.patch('/auth/profile', { name, avatar });
+
+  // Update stored user
+  localStorage.setItem('user', JSON.stringify(data.user));
+
+  return data.user;
+};

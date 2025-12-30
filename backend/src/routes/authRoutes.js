@@ -1,5 +1,6 @@
 import express from 'express';
 import * as authService from '../services/authService.js';
+import * as userRepository from '../services/userRepository.js';
 import { validate } from '../middlewares/validation.js';
 import { authenticate } from '../middlewares/auth.js';
 import { loginLimiter, registerLimiter, forgotPasswordLimiter } from '../middlewares/rateLimiter.js';
@@ -110,6 +111,32 @@ router.post('/reset-password', validate(validators.resetPasswordSchema), async (
   try {
     await authService.resetPassword(req.body.token, req.body.password);
     res.json({ message: 'Mot de passe réinitialisé avec succès' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update user profile (name and avatar)
+router.patch('/profile', authenticate, async (req, res, next) => {
+  try {
+    const { name, avatar } = req.body;
+
+    if (!name && !avatar) {
+      return res.status(400).json({ error: 'Nom ou avatar requis' });
+    }
+
+    // Validate name length
+    if (name && (name.length < 2 || name.length > 50)) {
+      return res.status(400).json({ error: 'Le nom doit contenir entre 2 et 50 caractères' });
+    }
+
+    // Update profile
+    await userRepository.updateProfile(req.user.id, { name, avatar });
+
+    // Get updated user
+    const updatedUser = await userRepository.findById(req.user.id);
+
+    res.json({ user: updatedUser });
   } catch (error) {
     next(error);
   }

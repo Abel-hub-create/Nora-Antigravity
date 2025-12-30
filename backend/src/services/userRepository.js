@@ -13,10 +13,19 @@ export const findByEmail = async (email) => {
 };
 
 export const findById = async (id) => {
-  const sql = `SELECT id, email, name, level, exp, next_level_exp, streak, eggs, collection, created_at
+  const sql = `SELECT id, email, name, avatar, level, exp, next_level_exp, streak, eggs, collection, created_at
                FROM users WHERE id = ? AND is_active = 1`;
   const users = await query(sql, [id]);
   return users[0] || null;
+};
+
+export const updateProfile = async (userId, { name, avatar }) => {
+  const sql = `UPDATE users SET
+    name = COALESCE(?, name),
+    avatar = COALESCE(?, avatar),
+    updated_at = NOW()
+    WHERE id = ?`;
+  await query(sql, [name, avatar, userId]);
 };
 
 export const updatePassword = async (userId, hashedPassword) => {
