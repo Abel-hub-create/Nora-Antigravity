@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { ArrowLeft, User, CreditCard, Bell, Moon, LogOut, Plus, Trash2, AlertTriangle, Check, Trophy } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, User, CreditCard, Bell, Moon, LogOut, Plus, Trash2, AlertTriangle, Check, Trophy, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUser, ACTIVITY_TYPES } from '../context/UserContext';
 import { useAuth } from '../features/auth/hooks/useAuth';
+import * as notificationService from '../services/notificationService';
 
 const Settings = () => {
     const { user, logout } = useAuth();
@@ -24,19 +25,69 @@ const Settings = () => {
     const [newGoalType, setNewGoalType] = useState('');
     const [newGoalMinutes, setNewGoalMinutes] = useState(30);
 
+    // Notification state
+    const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+    const [notificationsLoading, setNotificationsLoading] = useState(true);
+    const [notificationsSupported, setNotificationsSupported] = useState(true);
+
+    // Load notification settings on mount
+    useEffect(() => {
+        const loadNotificationSettings = async () => {
+            if (!notificationService.isPushSupported()) {
+                setNotificationsSupported(false);
+                setNotificationsLoading(false);
+                return;
+            }
+
+            try {
+                const settings = await notificationService.getNotificationSettings();
+                setNotificationsEnabled(settings.enabled);
+            } catch (error) {
+                console.error('Failed to load notification settings:', error);
+            } finally {
+                setNotificationsLoading(false);
+            }
+        };
+
+        loadNotificationSettings();
+    }, []);
+
+    // Handle notification toggle
+    const handleNotificationToggle = async () => {
+        if (notificationsLoading) return;
+
+        setNotificationsLoading(true);
+
+        try {
+            if (!notificationsEnabled) {
+                // Enable: Subscribe to push notifications
+                await notificationService.subscribeToPush();
+                setNotificationsEnabled(true);
+                addNotification('Notifications activees', 'success');
+            } else {
+                // Disable: Unsubscribe from push notifications
+                await notificationService.unsubscribeFromPush();
+                setNotificationsEnabled(false);
+                addNotification('Notifications desactivees', 'success');
+            }
+        } catch (error) {
+            console.error('Failed to toggle notifications:', error);
+            if (error.message === 'Notification permission denied') {
+                addNotification('Permission de notification refusee', 'warning');
+            } else {
+                addNotification('Erreur lors de la modification des notifications', 'warning');
+            }
+        } finally {
+            setNotificationsLoading(false);
+        }
+    };
+
     const sections = [
         {
             title: "Compte",
             items: [
                 { icon: User, label: "Modifier le Profil", value: user?.name || "Utilisateur" },
                 { icon: CreditCard, label: "Abonnement", value: "Plan Gratuit" },
-            ]
-        },
-        {
-            title: "Préférences",
-            items: [
-                { icon: Bell, label: "Notifications", toggle: true },
-                { icon: Moon, label: "Mode Sombre", toggle: true, active: true },
             ]
         }
     ];
@@ -363,6 +414,45 @@ const Settings = () => {
                         </div>
                     </div>
                 ))}
+
+                {/* Notifications Section */}
+                <div>
+                    <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">Notifications</h3>
+                    <div className="bg-surface rounded-2xl overflow-hidden border border-white/5">
+                        <button
+                            onClick={handleNotificationToggle}
+                            disabled={notificationsLoading || !notificationsSupported}
+                            className="w-full p-4 flex items-center justify-between disabled:opacity-50"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Bell size={20} className="text-text-muted" />
+                                <div className="text-left">
+                                    <span className="text-text-main block">Rappel quotidien</span>
+                                    <span className="text-xs text-text-muted">
+                                        {!notificationsSupported
+                                            ? 'Non supporte sur cet appareil'
+                                            : 'Notification a 18h si objectifs non termines'}
+                                    </span>
+                                </div>
+                            </div>
+                            {notificationsLoading ? (
+                                <Loader2 size={20} className="text-primary animate-spin" />
+                            ) : (
+                                <div
+                                    className={`w-10 h-6 rounded-full relative transition-colors ${
+                                        notificationsEnabled ? 'bg-primary' : 'bg-white/10'
+                                    }`}
+                                >
+                                    <div
+                                        className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${
+                                            notificationsEnabled ? 'left-5' : 'left-1'
+                                        }`}
+                                    />
+                                </div>
+                            )}
+                        </button>
+                    </div>
+                </div>
 
                 <button
                     onClick={handleLogout}

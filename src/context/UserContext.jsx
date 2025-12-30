@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../features/auth/hooks/useAuth';
+import * as notificationService from '../services/notificationService';
 
 const UserContext = createContext();
 
@@ -171,6 +172,33 @@ export const UserProvider = ({ children }) => {
             claimed: dailyGoalsRewardClaimed
         });
     }, [dailyGoalsRewardClaimed]);
+
+    // Sync daily progress to backend for notification eligibility
+    useEffect(() => {
+        // Only sync if user is authenticated
+        if (!authUser?.id) return;
+
+        // Calculate progress percentage
+        const progressPercentage = dailyGoals.length > 0
+            ? Math.round((dailyGoals.filter(g => g.completed).length / dailyGoals.length) * 100)
+            : 0;
+
+        // Debounce sync to avoid too many requests
+        const syncTimer = setTimeout(async () => {
+            try {
+                await notificationService.syncDailyProgress(
+                    dailyGoals,
+                    progressPercentage,
+                    dailyGoalsRewardClaimed
+                );
+            } catch (error) {
+                // Silently fail - notification sync is not critical
+                console.debug('Failed to sync daily progress:', error);
+            }
+        }, 2000);
+
+        return () => clearTimeout(syncTimer);
+    }, [authUser?.id, dailyGoals, dailyGoalsRewardClaimed]);
 
     // Check for day change - robust implementation with interval
     const checkAndResetForNewDay = useCallback(() => {

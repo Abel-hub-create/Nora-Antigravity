@@ -622,3 +622,95 @@ getAvailableSyntheses(folderId)
 ### Preset Colors
 
 8 preset colors available: Indigo (#6366f1), Rose (#f43f5e), Emerald (#10b981), Amber (#f59e0b), Violet (#8b5cf6), Cyan (#06b6d4), Pink (#ec4899), Lime (#84cc16)
+
+## Push Notifications System
+
+Daily reminder notifications sent at 18:00 (Europe/Paris) to remind users of incomplete daily goals.
+
+### Philosophy
+
+- **Non-intrusive**: Maximum 1 notification per day
+- **Respectful**: Neutral tone, no guilt or pressure
+- **Optional**: User must explicitly enable notifications
+- **Smart**: Only sent when objectives are incomplete
+
+### Notification Conditions
+
+A notification is sent ONLY if ALL conditions are true:
+1. User has enabled notifications (toggle in Settings)
+2. User has at least one daily goal defined
+3. Daily progress < 100%
+4. Daily reward not yet claimed
+5. Notification not already sent today
+
+### Database Schema
+
+```sql
+-- Added to users table
+notifications_enabled BOOLEAN DEFAULT FALSE
+last_notification_sent_at DATE NULL
+
+-- Push subscriptions table
+push_subscriptions (id, user_id, endpoint, p256dh, auth, created_at)
+
+-- Daily progress sync table
+daily_progress (id, user_id, daily_goals JSON, progress_percentage, reward_claimed, progress_date)
+```
+
+### Backend Services
+
+**`/backend/src/services/notificationService.js`**
+- `saveSubscription(userId, subscription)` - Save push subscription
+- `removeSubscription(userId)` - Remove subscription
+- `setNotificationsEnabled(userId, enabled)` - Toggle notifications
+- `sendNotification(userId, title, body)` - Send push notification
+- `getEligibleUsersForNotification()` - Get users who should receive notification
+- `sendDailyReminders()` - Send notifications to all eligible users (called by cron)
+
+**`/backend/src/services/dailyProgressRepository.js`**
+- `syncDailyProgress(userId, data)` - Sync frontend progress to backend
+- `getDailyProgress(userId)` - Get current day progress
+
+**`/backend/src/cron/notificationCron.js`**
+- Runs at 18:00 Europe/Paris every day
+- Calls `sendDailyReminders()` to notify eligible users
+
+### API Endpoints (`/api/notifications/`)
+
+| Method | Route | Description | Auth |
+|--------|-------|-------------|------|
+| GET | `/vapid-public-key` | Get VAPID public key | No |
+| GET | `/settings` | Get notification settings | Yes |
+| PATCH | `/settings` | Enable/disable notifications | Yes |
+| POST | `/subscribe` | Subscribe to push | Yes |
+| POST | `/unsubscribe` | Unsubscribe from push | Yes |
+| POST | `/sync-progress` | Sync daily progress | Yes |
+
+### Frontend Integration
+
+**`/src/services/notificationService.js`**
+- `isPushSupported()` - Check browser support
+- `subscribeToPush()` - Request permission and subscribe
+- `unsubscribeFromPush()` - Unsubscribe
+- `syncDailyProgress(goals, progress, claimed)` - Sync to backend
+
+**`/public/sw.js`** - Service Worker for receiving push notifications
+
+**Settings Page** - Toggle to enable/disable notifications
+
+### Notification Messages
+
+Random neutral messages (French):
+- "Il te reste un objectif aujourd'hui"
+- "Tu es proche de completer ta journee"
+- "Encore un petit pas pour aujourd'hui"
+- "Un objectif t'attend encore"
+- "Ta progression du jour n'est pas finie"
+
+### Environment Variables (Backend)
+
+```env
+VAPID_PUBLIC_KEY=<public_key>
+VAPID_PRIVATE_KEY=<private_key>
+VAPID_SUBJECT=mailto:contact@mirora.cloud
+```
