@@ -107,6 +107,8 @@ router.post('/ocr', authenticate, express.json({ limit: '50mb' }), async (req, r
   try {
     let extractedText;
 
+    console.log('[OCR] Traitement de', images ? images.length : 1, 'image(s)');
+
     if (images && Array.isArray(images)) {
       // Multiple images
       extractedText = await extractTextFromImages(images);
@@ -114,6 +116,8 @@ router.post('/ocr', authenticate, express.json({ limit: '50mb' }), async (req, r
       // Single image
       extractedText = await extractTextFromImage(image);
     }
+
+    console.log('[OCR] Texte extrait, longueur:', extractedText?.length || 0);
 
     if (!extractedText || extractedText === 'Aucun texte détecté') {
       return res.status(400).json({

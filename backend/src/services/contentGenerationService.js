@@ -184,8 +184,8 @@ export async function generateEducationalContent(content) {
   }
 
   const trimmedContent = content.trim();
-  if (trimmedContent.length < 50) {
-    throw new Error('Contenu trop court (minimum 50 caracteres)');
+  if (trimmedContent.length < 30) {
+    throw new Error('Le texte extrait est trop court. Prenez une photo plus nette avec plus de contenu visible.');
   }
 
   if (trimmedContent.length > 100000) {
