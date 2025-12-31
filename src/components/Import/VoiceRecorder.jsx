@@ -234,7 +234,7 @@ const VoiceRecorder = ({ onComplete }) => {
                     ? "La transcription peut prendre quelques secondes"
                     : isRecording
                         ? "Appuie sur le bouton rouge pour terminer"
-                        : "Dicte ton cours et il sera retranscrit par l'IA"
+                        : "Dicte ton cours et il sera synthétisé"
                 }
             </p>
         </div>
