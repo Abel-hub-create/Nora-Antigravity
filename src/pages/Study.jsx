@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, FileText, Calendar, ChevronRight, Pencil, Check, X, Loader2, Camera, Mic, Type } from 'lucide-react';
+import { Search, FileText, Calendar, ChevronRight, Pencil, Check, X, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as syntheseService from '../services/syntheseService';
@@ -65,14 +65,6 @@ const Study = () => {
         if (diffDays < 7) return `Il y a ${diffDays} jours`;
 
         return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-    };
-
-    const getSourceIcon = (sourceType) => {
-        switch (sourceType) {
-            case 'voice': return <Mic size={20} className="text-primary" />;
-            case 'photo': return <Camera size={20} className="text-primary" />;
-            default: return <Type size={20} className="text-primary" />;
-        }
     };
 
     return (
@@ -173,11 +165,6 @@ const Study = () => {
                                     className="p-4 flex items-center gap-3 cursor-pointer active:bg-white/5 transition-colors"
                                     onClick={() => navigate(`/study/${synthese.id}`)}
                                 >
-                                    {/* Icon */}
-                                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
-                                        {getSourceIcon(synthese.source_type)}
-                                    </div>
-
                                     {/* Content */}
                                     <div className="flex-1 min-w-0">
                                         <h3 className="font-semibold text-text-main truncate">
