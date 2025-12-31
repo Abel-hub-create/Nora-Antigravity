@@ -5,17 +5,23 @@ import { Link, useNavigate } from 'react-router-dom';
 import * as folderService from '../services/folderService';
 import FolderCard from '../components/Folders/FolderCard';
 import CreateFolderModal from '../components/Folders/CreateFolderModal';
+import { useAuth } from '../features/auth/hooks/useAuth';
+import { useUser } from '../context/UserContext';
 
 const Profile = () => {
     const navigate = useNavigate();
+    const { user: authUser } = useAuth();
+    const { user: userData } = useUser();
 
-    // User data (à remplacer par données réelles plus tard)
+    // Combiner les données auth (nom, avatar) et user context (level, xp, streak)
     const user = {
-        name: "Alex",
-        level: 4,
-        exp: 850,
-        nextLevelExp: 1000,
-        streak: 12
+        name: authUser?.name || "Utilisateur",
+        avatar: authUser?.avatar || null,
+        level: userData?.level || 1,
+        exp: userData?.exp || 0,
+        nextLevelExp: userData?.nextLevelExp || 1000,
+        streak: userData?.streak || 0,
+        eggs: userData?.eggs || 0
     };
 
     // Folders state
@@ -67,7 +73,13 @@ const Profile = () => {
                 <div className="flex items-center gap-4 mb-6 relative z-10">
                     <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary p-[2px]">
                         <div className="w-full h-full rounded-full bg-surface flex items-center justify-center overflow-hidden">
-                            <span className="text-2xl font-bold text-white">A</span>
+                            {user.avatar ? (
+                                <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                            ) : (
+                                <span className="text-2xl font-bold text-white">
+                                    {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                                </span>
+                            )}
                         </div>
                     </div>
                     <div>
@@ -78,8 +90,8 @@ const Profile = () => {
                         </div>
                     </div>
                     <div className="ml-auto bg-black/30 px-3 py-1 rounded-full border border-white/10 flex items-center gap-2">
-                        <span className="text-lg">🎁</span>
-                        <span className="text-sm font-bold text-white">1</span>
+                        <span className="text-lg">🥚</span>
+                        <span className="text-sm font-bold text-white">{user.eggs}</span>
                     </div>
                 </div>
                 {/* EXP Bar */}
@@ -97,7 +109,7 @@ const Profile = () => {
                         />
                     </div>
                     <p className="text-xs text-text-muted mt-2 text-center">
-                        150 XP vers le Niveau {user.level + 1}
+                        {user.nextLevelExp - user.exp} XP vers le Niveau {user.level + 1}
                     </p>
                 </div>
 
