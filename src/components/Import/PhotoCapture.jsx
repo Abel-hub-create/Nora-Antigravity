@@ -128,9 +128,11 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                 success: true
             })));
 
-            if (data.text && data.text.trim()) {
+            const extractedText = data.text?.trim() || '';
+
+            if (extractedText.length >= 30) {
                 stopCamera();
-                onComplete(data.text.trim());
+                onComplete(extractedText);
             } else {
                 setError('Aucun texte détecté. Prends en photo ton cours pour que je puisse le synthétiser.');
             }
