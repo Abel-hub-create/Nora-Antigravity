@@ -132,7 +132,7 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                 stopCamera();
                 onComplete(data.text.trim());
             } else {
-                setError('Aucun texte n\'a pu être extrait des photos. Essayez avec des images plus nettes.');
+                setError('Aucun texte détecté. Prends en photo ton cours pour que je puisse le synthétiser.');
             }
         } catch (err) {
             console.error('Erreur OCR:', err);

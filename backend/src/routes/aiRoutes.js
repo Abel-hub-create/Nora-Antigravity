@@ -121,7 +121,7 @@ router.post('/ocr', authenticate, express.json({ limit: '50mb' }), async (req, r
 
     if (!extractedText || extractedText === 'Aucun texte détecté') {
       return res.status(400).json({
-        error: 'Aucun texte n\'a pu être extrait. Essayez avec une image plus nette.'
+        error: 'Aucun texte détecté. Prends en photo ton cours pour que je puisse le synthétiser.'
       });
     }
 

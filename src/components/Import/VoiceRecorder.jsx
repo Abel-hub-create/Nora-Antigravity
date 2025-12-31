@@ -107,7 +107,7 @@ const VoiceRecorder = ({ onComplete }) => {
             if (data.transcript && data.transcript.trim()) {
                 onComplete(data.transcript.trim());
             } else {
-                setError('Aucun texte n\'a pu être transcrit. Réessayez en parlant plus clairement.');
+                setError('Aucun texte détecté. Dicte ton cours pour que je puisse le synthétiser.');
             }
         } catch (err) {
             console.error('Erreur transcription:', err);
