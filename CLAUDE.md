@@ -75,7 +75,7 @@ The home page is the main dashboard showing daily progress and quick actions.
 
 ### Header
 - Greeting: "Bonjour, [prenom]" - uses first word of user's name
-- Tagline: *"Un prix pense pour ceux qui etudient, pas pour les gros budgets."* (italic, in quotes)
+- Tagline: *"Un prix pensé pour ceux qui étudient, pas pour les gros budgets."* (italic, in quotes)
 
 ### Quick Actions
 Three action cards for fast navigation:

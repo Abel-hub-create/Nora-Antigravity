@@ -12,7 +12,7 @@ const Home = () => {
             {/* Header */}
             <header className="mb-6">
                 <h1 className="text-2xl font-bold text-text-main">Bonjour, {user.name?.split(' ')[0] || 'Utilisateur'}</h1>
-                <p className="text-text-muted italic">"Un prix pense pour ceux qui etudient, pas pour les gros budgets."</p>
+                <p className="text-text-muted italic">"Un prix pensé pour ceux qui étudient, pas pour les gros budgets."</p>
             </header>
 
             {/* Daily Progress */}
