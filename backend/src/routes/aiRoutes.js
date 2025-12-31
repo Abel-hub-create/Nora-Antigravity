@@ -76,13 +76,21 @@ router.post('/transcribe', authenticate, (req, res, next) => {
   try {
     const transcript = await transcribeAudio(filePath);
     console.log('[Transcribe] Success, length:', transcript?.length);
+    console.log('[Transcribe] Content:', transcript?.substring(0, 100));
 
     // Nettoyer le fichier après traitement
     fs.unlink(filePath, (err) => {
       if (err) console.error('Erreur suppression fichier temp:', err);
     });
 
-    res.json({ transcript });
+    // Vérifier si la transcription est suffisante (minimum 30 caractères)
+    if (!transcript || transcript.trim().length < 30) {
+      return res.status(400).json({
+        error: 'Aucun texte détecté. Dicte ton cours pour que je puisse le synthétiser.'
+      });
+    }
+
+    res.json({ transcript: transcript.trim() });
   } catch (error) {
     // Nettoyer le fichier en cas d'erreur aussi
     fs.unlink(filePath, () => {});
@@ -119,13 +127,14 @@ router.post('/ocr', authenticate, express.json({ limit: '50mb' }), async (req, r
 
     console.log('[OCR] Texte extrait, longueur:', extractedText?.length || 0);
 
-    if (!extractedText || extractedText === 'Aucun texte détecté') {
+    // Vérifier si le texte est suffisant (minimum 30 caractères)
+    if (!extractedText || extractedText.trim().length < 30) {
       return res.status(400).json({
         error: 'Aucun texte détecté. Prends en photo ton cours pour que je puisse le synthétiser.'
       });
     }
 
-    res.json({ text: extractedText });
+    res.json({ text: extractedText.trim() });
   } catch (error) {
     console.error('Erreur OCR:', error);
     res.status(500).json({ error: error.message || 'Erreur lors de l\'extraction du texte' });

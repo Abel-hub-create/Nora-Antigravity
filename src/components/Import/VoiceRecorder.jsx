@@ -104,13 +104,8 @@ const VoiceRecorder = ({ onComplete }) => {
             // Envoyer au backend via le client API centralisé
             const data = await api.upload('/ai/transcribe', formData);
 
-            const transcribedText = data.transcript?.trim() || '';
-
-            if (transcribedText.length >= 30) {
-                onComplete(transcribedText);
-            } else {
-                setError('Aucun texte détecté. Dicte ton cours pour que je puisse le synthétiser.');
-            }
+            // Le backend a validé le texte (minimum 30 caractères)
+            onComplete(data.transcript);
         } catch (err) {
             console.error('Erreur transcription:', err);
             const errorMessage = err?.response?.data?.error || err?.message || 'Erreur lors de la transcription';

@@ -37,6 +37,32 @@ export async function transcribeAudio(filePath) {
  * @param {string} base64Image - Image encodée en base64
  * @returns {Promise<string>} - Texte extrait
  */
+/**
+ * Vérifie si la réponse OCR indique qu'il n'y a pas de texte
+ */
+function isNoTextResponse(text) {
+  if (!text || text.length < 20) return true;
+
+  const noTextPatterns = [
+    /aucun texte/i,
+    /pas de texte/i,
+    /no text/i,
+    /image ne contient pas/i,
+    /ne contient aucun/i,
+    /pas lisible/i,
+    /illisible/i,
+    /impossible.*lire/i,
+    /je ne.*voir.*texte/i,
+    /cette image.*montre/i,
+    /l'image montre/i,
+    /je vois/i,
+    /on peut voir/i,
+    /la photo montre/i
+  ];
+
+  return noTextPatterns.some(pattern => pattern.test(text));
+}
+
 export async function extractTextFromImage(base64Image) {
   try {
     // Nettoyer le préfixe data URL si présent
@@ -50,14 +76,16 @@ export async function extractTextFromImage(base64Image) {
           content: [
             {
               type: 'text',
-              text: `Tu es un assistant d'extraction de texte. Extrais TOUT le texte visible dans cette image.
+              text: `TÂCHE: Extraire le texte d'un document/cours.
 
-Instructions:
-- Extrais le texte exactement comme il apparaît
-- Préserve la structure (paragraphes, listes, titres)
-- Si c'est un document manuscrit, fais de ton mieux pour lire l'écriture
-- Si l'image ne contient pas de texte lisible, réponds "Aucun texte détecté"
-- Ne fais aucun commentaire, retourne uniquement le texte extrait`
+RÈGLES STRICTES:
+1. Extrais UNIQUEMENT le texte écrit (imprimé ou manuscrit) visible dans l'image
+2. NE DÉCRIS JAMAIS l'image ou ce qu'elle montre
+3. Si tu ne vois PAS de texte de cours/document, réponds EXACTEMENT: AUCUN_TEXTE
+4. Préserve la structure (paragraphes, titres, listes)
+5. Pas de commentaires, pas d'explications
+
+RÉPONSE: Le texte extrait OU "AUCUN_TEXTE"`
             },
             {
               type: 'image_url',
@@ -71,7 +99,14 @@ Instructions:
       max_tokens: 4096
     });
 
-    return response.choices[0]?.message?.content?.trim() || '';
+    const result = response.choices[0]?.message?.content?.trim() || '';
+
+    // Vérifier si c'est une réponse "pas de texte"
+    if (result === 'AUCUN_TEXTE' || isNoTextResponse(result)) {
+      return '';
+    }
+
+    return result;
   } catch (error) {
     console.error('[OpenAI] Erreur OCR Vision:', error);
     throw new Error(`Erreur OCR: ${error.message}`);

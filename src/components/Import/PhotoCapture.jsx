@@ -128,14 +128,9 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                 success: true
             })));
 
-            const extractedText = data.text?.trim() || '';
-
-            if (extractedText.length >= 30) {
-                stopCamera();
-                onComplete(extractedText);
-            } else {
-                setError('Aucun texte détecté. Prends en photo ton cours pour que je puisse le synthétiser.');
-            }
+            // Le backend a validé le texte (minimum 30 caractères)
+            stopCamera();
+            onComplete(data.text);
         } catch (err) {
             console.error('Erreur OCR:', err);
             const errorMessage = err?.response?.data?.error || err?.message || 'Erreur lors du traitement des photos';
