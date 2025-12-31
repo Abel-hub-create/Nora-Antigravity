@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, FileText, Calendar, ChevronRight, Pencil, Check, X, Loader2 } from 'lucide-react';
+import { Search, FileText, Calendar, ChevronRight, Pencil, Check, X, Loader2, Camera, Mic, Type } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as syntheseService from '../services/syntheseService';
@@ -69,9 +69,9 @@ const Study = () => {
 
     const getSourceIcon = (sourceType) => {
         switch (sourceType) {
-            case 'voice': return '🎤';
-            case 'photo': return '📷';
-            default: return '📝';
+            case 'voice': return <Mic size={20} className="text-primary" />;
+            case 'photo': return <Camera size={20} className="text-primary" />;
+            default: return <Type size={20} className="text-primary" />;
         }
     };
 
@@ -79,7 +79,7 @@ const Study = () => {
         <div className="min-h-full bg-background p-4 pb-24">
             {/* Header */}
             <header className="mb-6">
-                <h1 className="text-2xl font-bold text-text-main mb-1">Mes Études</h1>
+                <h1 className="text-2xl font-bold text-text-main mb-1">Mes Synthèses</h1>
                 <p className="text-text-muted text-sm">
                     {syntheses.length} synthèse{syntheses.length !== 1 ? 's' : ''}
                 </p>
@@ -174,8 +174,8 @@ const Study = () => {
                                     onClick={() => navigate(`/study/${synthese.id}`)}
                                 >
                                     {/* Icon */}
-                                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
-                                        <span className="text-xl">{getSourceIcon(synthese.source_type)}</span>
+                                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+                                        {getSourceIcon(synthese.source_type)}
                                     </div>
 
                                     {/* Content */}
