@@ -61,6 +61,8 @@ npm start          # Start Express server (production)
 - User profile (level, XP, streak, eggs, creature collection)
 - Daily stats tracking (time spent per activity type)
 - Daily goals with XP reward system
+- Data synced to backend via `syncUserData()` on every change
+- **Important**: Uses `??` (nullish coalescing) instead of `||` to handle `0` values correctly
 
 **Gamification System**:
 - XP thresholds per activity type (flashcards: 10min/40XP, quiz: 20min/70XP, summary: 30min/100XP)
@@ -511,7 +513,8 @@ Import Page (text/voice/photo)
 
 **`/src/components/Import/PhotoCapture.jsx`**
 - Camera access via getUserMedia
-- Multi-photo capture
+- Multi-photo capture from camera
+- Gallery import button (select multiple images from device)
 - Sends images to backend for GPT-4 Vision OCR
 - Progress indicator during processing
 - Combined text extraction from multiple photos
