@@ -45,6 +45,6 @@ export const syncUserDataSchema = z.object({
     next_level_exp: z.number().optional(),
     streak: z.number().optional(),
     eggs: z.number().optional(),
-    collection: z.array(z.number()).optional()
+    collection: z.array(z.string()).optional()
   })
 });
