@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, RotateCw, ChevronRight, ChevronLeft, Loader2, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { ArrowLeft, RotateCw, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import useActiveTimer from '../hooks/useActiveTimer';
 import * as syntheseService from '../services/syntheseService';
@@ -14,7 +14,6 @@ const StudyFlashcards = () => {
     const [isFlipped, setIsFlipped] = useState(false);
     const [direction, setDirection] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
-    const [stats, setStats] = useState({ correct: 0, incorrect: 0 });
 
     useEffect(() => {
         const loadFlashcards = async () => {
@@ -50,25 +49,6 @@ const StudyFlashcards = () => {
 
     const handleFlip = () => {
         setIsFlipped(!isFlipped);
-    };
-
-    const handleFeedback = async (isCorrect) => {
-        try {
-            await syntheseService.updateFlashcardProgress(cards[currentCardIndex].id, isCorrect);
-            setStats(prev => ({
-                correct: prev.correct + (isCorrect ? 1 : 0),
-                incorrect: prev.incorrect + (isCorrect ? 0 : 1)
-            }));
-
-            // Auto advance after feedback
-            if (currentCardIndex < cards.length - 1) {
-                setTimeout(() => {
-                    handleNext();
-                }, 300);
-            }
-        } catch (error) {
-            console.error('Erreur mise à jour progression:', error);
-        }
     };
 
     const variants = {
@@ -126,7 +106,7 @@ const StudyFlashcards = () => {
                 </motion.div>
                 <h2 className="text-2xl font-bold text-text-main mb-2">Session terminée !</h2>
                 <p className="text-text-muted mb-6">
-                    {stats.correct} correct{stats.correct !== 1 ? 's' : ''} · {stats.incorrect} à revoir
+                    Tu as parcouru {cards.length} carte{cards.length !== 1 ? 's' : ''}
                 </p>
                 <Link
                     to={`/study/${id}`}
@@ -202,30 +182,6 @@ const StudyFlashcards = () => {
                         </motion.div>
                     </AnimatePresence>
                 </div>
-
-                {/* Feedback buttons (only when flipped) */}
-                {isFlipped && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex gap-4 mt-6"
-                    >
-                        <button
-                            onClick={() => handleFeedback(false)}
-                            className="flex items-center gap-2 px-6 py-3 bg-error/20 text-error rounded-xl font-medium hover:bg-error/30 transition-colors"
-                        >
-                            <ThumbsDown size={18} />
-                            À revoir
-                        </button>
-                        <button
-                            onClick={() => handleFeedback(true)}
-                            className="flex items-center gap-2 px-6 py-3 bg-success/20 text-success rounded-xl font-medium hover:bg-success/30 transition-colors"
-                        >
-                            <ThumbsUp size={18} />
-                            Compris
-                        </button>
-                    </motion.div>
-                )}
             </div>
 
             {/* Controls */}
