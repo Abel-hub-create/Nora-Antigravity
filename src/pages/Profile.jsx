@@ -14,7 +14,7 @@ const Profile = () => {
     const { user: authUser } = useAuth();
     const { user: userData, getAverageDailyStudyTime } = useUser();
 
-    // Combiner les données auth (nom, avatar) et user context (level, xp, streak)
+    // Combiner les données auth (nom, avatar) et user context (level, xp)
     const user = {
         name: authUser?.name || "Utilisateur",
         avatar: authUser?.avatar || null,
