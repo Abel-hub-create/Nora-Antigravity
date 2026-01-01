@@ -68,6 +68,7 @@ npm start          # Start Express server (production)
 - XP thresholds per activity type (flashcards: 10min/40XP, quiz: 20min/70XP, summary: 30min/100XP)
 - Level-up grants eggs for creature collection
 - Creatures have rarity tiers (rare → mythic → secret) with weighted random selection
+- **Creature IDs are strings** (e.g., 'r1', 'm1', 'l1') not numbers - stored as JSON array in DB
 
 **Time Tracking**: `useActiveTimer` hook tracks active time per activity, pausing when tab loses focus.
 
