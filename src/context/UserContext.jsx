@@ -80,15 +80,15 @@ export const UserProvider = ({ children }) => {
     const { user: authUser, syncUserData } = useAuth();
 
     const [user, setUser] = useState({
-        id: authUser?.id || null,
-        email: authUser?.email || null,
-        name: authUser?.name || "Utilisateur",
-        level: authUser?.level || 1,
-        exp: authUser?.exp || 0,
-        nextLevelExp: authUser?.next_level_exp || 1000,
-        streak: authUser?.streak || 0,
-        eggs: authUser?.eggs || 0,
-        collection: authUser?.collection || []
+        id: authUser?.id ?? null,
+        email: authUser?.email ?? null,
+        name: authUser?.name ?? "Utilisateur",
+        level: authUser?.level ?? 1,
+        exp: authUser?.exp ?? 0,
+        nextLevelExp: authUser?.next_level_exp ?? 1000,
+        streak: authUser?.streak ?? 0,
+        eggs: authUser?.eggs ?? 999, // TODO: remettre à 0 après les tests
+        collection: authUser?.collection ?? []
     });
 
     // Sync with auth user on mount and when authUser changes
@@ -99,12 +99,12 @@ export const UserProvider = ({ children }) => {
                 id: authUser.id,
                 email: authUser.email,
                 name: authUser.name,
-                level: authUser.level || prev.level,
-                exp: authUser.exp || prev.exp,
-                nextLevelExp: authUser.next_level_exp || prev.nextLevelExp,
-                streak: authUser.streak || prev.streak,
-                eggs: authUser.eggs || prev.eggs,
-                collection: authUser.collection || prev.collection
+                level: authUser.level ?? prev.level,
+                exp: authUser.exp ?? prev.exp,
+                nextLevelExp: authUser.next_level_exp ?? prev.nextLevelExp,
+                streak: authUser.streak ?? prev.streak,
+                eggs: authUser.eggs ?? prev.eggs,
+                collection: authUser.collection ?? prev.collection
             }));
         }
     }, [authUser]);

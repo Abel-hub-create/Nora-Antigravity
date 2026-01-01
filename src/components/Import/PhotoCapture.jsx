@@ -14,6 +14,7 @@ const PhotoCapture = ({ onComplete, onClose }) => {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const streamRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     // Initialiser la caméra
     const startCamera = useCallback(async () => {
@@ -93,6 +94,36 @@ const PhotoCapture = ({ onComplete, onClose }) => {
     // Supprimer une photo
     const removePhoto = (id) => {
         setPhotos(prev => prev.filter(p => p.id !== id));
+    };
+
+    // Importer depuis la galerie
+    const handleGalleryClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e) => {
+        const files = Array.from(e.target.files || []);
+
+        files.forEach(file => {
+            if (!file.type.startsWith('image/')) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const dataUrl = event.target.result;
+                const newPhoto = {
+                    id: Date.now() + Math.random(),
+                    dataUrl,
+                    isProcessing: false,
+                    success: false,
+                    error: null
+                };
+                setPhotos(prev => [...prev, newPhoto]);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Reset input pour permettre de sélectionner le même fichier
+        e.target.value = '';
     };
 
     // Traiter toutes les photos avec Vision API
@@ -299,12 +330,23 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                     </div>
                 )}
 
+                {/* Input file caché pour la galerie */}
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileChange}
+                    className="hidden"
+                />
+
                 {/* Boutons d'action */}
                 <div className="flex items-center justify-center gap-6">
-                    {/* Bouton Galerie (placeholder) */}
+                    {/* Bouton Galerie */}
                     <button
+                        onClick={handleGalleryClick}
                         disabled={isProcessing}
-                        className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center disabled:opacity-50"
+                        className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center disabled:opacity-50 hover:bg-white/20 transition-colors"
                     >
                         <Image size={24} className="text-white" />
                     </button>
