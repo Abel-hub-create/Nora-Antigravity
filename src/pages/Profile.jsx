@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Settings, Folder, Clock, Star, ChevronRight, Plus, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import * as folderService from '../services/folderService';
+import * as syntheseService from '../services/syntheseService';
 import FolderCard from '../components/Folders/FolderCard';
 import CreateFolderModal from '../components/Folders/CreateFolderModal';
 import { useAuth } from '../features/auth/hooks/useAuth';
@@ -11,7 +12,7 @@ import { useUser } from '../context/UserContext';
 const Profile = () => {
     const navigate = useNavigate();
     const { user: authUser } = useAuth();
-    const { user: userData } = useUser();
+    const { user: userData, getAverageDailyStudyTime } = useUser();
 
     // Combiner les données auth (nom, avatar) et user context (level, xp, streak)
     const user = {
@@ -20,9 +21,11 @@ const Profile = () => {
         level: userData?.level || 1,
         exp: userData?.exp || 0,
         nextLevelExp: userData?.nextLevelExp || 1000,
-        streak: userData?.streak || 0,
         eggs: userData?.eggs || 0
     };
+
+    // Get average daily study time
+    const averageMinutes = getAverageDailyStudyTime();
 
     // Folders state
     const [folders, setFolders] = useState([]);
@@ -30,21 +33,28 @@ const Profile = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
 
-    // Fetch folders on mount
+    // Syntheses count
+    const [synthesesCount, setSynthesesCount] = useState(0);
+
+    // Fetch folders and syntheses count on mount
     useEffect(() => {
-        const fetchFolders = async () => {
+        const fetchData = async () => {
             try {
                 setIsLoadingFolders(true);
-                const data = await folderService.getAllFolders();
-                setFolders(data);
+                const [foldersData, synthesesData] = await Promise.all([
+                    folderService.getAllFolders(),
+                    syntheseService.getAllSyntheses()
+                ]);
+                setFolders(foldersData);
+                setSynthesesCount(synthesesData.syntheses?.length || 0);
             } catch (error) {
-                console.error('Error fetching folders:', error);
+                console.error('Error fetching data:', error);
             } finally {
                 setIsLoadingFolders(false);
             }
         };
 
-        fetchFolders();
+        fetchData();
     }, []);
 
     // Create folder handler
@@ -120,12 +130,15 @@ const Profile = () => {
             {/* Stats Row */}
             <div className="grid grid-cols-2 gap-4 mb-8">
                 <div className="bg-surface/50 p-4 rounded-2xl border border-white/5 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-text-main mb-1">🔥 {user.streak}</span>
-                    <span className="text-xs text-text-muted">Jours d'affilée</span>
+                    <span className="text-2xl font-bold text-text-main mb-1">
+                        <Clock size={20} className="inline mr-1" />
+                        {averageMinutes} min
+                    </span>
+                    <span className="text-xs text-text-muted">Moyenne par jour</span>
                 </div>
                 <div className="bg-surface/50 p-4 rounded-2xl border border-white/5 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-text-main mb-1">📚 28</span>
-                    <span className="text-xs text-text-muted">Sujets Appris</span>
+                    <span className="text-2xl font-bold text-text-main mb-1">📚 {synthesesCount}</span>
+                    <span className="text-xs text-text-muted">Synthèses</span>
                 </div>
             </div>
 

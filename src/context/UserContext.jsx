@@ -71,6 +71,11 @@ const getDefaultDailyGoals = () => [
     { id: 2, type: 'quiz', targetMinutes: 20, completed: false }
 ];
 
+// Calculate total study time from daily stats (in seconds)
+const getTotalStudyTime = (stats) => {
+    return (stats.quizTime || 0) + (stats.flashcardsTime || 0) + (stats.summaryTime || 0);
+};
+
 export const UserProvider = ({ children }) => {
     const { user: authUser, syncUserData } = useAuth();
 
@@ -136,6 +141,12 @@ export const UserProvider = ({ children }) => {
         return false;
     });
 
+    // Study history - stores total study time per day for average calculation
+    // Format: [{ date: "Mon Dec 30 2024", totalSeconds: 3600 }, ...]
+    const [studyHistory, setStudyHistory] = useState(() => {
+        return loadFromStorage('nora_studyHistory', []);
+    });
+
     // Notifications state for goal completions and XP gains
     const [notifications, setNotifications] = useState([]);
     const notificationIdRef = useRef(0);
@@ -173,6 +184,11 @@ export const UserProvider = ({ children }) => {
         });
     }, [dailyGoalsRewardClaimed]);
 
+    // Persist studyHistory to localStorage
+    useEffect(() => {
+        saveToStorage('nora_studyHistory', studyHistory);
+    }, [studyHistory]);
+
     // Sync daily progress to backend for notification eligibility
     useEffect(() => {
         // Only sync if user is authenticated
@@ -207,6 +223,24 @@ export const UserProvider = ({ children }) => {
         if (dailyStats.date !== today) {
             console.log('[NORA] New day detected, resetting daily stats');
 
+            // Save yesterday's study time to history before resetting
+            const totalSeconds = getTotalStudyTime(dailyStats);
+            if (totalSeconds > 0) {
+                setStudyHistory(prev => {
+                    // Check if this day already exists in history
+                    const existingIndex = prev.findIndex(h => h.date === dailyStats.date);
+                    if (existingIndex >= 0) {
+                        // Update existing entry
+                        const updated = [...prev];
+                        updated[existingIndex] = { date: dailyStats.date, totalSeconds };
+                        return updated;
+                    }
+                    // Add new entry, keep last 30 days
+                    const newHistory = [...prev, { date: dailyStats.date, totalSeconds }];
+                    return newHistory.slice(-30);
+                });
+            }
+
             // Reset daily stats
             setDailyStats(getDefaultDailyStats());
 
@@ -219,7 +253,7 @@ export const UserProvider = ({ children }) => {
             return true;
         }
         return false;
-    }, [dailyStats.date]);
+    }, [dailyStats]);
 
     // Check for day change on mount and set up interval
     useEffect(() => {
@@ -471,6 +505,28 @@ export const UserProvider = ({ children }) => {
         return Math.min(100, (currentMinutes / threshold.timeMinutes) * 100);
     }, [dailyStats]);
 
+    // Get average daily study time in minutes (includes today)
+    const getAverageDailyStudyTime = useCallback(() => {
+        // Include today's time in the calculation
+        const todaySeconds = getTotalStudyTime(dailyStats);
+
+        // If no history and no time today, return 0
+        if (studyHistory.length === 0 && todaySeconds === 0) {
+            return 0;
+        }
+
+        // Calculate total from history
+        const historyTotal = studyHistory.reduce((sum, day) => sum + day.totalSeconds, 0);
+
+        // Total days = history days + today (if there's time today)
+        const totalDays = studyHistory.length + (todaySeconds > 0 ? 1 : 0);
+
+        if (totalDays === 0) return 0;
+
+        const averageSeconds = (historyTotal + todaySeconds) / totalDays;
+        return Math.round(averageSeconds / 60); // Return in minutes
+    }, [dailyStats, studyHistory]);
+
     const unlockCreature = useCallback((creatureId) => {
         setUser(prev => {
             if (!prev.collection.includes(creatureId)) {
@@ -511,6 +567,7 @@ export const UserProvider = ({ children }) => {
             updateTime,
             getStudyTimeMinutes,
             getXpProgress,
+            getAverageDailyStudyTime,
             notifications,
             addNotification,
             removeNotification,
