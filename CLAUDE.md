@@ -375,8 +375,8 @@ Central system for managing user content. A synthese groups: original content, s
 -- syntheses: Main content table
 syntheses (id, user_id, title, original_content, summary_content, source_type, is_archived, created_at)
 
--- flashcards: Linked to synthese, supports spaced repetition
-flashcards (id, synthese_id, front, back, difficulty, times_reviewed, times_correct, next_review_at)
+-- flashcards: Linked to synthese (simple navigation, no feedback tracking)
+flashcards (id, synthese_id, front, back, difficulty)
 
 -- quiz_questions: Linked to synthese
 quiz_questions (id, synthese_id, question, options JSON, correct_answer, explanation, times_answered, times_correct)
@@ -393,7 +393,6 @@ quiz_questions (id, synthese_id, question, options JSON, correct_answer, explana
 | PATCH | `/:id/archive` | Soft delete synthese |
 | DELETE | `/:id` | Permanently delete synthese |
 | GET | `/:id/flashcards` | Get flashcards for synthese |
-| POST | `/flashcards/:id/progress` | Update flashcard progress |
 | GET | `/:id/quiz` | Get quiz questions for synthese |
 | POST | `/:id/quiz/progress` | Update quiz progress |
 
@@ -407,7 +406,6 @@ updateTitle(id, title)
 archiveSynthese(id)
 deleteSynthese(id)
 getFlashcards(syntheseId)
-updateFlashcardProgress(flashcardId, isCorrect)
 getQuizQuestions(syntheseId)
 updateQuizProgress(syntheseId, questionId, isCorrect)
 ```
