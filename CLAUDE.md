@@ -115,6 +115,15 @@ Users can edit their profile (name and avatar) from Settings.
 ALTER TABLE users ADD COLUMN avatar MEDIUMTEXT NULL AFTER name;
 ```
 
+### Profile Page Stats
+
+The Profile page (`/profile`) displays two stats cards:
+
+| Stat | Source | Description |
+|------|--------|-------------|
+| Moyenne par jour | `getAverageDailyStudyTime()` | Average study time in minutes (today + last 30 days history) |
+| Synthèses | API `/syntheses` | Total count of user's syntheses |
+
 ## Study Time & XP System
 
 Comprehensive daily study time tracking with XP rewards. Data persists in localStorage and resets at midnight.
@@ -145,6 +154,7 @@ Comprehensive daily study time tracking with XP rewards. Data persists in localS
    - XP earning opportunities reset
    - Goals completion status resets
    - Total XP/levels/eggs NEVER reset
+   - Previous day's total study time saved to history (for average calculation)
 
 ### State Structure (`UserContext.jsx`)
 
@@ -170,6 +180,7 @@ dailyStats: {
 | `updateTime(activityType, seconds)` | Add time and check XP thresholds |
 | `getStudyTimeMinutes(activityType)` | Get time in minutes for display |
 | `getXpProgress(activityType)` | Get % progress to threshold |
+| `getAverageDailyStudyTime()` | Get average study time per day in minutes (includes today + last 30 days) |
 
 ### Timer Integration
 
@@ -183,6 +194,7 @@ Pages using the timer:
 - `nora_dailyStats` - Daily time counters and XP flags
 - `nora_dailyGoals` - User's daily goal configuration
 - `nora_dailyGoalsRewardClaimed` - Whether 10XP goals bonus was claimed
+- `nora_studyHistory` - Array of last 30 days study time `[{ date, totalSeconds }]`
 
 ## Daily Goals & Progress System
 
