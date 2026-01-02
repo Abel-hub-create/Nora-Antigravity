@@ -315,6 +315,8 @@ Full-stack authentication with JWT tokens and secure cookie-based refresh tokens
 | `/register` | Register | User registration with pseudo, email, password |
 | `/forgot-password` | ForgotPassword | Request password reset email |
 | `/reset-password/:token` | ResetPassword | Set new password with reset token |
+| `/verify-email-sent` | VerifyEmailSent | Shows after registration, prompts to check email |
+| `/verify-email/:token` | VerifyEmail | Verifies email from link, activates account |
 
 **Components**:
 - `ProtectedRoute` - HOC wrapping routes that require authentication
@@ -784,3 +786,65 @@ VAPID_PUBLIC_KEY=<public_key>
 VAPID_PRIVATE_KEY=<private_key>
 VAPID_SUBJECT=mailto:contact@mirora.cloud
 ```
+
+## Email System
+
+Transactional email system for password reset and email verification.
+
+### Current Status: NOT CONFIGURED
+
+Email sending is implemented but requires proper configuration to work.
+
+### Service
+
+Uses **Resend** (`/backend/src/services/emailService.js`) for sending emails.
+
+### Email Types
+
+| Email | Trigger | Expiry |
+|-------|---------|--------|
+| Password Reset | User clicks "Mot de passe oublie" | 1 hour |
+| Email Verification | User registers new account | 24 hours |
+
+### Configuration Options
+
+**Option 1: Resend with custom domain (recommended)**
+- Verify `mirora.cloud` in Resend dashboard
+- Add DNS records (SPF, DKIM) provided by Resend
+- Use `FROM_EMAIL=Nora <noreply@mirora.cloud>`
+
+**Option 2: SMTP (Outlook, Gmail, etc.)**
+- Replace Resend with Nodemailer
+- Configure SMTP credentials in `.env`
+- Requires app password for accounts with 2FA
+
+### Environment Variables (Backend)
+
+```env
+# Resend configuration
+RESEND_API_KEY=<resend_api_key>
+FROM_EMAIL=Nora <noreply@mirora.cloud>
+```
+
+### Email Templates
+
+Both emails use dark-themed HTML templates matching the app design:
+- Background: `#0f172a` (slate-900)
+- Card: `#1e293b` (slate-800)
+- Button: `#38bdf8` (sky-400)
+- Logo: `/nora-logo.png`
+
+### Backend Functions
+
+```javascript
+// emailService.js
+sendPasswordResetEmail(email, token)     // Send reset link
+sendVerificationEmail(email, token, name) // Send verification link
+```
+
+### Auth Flow Integration
+
+- `register()` → sends verification email automatically
+- `forgotPassword()` → sends reset email
+- `resendVerificationEmail()` → resend verification if needed
+- Errors are logged but don't block user creation
