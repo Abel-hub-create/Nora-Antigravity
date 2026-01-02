@@ -559,11 +559,20 @@ Centralized educational content generation with the Nora personality.
 - Faithful to original course content
 - Coherent output: summary, flashcards, and quiz are linked
 
+**Summary Generation Rules**:
+- Vraie synthese structuree (pas ultra-court, pas reformulation longue)
+- Plus courte que l'original mais assez developpee pour reviser
+- Conserve: notions importantes, definitions cles, regles, mecanismes, liens logiques
+- Supprime: exemples secondaires, anecdotes, repetitions
+- Format obligatoire: titres clairs (## Titre), bullet points, paragraphes courts, une idee par ligne
+- Chaque idee importante expliquee en 1-2 phrases max
+- Objectif: relire et comprendre sans retourner au texte original
+
 **Output Structure**:
 ```javascript
 {
   title: "Short title (max 50 chars)",
-  summary: "200-400 words structured summary",
+  summary: "Structured summary with ## titles, bullet points, one idea per line",
   flashcards: [
     { front: "Question", back: "Answer", difficulty: "easy|medium|hard" }
     // 6 flashcards: 2 easy, 3 medium, 1 hard
