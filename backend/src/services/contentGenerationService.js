@@ -12,7 +12,7 @@ const openai = new OpenAI({
 });
 
 const MODEL = 'gpt-4o-mini';
-const MAX_TOKENS = 3500;
+const MAX_TOKENS = 4500;
 
 /**
  * Prompt systeme definissant la personnalite de Nora
@@ -43,7 +43,7 @@ Tu dois generer un JSON avec exactement cette structure :
 
 {
   "title": "Titre court et precis du cours (maximum 50 caracteres)",
-  "summary": "Synthese complete du cours en 200-400 mots. Structure en paragraphes clairs. Identifie les concepts cles. Utilise un langage simple et accessible.",
+  "summary": "INSTRUCTIONS POUR LA SYNTHESE - Tu dois produire une vraie synthese structuree, pas un resume ultra-court et pas une reformulation longue. Contraintes obligatoires : La synthese doit etre claire, precise et complete sur l'essentiel. Elle doit etre nettement plus courte que le cours original, mais assez developpee pour reviser correctement. Tu conserves toutes les notions importantes, definitions cles, regles, mecanismes et liens logiques. Tu supprimes uniquement les exemples secondaires, anecdotes et repetitions. Tu expliques avec des mots simples, sans jargon inutile. Tu ne fais pas une synthese en 3 lignes : chaque idee importante doit etre expliquee en 1-2 phrases maximum. FORMAT OBLIGATOIRE : Utilise des titres clairs (## Titre), des bullet points (- item), des paragraphes courts, une idee par ligne. OBJECTIF : Que l'utilisateur puisse relire cette synthese et comprendre + memoriser le cours sans retourner au texte original.",
   "flashcards": [
     {"front": "Question ou concept a retenir", "back": "Reponse claire et complete", "difficulty": "easy"},
     {"front": "...", "back": "...", "difficulty": "easy"},
