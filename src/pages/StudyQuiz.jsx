@@ -6,6 +6,27 @@ import confetti from 'canvas-confetti';
 import useActiveTimer from '../hooks/useActiveTimer';
 import * as syntheseService from '../services/syntheseService';
 
+// Messages aleatoires selon le pourcentage de reussite
+const getResultMessage = (percentage) => {
+    const messages = {
+        zero: ["Retourne t'entrainer", "Concentre toi"],
+        low: ["Tu peux y arriver", "Tu t'améliores !"],
+        medium: ["C'est plutôt pas mal", "Bien joué !"],
+        high: ["Continue comme ça !", "C'est très bien !"],
+        perfect: ["C'est tout simplement parfait", "Bravo, tu as tout bon !"]
+    };
+
+    let category;
+    if (percentage === 0) category = 'zero';
+    else if (percentage <= 50) category = 'low';
+    else if (percentage <= 69) category = 'medium';
+    else if (percentage < 100) category = 'high';
+    else category = 'perfect';
+
+    const categoryMessages = messages[category];
+    return categoryMessages[Math.floor(Math.random() * categoryMessages.length)];
+};
+
 const StudyQuiz = () => {
     useActiveTimer('quiz');
     const { id } = useParams();
@@ -16,6 +37,7 @@ const StudyQuiz = () => {
     const [score, setScore] = useState(0);
     const [showResult, setShowResult] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [resultMessage, setResultMessage] = useState('');
 
     useEffect(() => {
         const loadQuiz = async () => {
@@ -61,6 +83,9 @@ const StudyQuiz = () => {
                 setCurrentQuestion(currentQuestion + 1);
                 setSelectedOption(null);
             } else {
+                const finalScore = correct ? score + 1 : score;
+                const percentage = Math.round((finalScore / questions.length) * 100);
+                setResultMessage(getResultMessage(percentage));
                 setShowResult(true);
             }
         }, 1200);
@@ -93,7 +118,7 @@ const StudyQuiz = () => {
 
     if (showResult) {
         const percentage = Math.round((score / questions.length) * 100);
-        const emoji = percentage >= 80 ? '🏆' : percentage >= 50 ? '👏' : '💪';
+        const emoji = percentage === 100 ? '🏆' : percentage >= 70 ? '🎯' : percentage >= 51 ? '👏' : percentage >= 1 ? '💪' : '📚';
 
         return (
             <div className="h-full flex flex-col items-center justify-center p-6 text-center">
@@ -111,9 +136,7 @@ const StudyQuiz = () => {
                 >
                     <h2 className="text-2xl font-bold text-text-main mb-2">Quiz Terminé !</h2>
                     <p className="text-4xl font-bold text-primary mb-2">{score}/{questions.length}</p>
-                    <p className="text-text-muted mb-8">
-                        {percentage >= 80 ? 'Excellent travail !' : percentage >= 50 ? 'Bien joué !' : 'Continue comme ça !'}
-                    </p>
+                    <p className="text-text-muted mb-8">{resultMessage}</p>
                     <div className="flex flex-col gap-3">
                         <Link
                             to={`/study/${id}`}
@@ -127,6 +150,7 @@ const StudyQuiz = () => {
                                 setSelectedOption(null);
                                 setScore(0);
                                 setShowResult(false);
+                                setResultMessage('');
                             }}
                             className="bg-surface border border-white/10 text-text-main px-8 py-3 rounded-xl hover:bg-surface/80 transition-colors"
                         >
