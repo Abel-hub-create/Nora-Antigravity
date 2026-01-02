@@ -144,27 +144,11 @@ const StudyDetail = () => {
                 </div>
             </motion.div>
 
-            {/* Original Content (collapsed) */}
-            <motion.details
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="bg-surface/50 rounded-2xl border border-white/5 mb-6 group"
-            >
-                <summary className="p-4 cursor-pointer text-text-muted hover:text-text-main transition-colors list-none flex items-center justify-between">
-                    <span className="text-sm font-medium">Voir le contenu original</span>
-                    <span className="text-xs group-open:rotate-180 transition-transform">▼</span>
-                </summary>
-                <div className="px-4 pb-4 text-text-muted text-sm leading-relaxed whitespace-pre-wrap border-t border-white/5 pt-3">
-                    {synthese.original_content}
-                </div>
-            </motion.details>
-
             {/* Delete Button */}
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
+                transition={{ delay: 0.2 }}
             >
                 {showDeleteConfirm ? (
                     <div className="bg-error/10 border border-error/20 rounded-2xl p-4">
