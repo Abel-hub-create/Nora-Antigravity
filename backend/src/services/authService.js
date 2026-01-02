@@ -1,6 +1,7 @@
 import * as userRepository from './userRepository.js';
 import * as hashService from './hashService.js';
 import * as tokenService from './tokenService.js';
+import * as emailService from './emailService.js';
 import crypto from 'crypto';
 
 export const register = async ({ email, password, name }) => {
@@ -15,12 +16,26 @@ export const register = async ({ email, password, name }) => {
   // Hash password
   const hashedPassword = await hashService.hashPassword(password);
 
-  // Create user
-  const user = await userRepository.create({
+  // Generate verification token
+  const verificationToken = crypto.randomBytes(32).toString('hex');
+  const verificationExpires = new Date(Date.now() + 86400000); // 24 hours
+
+  // Create user with verification token
+  const user = await userRepository.createWithVerificationToken({
     email,
     password: hashedPassword,
-    name
+    name,
+    verificationToken,
+    verificationExpires
   });
+
+  // Send verification email
+  try {
+    await emailService.sendVerificationEmail(email, verificationToken, name);
+  } catch (error) {
+    console.error('[Auth] Erreur envoi email verification:', error);
+    // Continue even if email fails - user can request resend
+  }
 
   return user;
 };
@@ -39,6 +54,14 @@ export const login = async ({ email, password }) => {
   if (!isValid) {
     const error = new Error('Email ou mot de passe incorrect');
     error.statusCode = 401;
+    throw error;
+  }
+
+  // Check if email is verified
+  if (!user.is_verified) {
+    const error = new Error('Verifie ton email avant de te connecter. Regarde dans ta boite mail.');
+    error.statusCode = 403;
+    error.code = 'EMAIL_NOT_VERIFIED';
     throw error;
   }
 
@@ -103,8 +126,13 @@ export const forgotPassword = async (email) => {
 
   await userRepository.createPasswordReset(user.id, resetToken, expiresAt);
 
-  // In production, send email here
-  console.log(`[DEV] Reset token for ${email}: ${resetToken}`);
+  // Send password reset email
+  try {
+    await emailService.sendPasswordResetEmail(email, resetToken);
+  } catch (error) {
+    console.error('[Auth] Erreur envoi email reset:', error);
+    // Continue even if email fails - token is saved
+  }
 
   return resetToken;
 };
@@ -137,4 +165,50 @@ export const getUserById = async (userId) => {
 export const syncUserData = async (userId, userData) => {
   await userRepository.updateUserData(userId, userData);
   return await userRepository.findById(userId);
+};
+
+export const verifyEmail = async (token) => {
+  const user = await userRepository.findByVerificationToken(token);
+  if (!user) {
+    const error = new Error('Lien de verification invalide ou expire');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (user.is_verified) {
+    return user; // Already verified
+  }
+
+  await userRepository.verifyEmail(user.id);
+  return user;
+};
+
+export const resendVerificationEmail = async (email) => {
+  const user = await userRepository.findByEmail(email);
+  if (!user) {
+    // Don't reveal if email exists
+    return null;
+  }
+
+  if (user.is_verified) {
+    const error = new Error('Cet email est deja verifie');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Generate new verification token
+  const verificationToken = crypto.randomBytes(32).toString('hex');
+  const verificationExpires = new Date(Date.now() + 86400000); // 24 hours
+
+  await userRepository.updateVerificationToken(user.id, verificationToken, verificationExpires);
+
+  // Send verification email
+  try {
+    await emailService.sendVerificationEmail(email, verificationToken, user.name);
+  } catch (error) {
+    console.error('[Auth] Erreur envoi email verification:', error);
+    throw new Error('Erreur lors de l\'envoi de l\'email');
+  }
+
+  return verificationToken;
 };

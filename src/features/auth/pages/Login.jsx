@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Sparkles } from 'lucide-react';
+import { Mail, Lock } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import AuthInput from '../components/AuthInput';
 
@@ -74,15 +74,15 @@ const Login = () => {
       >
         {/* Logo & Header */}
         <div className="text-center mb-8">
-          <motion.div
+          <motion.img
+            src="/nora-logo.png"
+            alt="Nora"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring' }}
-            className="inline-flex items-center justify-center w-16 h-16 bg-primary/20 rounded-2xl mb-4"
-          >
-            <Sparkles size={32} className="text-primary" />
-          </motion.div>
-          <h1 className="text-3xl font-bold text-text-main mb-2">Mirora</h1>
+            className="w-20 h-20 mx-auto mb-4 rounded-2xl"
+          />
+          <h1 className="text-3xl font-bold text-text-main mb-2">Nora</h1>
           <p className="text-text-muted">Content de te revoir !</p>
         </div>
 

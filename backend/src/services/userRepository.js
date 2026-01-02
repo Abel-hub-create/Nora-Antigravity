@@ -89,3 +89,36 @@ export const markPasswordResetUsed = async (token) => {
   const sql = 'UPDATE password_resets SET used = 1 WHERE token = ?';
   await query(sql, [token]);
 };
+
+// Email verification management
+export const createWithVerificationToken = async ({ email, password, name, verificationToken, verificationExpires }) => {
+  const sql = `INSERT INTO users (email, password, name, is_verified, verification_token, verification_token_expires)
+               VALUES (?, ?, ?, FALSE, ?, ?)`;
+  const result = await query(sql, [email, password, name, verificationToken, verificationExpires]);
+  return { id: result.insertId, email, name };
+};
+
+export const findByVerificationToken = async (token) => {
+  const sql = 'SELECT * FROM users WHERE verification_token = ? AND verification_token_expires > NOW() AND is_active = 1';
+  const users = await query(sql, [token]);
+  return users[0] || null;
+};
+
+export const verifyEmail = async (userId) => {
+  const sql = `UPDATE users SET
+    is_verified = TRUE,
+    verification_token = NULL,
+    verification_token_expires = NULL,
+    updated_at = NOW()
+    WHERE id = ?`;
+  await query(sql, [userId]);
+};
+
+export const updateVerificationToken = async (userId, token, expiresAt) => {
+  const sql = `UPDATE users SET
+    verification_token = ?,
+    verification_token_expires = ?,
+    updated_at = NOW()
+    WHERE id = ?`;
+  await query(sql, [token, expiresAt, userId]);
+};

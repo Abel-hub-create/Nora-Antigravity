@@ -8,27 +8,16 @@ import * as validators from '../validators/authValidators.js';
 
 const router = express.Router();
 
-// Register
+// Register (user must verify email before login)
 router.post('/register', registerLimiter, validate(validators.registerSchema), async (req, res, next) => {
   try {
     const user = await authService.register(req.body);
 
-    // Generate tokens
-    const { accessToken, refreshToken } = await authService.generateTokens(
-      user.id,
-      req.headers['user-agent'],
-      req.ip
-    );
-
-    // Set cookie (30 days)
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 30 * 24 * 60 * 60 * 1000
+    // Don't generate tokens - user must verify email first
+    res.status(201).json({
+      message: 'Compte cree ! Verifie ton email pour activer ton compte.',
+      requiresVerification: true
     });
-
-    res.status(201).json({ user, accessToken });
   } catch (error) {
     next(error);
   }
@@ -149,6 +138,37 @@ router.post('/sync', authenticate, validate(validators.syncUserDataSchema), asyn
     res.json({ user: updatedUser });
   } catch (error) {
     next(error);
+  }
+});
+
+// Verify email
+router.get('/verify-email/:token', async (req, res, next) => {
+  try {
+    await authService.verifyEmail(req.params.token);
+    res.json({ message: 'Email verifie avec succes ! Tu peux maintenant te connecter.' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Resend verification email
+router.post('/resend-verification', forgotPasswordLimiter, async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      return res.status(400).json({ error: 'Email invalide' });
+    }
+
+    await authService.resendVerificationEmail(email);
+    // Always return same message to prevent email enumeration
+    res.json({ message: 'Si cet email existe et n\'est pas verifie, un nouveau lien a ete envoye' });
+  } catch (error) {
+    // Don't leak information about email status - return same success message
+    if (error.message === 'Cet email est deja verifie') {
+      res.json({ message: 'Si cet email existe et n\'est pas verifie, un nouveau lien a ete envoye' });
+    } else {
+      next(error);
+    }
   }
 });
 

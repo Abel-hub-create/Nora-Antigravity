@@ -9,6 +9,8 @@ import Login from './features/auth/pages/Login';
 import Register from './features/auth/pages/Register';
 import ForgotPassword from './features/auth/pages/ForgotPassword';
 import ResetPassword from './features/auth/pages/ResetPassword';
+import VerifyEmailSent from './features/auth/pages/VerifyEmailSent';
+import VerifyEmail from './features/auth/pages/VerifyEmail';
 
 // Pages
 import Home from './pages/Home';
@@ -35,6 +37,8 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-email-sent" element={<VerifyEmailSent />} />
+          <Route path="/verify-email/:token" element={<VerifyEmail />} />
 
           {/* Protected Routes */}
           <Route

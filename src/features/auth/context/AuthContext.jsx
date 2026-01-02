@@ -51,11 +51,11 @@ export const AuthProvider = ({ children }) => {
   const register = useCallback(async (data) => {
     try {
       setError(null);
-      const userData = await authService.register(data);
-      setUser(userData);
-      return userData;
+      const result = await authService.register(data);
+      // Don't set user - they need to verify email first
+      return result;
     } catch (err) {
-      const message = err.response?.data?.error || 'Échec de l\'inscription';
+      const message = err.response?.data?.error || 'Echec de l\'inscription';
       setError(message);
       throw new Error(message);
     }
