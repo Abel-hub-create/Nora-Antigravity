@@ -151,6 +151,17 @@ router.get('/verify-email/:token', async (req, res, next) => {
   }
 });
 
+// Delete account
+router.delete('/account', authenticate, async (req, res, next) => {
+  try {
+    await authService.deleteAccount(req.user.id);
+    res.clearCookie('refreshToken');
+    res.json({ message: 'Compte supprime avec succes' });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Resend verification email
 router.post('/resend-verification', forgotPasswordLimiter, async (req, res, next) => {
   try {

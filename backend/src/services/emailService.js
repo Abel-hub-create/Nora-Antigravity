@@ -69,7 +69,7 @@ export const sendPasswordResetEmail = async (email, token) => {
                         <tr>
                           <td align="center">
                             <a href="${resetLink}" style="display: inline-block; background-color: #38bdf8; color: #0f172a; text-decoration: none; font-weight: 600; padding: 14px 32px; border-radius: 12px; font-size: 16px;">
-                              Reinitialiser mon mot de passe
+                              Modifier mon mot de passe
                             </a>
                           </td>
                         </tr>

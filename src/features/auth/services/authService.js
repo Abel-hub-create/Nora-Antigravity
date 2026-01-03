@@ -58,3 +58,11 @@ export const updateProfile = async ({ name, avatar }) => {
 
   return data.user;
 };
+
+export const deleteAccount = async () => {
+  await api.delete('/auth/account');
+
+  // Clear storage
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('user');
+};

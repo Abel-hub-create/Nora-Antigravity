@@ -117,6 +117,18 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const deleteAccount = useCallback(async () => {
+    try {
+      setError(null);
+      await authService.deleteAccount();
+      setUser(null);
+    } catch (err) {
+      const message = err.response?.data?.error || 'Echec de la suppression du compte';
+      setError(message);
+      throw new Error(message);
+    }
+  }, []);
+
   const value = {
     user,
     isAuthenticated: !!user,
@@ -129,7 +141,8 @@ export const AuthProvider = ({ children }) => {
     resetPassword,
     clearError,
     syncUserData,
-    updateProfile
+    updateProfile,
+    deleteAccount
   };
 
   return (

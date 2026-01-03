@@ -183,6 +183,11 @@ export const verifyEmail = async (token) => {
   return user;
 };
 
+export const deleteAccount = async (userId) => {
+  // Delete all user data
+  await userRepository.deleteAccount(userId);
+};
+
 export const resendVerificationEmail = async (email) => {
   const user = await userRepository.findByEmail(email);
   if (!user) {

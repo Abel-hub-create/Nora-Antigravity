@@ -105,10 +105,10 @@ export const findByVerificationToken = async (token) => {
 };
 
 export const verifyEmail = async (userId) => {
+  // Keep token for 5 more minutes to handle double-clicks/refreshes
   const sql = `UPDATE users SET
     is_verified = TRUE,
-    verification_token = NULL,
-    verification_token_expires = NULL,
+    verification_token_expires = DATE_ADD(NOW(), INTERVAL 5 MINUTE),
     updated_at = NOW()
     WHERE id = ?`;
   await query(sql, [userId]);
@@ -121,4 +121,41 @@ export const updateVerificationToken = async (userId, token, expiresAt) => {
     updated_at = NOW()
     WHERE id = ?`;
   await query(sql, [token, expiresAt, userId]);
+};
+
+export const deleteAccount = async (userId) => {
+  // Delete in order to respect foreign key constraints
+  // 1. Delete flashcards and quiz questions (via syntheses)
+  await query(`DELETE f FROM flashcards f
+               INNER JOIN syntheses s ON f.synthese_id = s.id
+               WHERE s.user_id = ?`, [userId]);
+  await query(`DELETE q FROM quiz_questions q
+               INNER JOIN syntheses s ON q.synthese_id = s.id
+               WHERE s.user_id = ?`, [userId]);
+
+  // 2. Delete folder_syntheses relations
+  await query(`DELETE fs FROM folder_syntheses fs
+               INNER JOIN folders f ON fs.folder_id = f.id
+               WHERE f.user_id = ?`, [userId]);
+
+  // 3. Delete folders
+  await query('DELETE FROM folders WHERE user_id = ?', [userId]);
+
+  // 4. Delete syntheses
+  await query('DELETE FROM syntheses WHERE user_id = ?', [userId]);
+
+  // 5. Delete push subscriptions
+  await query('DELETE FROM push_subscriptions WHERE user_id = ?', [userId]);
+
+  // 6. Delete daily progress
+  await query('DELETE FROM daily_progress WHERE user_id = ?', [userId]);
+
+  // 7. Delete refresh tokens
+  await query('DELETE FROM refresh_tokens WHERE user_id = ?', [userId]);
+
+  // 8. Delete password resets
+  await query('DELETE FROM password_resets WHERE user_id = ?', [userId]);
+
+  // 9. Finally delete the user
+  await query('DELETE FROM users WHERE id = ?', [userId]);
 };

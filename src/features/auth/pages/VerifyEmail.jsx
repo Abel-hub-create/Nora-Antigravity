@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
@@ -8,9 +8,14 @@ const VerifyEmail = () => {
   const { token } = useParams();
   const [status, setStatus] = useState('loading'); // loading, success, error
   const [message, setMessage] = useState('');
+  const hasVerified = useRef(false);
 
   useEffect(() => {
     const verifyEmail = async () => {
+      // Prevent double call in StrictMode
+      if (hasVerified.current) return;
+      hasVerified.current = true;
+
       try {
         const response = await api.get(`/auth/verify-email/${token}`);
         setStatus('success');
