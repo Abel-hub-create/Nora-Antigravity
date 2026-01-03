@@ -99,9 +99,15 @@ export const createWithVerificationToken = async ({ email, password, name, verif
 };
 
 export const findByVerificationToken = async (token) => {
-  const sql = 'SELECT * FROM users WHERE verification_token = ? AND verification_token_expires > NOW() AND is_active = 1';
+  // Find user by token (even if expired, to check if already verified)
+  const sql = 'SELECT * FROM users WHERE verification_token = ? AND is_active = 1';
   const users = await query(sql, [token]);
   return users[0] || null;
+};
+
+export const isVerificationTokenExpired = (user) => {
+  if (!user.verification_token_expires) return true;
+  return new Date(user.verification_token_expires) < new Date();
 };
 
 export const verifyEmail = async (userId) => {

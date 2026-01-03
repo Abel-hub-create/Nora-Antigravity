@@ -169,18 +169,29 @@ export const syncUserData = async (userId, userData) => {
 
 export const verifyEmail = async (token) => {
   const user = await userRepository.findByVerificationToken(token);
+
+  // Token not found at all
   if (!user) {
-    const error = new Error('Lien de verification invalide ou expire');
+    const error = new Error('Lien de verification invalide');
     error.statusCode = 400;
     throw error;
   }
 
+  // Already verified - return success
   if (user.is_verified) {
-    return user; // Already verified
+    return { user, alreadyVerified: true };
   }
 
+  // Not verified yet - check if token expired
+  if (userRepository.isVerificationTokenExpired(user)) {
+    const error = new Error('Lien de verification expire. Demande un nouveau lien.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Token valid, verify the email
   await userRepository.verifyEmail(user.id);
-  return user;
+  return { user, alreadyVerified: false };
 };
 
 export const deleteAccount = async (userId) => {

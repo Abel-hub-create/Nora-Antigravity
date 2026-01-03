@@ -144,8 +144,12 @@ router.post('/sync', authenticate, validate(validators.syncUserDataSchema), asyn
 // Verify email
 router.get('/verify-email/:token', async (req, res, next) => {
   try {
-    await authService.verifyEmail(req.params.token);
-    res.json({ message: 'Email verifie avec succes ! Tu peux maintenant te connecter.' });
+    const result = await authService.verifyEmail(req.params.token);
+    if (result.alreadyVerified) {
+      res.json({ message: 'Email deja verifie ! Tu peux te connecter.', alreadyVerified: true });
+    } else {
+      res.json({ message: 'Email verifie avec succes ! Tu peux maintenant te connecter.', alreadyVerified: false });
+    }
   } catch (error) {
     next(error);
   }
