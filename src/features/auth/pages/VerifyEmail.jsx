@@ -6,7 +6,7 @@ import api from '../../../lib/api';
 
 const VerifyEmail = () => {
   const { token } = useParams();
-  const [status, setStatus] = useState('loading'); // loading, success, error
+  const [status, setStatus] = useState('loading'); // loading, success, already_verified, expired, error
   const [message, setMessage] = useState('');
   const hasVerified = useRef(false);
 
@@ -17,12 +17,23 @@ const VerifyEmail = () => {
       hasVerified.current = true;
 
       try {
-        const response = await api.get(`/auth/verify-email/${token}`);
-        setStatus('success');
-        setMessage(response.data.message);
+        const data = await api.get(`/auth/verify-email/${token}`);
+        if (data.alreadyVerified) {
+          setStatus('already_verified');
+          setMessage('Ton compte est deja actif.');
+        } else {
+          setStatus('success');
+          setMessage('Ton compte a bien ete active !');
+        }
       } catch (error) {
-        setStatus('error');
-        setMessage(error.response?.data?.error || 'Lien invalide ou expire');
+        const errorMessage = error.response?.data?.error || error.message || '';
+        if (errorMessage.toLowerCase().includes('expire')) {
+          setStatus('expired');
+          setMessage('Le lien de verification a expire. Demande un nouveau lien depuis la page de connexion.');
+        } else {
+          setStatus('error');
+          setMessage(errorMessage || 'Lien invalide');
+        }
       }
     };
 
@@ -68,16 +79,66 @@ const VerifyEmail = () => {
                 <CheckCircle size={40} className="text-success" />
               </motion.div>
               <h1 className="text-2xl font-bold text-text-main mb-3">
-                Email verifie !
+                Compte active !
               </h1>
               <p className="text-text-muted mb-6">
-                Ton compte est maintenant actif. Tu peux te connecter et commencer a apprendre.
+                {message}
               </p>
               <Link
                 to="/login"
                 className="inline-block w-full bg-primary hover:bg-primary-dark text-background font-semibold py-3 rounded-xl transition-colors"
               >
                 Se connecter
+              </Link>
+            </>
+          )}
+
+          {status === 'already_verified' && (
+            <>
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: 'spring' }}
+                className="inline-flex items-center justify-center w-20 h-20 bg-primary/20 rounded-2xl mb-6"
+              >
+                <CheckCircle size={40} className="text-primary" />
+              </motion.div>
+              <h1 className="text-2xl font-bold text-text-main mb-3">
+                Compte deja actif
+              </h1>
+              <p className="text-text-muted mb-6">
+                {message}
+              </p>
+              <Link
+                to="/login"
+                className="inline-block w-full bg-primary hover:bg-primary-dark text-background font-semibold py-3 rounded-xl transition-colors"
+              >
+                Se connecter
+              </Link>
+            </>
+          )}
+
+          {status === 'expired' && (
+            <>
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: 'spring' }}
+                className="inline-flex items-center justify-center w-20 h-20 bg-amber-400/20 rounded-2xl mb-6"
+              >
+                <XCircle size={40} className="text-amber-400" />
+              </motion.div>
+              <h1 className="text-2xl font-bold text-text-main mb-3">
+                Lien expire
+              </h1>
+              <p className="text-text-muted mb-6">
+                {message}
+              </p>
+              <Link
+                to="/login"
+                className="inline-block w-full bg-primary hover:bg-primary-dark text-background font-semibold py-3 rounded-xl transition-colors"
+              >
+                Retour a la connexion
               </Link>
             </>
           )}

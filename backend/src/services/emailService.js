@@ -165,7 +165,7 @@ export const sendVerificationEmail = async (email, token, name) => {
                       </table>
 
                       <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 24px 0 0 0; text-align: center;">
-                        Ce lien expire dans 24 heures.<br>
+                        Ce lien expire dans 1 heure.<br>
                         Si tu n'as pas cree de compte, ignore cet email.
                       </p>
                     </td>

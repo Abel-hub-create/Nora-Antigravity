@@ -2,11 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, User, CreditCard, Bell, LogOut, Plus, Trash2, AlertTriangle, Check, Trophy, Loader2, Camera, X, UserX } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { useUser, ACTIVITY_TYPES } from '../context/UserContext';
 import { useAuth } from '../features/auth/hooks/useAuth';
 import * as notificationService from '../services/notificationService';
+import LanguageSelector from '../components/Settings/LanguageSelector';
 
 const Settings = () => {
+    const { t } = useTranslation();
     const { user, logout, updateProfile, deleteAccount } = useAuth();
     const {
         dailyGoals,
@@ -264,17 +267,25 @@ const Settings = () => {
                 <Link to="/profile" className="p-2 -ml-2 text-text-muted hover:text-text-main transition-colors">
                     <ArrowLeft size={24} />
                 </Link>
-                <h1 className="text-2xl font-bold text-text-main">Paramètres</h1>
+                <h1 className="text-2xl font-bold text-text-main">{t('settings.title')}</h1>
             </header>
+
+            {/* Language Section */}
+            <div className="mb-8">
+                <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">{t('settings.language')}</h3>
+                <div className="bg-surface rounded-2xl overflow-hidden border border-white/5">
+                    <LanguageSelector />
+                </div>
+            </div>
 
             {/* Daily Goals Section */}
             <div className="mb-8">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider">Objectifs Quotidiens</h3>
+                    <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider">{t('settings.dailyGoals')}</h3>
                     {dailyGoalsRewardClaimed && (
                         <div className="flex items-center gap-1 text-xs text-yellow-400">
                             <Trophy size={14} />
-                            <span>Bonus réclamé</span>
+                            <span>{t('settings.bonusClaimed')}</span>
                         </div>
                     )}
                 </div>
@@ -283,7 +294,7 @@ const Settings = () => {
                     {/* Current Progress Indicator */}
                     {dailyGoals.length > 0 && (
                         <div className="flex items-center justify-between p-3 bg-black/30 rounded-xl mb-2">
-                            <span className="text-sm text-text-muted">Progression actuelle</span>
+                            <span className="text-sm text-text-muted">{t('settings.currentProgress')}</span>
                             <span className="text-lg font-bold text-primary">{dailyProgressPercentage}%</span>
                         </div>
                     )}
@@ -335,8 +346,8 @@ const Settings = () => {
                     {/* Empty State */}
                     {dailyGoals.length === 0 && (
                         <div className="text-center py-6 text-text-muted">
-                            <p className="text-sm">Aucun objectif défini</p>
-                            <p className="text-xs mt-1">Ajoutez des objectifs pour suivre votre progression</p>
+                            <p className="text-sm">{t('settings.noGoalsDefined')}</p>
+                            <p className="text-xs mt-1">{t('settings.addGoalsHint')}</p>
                         </div>
                     )}
 
@@ -349,7 +360,7 @@ const Settings = () => {
                                     className="w-full p-3 rounded-xl border-2 border-dashed border-white/10 text-text-muted hover:border-primary/50 hover:text-primary transition-colors flex items-center justify-center gap-2"
                                 >
                                     <Plus size={18} />
-                                    Ajouter un objectif
+                                    {t('settings.addGoal')}
                                 </button>
                             ) : (
                                 <motion.div
@@ -358,7 +369,7 @@ const Settings = () => {
                                     className="p-4 bg-black/30 rounded-xl space-y-4"
                                 >
                                     <div>
-                                        <label className="text-sm text-text-muted mb-2 block">Type d'activité</label>
+                                        <label className="text-sm text-text-muted mb-2 block">{t('settings.activityType')}</label>
                                         <div className="flex gap-2 flex-wrap">
                                             {availableTypes.map(type => (
                                                 <button
@@ -377,8 +388,8 @@ const Settings = () => {
                                     </div>
                                     <div>
                                         <div className="flex justify-between items-center mb-2">
-                                            <label className="text-sm text-text-muted">Durée cible</label>
-                                            <span className="text-primary font-bold">{newGoalMinutes} min</span>
+                                            <label className="text-sm text-text-muted">{t('settings.targetDuration')}</label>
+                                            <span className="text-primary font-bold">{newGoalMinutes} {t('common.min')}</span>
                                         </div>
                                         <input
                                             type="range"
@@ -398,13 +409,13 @@ const Settings = () => {
                                             }}
                                             className="flex-1 p-2 rounded-xl bg-white/5 text-text-muted hover:bg-white/10 transition-colors"
                                         >
-                                            Annuler
+                                            {t('common.cancel')}
                                         </button>
                                         <button
                                             onClick={handleAddGoal}
                                             className="flex-1 p-2 rounded-xl bg-primary text-white hover:bg-primary-dark transition-colors"
                                         >
-                                            Ajouter
+                                            {t('common.add')}
                                         </button>
                                     </div>
                                 </motion.div>
@@ -415,9 +426,9 @@ const Settings = () => {
                     {/* Warning message */}
                     <p className="text-xs text-text-muted italic flex items-start gap-2 mt-4">
                         <AlertTriangle size={14} className="shrink-0 mt-0.5 text-orange-400" />
-                        Modifier vos objectifs réinitialisera votre progression quotidienne à 0%.
+                        {t('settings.modifyWarning')}
                         {dailyGoalsRewardClaimed && (
-                            <span className="block text-yellow-400"> Le bonus de 10 XP ne peut pas être regagné aujourd'hui.</span>
+                            <span className="block text-yellow-400"> {t('settings.bonusWarningNote')}</span>
                         )}
                     </p>
                 </div>
@@ -442,13 +453,13 @@ const Settings = () => {
                                 <div className="w-12 h-12 rounded-full bg-orange-400/20 flex items-center justify-center">
                                     <AlertTriangle className="text-orange-400" size={24} />
                                 </div>
-                                <h3 className="text-lg font-bold text-text-main">Attention</h3>
+                                <h3 className="text-lg font-bold text-text-main">{t('common.warning')}</h3>
                             </div>
                             <p className="text-text-muted mb-6">
-                                Modifier vos objectifs réinitialisera votre progression quotidienne à <span className="text-primary font-bold">0%</span>.
+                                {t('settings.modifyWarning').replace('0%', '')} <span className="text-primary font-bold">0%</span>.
                                 {dailyGoalsRewardClaimed && (
                                     <span className="block mt-2 text-yellow-400">
-                                        Note: Le bonus de 10 XP a déjà été réclamé aujourd'hui et ne peut pas être regagné.
+                                        {t('settings.bonusAlreadyClaimed')}
                                     </span>
                                 )}
                             </p>
@@ -457,13 +468,13 @@ const Settings = () => {
                                     onClick={cancelChange}
                                     className="flex-1 p-3 rounded-xl bg-white/5 text-text-main hover:bg-white/10 transition-colors"
                                 >
-                                    Annuler
+                                    {t('common.cancel')}
                                 </button>
                                 <button
                                     onClick={confirmChange}
                                     className="flex-1 p-3 rounded-xl bg-orange-500 text-white hover:bg-orange-600 transition-colors"
                                 >
-                                    Confirmer
+                                    {t('common.confirm')}
                                 </button>
                             </div>
                         </motion.div>
@@ -487,7 +498,7 @@ const Settings = () => {
                             className="bg-surface rounded-2xl p-6 max-w-sm w-full border border-white/10"
                         >
                             <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-lg font-bold text-text-main">Modifier le profil</h3>
+                                <h3 className="text-lg font-bold text-text-main">{t('settings.profileModal.title')}</h3>
                                 <button
                                     onClick={() => setShowProfileModal(false)}
                                     className="p-2 rounded-lg hover:bg-white/10 transition-colors"
@@ -528,12 +539,12 @@ const Settings = () => {
 
                             {/* Name input */}
                             <div className="mb-6">
-                                <label className="block text-sm text-text-muted mb-2">Nom</label>
+                                <label className="block text-sm text-text-muted mb-2">{t('settings.profileModal.name')}</label>
                                 <input
                                     type="text"
                                     value={newName}
                                     onChange={(e) => setNewName(e.target.value)}
-                                    placeholder="Votre nom"
+                                    placeholder={t('settings.profileModal.namePlaceholder')}
                                     className="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/10 text-text-main placeholder-text-muted focus:outline-none focus:border-primary transition-colors"
                                     maxLength={50}
                                 />
@@ -545,7 +556,7 @@ const Settings = () => {
                                     onClick={() => setShowProfileModal(false)}
                                     className="flex-1 p-3 rounded-xl bg-white/5 text-text-main hover:bg-white/10 transition-colors"
                                 >
-                                    Annuler
+                                    {t('common.cancel')}
                                 </button>
                                 <button
                                     onClick={handleProfileUpdate}
@@ -555,7 +566,7 @@ const Settings = () => {
                                     {isUpdatingProfile ? (
                                         <Loader2 size={18} className="animate-spin" />
                                     ) : (
-                                        'Enregistrer'
+                                        t('common.save')
                                     )}
                                 </button>
                             </div>
@@ -598,7 +609,7 @@ const Settings = () => {
 
                 {/* Notifications Section */}
                 <div>
-                    <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">Notifications</h3>
+                    <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">{t('settings.notifications')}</h3>
                     <div className="bg-surface rounded-2xl overflow-hidden border border-white/5">
                         <button
                             onClick={handleNotificationToggle}
@@ -608,11 +619,11 @@ const Settings = () => {
                             <div className="flex items-center gap-3">
                                 <Bell size={20} className="text-text-muted" />
                                 <div className="text-left">
-                                    <span className="text-text-main block">Rappel quotidien</span>
+                                    <span className="text-text-main block">{t('settings.dailyReminder')}</span>
                                     <span className="text-xs text-text-muted">
                                         {!notificationsSupported
-                                            ? 'Non supporte sur cet appareil'
-                                            : 'Notification a 18h si objectifs non termines'}
+                                            ? t('settings.notSupported')
+                                            : t('settings.notificationTime')}
                                     </span>
                                 </div>
                             </div>
@@ -641,21 +652,21 @@ const Settings = () => {
                     className="w-full p-4 rounded-2xl bg-error/10 text-error font-medium flex items-center justify-center gap-2 hover:bg-error/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <LogOut size={20} />
-                    {isLoggingOut ? 'Déconnexion...' : 'Se Déconnecter'}
+                    {isLoggingOut ? t('settings.loggingOut') : t('settings.logout')}
                 </button>
 
                 {/* Delete Account Section */}
                 <div className="mt-8 pt-8 border-t border-white/10">
-                    <h3 className="text-sm font-semibold text-error uppercase tracking-wider mb-4">Zone de danger</h3>
+                    <h3 className="text-sm font-semibold text-error uppercase tracking-wider mb-4">{t('settings.dangerZone')}</h3>
                     <button
                         onClick={() => setShowDeleteModal(true)}
                         className="w-full p-4 rounded-2xl border-2 border-error/30 text-error font-medium flex items-center justify-center gap-2 hover:bg-error/10 transition-colors"
                     >
                         <UserX size={20} />
-                        Supprimer mon compte
+                        {t('settings.deleteAccount')}
                     </button>
                     <p className="text-xs text-text-muted mt-2 text-center">
-                        Cette action est irréversible. Toutes vos données seront supprimées.
+                        {t('settings.deleteWarning')}
                     </p>
                 </div>
             </div>
@@ -679,24 +690,24 @@ const Settings = () => {
                                 <div className="w-12 h-12 rounded-full bg-error/20 flex items-center justify-center">
                                     <UserX className="text-error" size={24} />
                                 </div>
-                                <h3 className="text-lg font-bold text-text-main">Supprimer le compte</h3>
+                                <h3 className="text-lg font-bold text-text-main">{t('settings.deleteConfirmTitle')}</h3>
                             </div>
                             <p className="text-text-muted mb-4">
-                                Cette action est <span className="text-error font-bold">irréversible</span>. Toutes vos données seront définitivement supprimées :
+                                {t('settings.deleteConfirmText')} <span className="text-error font-bold">{t('settings.deleteIrreversible')}</span>. {t('settings.deleteDataList')}
                             </p>
                             <ul className="text-sm text-text-muted mb-4 space-y-1 list-disc list-inside">
-                                <li>Vos synthèses et flashcards</li>
-                                <li>Votre progression et XP</li>
-                                <li>Vos dossiers et collections</li>
+                                <li>{t('settings.deleteSyntheses')}</li>
+                                <li>{t('settings.deleteProgress')}</li>
+                                <li>{t('settings.deleteFolders')}</li>
                             </ul>
                             <p className="text-text-muted mb-4">
-                                Pour confirmer, tapez <span className="font-mono bg-black/30 px-2 py-1 rounded text-error">SUPPRIMER</span>
+                                {t('settings.typeToConfirm')} <span className="font-mono bg-black/30 px-2 py-1 rounded text-error">{t('settings.deleteKeyword')}</span>
                             </p>
                             <input
                                 type="text"
                                 value={deleteConfirmText}
                                 onChange={(e) => setDeleteConfirmText(e.target.value)}
-                                placeholder="Tapez SUPPRIMER"
+                                placeholder={t('settings.typePlaceholder')}
                                 className="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/10 text-text-main placeholder-text-muted focus:outline-none focus:border-error transition-colors mb-4"
                             />
                             <div className="flex gap-3">
@@ -707,17 +718,17 @@ const Settings = () => {
                                     }}
                                     className="flex-1 p-3 rounded-xl bg-white/5 text-text-main hover:bg-white/10 transition-colors"
                                 >
-                                    Annuler
+                                    {t('common.cancel')}
                                 </button>
                                 <button
                                     onClick={handleDeleteAccount}
-                                    disabled={deleteConfirmText !== 'SUPPRIMER' || isDeletingAccount}
+                                    disabled={deleteConfirmText !== t('settings.deleteKeyword') || isDeletingAccount}
                                     className="flex-1 p-3 rounded-xl bg-error text-white hover:bg-error/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
                                     {isDeletingAccount ? (
                                         <Loader2 size={18} className="animate-spin" />
                                     ) : (
-                                        'Supprimer'
+                                        t('common.delete')
                                     )}
                                 </button>
                             </div>

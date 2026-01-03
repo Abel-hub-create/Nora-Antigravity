@@ -45,7 +45,7 @@ npm start          # Start Express server (production)
 
 ## Architecture
 
-**Nora** is a French-language gamified learning app built as a mobile-first React SPA with a phone frame wrapper.
+**Nora** is a bilingual (French/English) gamified learning app built as a mobile-first React SPA with a phone frame wrapper.
 
 ### Tech Stack
 - React 19 + Vite 7
@@ -53,6 +53,7 @@ npm start          # Start Express server (production)
 - Tailwind CSS with custom dark theme (slate-based)
 - Framer Motion for animations
 - Lucide React for icons
+- i18next + react-i18next for internationalization
 - Express.js backend with JWT authentication
 
 ### Core Architecture
@@ -126,6 +127,56 @@ The Profile page (`/profile`) displays two stats cards:
 |------|--------|-------------|
 | Moyenne par jour | `getAverageDailyStudyTime()` | Average study time in minutes (today + last 30 days history) |
 | Synthèses | API `/syntheses` | Total count of user's syntheses |
+
+## Internationalization (i18n)
+
+The app supports French and English languages using i18next.
+
+### Structure
+
+```
+src/i18n/
+├── index.js              # i18next configuration
+└── locales/
+    ├── fr.json           # French translations (with accents)
+    └── en.json           # English translations
+```
+
+### Usage
+
+```javascript
+import { useTranslation } from 'react-i18next';
+
+const MyComponent = () => {
+    const { t } = useTranslation();
+    return <h1>{t('home.greeting', { name: 'User' })}</h1>;
+};
+```
+
+### Language Selection
+
+- Located in Settings page (`/settings`) as the first section
+- Component: `/src/components/Settings/LanguageSelector.jsx`
+- Stored in localStorage under `nora_language`
+- Detects browser language on first visit, defaults to French
+
+### Translation Keys Structure
+
+| Namespace | Usage |
+|-----------|-------|
+| `common.*` | Shared buttons, labels (save, cancel, delete) |
+| `home.*` | Home page content |
+| `settings.*` | Settings page |
+| `auth.*` | Login, register, password reset |
+| `study.*` | Study pages |
+| `flashcards.*` | Flashcards mode |
+| `quiz.*` | Quiz mode |
+| `activities.*` | Activity type labels (Summary, Quiz, Flashcards) |
+
+### Adding New Translations
+
+1. Add key to both `fr.json` and `en.json`
+2. Use `t('namespace.key')` or `t('namespace.key', { variable: value })` for interpolation
 
 ## Study Time & XP System
 
@@ -324,7 +375,7 @@ Full-stack authentication with JWT tokens and secure cookie-based refresh tokens
 | `/forgot-password` | ForgotPassword | Request password reset email |
 | `/reset-password/:token` | ResetPassword | Set new password with reset token |
 | `/verify-email-sent` | VerifyEmailSent | Shows after registration, prompts to check email (1h expiry) |
-| `/verify-email/:token` | VerifyEmail | Verifies email from link, activates account |
+| `/verify-email/:token` | VerifyEmail | Verifies email from link. Shows: "Compte active" (success), "Compte deja actif" (already verified), "Lien expire" (token expired), or error |
 
 **Components**:
 - `ProtectedRoute` - HOC wrapping routes that require authentication
@@ -799,9 +850,9 @@ VAPID_SUBJECT=mailto:contact@mirora.cloud
 
 Transactional email system for password reset and email verification.
 
-### Current Status: NOT CONFIGURED
+### Current Status: CONFIGURED
 
-Email sending is implemented but requires proper configuration to work.
+Email sending is fully configured and working via Resend.
 
 ### Service
 
