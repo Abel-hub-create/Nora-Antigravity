@@ -319,11 +319,11 @@ Full-stack authentication with JWT tokens and secure cookie-based refresh tokens
 **Pages**:
 | Path | Page | Description |
 |------|------|-------------|
-| `/login` | Login | Email/password login with "Se souvenir de moi" |
-| `/register` | Register | User registration with pseudo, email, password |
+| `/login` | Login | Email/password login with "Se souvenir de moi" + resend verification button if email not verified |
+| `/register` | Register | User registration + resend verification button if email already used |
 | `/forgot-password` | ForgotPassword | Request password reset email |
 | `/reset-password/:token` | ResetPassword | Set new password with reset token |
-| `/verify-email-sent` | VerifyEmailSent | Shows after registration, prompts to check email |
+| `/verify-email-sent` | VerifyEmailSent | Shows after registration, prompts to check email (1h expiry) |
 | `/verify-email/:token` | VerifyEmail | Verifies email from link, activates account |
 
 **Components**:
