@@ -18,7 +18,7 @@ export const register = async ({ email, password, name }) => {
 
   // Generate verification token
   const verificationToken = crypto.randomBytes(32).toString('hex');
-  const verificationExpires = new Date(Date.now() + 86400000); // 24 hours
+  const verificationExpires = new Date(Date.now() + 3600000); // 1 hour
 
   // Create user with verification token
   const user = await userRepository.createWithVerificationToken({
@@ -214,7 +214,7 @@ export const resendVerificationEmail = async (email) => {
 
   // Generate new verification token
   const verificationToken = crypto.randomBytes(32).toString('hex');
-  const verificationExpires = new Date(Date.now() + 86400000); // 24 hours
+  const verificationExpires = new Date(Date.now() + 3600000); // 1 hour
 
   await userRepository.updateVerificationToken(user.id, verificationToken, verificationExpires);
 

@@ -812,7 +812,7 @@ Uses **Resend** (`/backend/src/services/emailService.js`) for sending emails.
 | Email | Trigger | Expiry |
 |-------|---------|--------|
 | Password Reset | User clicks "Mot de passe oublie" | 1 hour |
-| Email Verification | User registers new account | 24 hours |
+| Email Verification | User registers new account | 1 hour |
 
 ### Configuration Options
 
