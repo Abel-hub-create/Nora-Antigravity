@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Mail, Lock } from 'lucide-react';
+import { User, Mail, Lock, RefreshCw } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import AuthInput from '../components/AuthInput';
+import api from '../../../lib/api';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -14,9 +15,31 @@ const Register = () => {
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resendMessage, setResendMessage] = useState('');
 
   const { register, error: authError, clearError } = useAuth();
   const navigate = useNavigate();
+
+  // Check if error is about email already used
+  const isEmailAlreadyUsed = authError?.toLowerCase().includes('email est déjà utilisé') ||
+                              authError?.toLowerCase().includes('email est deja utilise');
+
+  const handleResendVerification = async () => {
+    if (!formData.email || isResending) return;
+
+    setIsResending(true);
+    setResendMessage('');
+
+    try {
+      await api.post('/auth/resend-verification', { email: formData.email });
+      setResendMessage('Email renvoyé ! Vérifie ta boîte mail (1h pour valider).');
+    } catch (error) {
+      setResendMessage('Erreur lors de l\'envoi. Réessaie plus tard.');
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -108,7 +131,26 @@ const Register = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-error/10 border border-error/20 rounded-xl p-3 text-error text-sm"
               >
-                {authError}
+                <p>{authError}</p>
+                {isEmailAlreadyUsed && (
+                  <div className="mt-3 pt-3 border-t border-error/20">
+                    <p className="text-text-muted mb-2">Tu n'as pas reçu l'email de vérification ?</p>
+                    <button
+                      type="button"
+                      onClick={handleResendVerification}
+                      disabled={isResending || !formData.email}
+                      className="flex items-center justify-center gap-2 w-full py-2 text-primary hover:text-primary-dark transition-colors disabled:opacity-50"
+                    >
+                      <RefreshCw size={16} className={isResending ? 'animate-spin' : ''} />
+                      <span>{isResending ? 'Envoi en cours...' : 'Renvoyer l\'email de vérification'}</span>
+                    </button>
+                    {resendMessage && (
+                      <p className={`text-center mt-2 ${resendMessage.includes('Erreur') ? 'text-error' : 'text-success'}`}>
+                        {resendMessage}
+                      </p>
+                    )}
+                  </div>
+                )}
               </motion.div>
             )}
 
