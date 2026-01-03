@@ -29,8 +29,15 @@ export const DAILY_GOALS_BONUS_XP = 10;
 // Helper to get today's date string
 const getTodayString = () => new Date().toDateString();
 
+// Helper to get user-specific storage key
+const getUserStorageKey = (baseKey, userId) => {
+    if (!userId) return null;
+    return `${baseKey}_${userId}`;
+};
+
 // Helper to load from localStorage with default value
 const loadFromStorage = (key, defaultValue) => {
+    if (!key) return defaultValue;
     try {
         const stored = localStorage.getItem(key);
         if (stored) {
@@ -44,6 +51,7 @@ const loadFromStorage = (key, defaultValue) => {
 
 // Helper to save to localStorage
 const saveToStorage = (key, value) => {
+    if (!key) return;
     try {
         localStorage.setItem(key, JSON.stringify(value));
     } catch (e) {
@@ -91,6 +99,9 @@ export const UserProvider = ({ children }) => {
         collection: authUser?.collection ?? []
     });
 
+    // Track the current user ID to detect user changes
+    const currentUserIdRef = useRef(authUser?.id ?? null);
+
     // Sync with auth user on mount and when authUser changes
     useEffect(() => {
         if (authUser) {
@@ -109,43 +120,82 @@ export const UserProvider = ({ children }) => {
         }
     }, [authUser]);
 
-    // Daily Stats State - Load from localStorage or use defaults
-    const [dailyStats, setDailyStats] = useState(() => {
-        const stored = loadFromStorage('nora_dailyStats', null);
-        if (stored && stored.date === getTodayString()) {
-            return stored;
+    // Helper function to load user-specific data from localStorage
+    const loadUserData = useCallback((userId) => {
+        if (!userId) {
+            return {
+                dailyStats: getDefaultDailyStats(),
+                dailyGoals: getDefaultDailyGoals(),
+                dailyGoalsRewardClaimed: false,
+                studyHistory: []
+            };
         }
-        return getDefaultDailyStats();
-    });
 
-    // Daily Goals State - Load from localStorage or use defaults
-    const [dailyGoals, setDailyGoalsState] = useState(() => {
-        const stored = loadFromStorage('nora_dailyGoals', null);
-        if (stored) {
-            // Reset completed status if it's a new day
-            const statsDate = loadFromStorage('nora_dailyStats', {})?.date;
-            if (statsDate !== getTodayString()) {
-                return stored.map(g => ({ ...g, completed: false }));
-            }
-            return stored;
+        const statsKey = getUserStorageKey('nora_dailyStats', userId);
+        const goalsKey = getUserStorageKey('nora_dailyGoals', userId);
+        const rewardKey = getUserStorageKey('nora_dailyGoalsRewardClaimed', userId);
+        const historyKey = getUserStorageKey('nora_studyHistory', userId);
+
+        // Load daily stats
+        let dailyStats = loadFromStorage(statsKey, null);
+        if (!dailyStats || dailyStats.date !== getTodayString()) {
+            dailyStats = getDefaultDailyStats();
         }
-        return getDefaultDailyGoals();
-    });
+
+        // Load daily goals
+        let dailyGoals = loadFromStorage(goalsKey, null);
+        if (dailyGoals) {
+            // Reset completed status if it's a new day
+            if (dailyStats.date !== getTodayString()) {
+                dailyGoals = dailyGoals.map(g => ({ ...g, completed: false }));
+            }
+        } else {
+            dailyGoals = getDefaultDailyGoals();
+        }
+
+        // Load reward claimed status
+        const storedReward = loadFromStorage(rewardKey, null);
+        const dailyGoalsRewardClaimed = storedReward && storedReward.date === getTodayString()
+            ? storedReward.claimed
+            : false;
+
+        // Load study history
+        const studyHistory = loadFromStorage(historyKey, []);
+
+        return { dailyStats, dailyGoals, dailyGoalsRewardClaimed, studyHistory };
+    }, []);
+
+    // Daily Stats State - Initialize with defaults, will be loaded when user is available
+    const [dailyStats, setDailyStats] = useState(getDefaultDailyStats);
+
+    // Daily Goals State - Initialize with defaults, will be loaded when user is available
+    const [dailyGoals, setDailyGoalsState] = useState(getDefaultDailyGoals);
 
     // Track if daily goals reward has been claimed today
-    const [dailyGoalsRewardClaimed, setDailyGoalsRewardClaimed] = useState(() => {
-        const stored = loadFromStorage('nora_dailyGoalsRewardClaimed', null);
-        if (stored && stored.date === getTodayString()) {
-            return stored.claimed;
-        }
-        return false;
-    });
+    const [dailyGoalsRewardClaimed, setDailyGoalsRewardClaimed] = useState(false);
 
     // Study history - stores total study time per day for average calculation
     // Format: [{ date: "Mon Dec 30 2024", totalSeconds: 3600 }, ...]
-    const [studyHistory, setStudyHistory] = useState(() => {
-        return loadFromStorage('nora_studyHistory', []);
-    });
+    const [studyHistory, setStudyHistory] = useState([]);
+
+    // Load user-specific data when user changes
+    useEffect(() => {
+        const newUserId = authUser?.id ?? null;
+        const previousUserId = currentUserIdRef.current;
+
+        // Detect user change
+        if (newUserId !== previousUserId) {
+            console.log(`[NORA] User changed from ${previousUserId} to ${newUserId}`);
+            currentUserIdRef.current = newUserId;
+
+            // Load data for the new user
+            const userData = loadUserData(newUserId);
+            setDailyStats(userData.dailyStats);
+            setDailyGoalsState(userData.dailyGoals);
+            setDailyGoalsRewardClaimed(userData.dailyGoalsRewardClaimed);
+            setStudyHistory(userData.studyHistory);
+        }
+    }, [authUser?.id, loadUserData]);
 
     // Notifications state for goal completions and XP gains
     const [notifications, setNotifications] = useState([]);
@@ -166,28 +216,40 @@ export const UserProvider = ({ children }) => {
         setNotifications(prev => prev.filter(n => n.id !== id));
     }, []);
 
-    // Persist dailyStats to localStorage
+    // Persist dailyStats to localStorage (user-specific)
     useEffect(() => {
-        saveToStorage('nora_dailyStats', dailyStats);
-    }, [dailyStats]);
+        const userId = authUser?.id;
+        if (!userId) return;
+        const key = getUserStorageKey('nora_dailyStats', userId);
+        saveToStorage(key, dailyStats);
+    }, [dailyStats, authUser?.id]);
 
-    // Persist dailyGoals to localStorage
+    // Persist dailyGoals to localStorage (user-specific)
     useEffect(() => {
-        saveToStorage('nora_dailyGoals', dailyGoals);
-    }, [dailyGoals]);
+        const userId = authUser?.id;
+        if (!userId) return;
+        const key = getUserStorageKey('nora_dailyGoals', userId);
+        saveToStorage(key, dailyGoals);
+    }, [dailyGoals, authUser?.id]);
 
-    // Persist dailyGoalsRewardClaimed to localStorage
+    // Persist dailyGoalsRewardClaimed to localStorage (user-specific)
     useEffect(() => {
-        saveToStorage('nora_dailyGoalsRewardClaimed', {
+        const userId = authUser?.id;
+        if (!userId) return;
+        const key = getUserStorageKey('nora_dailyGoalsRewardClaimed', userId);
+        saveToStorage(key, {
             date: getTodayString(),
             claimed: dailyGoalsRewardClaimed
         });
-    }, [dailyGoalsRewardClaimed]);
+    }, [dailyGoalsRewardClaimed, authUser?.id]);
 
-    // Persist studyHistory to localStorage
+    // Persist studyHistory to localStorage (user-specific)
     useEffect(() => {
-        saveToStorage('nora_studyHistory', studyHistory);
-    }, [studyHistory]);
+        const userId = authUser?.id;
+        if (!userId) return;
+        const key = getUserStorageKey('nora_studyHistory', userId);
+        saveToStorage(key, studyHistory);
+    }, [studyHistory, authUser?.id]);
 
     // Sync daily progress to backend for notification eligibility
     useEffect(() => {

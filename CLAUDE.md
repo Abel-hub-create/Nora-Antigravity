@@ -194,10 +194,18 @@ Pages using the timer:
 
 ### localStorage Keys
 
-- `nora_dailyStats` - Daily time counters and XP flags
-- `nora_dailyGoals` - User's daily goal configuration
-- `nora_dailyGoalsRewardClaimed` - Whether 10XP goals bonus was claimed
-- `nora_studyHistory` - Array of last 30 days study time `[{ date, totalSeconds }]`
+All localStorage keys are **user-specific** to ensure data isolation between accounts on the same browser.
+
+Format: `{baseKey}_{userId}`
+
+| Base Key | Example | Description |
+|----------|---------|-------------|
+| `nora_dailyStats` | `nora_dailyStats_42` | Daily time counters and XP flags |
+| `nora_dailyGoals` | `nora_dailyGoals_42` | User's daily goal configuration |
+| `nora_dailyGoalsRewardClaimed` | `nora_dailyGoalsRewardClaimed_42` | Whether 10XP goals bonus was claimed |
+| `nora_studyHistory` | `nora_studyHistory_42` | Array of last 30 days study time |
+
+**Important**: When user changes (login/logout), data is automatically loaded for the new user. Data is only saved when a user is authenticated.
 
 ## Daily Goals & Progress System
 
