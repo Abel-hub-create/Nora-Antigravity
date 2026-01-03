@@ -57,7 +57,7 @@ const VerifyEmailSent = () => {
 
           <p className="text-text-muted text-sm mb-6">
             Clique sur le lien dans l'email pour activer ton compte.
-            Le lien expire dans 24 heures.
+            Le lien expire dans 1 heure.
           </p>
 
           {resendMessage && (
