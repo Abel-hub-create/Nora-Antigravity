@@ -130,7 +130,7 @@ The Profile page (`/profile`) displays two stats cards:
 
 ## Internationalization (i18n)
 
-The app supports French and English languages using i18next.
+The app is **fully bilingual** (French/English) using i18next. All UI text is translated.
 
 ### Structure
 
@@ -138,8 +138,8 @@ The app supports French and English languages using i18next.
 src/i18n/
 ├── index.js              # i18next configuration
 └── locales/
-    ├── fr.json           # French translations (with accents)
-    └── en.json           # English translations
+    ├── fr.json           # French translations (~250 keys)
+    └── en.json           # English translations (~250 keys)
 ```
 
 ### Usage
@@ -148,8 +148,14 @@ src/i18n/
 import { useTranslation } from 'react-i18next';
 
 const MyComponent = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+
+    // Simple translation
     return <h1>{t('home.greeting', { name: 'User' })}</h1>;
+
+    // Dynamic locale for dates
+    const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
+    return <span>{new Date().toLocaleDateString(locale)}</span>;
 };
 ```
 
@@ -164,19 +170,51 @@ const MyComponent = () => {
 
 | Namespace | Usage |
 |-----------|-------|
-| `common.*` | Shared buttons, labels (save, cancel, delete) |
+| `common.*` | Shared buttons, labels (save, cancel, delete, loading, today, yesterday, etc.) |
 | `home.*` | Home page content |
-| `settings.*` | Settings page |
-| `auth.*` | Login, register, password reset |
-| `study.*` | Study pages |
-| `flashcards.*` | Flashcards mode |
-| `quiz.*` | Quiz mode |
+| `settings.*` | Settings page (account, profile, subscription, notifications, goals) |
+| `auth.*` | Login, register, password reset, email verification |
+| `study.*` | Study pages (search, list, empty states) |
+| `studyDetail.*` | Summary detail page |
+| `flashcards.*` | Flashcards mode (session, cards, completion) |
+| `quiz.*` | Quiz mode (questions, results, messages by score) |
+| `import.*` | Import page (voice, photo modes) |
+| `process.*` | AI generation steps and status |
+| `profile.*` | Profile page (level, XP, folders) |
+| `collection.*` | Creature collection (eggs, capsules) |
+| `folders.*` | Folder management (create, rename, add syntheses) |
 | `activities.*` | Activity type labels (Summary, Quiz, Flashcards) |
+| `notifications.*` | XP and goal completion notifications |
+| `errors.*` | Error messages |
+
+### Translated Components
+
+All pages and components use `t()` for text:
+- **Pages**: Home, Study, StudyDetail, StudyFlashcards, StudyQuiz, Import, Process, Profile, Collection, FolderDetail, Settings
+- **Components**: CreateFolderModal, AddSynthesesModal, LanguageSelector, DailyProgress
+- **Context**: UserContext (notifications, goal labels)
 
 ### Adding New Translations
 
 1. Add key to both `fr.json` and `en.json`
 2. Use `t('namespace.key')` or `t('namespace.key', { variable: value })` for interpolation
+3. For plurals, use separate keys: `count` (singular) and `countPlural` (plural)
+4. For dates, use `i18n.language` to get locale for `toLocaleDateString()`
+
+### Dynamic Labels in UserContext
+
+Activity types have both static labels (fallback) and translation keys:
+
+```javascript
+export const ACTIVITY_TYPES = {
+    summary: { label: 'Synthèse', labelKey: 'activities.summary', key: 'summaryTime' },
+    quiz: { label: 'Quiz', labelKey: 'activities.quiz', key: 'quizTime' },
+    flashcards: { label: 'Flashcards', labelKey: 'activities.flashcards', key: 'flashcardsTime' }
+};
+
+// Usage in component:
+const label = t(ACTIVITY_TYPES[type].labelKey);
+```
 
 ## Study Time & XP System
 
