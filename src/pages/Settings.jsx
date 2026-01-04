@@ -78,19 +78,19 @@ const Settings = () => {
                 // Enable: Subscribe to push notifications
                 await notificationService.subscribeToPush();
                 setNotificationsEnabled(true);
-                addNotification('Notifications activees', 'success');
+                addNotification(t('settings.notificationsEnabled'), 'success');
             } else {
                 // Disable: Unsubscribe from push notifications
                 await notificationService.unsubscribeFromPush();
                 setNotificationsEnabled(false);
-                addNotification('Notifications desactivees', 'success');
+                addNotification(t('settings.notificationsDisabled'), 'success');
             }
         } catch (error) {
             console.error('Failed to toggle notifications:', error);
             if (error.message === 'Notification permission denied') {
-                addNotification('Permission de notification refusee', 'warning');
+                addNotification(t('settings.permissionDenied'), 'warning');
             } else {
-                addNotification('Erreur lors de la modification des notifications', 'warning');
+                addNotification(t('settings.notificationError'), 'warning');
             }
         } finally {
             setNotificationsLoading(false);
@@ -104,13 +104,13 @@ const Settings = () => {
 
         // Validate file type
         if (!file.type.startsWith('image/')) {
-            addNotification('Veuillez selectionner une image', 'warning');
+            addNotification(t('settings.profileModal.selectImage'), 'warning');
             return;
         }
 
         // Validate file size (max 2MB)
         if (file.size > 2 * 1024 * 1024) {
-            addNotification('L\'image ne doit pas depasser 2MB', 'warning');
+            addNotification(t('settings.profileModal.imageTooLarge'), 'warning');
             return;
         }
 
@@ -125,7 +125,7 @@ const Settings = () => {
     // Handle profile update
     const handleProfileUpdate = async () => {
         if (!newName.trim()) {
-            addNotification('Le nom ne peut pas etre vide', 'warning');
+            addNotification(t('settings.profileModal.nameEmpty'), 'warning');
             return;
         }
 
@@ -136,10 +136,10 @@ const Settings = () => {
                 name: newName.trim(),
                 avatar: newAvatar
             });
-            addNotification('Profil mis a jour', 'success');
+            addNotification(t('settings.profileModal.updated'), 'success');
             setShowProfileModal(false);
         } catch (error) {
-            addNotification('Erreur lors de la mise a jour', 'warning');
+            addNotification(t('settings.profileModal.updateError'), 'warning');
         } finally {
             setIsUpdatingProfile(false);
         }
@@ -154,10 +154,10 @@ const Settings = () => {
 
     const sections = [
         {
-            title: "Compte",
+            title: t('settings.account'),
             items: [
-                { icon: User, label: "Modifier le Profil", value: user?.name || "Utilisateur", onClick: openProfileModal },
-                { icon: CreditCard, label: "Abonnement", value: "Plan Gratuit" },
+                { icon: User, label: t('settings.editProfile'), value: user?.name || t('common.user'), onClick: openProfileModal },
+                { icon: CreditCard, label: t('settings.subscription'), value: t('settings.freePlan') },
             ]
         }
     ];
@@ -190,7 +190,7 @@ const Settings = () => {
     // Handle adding a new goal with warning
     const handleAddGoal = () => {
         if (!newGoalType) {
-            addNotification('Veuillez sélectionner un type d\'objectif', 'warning');
+            addNotification(t('settings.selectGoalType'), 'warning');
             return;
         }
         if (dailyProgressPercentage > 0) {
@@ -245,7 +245,7 @@ const Settings = () => {
     };
 
     const handleDeleteAccount = async () => {
-        if (deleteConfirmText !== 'SUPPRIMER') return;
+        if (deleteConfirmText !== t('settings.deleteKeyword')) return;
 
         setIsDeletingAccount(true);
         try {
@@ -253,7 +253,7 @@ const Settings = () => {
             navigate('/login');
         } catch (error) {
             console.error('Delete account failed:', error);
-            addNotification('Erreur lors de la suppression du compte', 'warning');
+            addNotification(t('settings.deleteError'), 'warning');
         } finally {
             setIsDeletingAccount(false);
             setShowDeleteModal(false);

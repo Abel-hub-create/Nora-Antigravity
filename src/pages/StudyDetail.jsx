@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Layers, Brain, Calendar, Trash2, Loader2, AlertCircle } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import * as syntheseService from '../services/syntheseService';
 import useActiveTimer from '../hooks/useActiveTimer';
 
 const StudyDetail = () => {
+    const { t, i18n } = useTranslation();
     // Track time spent reading the summary
     useActiveTimer('summary');
     const { id } = useParams();
@@ -23,26 +25,27 @@ const StudyDetail = () => {
                 const data = await syntheseService.getSynthese(id);
                 setSynthese(data);
             } catch (err) {
-                setError('Impossible de charger cette synthèse');
+                setError(t('studyDetail.loadError'));
                 console.error(err);
             } finally {
                 setIsLoading(false);
             }
         };
         loadSynthese();
-    }, [id]);
+    }, [id, t]);
 
     const handleDelete = async () => {
         try {
             await syntheseService.deleteSynthese(id);
             navigate('/study');
         } catch (err) {
-            console.error('Erreur suppression:', err);
+            console.error('Error deleting:', err);
         }
     };
 
     const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString('fr-FR', {
+        const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
+        return new Date(dateString).toLocaleDateString(locale, {
             day: 'numeric',
             month: 'long',
             year: 'numeric'
@@ -54,7 +57,7 @@ const StudyDetail = () => {
             <div className="min-h-full bg-background flex items-center justify-center">
                 <div className="text-center">
                     <Loader2 className="animate-spin text-primary mx-auto mb-3" size={32} />
-                    <p className="text-text-muted">Chargement...</p>
+                    <p className="text-text-muted">{t('common.loading')}</p>
                 </div>
             </div>
         );
@@ -65,11 +68,11 @@ const StudyDetail = () => {
             <div className="min-h-full bg-background p-6">
                 <Link to="/study" className="inline-flex items-center gap-2 text-text-muted hover:text-text-main mb-6">
                     <ArrowLeft size={20} />
-                    Retour
+                    {t('common.back')}
                 </Link>
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                     <AlertCircle className="text-error mb-3" size={40} />
-                    <p className="text-text-muted">{error || 'Synthèse introuvable'}</p>
+                    <p className="text-text-muted">{error || t('study.notFound')}</p>
                 </div>
             </div>
         );
@@ -111,9 +114,9 @@ const StudyDetail = () => {
                     <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
                         <Layers className="text-primary" size={24} />
                     </div>
-                    <span className="font-medium text-text-main">Flashcards</span>
+                    <span className="font-medium text-text-main">{t('study.flashcardsButton')}</span>
                     <span className="text-xs text-text-muted">
-                        {synthese.flashcards?.length || 0} cartes
+                        {synthese.flashcards?.length || 0} {t('common.cards')}
                     </span>
                 </Link>
 
@@ -124,9 +127,9 @@ const StudyDetail = () => {
                     <div className="w-12 h-12 bg-secondary/20 rounded-xl flex items-center justify-center">
                         <Brain className="text-secondary" size={24} />
                     </div>
-                    <span className="font-medium text-text-main">Quiz</span>
+                    <span className="font-medium text-text-main">{t('study.quizButton')}</span>
                     <span className="text-xs text-text-muted">
-                        {synthese.quizQuestions?.length || 0} questions
+                        {synthese.quizQuestions?.length || 0} {t('common.questions')}
                     </span>
                 </Link>
             </motion.div>
@@ -138,7 +141,7 @@ const StudyDetail = () => {
                 transition={{ delay: 0.1 }}
                 className="bg-surface rounded-2xl border border-white/5 p-5 mb-6"
             >
-                <h2 className="font-semibold text-text-main mb-3">Synthèse</h2>
+                <h2 className="font-semibold text-text-main mb-3">{t('studyDetail.summary')}</h2>
                 <div className="text-text-muted text-sm leading-relaxed whitespace-pre-wrap">
                     {synthese.summary_content}
                 </div>
@@ -153,20 +156,20 @@ const StudyDetail = () => {
                 {showDeleteConfirm ? (
                     <div className="bg-error/10 border border-error/20 rounded-2xl p-4">
                         <p className="text-sm text-text-main mb-3">
-                            Supprimer cette synthèse et tout son contenu ?
+                            {t('studyDetail.deleteConfirm')}
                         </p>
                         <div className="flex gap-2">
                             <button
                                 onClick={handleDelete}
                                 className="flex-1 py-2 bg-error text-white rounded-xl font-medium hover:bg-error/90 transition-colors"
                             >
-                                Supprimer
+                                {t('common.delete')}
                             </button>
                             <button
                                 onClick={() => setShowDeleteConfirm(false)}
                                 className="flex-1 py-2 bg-surface text-text-muted rounded-xl font-medium hover:bg-surface/80 transition-colors"
                             >
-                                Annuler
+                                {t('common.cancel')}
                             </button>
                         </div>
                     </div>
@@ -176,7 +179,7 @@ const StudyDetail = () => {
                         className="w-full py-3 text-error/70 hover:text-error flex items-center justify-center gap-2 transition-colors"
                     >
                         <Trash2 size={18} />
-                        <span className="text-sm">Supprimer cette synthèse</span>
+                        <span className="text-sm">{t('studyDetail.deleteSynthesis')}</span>
                     </button>
                 )}
             </motion.div>

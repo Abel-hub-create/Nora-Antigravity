@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
   Folder,
@@ -16,6 +17,7 @@ import * as folderService from '../services/folderService';
 import AddSynthesesModal from '../components/Folders/AddSynthesesModal';
 
 const FolderDetail = () => {
+  const { t, i18n } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -53,14 +55,14 @@ const FolderDetail = () => {
         setEditName(folderData.name);
       } catch (err) {
         console.error('Error fetching folder:', err);
-        setError('Impossible de charger le dossier');
+        setError(t('folders.loadError'));
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [id]);
+  }, [id, t]);
 
   // Load available syntheses when opening add modal
   const handleOpenAddModal = async () => {
@@ -141,6 +143,11 @@ const FolderDetail = () => {
     }
   };
 
+  const formatDate = (dateString) => {
+    const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
+    return new Date(dateString).toLocaleDateString(locale);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-full bg-background flex items-center justify-center">
@@ -157,11 +164,11 @@ const FolderDetail = () => {
           className="flex items-center gap-2 text-text-muted mb-6"
         >
           <ArrowLeft size={20} />
-          Retour
+          {t('common.back')}
         </button>
         <div className="text-center py-12">
           <Folder size={48} className="mx-auto text-text-muted mb-4 opacity-50" />
-          <p className="text-text-muted">{error || 'Dossier introuvable'}</p>
+          <p className="text-text-muted">{error || t('folders.notFound')}</p>
         </div>
       </div>
     );
@@ -218,7 +225,7 @@ const FolderDetail = () => {
                   className="w-full px-4 py-3 flex items-center gap-3 text-text-main hover:bg-white/5 transition-colors"
                 >
                   <Edit2 size={16} />
-                  Renommer
+                  {t('folders.rename')}
                 </button>
                 <button
                   onClick={() => {
@@ -228,7 +235,7 @@ const FolderDetail = () => {
                   className="w-full px-4 py-3 flex items-center gap-3 text-red-400 hover:bg-white/5 transition-colors"
                 >
                   <Trash2 size={16} />
-                  Supprimer
+                  {t('common.delete')}
                 </button>
               </motion.div>
             </>
@@ -242,7 +249,7 @@ const FolderDetail = () => {
         className="w-full mb-6 py-3 border-2 border-dashed border-white/10 rounded-xl text-text-muted hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2"
       >
         <Plus size={20} />
-        Ajouter des synthèses
+        {t('folders.addSyntheses')}
       </button>
 
       {/* Syntheses List */}
@@ -250,10 +257,10 @@ const FolderDetail = () => {
         <div className="text-center py-12">
           <FileText size={48} className="mx-auto text-text-muted mb-4 opacity-50" />
           <p className="text-text-muted">
-            Ce dossier est vide
+            {t('folders.empty')}
           </p>
           <p className="text-sm text-text-muted mt-1">
-            Ajoutez des synthèses pour les organiser
+            {t('folders.emptyHint')}
           </p>
         </div>
       ) : (
@@ -274,13 +281,13 @@ const FolderDetail = () => {
                   {synthese.title}
                 </h3>
                 <p className="text-xs text-text-muted mt-0.5">
-                  {new Date(synthese.created_at).toLocaleDateString('fr-FR')}
+                  {formatDate(synthese.created_at)}
                 </p>
               </Link>
               <button
                 onClick={() => handleRemoveSynthese(synthese.id)}
                 className="p-2 text-text-muted hover:text-red-400 transition-colors shrink-0"
-                title="Retirer du dossier"
+                title={t('folders.removeFromFolder')}
               >
                 <X size={18} />
               </button>
@@ -312,7 +319,7 @@ const FolderDetail = () => {
             className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 bg-surface rounded-2xl border border-white/10 p-6 max-w-sm mx-auto"
           >
             <h2 className="text-lg font-bold text-text-main mb-4">
-              Renommer le dossier
+              {t('folders.renameFolder')}
             </h2>
             <input
               type="text"
@@ -326,14 +333,14 @@ const FolderDetail = () => {
                 onClick={() => setShowEditModal(false)}
                 className="flex-1 py-3 bg-white/5 text-text-main rounded-xl"
               >
-                Annuler
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleUpdateName}
                 disabled={isSubmitting || !editName.trim()}
                 className="flex-1 py-3 bg-primary text-white rounded-xl disabled:opacity-50"
               >
-                {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
+                {isSubmitting ? t('common.saving') : t('common.save')}
               </button>
             </div>
           </motion.div>
@@ -353,24 +360,24 @@ const FolderDetail = () => {
             className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 bg-surface rounded-2xl border border-white/10 p-6 max-w-sm mx-auto"
           >
             <h2 className="text-lg font-bold text-text-main mb-2">
-              Supprimer le dossier ?
+              {t('folders.deleteConfirm')}
             </h2>
             <p className="text-text-muted text-sm mb-6">
-              Les synthèses ne seront pas supprimées, elles seront simplement retirées du dossier.
+              {t('folders.deleteHint')}
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 className="flex-1 py-3 bg-white/5 text-text-main rounded-xl"
               >
-                Annuler
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleDelete}
                 disabled={isSubmitting}
                 className="flex-1 py-3 bg-red-500 text-white rounded-xl disabled:opacity-50"
               >
-                {isSubmitting ? 'Suppression...' : 'Supprimer'}
+                {isSubmitting ? t('common.deleting') : t('common.delete')}
               </button>
             </div>
           </motion.div>

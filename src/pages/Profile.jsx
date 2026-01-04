@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Settings, Folder, Clock, Star, ChevronRight, Plus, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import * as folderService from '../services/folderService';
 import * as syntheseService from '../services/syntheseService';
 import FolderCard from '../components/Folders/FolderCard';
@@ -10,13 +11,14 @@ import { useAuth } from '../features/auth/hooks/useAuth';
 import { useUser } from '../context/UserContext';
 
 const Profile = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { user: authUser } = useAuth();
     const { user: userData, getAverageDailyStudyTime } = useUser();
 
     // Combiner les données auth (nom, avatar) et user context (level, xp)
     const user = {
-        name: authUser?.name || "Utilisateur",
+        name: authUser?.name || t('common.user'),
         avatar: authUser?.avatar || null,
         level: userData?.level || 1,
         exp: userData?.exp || 0,
@@ -72,7 +74,7 @@ const Profile = () => {
         <div className="min-h-full bg-background p-6 pb-24">
             {/* Header */}
             <header className="flex justify-between items-center mb-8">
-                <h1 className="text-2xl font-bold text-text-main">Mon Profil</h1>
+                <h1 className="text-2xl font-bold text-text-main">{t('profile.title')}</h1>
                 <Link to="/settings" className="p-2 bg-surface rounded-full text-text-muted hover:text-text-main transition-colors">
                     <Settings size={20} />
                 </Link>
@@ -96,7 +98,7 @@ const Profile = () => {
                         <h2 className="text-xl font-bold text-text-main">{user.name}</h2>
                         <div className="flex items-center gap-2 text-sm text-primary font-medium">
                             <Star size={14} className="fill-current" />
-                            Niveau {user.level}
+                            {t('profile.level')} {user.level}
                         </div>
                     </div>
                     <div className="ml-auto bg-black/30 px-3 py-1 rounded-full border border-white/10 flex items-center gap-2">
@@ -119,7 +121,7 @@ const Profile = () => {
                         />
                     </div>
                     <p className="text-xs text-text-muted mt-2 text-center">
-                        {user.nextLevelExp - user.exp} XP vers le Niveau {user.level + 1}
+                        {t('profile.xpToLevel', { xp: user.nextLevelExp - user.exp, level: user.level + 1 })}
                     </p>
                 </div>
 
@@ -132,26 +134,26 @@ const Profile = () => {
                 <div className="bg-surface/50 p-4 rounded-2xl border border-white/5 flex flex-col items-center justify-center">
                     <span className="text-2xl font-bold text-text-main mb-1">
                         <Clock size={20} className="inline mr-1" />
-                        {averageMinutes} min
+                        {averageMinutes} {t('common.min')}
                     </span>
-                    <span className="text-xs text-text-muted">Moyenne par jour</span>
+                    <span className="text-xs text-text-muted">{t('profile.avgPerDay')}</span>
                 </div>
                 <div className="bg-surface/50 p-4 rounded-2xl border border-white/5 flex flex-col items-center justify-center">
                     <span className="text-2xl font-bold text-text-main mb-1">📚 {synthesesCount}</span>
-                    <span className="text-xs text-text-muted">Synthèses</span>
+                    <span className="text-xs text-text-muted">{t('profile.synthesesCount')}</span>
                 </div>
             </div>
 
             {/* Folders Section */}
             <div>
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold text-text-main">Mes Dossiers</h3>
+                    <h3 className="text-lg font-bold text-text-main">{t('profile.folders')}</h3>
                     <button
                         onClick={() => setShowCreateModal(true)}
                         className="flex items-center gap-1 text-xs text-primary font-medium"
                     >
                         <Plus size={16} />
-                        Créer
+                        {t('profile.createFolder')}
                     </button>
                 </div>
 
@@ -162,9 +164,9 @@ const Profile = () => {
                 ) : folders.length === 0 ? (
                     <div className="text-center py-8">
                         <Folder size={40} className="mx-auto text-text-muted mb-3 opacity-50" />
-                        <p className="text-text-muted text-sm">Aucun dossier</p>
+                        <p className="text-text-muted text-sm">{t('profile.noFolders')}</p>
                         <p className="text-text-muted text-xs mt-1">
-                            Créez un dossier pour organiser vos synthèses
+                            {t('profile.createFolderHint')}
                         </p>
                     </div>
                 ) : (

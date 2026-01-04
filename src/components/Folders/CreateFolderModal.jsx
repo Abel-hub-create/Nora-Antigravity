@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Folder, Check } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const PRESET_COLORS = [
   '#6366f1', // Indigo (default)
@@ -14,6 +15,7 @@ const PRESET_COLORS = [
 ];
 
 const CreateFolderModal = ({ isOpen, onClose, onSubmit, isLoading = false }) => {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [color, setColor] = useState(PRESET_COLORS[0]);
   const [error, setError] = useState('');
@@ -23,12 +25,12 @@ const CreateFolderModal = ({ isOpen, onClose, onSubmit, isLoading = false }) => 
     setError('');
 
     if (!name.trim()) {
-      setError('Le nom du dossier est requis');
+      setError(t('folders.nameRequired'));
       return;
     }
 
     if (name.length > 100) {
-      setError('Le nom ne peut pas dépasser 100 caractères');
+      setError(t('folders.nameTooLong'));
       return;
     }
 
@@ -38,7 +40,7 @@ const CreateFolderModal = ({ isOpen, onClose, onSubmit, isLoading = false }) => 
       setColor(PRESET_COLORS[0]);
       onClose();
     } catch (err) {
-      setError(err.message || 'Erreur lors de la création');
+      setError(err.message || t('folders.createError'));
     }
   };
 
@@ -71,7 +73,7 @@ const CreateFolderModal = ({ isOpen, onClose, onSubmit, isLoading = false }) => 
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-text-main">Nouveau Dossier</h2>
+              <h2 className="text-lg font-bold text-text-main">{t('folders.new')}</h2>
               <button
                 onClick={handleClose}
                 className="p-2 text-text-muted hover:text-text-main transition-colors"
@@ -94,13 +96,13 @@ const CreateFolderModal = ({ isOpen, onClose, onSubmit, isLoading = false }) => 
               {/* Name Input */}
               <div className="mb-4">
                 <label className="block text-sm text-text-muted mb-2">
-                  Nom du dossier
+                  {t('folders.name')}
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Ex: Mathématiques"
+                  placeholder={t('folders.namePlaceholder')}
                   className="w-full px-4 py-3 bg-background rounded-xl border border-white/10 text-text-main placeholder:text-text-muted focus:outline-none focus:border-primary transition-colors"
                   autoFocus
                   disabled={isLoading}
@@ -110,7 +112,7 @@ const CreateFolderModal = ({ isOpen, onClose, onSubmit, isLoading = false }) => 
               {/* Color Picker */}
               <div className="mb-6">
                 <label className="block text-sm text-text-muted mb-2">
-                  Couleur
+                  {t('folders.color')}
                 </label>
                 <div className="flex flex-wrap gap-3">
                   {PRESET_COLORS.map((c) => (
@@ -140,7 +142,7 @@ const CreateFolderModal = ({ isOpen, onClose, onSubmit, isLoading = false }) => 
                 disabled={isLoading || !name.trim()}
                 className="w-full py-3 bg-primary text-white font-medium rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:bg-primary-dark"
               >
-                {isLoading ? 'Création...' : 'Créer le dossier'}
+                {isLoading ? t('common.creating') : t('folders.createFolder')}
               </button>
             </form>
           </motion.div>

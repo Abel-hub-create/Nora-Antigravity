@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, RotateCw, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import useActiveTimer from '../hooks/useActiveTimer';
 import * as syntheseService from '../services/syntheseService';
 
 const StudyFlashcards = () => {
+    const { t } = useTranslation();
     useActiveTimer('flashcards');
     const { id } = useParams();
     const [cards, setCards] = useState([]);
@@ -23,7 +25,7 @@ const StudyFlashcards = () => {
                 setCards(response.flashcards || []);
                 setSyntheseTitle(response.syntheseTitle || 'Flashcards');
             } catch (error) {
-                console.error('Erreur chargement flashcards:', error);
+                console.error('Error loading flashcards:', error);
             } finally {
                 setIsLoading(false);
             }
@@ -73,7 +75,7 @@ const StudyFlashcards = () => {
             <div className="min-h-full bg-background flex items-center justify-center">
                 <div className="text-center">
                     <Loader2 className="animate-spin text-primary mx-auto mb-3" size={32} />
-                    <p className="text-text-muted">Chargement...</p>
+                    <p className="text-text-muted">{t('common.loading')}</p>
                 </div>
             </div>
         );
@@ -84,10 +86,10 @@ const StudyFlashcards = () => {
             <div className="min-h-full bg-background p-6">
                 <Link to={`/study/${id}`} className="inline-flex items-center gap-2 text-text-muted hover:text-text-main mb-6">
                     <ArrowLeft size={20} />
-                    Retour
+                    {t('common.back')}
                 </Link>
                 <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <p className="text-text-muted">Aucune flashcard pour cette synthèse</p>
+                    <p className="text-text-muted">{t('flashcards.noFlashcards')}</p>
                 </div>
             </div>
         );
@@ -104,15 +106,17 @@ const StudyFlashcards = () => {
                 >
                     <span className="text-3xl">🎉</span>
                 </motion.div>
-                <h2 className="text-2xl font-bold text-text-main mb-2">Session terminée !</h2>
+                <h2 className="text-2xl font-bold text-text-main mb-2">{t('flashcards.completed')}</h2>
                 <p className="text-text-muted mb-6">
-                    Tu as parcouru {cards.length} carte{cards.length !== 1 ? 's' : ''}
+                    {cards.length === 1
+                        ? t('flashcards.reviewedAll', { count: cards.length })
+                        : t('flashcards.reviewedAllPlural', { count: cards.length })}
                 </p>
                 <Link
                     to={`/study/${id}`}
                     className="bg-primary text-white px-8 py-3 rounded-xl font-medium hover:bg-primary-dark transition-colors"
                 >
-                    Retour à la synthèse
+                    {t('flashcards.backToSynthesis')}
                 </Link>
             </div>
         );
@@ -126,7 +130,7 @@ const StudyFlashcards = () => {
                 </Link>
                 <div className="flex-1 min-w-0">
                     <h1 className="text-lg font-bold text-text-main truncate">{syntheseTitle}</h1>
-                    <p className="text-xs text-text-muted">Flashcards</p>
+                    <p className="text-xs text-text-muted">{t('flashcards.title')}</p>
                 </div>
             </header>
 
@@ -158,13 +162,13 @@ const StudyFlashcards = () => {
                                     className="absolute inset-0 bg-surface border border-white/10 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-xl"
                                     style={{ backfaceVisibility: "hidden" }}
                                 >
-                                    <span className="text-sm text-primary font-bold uppercase tracking-wider mb-4">Question</span>
+                                    <span className="text-sm text-primary font-bold uppercase tracking-wider mb-4">{t('flashcards.question')}</span>
                                     <p className="text-xl font-medium text-text-main leading-relaxed">
                                         {cards[currentCardIndex].front}
                                     </p>
                                     <div className="absolute bottom-6 text-text-muted text-xs flex items-center gap-2">
                                         <RotateCw size={14} />
-                                        Appuyer pour retourner
+                                        {t('flashcards.tapToReveal')}
                                     </div>
                                 </div>
 
@@ -173,7 +177,7 @@ const StudyFlashcards = () => {
                                     className="absolute inset-0 bg-surface border border-primary/20 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-xl shadow-primary/5"
                                     style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                                 >
-                                    <span className="text-sm text-primary font-bold uppercase tracking-wider mb-4">Réponse</span>
+                                    <span className="text-sm text-primary font-bold uppercase tracking-wider mb-4">{t('flashcards.answer')}</span>
                                     <p className="text-lg text-text-main leading-relaxed">
                                         {cards[currentCardIndex].back}
                                     </p>

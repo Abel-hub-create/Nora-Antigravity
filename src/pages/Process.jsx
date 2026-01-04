@@ -1,23 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Check, Loader2, AlertCircle, Sparkles, BookOpen, Brain, HelpCircle, Save, ArrowLeft } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 import { createSynthese } from '../services/syntheseService';
 import { generateComplete, isMockMode } from '../services/openaiService';
 
-const STEPS = [
-  { id: 'title', label: 'Titre', icon: Sparkles, description: 'Génération du titre' },
-  { id: 'summary', label: 'Synthèse', icon: BookOpen, description: 'Création de la synthèse' },
-  { id: 'flashcards', label: 'Flashcards', icon: Brain, description: 'Génération des flashcards' },
-  { id: 'quiz', label: 'Quiz', icon: HelpCircle, description: 'Création des questions' },
-  { id: 'saving', label: 'Sauvegarde', icon: Save, description: 'Enregistrement' }
-];
-
 const Process = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { addNotification } = useUser();
+
+  const STEPS = [
+    { id: 'title', label: t('process.steps.title'), icon: Sparkles, description: t('process.steps.titleDesc') },
+    { id: 'summary', label: t('process.steps.summary'), icon: BookOpen, description: t('process.steps.summaryDesc') },
+    { id: 'flashcards', label: t('process.steps.flashcards'), icon: Brain, description: t('process.steps.flashcardsDesc') },
+    { id: 'quiz', label: t('process.steps.quiz'), icon: HelpCircle, description: t('process.steps.quizDesc') },
+    { id: 'saving', label: t('process.steps.saving'), icon: Save, description: t('process.steps.savingDesc') }
+  ];
 
   // Récupérer les données passées depuis Import
   const { content, sourceType } = location.state || {};
@@ -76,9 +78,9 @@ const Process = () => {
 
         // Notification
         if (isMockMode()) {
-          addNotification('Synthese creee (mode demo)', 'success');
+          addNotification(t('process.summaryCreatedDemo'), 'success');
         } else {
-          addNotification('Synthese creee avec succes !', 'success');
+          addNotification(t('process.summaryCreatedSuccess'), 'success');
         }
 
         // Rediriger vers la synthese creee apres un court delai
@@ -88,15 +90,15 @@ const Process = () => {
 
       } catch (err) {
         clearInterval(stepInterval);
-        console.error('Erreur lors du traitement:', err);
+        console.error('Error processing:', err);
         setStatus('error');
-        const errorMessage = err?.message || err?.error || 'Une erreur est survenue';
+        const errorMessage = err?.message || err?.error || t('errors.generic');
         setError(errorMessage);
       }
     };
 
     processContent();
-  }, [content, sourceType, navigate, addNotification]);
+  }, [content, sourceType, navigate, addNotification, t]);
 
   // Réessayer en cas d'erreur
   const handleRetry = () => {
@@ -130,17 +132,17 @@ const Process = () => {
           className="flex items-center gap-2 text-text-muted hover:text-text-main transition-colors mb-4"
         >
           <ArrowLeft size={20} />
-          Retour
+          {t('common.back')}
         </button>
         <h1 className="text-2xl font-bold text-text-main">
-          {status === 'success' ? 'Terminé !' : 'Traitement en cours'}
+          {status === 'success' ? t('process.done') : t('process.processing')}
         </h1>
         <p className="text-text-muted">
           {status === 'success'
-            ? 'Votre synthèse est prête'
+            ? t('process.summaryReady')
             : isMockMode()
-              ? 'Mode démonstration (API non connectée)'
-              : 'Génération du contenu par IA...'}
+              ? t('process.demoMode')
+              : t('process.aiGenerating')}
         </p>
       </header>
 
@@ -286,7 +288,7 @@ const Process = () => {
                 onClick={handleRetry}
                 className="w-full py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark transition-colors"
               >
-                Réessayer
+                {t('common.retry')}
               </button>
             </motion.div>
           )}
@@ -300,10 +302,10 @@ const Process = () => {
               animate={{ opacity: 1, y: 0 }}
               className="mt-8 w-full max-w-xs text-center"
             >
-              <p className="text-text-muted text-sm mb-2">Synthèse créée</p>
+              <p className="text-text-muted text-sm mb-2">{t('process.summaryCreated')}</p>
               <p className="text-text-main font-medium">{generatedData.title}</p>
               <p className="text-text-muted text-xs mt-4">
-                Redirection automatique...
+                {t('process.autoRedirect')}
               </p>
             </motion.div>
           )}
@@ -314,7 +316,7 @@ const Process = () => {
       {isMockMode() && status === 'processing' && (
         <div className="mt-8 text-center">
           <p className="text-xs text-text-muted">
-            Mode démonstration actif. Connectez l'API OpenAI pour la génération réelle.
+            {t('process.demoModeActive')}
           </p>
         </div>
       )}

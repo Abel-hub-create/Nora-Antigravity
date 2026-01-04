@@ -2,9 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Search, FileText, Calendar, ChevronRight, Pencil, Check, X, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import * as syntheseService from '../services/syntheseService';
 
 const Study = () => {
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
     const [syntheses, setSyntheses] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -18,7 +20,7 @@ const Study = () => {
             const response = await syntheseService.getAllSyntheses({ search: searchQuery });
             setSyntheses(response.syntheses || []);
         } catch (error) {
-            console.error('Erreur chargement synthèses:', error);
+            console.error('Error loading syntheses:', error);
             setSyntheses([]);
         } finally {
             setIsLoading(false);
@@ -41,7 +43,7 @@ const Study = () => {
             );
             setEditingId(null);
         } catch (error) {
-            console.error('Erreur renommage:', error);
+            console.error('Error renaming:', error);
         }
     };
 
@@ -60,20 +62,23 @@ const Study = () => {
         const now = new Date();
         const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
 
-        if (diffDays === 0) return "Aujourd'hui";
-        if (diffDays === 1) return 'Hier';
-        if (diffDays < 7) return `Il y a ${diffDays} jours`;
+        if (diffDays === 0) return t('common.today');
+        if (diffDays === 1) return t('common.yesterday');
+        if (diffDays < 7) return t('common.daysAgo', { count: diffDays });
 
-        return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+        const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
+        return date.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
     };
 
     return (
         <div className="min-h-full bg-background p-4 pb-24">
             {/* Header */}
             <header className="mb-6">
-                <h1 className="text-2xl font-bold text-text-main mb-1">Mes Synthèses</h1>
+                <h1 className="text-2xl font-bold text-text-main mb-1">{t('study.title')}</h1>
                 <p className="text-text-muted text-sm">
-                    {syntheses.length} synthèse{syntheses.length !== 1 ? 's' : ''}
+                    {syntheses.length === 1
+                        ? t('study.count', { count: syntheses.length })
+                        : t('study.countPlural', { count: syntheses.length })}
                 </p>
             </header>
 
@@ -82,7 +87,7 @@ const Study = () => {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" size={20} />
                 <input
                     type="text"
-                    placeholder="Rechercher une synthèse..."
+                    placeholder={t('study.searchPlaceholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full bg-surface border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-text-main placeholder-text-muted focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
@@ -93,7 +98,7 @@ const Study = () => {
             {isLoading && (
                 <div className="flex flex-col items-center justify-center py-16">
                     <Loader2 className="animate-spin text-primary mb-3" size={32} />
-                    <p className="text-text-muted">Chargement...</p>
+                    <p className="text-text-muted">{t('common.loading')}</p>
                 </div>
             )}
 
@@ -108,12 +113,12 @@ const Study = () => {
                         <FileText className="text-text-muted" size={32} />
                     </div>
                     <h3 className="text-lg font-semibold text-text-main mb-2">
-                        {searchQuery ? 'Aucun résultat' : 'Aucune synthèse'}
+                        {searchQuery ? t('study.noResults') : t('study.noSyntheses')}
                     </h3>
                     <p className="text-text-muted text-sm max-w-[250px]">
                         {searchQuery
-                            ? 'Essayez avec d\'autres mots-clés'
-                            : 'Importez du contenu pour créer votre première synthèse'}
+                            ? t('study.tryOtherKeywords')
+                            : t('study.importContent')}
                     </p>
                 </motion.div>
             )}

@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Gift, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import EggAnimation from '../components/Collection/EggAnimation';
 import { useUser } from '../context/UserContext';
 import { CREATURES, getRandomCreature, RARITIES } from '../data/creatures';
 
 const Collection = () => {
+    const { t } = useTranslation();
     const { user, useEgg, unlockCreature } = useUser();
     const [showEgg, setShowEgg] = useState(false);
     const [reward, setReward] = useState(null);
@@ -41,7 +43,7 @@ const Collection = () => {
                 <Link to="/profile" className="p-2 -ml-2 text-text-muted hover:text-text-main transition-colors">
                     <ArrowLeft size={24} />
                 </Link>
-                <h1 className="text-2xl font-bold text-text-main">Ma Collection</h1>
+                <h1 className="text-2xl font-bold text-text-main">{t('collection.title')}</h1>
             </header>
 
             {/* Egg Status */}
@@ -49,8 +51,8 @@ const Collection = () => {
                 <div className="bg-gradient-to-r from-surface to-surface/50 p-6 rounded-3xl border border-white/5 relative overflow-hidden">
                     <div className="relative z-10 flex justify-between items-center">
                         <div>
-                            <h2 className="text-lg font-bold text-text-main mb-1">Capsules Disponibles</h2>
-                            <p className="text-sm text-text-muted">Continue d'apprendre pour en gagner !</p>
+                            <h2 className="text-lg font-bold text-text-main mb-1">{t('collection.eggs')}</h2>
+                            <p className="text-sm text-text-muted">{t('collection.eggsHint')}</p>
                         </div>
                         <div className="flex items-center gap-2 bg-black/30 px-4 py-2 rounded-full border border-white/10">
                             <Gift size={18} className="text-primary" />
@@ -64,14 +66,14 @@ const Collection = () => {
                             onClick={handleOpenEgg}
                             className="mt-6 w-full py-3 bg-primary text-background font-bold rounded-xl shadow-lg shadow-primary/20 hover:bg-primary-dark transition-colors relative z-10"
                         >
-                            Ouvrir maintenant
+                            {t('collection.openNow')}
                         </motion.button>
                     ) : (
                         <button
                             disabled
                             className="mt-6 w-full py-3 bg-surface text-text-muted font-bold rounded-xl border border-white/5 cursor-not-allowed relative z-10"
                         >
-                            Pas de capsule
+                            {t('collection.noEggs')}
                         </button>
                     )}
 
@@ -82,7 +84,7 @@ const Collection = () => {
 
             {/* Grid */}
             <div>
-                <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">Créatures</h3>
+                <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">{t('collection.creatures')}</h3>
                 <div className="grid grid-cols-3 gap-3">
                     {sortedCreatures.map((creature) => {
                         const isUnlocked = user.collection.includes(creature.id);

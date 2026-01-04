@@ -13,7 +13,18 @@
     "success": "Success",
     "warning": "Warning",
     "min": "min",
-    "user": "User"
+    "user": "User",
+    "saving": "Saving...",
+    "deleting": "Deleting...",
+    "creating": "Creating...",
+    "adding": "Adding...",
+    "search": "Search...",
+    "retry": "Retry",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo": "{{count}} days ago",
+    "cards": "cards",
+    "questions": "questions"
   },
   "activities": {
     "summary": "Summary",
@@ -109,7 +120,12 @@
     "deleteSuccess": "Summary deleted",
     "renameTitle": "Rename",
     "renamePlaceholder": "New title",
-    "moveToFolder": "Move to folder"
+    "moveToFolder": "Move to folder",
+    "count": "{{count}} summary",
+    "countPlural": "{{count}} summaries",
+    "noResults": "No results",
+    "tryOtherKeywords": "Try other keywords",
+    "importContent": "Import content to create your first summary"
   },
   "flashcards": {
     "title": "Flashcards",
@@ -119,9 +135,13 @@
     "previous": "Previous",
     "next": "Next",
     "finish": "Finish",
-    "completed": "Completed!",
-    "reviewedAll": "You've reviewed all the cards.",
-    "backToSynthesis": "Back to summary"
+    "completed": "Session completed!",
+    "reviewedAll": "You've reviewed {{count}} card",
+    "reviewedAllPlural": "You've reviewed {{count}} cards",
+    "backToSynthesis": "Back to summary",
+    "noFlashcards": "No flashcards for this summary",
+    "question": "Question",
+    "answer": "Answer"
   },
   "quiz": {
     "title": "Quiz",
@@ -136,10 +156,21 @@
     "results": "Results",
     "score": "Score",
     "retry": "Try again",
-    "backToSynthesis": "Back to summary"
+    "backToSynthesis": "Back to summary",
+    "completed": "Quiz Completed!",
+    "noQuestions": "No questions for this summary",
+    "questionOf": "Question {{current}} of {{total}}",
+    "messages": {
+      "zero": ["Go back to practice", "Focus more"],
+      "low": ["You can do it", "You're improving!"],
+      "medium": ["Pretty good", "Well done!"],
+      "high": ["Keep it up!", "Very good!"],
+      "perfect": ["Simply perfect", "Congratulations, you got them all right!"]
+    }
   },
   "import": {
-    "title": "Import",
+    "title": "New Import",
+    "subtitle": "What do you want to learn today?",
     "text": "Text",
     "voice": "Voice",
     "photo": "Photo",
@@ -172,39 +203,85 @@
     "creatingQuiz": "Creating quiz",
     "saving": "Saving",
     "error": "Error during generation",
-    "retry": "Retry"
+    "retry": "Retry",
+    "done": "Done!",
+    "processing": "Processing",
+    "summaryReady": "Your summary is ready",
+    "demoMode": "Demo mode (API not connected)",
+    "aiGenerating": "AI content generation...",
+    "summaryCreated": "Summary created",
+    "summaryCreatedDemo": "Summary created (demo mode)",
+    "summaryCreatedSuccess": "Summary created successfully!",
+    "autoRedirect": "Automatic redirect...",
+    "demoModeActive": "Demo mode active. Connect the OpenAI API for real generation.",
+    "steps": {
+      "title": "Title",
+      "titleDesc": "Generating title",
+      "summary": "Summary",
+      "summaryDesc": "Creating summary",
+      "flashcards": "Flashcards",
+      "flashcardsDesc": "Generating flashcards",
+      "quiz": "Quiz",
+      "quizDesc": "Creating questions",
+      "saving": "Saving",
+      "savingDesc": "Saving"
+    }
   },
   "profile": {
-    "title": "Profile",
+    "title": "My Profile",
     "level": "Level",
     "xp": "XP",
     "streak": "Streak",
     "days": "days",
     "avgPerDay": "Average per day",
     "synthesesCount": "Summaries",
-    "folders": "Folders",
-    "createFolder": "Create folder",
+    "folders": "My Folders",
+    "createFolder": "Create",
     "noFolders": "No folders",
-    "settings": "Settings"
+    "createFolderHint": "Create a folder to organize your summaries",
+    "settings": "Settings",
+    "xpToLevel": "{{xp}} XP to Level {{level}}"
   },
   "folders": {
     "create": "Create folder",
+    "new": "New Folder",
     "name": "Folder name",
-    "namePlaceholder": "My folder",
+    "namePlaceholder": "E.g.: Mathematics",
+    "nameRequired": "Folder name is required",
+    "nameTooLong": "Name cannot exceed 100 characters",
     "color": "Color",
     "synthesesCount": "{{count}} summary(ies)",
-    "empty": "Empty folder",
+    "empty": "This folder is empty",
+    "emptyHint": "Add summaries to organize them",
     "addSyntheses": "Add summaries",
-    "delete": "Delete folder",
-    "deleteConfirm": "Delete this folder? Summaries will not be deleted."
+    "delete": "Delete",
+    "deleteConfirm": "Delete folder?",
+    "deleteHint": "Summaries will not be deleted, they will just be removed from the folder.",
+    "notFound": "Folder not found",
+    "loadError": "Unable to load folder",
+    "rename": "Rename",
+    "renameFolder": "Rename folder",
+    "removeFromFolder": "Remove from folder",
+    "createFolder": "Create folder",
+    "createError": "Error creating folder",
+    "noSynthesisFound": "No summary found",
+    "allSynthesesInFolder": "All your summaries are already in this folder"
   },
   "collection": {
-    "title": "Collection",
-    "eggs": "Eggs",
+    "title": "My Collection",
+    "eggs": "Available Capsules",
+    "eggsHint": "Keep learning to earn more!",
     "hatch": "Hatch",
-    "noEggs": "No eggs available",
+    "openNow": "Open now",
+    "noEggs": "No capsule",
     "creatures": "Creatures",
     "locked": "Locked"
+  },
+  "studyDetail": {
+    "loadError": "Unable to load this summary",
+    "summary": "Summary",
+    "deleteConfirm": "Delete this summary and all its content?",
+    "deleteSynthesis": "Delete this summary"
   },
   "auth": {
     "login": "Log in",

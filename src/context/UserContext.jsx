@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../features/auth/hooks/useAuth';
 import * as notificationService from '../services/notificationService';
 
@@ -7,10 +8,11 @@ const UserContext = createContext();
 export const useUser = () => useContext(UserContext);
 
 // Available activity types for goals
+// NOTE: labelKey is used with t() function for translation
 export const ACTIVITY_TYPES = {
-    summary: { label: 'Synthèse', key: 'summaryTime' },
-    quiz: { label: 'Quiz', key: 'quizTime' },
-    flashcards: { label: 'Flashcards', key: 'flashcardsTime' }
+    summary: { label: 'Synthèse', labelKey: 'activities.summary', key: 'summaryTime' },
+    quiz: { label: 'Quiz', labelKey: 'activities.quiz', key: 'quizTime' },
+    flashcards: { label: 'Flashcards', labelKey: 'activities.flashcards', key: 'flashcardsTime' }
 };
 
 // XP Thresholds for daily study time rewards
@@ -85,6 +87,7 @@ const getTotalStudyTime = (stats) => {
 };
 
 export const UserProvider = ({ children }) => {
+    const { t } = useTranslation();
     const { user: authUser, syncUserData } = useAuth();
 
     const [user, setUser] = useState({
@@ -432,10 +435,11 @@ export const UserProvider = ({ children }) => {
 
                 if (timeInSeconds >= thresholdInSeconds) {
                     newStats.xpAwarded[activityType] = true;
-                    const label = ACTIVITY_TYPES[activityType]?.label || activityType;
+                    const labelKey = ACTIVITY_TYPES[activityType]?.labelKey;
+                    const label = labelKey ? t(labelKey) : activityType;
                     // Use setTimeout to call addExp outside of setState
                     setTimeout(() => {
-                        addExp(threshold.xp, true, `+${threshold.xp} XP - ${label} (${threshold.timeMinutes}min)`);
+                        addExp(threshold.xp, true, t('notifications.xpGained', { amount: threshold.xp, label, time: threshold.timeMinutes }));
                     }, 0);
                 }
             }
@@ -447,7 +451,7 @@ export const UserProvider = ({ children }) => {
                 newStats.xpAwarded.summary) {
                 newStats.xpAwarded.allBonus = true;
                 setTimeout(() => {
-                    addExp(ALL_BONUS_XP, true, `+${ALL_BONUS_XP} XP - Bonus journalier complet !`);
+                    addExp(ALL_BONUS_XP, true, t('notifications.dailyBonusComplete', { amount: ALL_BONUS_XP }));
                 }, 100);
             }
 
@@ -478,13 +482,14 @@ export const UserProvider = ({ children }) => {
 
             // Show notifications outside of setState
             goalsToNotify.forEach(type => {
-                const label = ACTIVITY_TYPES[type]?.label || type;
-                setTimeout(() => addNotification(`Objectif "${label}" complété !`, 'goal'), 0);
+                const labelKey = ACTIVITY_TYPES[type]?.labelKey;
+                const label = labelKey ? t(labelKey) : type;
+                setTimeout(() => addNotification(t('notifications.goalCompleted', { label }), 'goal'), 0);
             });
 
             return updatedGoals;
         });
-    }, [dailyStats, checkAndResetForNewDay, addExp, addNotification]);
+    }, [dailyStats, checkAndResetForNewDay, addExp, addNotification, t]);
 
     // Check Daily Goals Completion Bonus (10 XP) - only once per day
     useEffect(() => {
@@ -496,9 +501,9 @@ export const UserProvider = ({ children }) => {
             dailyGoals.every(g => g.completed) &&
             !dailyGoalsRewardClaimed) {
             setDailyGoalsRewardClaimed(true);
-            addExp(DAILY_GOALS_BONUS_XP, true, `+${DAILY_GOALS_BONUS_XP} XP - Tous les objectifs complétés !`);
+            addExp(DAILY_GOALS_BONUS_XP, true, t('notifications.allGoalsCompleted', { amount: DAILY_GOALS_BONUS_XP }));
         }
-    }, [dailyGoals, dailyGoalsRewardClaimed, addExp]);
+    }, [dailyGoals, dailyGoalsRewardClaimed, addExp, t]);
 
     // Function to update daily goals with reset of progress
     const updateDailyGoals = useCallback((newGoals, skipWarning = false) => {
@@ -514,14 +519,14 @@ export const UserProvider = ({ children }) => {
     const addDailyGoal = useCallback((type, targetMinutes) => {
         setDailyGoalsState(prev => {
             if (prev.some(g => g.type === type)) {
-                addNotification('Un objectif de ce type existe déjà', 'warning');
+                addNotification(t('settings.goalExists'), 'warning');
                 return prev;
             }
             const newId = Math.max(...prev.map(g => g.id), 0) + 1;
             const newGoals = [...prev, { id: newId, type, targetMinutes, completed: false }];
             return newGoals.map(g => ({ ...g, completed: false }));
         });
-    }, [addNotification]);
+    }, [addNotification, t]);
 
     // Remove a goal
     const removeDailyGoal = useCallback((goalId) => {

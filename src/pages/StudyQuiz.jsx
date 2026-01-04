@@ -2,32 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import confetti from 'canvas-confetti';
 import useActiveTimer from '../hooks/useActiveTimer';
 import * as syntheseService from '../services/syntheseService';
 
-// Messages aleatoires selon le pourcentage de reussite
-const getResultMessage = (percentage) => {
-    const messages = {
-        zero: ["Retourne t'entrainer", "Concentre toi"],
-        low: ["Tu peux y arriver", "Tu t'améliores !"],
-        medium: ["C'est plutôt pas mal", "Bien joué !"],
-        high: ["Continue comme ça !", "C'est très bien !"],
-        perfect: ["C'est tout simplement parfait", "Bravo, tu as tout bon !"]
-    };
-
-    let category;
-    if (percentage === 0) category = 'zero';
-    else if (percentage <= 50) category = 'low';
-    else if (percentage <= 69) category = 'medium';
-    else if (percentage < 100) category = 'high';
-    else category = 'perfect';
-
-    const categoryMessages = messages[category];
-    return categoryMessages[Math.floor(Math.random() * categoryMessages.length)];
-};
-
 const StudyQuiz = () => {
+    const { t } = useTranslation();
     useActiveTimer('quiz');
     const { id } = useParams();
     const [questions, setQuestions] = useState([]);
@@ -39,6 +20,21 @@ const StudyQuiz = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [resultMessage, setResultMessage] = useState('');
 
+    // Get result message based on percentage
+    const getResultMessage = (percentage) => {
+        const messages = t('quiz.messages', { returnObjects: true });
+
+        let category;
+        if (percentage === 0) category = 'zero';
+        else if (percentage <= 50) category = 'low';
+        else if (percentage <= 69) category = 'medium';
+        else if (percentage < 100) category = 'high';
+        else category = 'perfect';
+
+        const categoryMessages = messages[category];
+        return categoryMessages[Math.floor(Math.random() * categoryMessages.length)];
+    };
+
     useEffect(() => {
         const loadQuiz = async () => {
             try {
@@ -47,7 +43,7 @@ const StudyQuiz = () => {
                 setQuestions(response.questions || []);
                 setSyntheseTitle(response.syntheseTitle || 'Quiz');
             } catch (error) {
-                console.error('Erreur chargement quiz:', error);
+                console.error('Error loading quiz:', error);
             } finally {
                 setIsLoading(false);
             }
@@ -65,7 +61,7 @@ const StudyQuiz = () => {
         try {
             await syntheseService.updateQuizProgress(id, questions[currentQuestion].id, correct);
         } catch (error) {
-            console.error('Erreur mise à jour progression:', error);
+            console.error('Error updating progress:', error);
         }
 
         if (correct) {
@@ -96,7 +92,7 @@ const StudyQuiz = () => {
             <div className="min-h-full bg-background flex items-center justify-center">
                 <div className="text-center">
                     <Loader2 className="animate-spin text-primary mx-auto mb-3" size={32} />
-                    <p className="text-text-muted">Chargement...</p>
+                    <p className="text-text-muted">{t('common.loading')}</p>
                 </div>
             </div>
         );
@@ -107,10 +103,10 @@ const StudyQuiz = () => {
             <div className="min-h-full bg-background p-6">
                 <Link to={`/study/${id}`} className="inline-flex items-center gap-2 text-text-muted hover:text-text-main mb-6">
                     <ArrowLeft size={20} />
-                    Retour
+                    {t('common.back')}
                 </Link>
                 <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <p className="text-text-muted">Aucune question pour cette synthèse</p>
+                    <p className="text-text-muted">{t('quiz.noQuestions')}</p>
                 </div>
             </div>
         );
@@ -134,7 +130,7 @@ const StudyQuiz = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                 >
-                    <h2 className="text-2xl font-bold text-text-main mb-2">Quiz Terminé !</h2>
+                    <h2 className="text-2xl font-bold text-text-main mb-2">{t('quiz.completed')}</h2>
                     <p className="text-4xl font-bold text-primary mb-2">{score}/{questions.length}</p>
                     <p className="text-text-muted mb-8">{resultMessage}</p>
                     <div className="flex flex-col gap-3">
@@ -142,7 +138,7 @@ const StudyQuiz = () => {
                             to={`/study/${id}`}
                             className="bg-primary text-white px-8 py-3 rounded-xl font-medium hover:bg-primary-dark transition-colors"
                         >
-                            Retour à la synthèse
+                            {t('quiz.backToSynthesis')}
                         </Link>
                         <button
                             onClick={() => {
@@ -154,7 +150,7 @@ const StudyQuiz = () => {
                             }}
                             className="bg-surface border border-white/10 text-text-main px-8 py-3 rounded-xl hover:bg-surface/80 transition-colors"
                         >
-                            Recommencer
+                            {t('quiz.retry')}
                         </button>
                     </div>
                 </motion.div>
@@ -183,7 +179,7 @@ const StudyQuiz = () => {
                     />
                 </div>
                 <p className="text-xs text-text-muted mt-2 text-right">
-                    Question {currentQuestion + 1} sur {questions.length}
+                    {t('quiz.questionOf', { current: currentQuestion + 1, total: questions.length })}
                 </p>
             </header>
 

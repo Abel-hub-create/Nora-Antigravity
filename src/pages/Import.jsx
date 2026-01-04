@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, Camera } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import VoiceRecorder from '../components/Import/VoiceRecorder';
 import PhotoCapture from '../components/Import/PhotoCapture';
 
 const Import = () => {
+    const { t } = useTranslation();
     const [mode, setMode] = useState('voice'); // 'voice' or 'photo'
     const [showPhotoCapture, setShowPhotoCapture] = useState(false);
     const navigate = useNavigate();
@@ -44,8 +46,8 @@ const Import = () => {
         <>
             <div className="h-full flex flex-col p-6 pt-8">
                 <header className="mb-6">
-                    <h1 className="text-2xl font-bold text-text-main">Nouvel Import</h1>
-                    <p className="text-text-muted">Que veux-tu apprendre aujourd'hui ?</p>
+                    <h1 className="text-2xl font-bold text-text-main">{t('import.title')}</h1>
+                    <p className="text-text-muted">{t('import.subtitle')}</p>
                 </header>
 
                 {/* Mode Switcher - 2 options */}
@@ -59,7 +61,7 @@ const Import = () => {
                         }`}
                     >
                         <Mic size={18} />
-                        Vocal
+                        {t('import.voice')}
                     </button>
                     <button
                         onClick={handlePhotoMode}
@@ -70,7 +72,7 @@ const Import = () => {
                         }`}
                     >
                         <Camera size={18} />
-                        Photo
+                        {t('import.photo')}
                     </button>
                 </div>
 
