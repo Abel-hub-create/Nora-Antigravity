@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Lock, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import AuthInput from '../components/AuthInput';
 
 const ResetPassword = () => {
+  const { t } = useTranslation();
   const { token } = useParams();
   const navigate = useNavigate();
 
@@ -31,13 +33,13 @@ const ResetPassword = () => {
     const newErrors = {};
 
     if (!formData.password) {
-      newErrors.password = 'Le mot de passe est requis';
+      newErrors.password = t('auth.passwordRequired');
     } else if (formData.password.length < 8) {
-      newErrors.password = 'Le mot de passe doit contenir au moins 8 caractères';
+      newErrors.password = t('auth.passwordMin');
     }
 
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
+      newErrors.confirmPassword = t('auth.passwordMismatch');
     }
 
     setErrors(newErrors);
@@ -77,16 +79,16 @@ const ResetPassword = () => {
               <AlertCircle size={32} className="text-error" />
             </div>
 
-            <h2 className="text-2xl font-bold text-text-main mb-2">Lien invalide</h2>
+            <h2 className="text-2xl font-bold text-text-main mb-2">{t('auth.invalidLink')}</h2>
             <p className="text-text-muted mb-6">
-              Ce lien de réinitialisation est invalide ou a expiré.
+              {t('auth.linkExpiredText')}
             </p>
 
             <Link
               to="/forgot-password"
               className="inline-flex items-center gap-2 text-primary hover:text-primary-dark transition-colors"
             >
-              Demander un nouveau lien
+              {t('auth.sendResetLink')}
             </Link>
           </div>
         </motion.div>
@@ -113,9 +115,9 @@ const ResetPassword = () => {
               <CheckCircle size={32} className="text-success" />
             </motion.div>
 
-            <h2 className="text-2xl font-bold text-text-main mb-2">Mot de passe modifié !</h2>
+            <h2 className="text-2xl font-bold text-text-main mb-2">{t('auth.passwordReset')}</h2>
             <p className="text-text-muted mb-6">
-              Tu vas être redirigé vers la page de connexion...
+              {t('auth.passwordResetSuccess')}
             </p>
 
             <Link
@@ -123,7 +125,7 @@ const ResetPassword = () => {
               className="inline-flex items-center gap-2 text-primary hover:text-primary-dark transition-colors"
             >
               <ArrowLeft size={20} />
-              Se connecter maintenant
+              {t('auth.login')}
             </Link>
           </div>
         </motion.div>
@@ -140,8 +142,8 @@ const ResetPassword = () => {
       >
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-text-main mb-2">Nouveau mot de passe</h1>
-          <p className="text-text-muted">Choisis un nouveau mot de passe sécurisé</p>
+          <h1 className="text-3xl font-bold text-text-main mb-2">{t('auth.newPassword')}</h1>
+          <p className="text-text-muted">{t('auth.chooseNewPassword')}</p>
         </div>
 
         {/* Form Card */}
@@ -160,8 +162,8 @@ const ResetPassword = () => {
             <AuthInput
               type="password"
               name="password"
-              label="Nouveau mot de passe"
-              placeholder="Minimum 8 caractères"
+              label={t('auth.newPassword')}
+              placeholder={t('auth.passwordMin')}
               value={formData.password}
               onChange={handleChange}
               error={errors.password}
@@ -173,8 +175,8 @@ const ResetPassword = () => {
             <AuthInput
               type="password"
               name="confirmPassword"
-              label="Confirmer le mot de passe"
-              placeholder="••••••••"
+              label={t('auth.confirmPassword')}
+              placeholder={t('auth.passwordPlaceholder')}
               value={formData.confirmPassword}
               onChange={handleChange}
               error={errors.confirmPassword}
@@ -189,7 +191,7 @@ const ResetPassword = () => {
               disabled={isSubmitting}
               className="w-full bg-primary hover:bg-primary-dark text-background font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
-              {isSubmitting ? 'Modification...' : 'Modifier le mot de passe'}
+              {isSubmitting ? t('auth.modifying') : t('auth.modifyPassword')}
             </motion.button>
           </form>
 
@@ -198,7 +200,7 @@ const ResetPassword = () => {
             className="flex items-center justify-center gap-2 text-text-muted hover:text-text-main transition-colors mt-6"
           >
             <ArrowLeft size={18} />
-            Retour à la connexion
+            {t('auth.backToLogin')}
           </Link>
         </div>
       </motion.div>

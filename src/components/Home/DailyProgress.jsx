@@ -1,9 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Check, Target, Trophy } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useUser, ACTIVITY_TYPES } from '../../context/UserContext';
 
 const DailyProgress = () => {
+    const { t } = useTranslation();
     const {
         dailyGoals,
         dailyProgressPercentage,
@@ -29,12 +31,12 @@ const DailyProgress = () => {
 
     // Get motivational message based on progress
     const getMessage = () => {
-        if (totalGoals === 0) return "Définissez des objectifs pour commencer !";
-        if (dailyProgressPercentage === 100) return "Bravo ! Tous les objectifs complétés !";
-        if (dailyProgressPercentage >= 75) return "Presque fini ! Tu y es presque !";
-        if (dailyProgressPercentage >= 50) return "Super travail ! Continue comme ça !";
-        if (dailyProgressPercentage >= 25) return "Bien parti ! Tu avances bien !";
-        return "C'est parti ! Tu gères.";
+        if (totalGoals === 0) return t('dailyProgress.messages.noGoals');
+        if (dailyProgressPercentage === 100) return t('dailyProgress.messages.allComplete');
+        if (dailyProgressPercentage >= 75) return t('dailyProgress.messages.almost');
+        if (dailyProgressPercentage >= 50) return t('dailyProgress.messages.great');
+        if (dailyProgressPercentage >= 25) return t('dailyProgress.messages.good');
+        return t('dailyProgress.messages.start');
     };
 
     return (
@@ -43,7 +45,7 @@ const DailyProgress = () => {
             <div className="flex justify-between items-end mb-3">
                 <div className="flex items-center gap-2">
                     <Target className="w-5 h-5 text-primary" />
-                    <h2 className="text-lg font-medium text-text-main">Objectifs du Jour</h2>
+                    <h2 className="text-lg font-medium text-text-main">{t('dailyProgress.title')}</h2>
                 </div>
                 <div className="flex items-center gap-2">
                     {dailyGoalsRewardClaimed && (
@@ -80,7 +82,9 @@ const DailyProgress = () => {
                     {/* Completed count */}
                     <div className="flex justify-between items-center">
                         <span className="text-xs text-text-muted">
-                            {completedGoals} sur {totalGoals} objectif{totalGoals > 1 ? 's' : ''} complété{completedGoals > 1 ? 's' : ''}
+                            {totalGoals > 1
+                                ? t('dailyProgress.goalsCompletedPlural', { completed: completedGoals, total: totalGoals })
+                                : t('dailyProgress.goalsCompleted', { completed: completedGoals, total: totalGoals })}
                         </span>
                         {dailyGoalsRewardClaimed && (
                             <span className="text-xs text-yellow-400 flex items-center gap-1">
@@ -116,7 +120,7 @@ const DailyProgress = () => {
                                             <span className={`text-sm font-medium ${
                                                 goal.completed ? 'text-green-400' : 'text-text-main'
                                             }`}>
-                                                {ACTIVITY_TYPES[goal.type]?.label || goal.type}
+                                                {t(ACTIVITY_TYPES[goal.type]?.labelKey) || goal.type}
                                             </span>
                                         </div>
                                         <span className={`text-xs ${
@@ -146,9 +150,9 @@ const DailyProgress = () => {
                 </div>
             ) : (
                 <div className="text-center py-4 bg-surface/30 rounded-xl border border-white/5">
-                    <p className="text-sm text-text-muted">Aucun objectif défini</p>
+                    <p className="text-sm text-text-muted">{t('dailyProgress.noGoals')}</p>
                     <p className="text-xs text-text-muted mt-1">
-                        Allez dans les paramètres pour ajouter des objectifs
+                        {t('dailyProgress.addGoalsHintSettings')}
                     </p>
                 </div>
             )}

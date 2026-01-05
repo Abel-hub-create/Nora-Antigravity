@@ -8,7 +8,7 @@ const languages = [
 ];
 
 const LanguageSelector = () => {
-    const { i18n } = useTranslation();
+    const { t, i18n } = useTranslation();
     const currentLang = i18n.language;
 
     const handleLanguageChange = (langCode) => {
@@ -19,7 +19,7 @@ const LanguageSelector = () => {
         <div className="p-4">
             <div className="flex items-center gap-3 mb-4">
                 <Globe size={20} className="text-text-muted" />
-                <span className="text-text-main">Langue / Language</span>
+                <span className="text-text-main">{t('settings.language')}</span>
             </div>
             <div className="flex gap-2">
                 {languages.map((lang) => (

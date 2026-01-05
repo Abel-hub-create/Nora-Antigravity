@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import AuthInput from '../components/AuthInput';
 
 const ForgotPassword = () => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -18,12 +20,12 @@ const ForgotPassword = () => {
     setError('');
 
     if (!email) {
-      setError('L\'email est requis');
+      setError(t('auth.emailRequired'));
       return;
     }
 
     if (!/\S+@\S+\.\S+/.test(email)) {
-      setError('Email invalide');
+      setError(t('auth.emailInvalid'));
       return;
     }
 
@@ -57,9 +59,9 @@ const ForgotPassword = () => {
               <CheckCircle size={32} className="text-success" />
             </motion.div>
 
-            <h2 className="text-2xl font-bold text-text-main mb-2">Email envoyé !</h2>
+            <h2 className="text-2xl font-bold text-text-main mb-2">{t('auth.resetLinkSent')}</h2>
             <p className="text-text-muted mb-6">
-              Si un compte existe avec cet email, tu recevras un lien de réinitialisation.
+              {t('auth.resetPasswordText')}
             </p>
 
             <Link
@@ -67,7 +69,7 @@ const ForgotPassword = () => {
               className="inline-flex items-center gap-2 text-primary hover:text-primary-dark transition-colors"
             >
               <ArrowLeft size={20} />
-              Retour à la connexion
+              {t('auth.backToLogin')}
             </Link>
           </div>
         </motion.div>
@@ -84,8 +86,8 @@ const ForgotPassword = () => {
       >
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-text-main mb-2">Mot de passe oublié ?</h1>
-          <p className="text-text-muted">Entre ton email pour recevoir un lien de réinitialisation</p>
+          <h1 className="text-3xl font-bold text-text-main mb-2">{t('auth.forgotPassword')}</h1>
+          <p className="text-text-muted">{t('auth.resetPasswordText')}</p>
         </div>
 
         {/* Form Card */}
@@ -104,8 +106,8 @@ const ForgotPassword = () => {
             <AuthInput
               type="email"
               name="email"
-              label="Email"
-              placeholder="ton@email.com"
+              label={t('auth.email')}
+              placeholder={t('auth.emailPlaceholder')}
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -121,7 +123,7 @@ const ForgotPassword = () => {
               disabled={isSubmitting}
               className="w-full bg-primary hover:bg-primary-dark text-background font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
-              {isSubmitting ? 'Envoi en cours...' : 'Envoyer le lien'}
+              {isSubmitting ? t('auth.sendingLink') : t('auth.sendResetLink')}
             </motion.button>
           </form>
 
@@ -130,7 +132,7 @@ const ForgotPassword = () => {
             className="flex items-center justify-center gap-2 text-text-muted hover:text-text-main transition-colors mt-6"
           >
             <ArrowLeft size={18} />
-            Retour à la connexion
+            {t('auth.backToLogin')}
           </Link>
         </div>
       </motion.div>

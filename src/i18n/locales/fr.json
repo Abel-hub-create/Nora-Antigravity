@@ -47,9 +47,20 @@
     "completed": "Terminé",
     "noGoals": "Aucun objectif défini",
     "addGoalsHint": "Ajoutez des objectifs dans les paramètres",
+    "addGoalsHintSettings": "Allez dans les paramètres pour ajouter des objectifs",
     "goalCompleted": "Objectif \"{{label}}\" complété !",
     "allGoalsCompleted": "Tous les objectifs complétés !",
-    "bonusXp": "+{{amount}} XP - Bonus journalier complet !"
+    "bonusXp": "+{{amount}} XP - Bonus journalier complet !",
+    "goalsCompleted": "{{completed}} sur {{total}} objectif complété",
+    "goalsCompletedPlural": "{{completed}} sur {{total}} objectifs complétés",
+    "messages": {
+      "noGoals": "Définissez des objectifs pour commencer !",
+      "allComplete": "Bravo ! Tous les objectifs complétés !",
+      "almost": "Presque fini ! Tu y es presque !",
+      "great": "Super travail ! Continue comme ça !",
+      "good": "Bien parti ! Tu avances bien !",
+      "start": "C'est parti ! Tu gères."
+    }
   },
   "settings": {
     "title": "Paramètres",
@@ -185,7 +196,17 @@
     "micPermission": "Autorisation micro requise",
     "micError": "Erreur d'accès au micro",
     "recordError": "Erreur d'enregistrement",
-    "transcriptionError": "Erreur de transcription"
+    "transcriptionError": "Erreur de transcription",
+    "tapToSpeak": "Appuie pour parler",
+    "listening": "J'écoute...",
+    "transcribing": "Transcription en cours...",
+    "sendingToAI": "Envoi à l'IA pour transcription...",
+    "transcriptionTime": "La transcription peut prendre quelques secondes",
+    "tapRedToStop": "Appuie sur le bouton rouge pour terminer",
+    "dictateCourse": "Dicte ton cours et il sera synthétisé",
+    "micDenied": "Accès au microphone refusé. Veuillez autoriser l'accès.",
+    "micUnavailable": "Impossible d'accéder au microphone.",
+    "noAudioRecorded": "Aucun audio enregistré."
   },
   "photo": {
     "takePhoto": "Prendre une photo",
@@ -193,7 +214,18 @@
     "processing": "Analyse en cours...",
     "cameraPermission": "Autorisation caméra requise",
     "cameraError": "Erreur d'accès à la caméra",
-    "extractionError": "Erreur d'extraction du texte"
+    "extractionError": "Erreur d'extraction du texte",
+    "photoCount": "{{count}} photo",
+    "photoCountPlural": "{{count}} photos",
+    "cameraDenied": "Accès à la caméra refusé. Veuillez autoriser l'accès dans les paramètres.",
+    "noCamera": "Aucune caméra détectée.",
+    "cameraUnavailable": "Impossible d'accéder à la caméra.",
+    "retry": "Réessayer",
+    "extractingText": "Extraction du texte par l'IA...",
+    "aiAnalyzing": "L'IA analyse vos photos...",
+    "tapCheckToExtract": "Appuie sur ✓ pour extraire le texte",
+    "takePhotosOfCourse": "Prends des photos de ton cours",
+    "error": "Erreur"
   },
   "process": {
     "generating": "Génération en cours...",
@@ -299,10 +331,13 @@
     "loginButton": "Connexion",
     "emailRequired": "L'email est requis",
     "emailInvalid": "Email invalide",
+    "emailPlaceholder": "ton@email.com",
+    "passwordPlaceholder": "••••••••",
     "passwordRequired": "Le mot de passe est requis",
     "passwordMin": "Minimum 6 caractères",
     "passwordMismatch": "Les mots de passe ne correspondent pas",
     "nameRequired": "Le nom est requis",
+    "namePlaceholder": "Ton nom",
     "loginError": "Échec de la connexion",
     "registerError": "Échec de l'inscription",
     "verifyEmail": "Vérifie ton email",
@@ -327,7 +362,19 @@
     "passwordReset": "Mot de passe réinitialisé !",
     "passwordResetSuccess": "Tu peux maintenant te connecter avec ton nouveau mot de passe.",
     "emailNotVerified": "Vérifie ton email avant de te connecter. Regarde dans ta boîte mail.",
-    "resendVerification": "Renvoyer le lien de vérification"
+    "resendVerification": "Renvoyer le lien de vérification",
+    "welcomeBack": "Content de te revoir !",
+    "welcomeNew": "Bienvenue sur Nora",
+    "sendingEmail": "Envoi en cours...",
+    "resendVerificationEmail": "Renvoyer l'email de vérification",
+    "emailResent": "Email renvoyé ! Vérifie ta boîte mail.",
+    "resendError": "Erreur lors de l'envoi. Réessaie plus tard.",
+    "connecting": "Connexion...",
+    "creating": "Création...",
+    "sendingLink": "Envoi...",
+    "modifying": "Modification...",
+    "modifyPassword": "Modifier le mot de passe",
+    "chooseNewPassword": "Choisis un nouveau mot de passe pour ton compte."
   },
   "notifications": {
     "goalCompleted": "Objectif \"{{label}}\" complété !",

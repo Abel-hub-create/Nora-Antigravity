@@ -47,9 +47,20 @@
     "completed": "Completed",
     "noGoals": "No goals defined",
     "addGoalsHint": "Add goals in settings",
+    "addGoalsHintSettings": "Go to settings to add goals",
     "goalCompleted": "Goal \"{{label}}\" completed!",
     "allGoalsCompleted": "All goals completed!",
-    "bonusXp": "+{{amount}} XP - Daily bonus complete!"
+    "bonusXp": "+{{amount}} XP - Daily bonus complete!",
+    "goalsCompleted": "{{completed}} out of {{total}} goal completed",
+    "goalsCompletedPlural": "{{completed}} out of {{total}} goals completed",
+    "messages": {
+      "noGoals": "Set goals to get started!",
+      "allComplete": "Great job! All goals completed!",
+      "almost": "Almost there! You're so close!",
+      "great": "Great work! Keep it up!",
+      "good": "Good start! You're making progress!",
+      "start": "Let's go! You got this."
+    }
   },
   "settings": {
     "title": "Settings",
@@ -185,7 +196,17 @@
     "micPermission": "Microphone permission required",
     "micError": "Error accessing microphone",
     "recordError": "Recording error",
-    "transcriptionError": "Transcription error"
+    "transcriptionError": "Transcription error",
+    "tapToSpeak": "Tap to speak",
+    "listening": "Listening...",
+    "transcribing": "Transcribing...",
+    "sendingToAI": "Sending to AI for transcription...",
+    "transcriptionTime": "Transcription may take a few seconds",
+    "tapRedToStop": "Tap the red button to stop",
+    "dictateCourse": "Dictate your course and it will be summarized",
+    "micDenied": "Microphone access denied. Please allow access.",
+    "micUnavailable": "Unable to access microphone.",
+    "noAudioRecorded": "No audio recorded."
   },
   "photo": {
     "takePhoto": "Take a photo",
@@ -193,7 +214,18 @@
     "processing": "Analyzing...",
     "cameraPermission": "Camera permission required",
     "cameraError": "Error accessing camera",
-    "extractionError": "Error extracting text"
+    "extractionError": "Error extracting text",
+    "photoCount": "{{count}} photo",
+    "photoCountPlural": "{{count}} photos",
+    "cameraDenied": "Camera access denied. Please allow access in settings.",
+    "noCamera": "No camera detected.",
+    "cameraUnavailable": "Unable to access camera.",
+    "retry": "Retry",
+    "extractingText": "AI extracting text...",
+    "aiAnalyzing": "AI is analyzing your photos...",
+    "tapCheckToExtract": "Tap ✓ to extract text",
+    "takePhotosOfCourse": "Take photos of your course",
+    "error": "Error"
   },
   "process": {
     "generating": "Generating...",
@@ -299,10 +331,13 @@
     "loginButton": "Login",
     "emailRequired": "Email is required",
     "emailInvalid": "Invalid email",
+    "emailPlaceholder": "your@email.com",
+    "passwordPlaceholder": "••••••••",
     "passwordRequired": "Password is required",
     "passwordMin": "Minimum 6 characters",
     "passwordMismatch": "Passwords do not match",
     "nameRequired": "Name is required",
+    "namePlaceholder": "Your name",
     "loginError": "Login failed",
     "registerError": "Registration failed",
     "verifyEmail": "Verify your email",
@@ -327,7 +362,19 @@
     "passwordReset": "Password reset!",
     "passwordResetSuccess": "You can now log in with your new password.",
     "emailNotVerified": "Verify your email before logging in. Check your inbox.",
-    "resendVerification": "Resend verification link"
+    "resendVerification": "Resend verification link",
+    "welcomeBack": "Welcome back!",
+    "welcomeNew": "Welcome to Nora",
+    "sendingEmail": "Sending...",
+    "resendVerificationEmail": "Resend verification email",
+    "emailResent": "Email sent! Check your inbox.",
+    "resendError": "Error sending. Try again later.",
+    "connecting": "Connecting...",
+    "creating": "Creating...",
+    "sendingLink": "Sending...",
+    "modifying": "Modifying...",
+    "modifyPassword": "Change password",
+    "chooseNewPassword": "Choose a new password for your account."
   },
   "notifications": {
     "goalCompleted": "Goal \"{{label}}\" completed!",

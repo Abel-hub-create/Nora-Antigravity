@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, X, Check, Loader2, AlertCircle, Image, RotateCcw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import api from '../../lib/api';
 
 const PhotoCapture = ({ onComplete, onClose }) => {
+    const { t } = useTranslation();
     const [photos, setPhotos] = useState([]);
     const [isCapturing, setIsCapturing] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -39,11 +41,11 @@ const PhotoCapture = ({ onComplete, onClose }) => {
             console.error('Erreur accès caméra:', err);
 
             if (err.name === 'NotAllowedError') {
-                setCameraError('Accès à la caméra refusé. Veuillez autoriser l\'accès dans les paramètres.');
+                setCameraError(t('photo.cameraDenied'));
             } else if (err.name === 'NotFoundError') {
-                setCameraError('Aucune caméra détectée.');
+                setCameraError(t('photo.noCamera'));
             } else {
-                setCameraError('Impossible d\'accéder à la caméra.');
+                setCameraError(t('photo.cameraUnavailable'));
             }
         }
     }, []);
@@ -171,7 +173,7 @@ const PhotoCapture = ({ onComplete, onClose }) => {
             setPhotos(prev => prev.map(p => ({
                 ...p,
                 isProcessing: false,
-                error: 'Erreur'
+                error: t('photo.error')
             })));
         } finally {
             setIsProcessing(false);
@@ -205,7 +207,11 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                     <X size={24} className="text-white" />
                 </button>
                 <h2 className="text-white font-medium">
-                    {photos.length > 0 ? `${photos.length} photo${photos.length > 1 ? 's' : ''}` : 'Prendre une photo'}
+                    {photos.length > 0
+                        ? (photos.length > 1
+                            ? t('photo.photoCountPlural', { count: photos.length })
+                            : t('photo.photoCount', { count: photos.length }))
+                        : t('photo.takePhoto')}
                 </h2>
                 <div className="w-10" />
             </div>
@@ -223,7 +229,7 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                             className="flex items-center gap-2 mx-auto px-4 py-2 bg-primary rounded-xl text-white"
                         >
                             <RotateCcw size={18} />
-                            Réessayer
+                            {t('photo.retry')}
                         </button>
                     </div>
                 ) : (
@@ -317,7 +323,7 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                 {isProcessing && (
                     <div className="mb-4">
                         <div className="flex justify-between text-sm text-white/70 mb-1">
-                            <span>Extraction du texte par l'IA...</span>
+                            <span>{t('photo.extractingText')}</span>
                             <span>{ocrProgress}%</span>
                         </div>
                         <div className="h-2 bg-white/20 rounded-full overflow-hidden">
@@ -381,10 +387,10 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                 {/* Instructions */}
                 <p className="text-center text-white/60 text-sm mt-4">
                     {isProcessing
-                        ? 'L\'IA analyse vos photos...'
+                        ? t('photo.aiAnalyzing')
                         : photos.length > 0
-                            ? 'Appuie sur ✓ pour extraire le texte'
-                            : 'Prends des photos de ton cours'}
+                            ? t('photo.tapCheckToExtract')
+                            : t('photo.takePhotosOfCourse')}
                 </p>
             </div>
         </motion.div>

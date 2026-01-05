@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, ArrowLeft, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import api from '../../../lib/api';
 
 const VerifyEmailSent = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const email = location.state?.email || '';
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState('');
+  const [resendSuccess, setResendSuccess] = useState(false);
 
   const handleResend = async () => {
     if (!email) return;
@@ -18,9 +21,11 @@ const VerifyEmailSent = () => {
 
     try {
       await api.post('/auth/resend-verification', { email });
-      setResendMessage('Email renvoye ! Verifie ta boite mail.');
+      setResendMessage(t('auth.emailResent'));
+      setResendSuccess(true);
     } catch (error) {
-      setResendMessage('Erreur lors de l\'envoi. Reessaie plus tard.');
+      setResendMessage(t('auth.resendError'));
+      setResendSuccess(false);
     } finally {
       setIsResending(false);
     }
@@ -44,11 +49,11 @@ const VerifyEmailSent = () => {
           </motion.div>
 
           <h1 className="text-2xl font-bold text-text-main mb-3">
-            Verifie ton email
+            {t('auth.verifyEmail')}
           </h1>
 
           <p className="text-text-muted mb-2">
-            Un email de verification a ete envoye a :
+            {t('auth.verifyEmailText')}
           </p>
 
           {email && (
@@ -56,15 +61,14 @@ const VerifyEmailSent = () => {
           )}
 
           <p className="text-text-muted text-sm mb-6">
-            Clique sur le lien dans l'email pour activer ton compte.
-            Le lien expire dans 1 heure.
+            {t('auth.linkExpiry')}
           </p>
 
           {resendMessage && (
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className={`text-sm mb-4 ${resendMessage.includes('Erreur') ? 'text-error' : 'text-success'}`}
+              className={`text-sm mb-4 ${resendSuccess ? 'text-success' : 'text-error'}`}
             >
               {resendMessage}
             </motion.p>
@@ -77,7 +81,7 @@ const VerifyEmailSent = () => {
               className="flex items-center justify-center gap-2 w-full py-3 text-text-muted hover:text-primary transition-colors disabled:opacity-50 mb-4"
             >
               <RefreshCw size={18} className={isResending ? 'animate-spin' : ''} />
-              <span>{isResending ? 'Envoi en cours...' : 'Renvoyer l\'email'}</span>
+              <span>{isResending ? t('auth.sendingEmail') : t('auth.resendEmail')}</span>
             </button>
           )}
 
@@ -86,7 +90,7 @@ const VerifyEmailSent = () => {
             className="inline-flex items-center gap-2 text-primary hover:text-primary-dark transition-colors"
           >
             <ArrowLeft size={20} />
-            Retour a la connexion
+            {t('auth.backToLogin')}
           </Link>
         </div>
       </motion.div>

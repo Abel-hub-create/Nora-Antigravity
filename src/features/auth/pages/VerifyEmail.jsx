@@ -2,9 +2,11 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import api from '../../../lib/api';
 
 const VerifyEmail = () => {
+  const { t } = useTranslation();
   const { token } = useParams();
   const [status, setStatus] = useState('loading'); // loading, success, already_verified, expired, error
   const [message, setMessage] = useState('');
@@ -20,19 +22,19 @@ const VerifyEmail = () => {
         const data = await api.get(`/auth/verify-email/${token}`);
         if (data.alreadyVerified) {
           setStatus('already_verified');
-          setMessage('Ton compte est deja actif.');
+          setMessage(t('auth.alreadyVerified'));
         } else {
           setStatus('success');
-          setMessage('Ton compte a bien ete active !');
+          setMessage(t('auth.accountActivated'));
         }
       } catch (error) {
         const errorMessage = error.response?.data?.error || error.message || '';
         if (errorMessage.toLowerCase().includes('expire')) {
           setStatus('expired');
-          setMessage('Le lien de verification a expire. Demande un nouveau lien depuis la page de connexion.');
+          setMessage(t('auth.linkExpiredText'));
         } else {
           setStatus('error');
-          setMessage(errorMessage || 'Lien invalide');
+          setMessage(errorMessage || t('auth.invalidLink'));
         }
       }
     };
@@ -41,9 +43,9 @@ const VerifyEmail = () => {
       verifyEmail();
     } else {
       setStatus('error');
-      setMessage('Token manquant');
+      setMessage(t('auth.invalidLink'));
     }
-  }, [token]);
+  }, [token, t]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
@@ -63,7 +65,7 @@ const VerifyEmail = () => {
                 <Loader2 size={40} className="text-primary" />
               </motion.div>
               <h1 className="text-2xl font-bold text-text-main mb-3">
-                Verification en cours...
+                {t('common.loading')}
               </h1>
             </>
           )}
@@ -79,7 +81,7 @@ const VerifyEmail = () => {
                 <CheckCircle size={40} className="text-success" />
               </motion.div>
               <h1 className="text-2xl font-bold text-text-main mb-3">
-                Compte active !
+                {t('auth.emailVerified')}
               </h1>
               <p className="text-text-muted mb-6">
                 {message}
@@ -88,7 +90,7 @@ const VerifyEmail = () => {
                 to="/login"
                 className="inline-block w-full bg-primary hover:bg-primary-dark text-background font-semibold py-3 rounded-xl transition-colors"
               >
-                Se connecter
+                {t('auth.login')}
               </Link>
             </>
           )}
@@ -104,7 +106,7 @@ const VerifyEmail = () => {
                 <CheckCircle size={40} className="text-primary" />
               </motion.div>
               <h1 className="text-2xl font-bold text-text-main mb-3">
-                Compte deja actif
+                {t('auth.accountAlreadyActive')}
               </h1>
               <p className="text-text-muted mb-6">
                 {message}
@@ -113,7 +115,7 @@ const VerifyEmail = () => {
                 to="/login"
                 className="inline-block w-full bg-primary hover:bg-primary-dark text-background font-semibold py-3 rounded-xl transition-colors"
               >
-                Se connecter
+                {t('auth.login')}
               </Link>
             </>
           )}
@@ -129,7 +131,7 @@ const VerifyEmail = () => {
                 <XCircle size={40} className="text-amber-400" />
               </motion.div>
               <h1 className="text-2xl font-bold text-text-main mb-3">
-                Lien expire
+                {t('auth.linkExpired')}
               </h1>
               <p className="text-text-muted mb-6">
                 {message}
@@ -138,7 +140,7 @@ const VerifyEmail = () => {
                 to="/login"
                 className="inline-block w-full bg-primary hover:bg-primary-dark text-background font-semibold py-3 rounded-xl transition-colors"
               >
-                Retour a la connexion
+                {t('auth.backToLogin')}
               </Link>
             </>
           )}
@@ -154,7 +156,7 @@ const VerifyEmail = () => {
                 <XCircle size={40} className="text-error" />
               </motion.div>
               <h1 className="text-2xl font-bold text-text-main mb-3">
-                Erreur de verification
+                {t('auth.verificationError')}
               </h1>
               <p className="text-text-muted mb-6">
                 {message}
@@ -164,13 +166,13 @@ const VerifyEmail = () => {
                   to="/login"
                   className="inline-block w-full bg-surface border border-white/10 text-text-main font-medium py-3 rounded-xl hover:bg-surface/80 transition-colors"
                 >
-                  Retour a la connexion
+                  {t('auth.backToLogin')}
                 </Link>
                 <Link
                   to="/register"
                   className="inline-block w-full text-primary hover:text-primary-dark transition-colors py-2"
                 >
-                  Creer un nouveau compte
+                  {t('auth.register')}
                 </Link>
               </div>
             </>

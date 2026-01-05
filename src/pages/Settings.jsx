@@ -316,7 +316,7 @@ const Settings = () => {
                                                 <Check size={16} className="text-green-400" />
                                             )}
                                             <span className="text-text-main">
-                                                {ACTIVITY_TYPES[goal.type]?.label || goal.type}
+                                                {t(ACTIVITY_TYPES[goal.type]?.labelKey) || goal.type}
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-3">
@@ -381,7 +381,7 @@ const Settings = () => {
                                                             : 'bg-white/5 text-text-muted hover:bg-white/10'
                                                     }`}
                                                 >
-                                                    {ACTIVITY_TYPES[type]?.label || type}
+                                                    {t(ACTIVITY_TYPES[type]?.labelKey) || type}
                                                 </button>
                                             ))}
                                         </div>

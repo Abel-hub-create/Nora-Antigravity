@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { User, Mail, Lock, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import AuthInput from '../components/AuthInput';
 import api from '../../../lib/api';
 
 const Register = () => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -17,13 +19,15 @@ const Register = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState('');
+  const [resendSuccess, setResendSuccess] = useState(false);
 
   const { register, error: authError, clearError } = useAuth();
   const navigate = useNavigate();
 
   // Check if error is about email already used
   const isEmailAlreadyUsed = authError?.toLowerCase().includes('email est déjà utilisé') ||
-                              authError?.toLowerCase().includes('email est deja utilise');
+                              authError?.toLowerCase().includes('email est deja utilise') ||
+                              authError?.toLowerCase().includes('email already');
 
   const handleResendVerification = async () => {
     if (!formData.email || isResending) return;
@@ -33,9 +37,11 @@ const Register = () => {
 
     try {
       await api.post('/auth/resend-verification', { email: formData.email });
-      setResendMessage('Email renvoyé ! Vérifie ta boîte mail (1h pour valider).');
+      setResendMessage(t('auth.emailResent'));
+      setResendSuccess(true);
     } catch (error) {
-      setResendMessage('Erreur lors de l\'envoi. Réessaie plus tard.');
+      setResendMessage(t('auth.resendError'));
+      setResendSuccess(false);
     } finally {
       setIsResending(false);
     }
@@ -56,23 +62,23 @@ const Register = () => {
     const newErrors = {};
 
     if (!formData.name || formData.name.length < 2) {
-      newErrors.name = 'Le nom doit contenir au moins 2 caractères';
+      newErrors.name = t('auth.nameRequired');
     }
 
     if (!formData.email) {
-      newErrors.email = 'L\'email est requis';
+      newErrors.email = t('auth.emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email invalide';
+      newErrors.email = t('auth.emailInvalid');
     }
 
     if (!formData.password) {
-      newErrors.password = 'Le mot de passe est requis';
+      newErrors.password = t('auth.passwordRequired');
     } else if (formData.password.length < 8) {
-      newErrors.password = 'Le mot de passe doit contenir au moins 8 caractères';
+      newErrors.password = t('auth.passwordMin');
     }
 
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
+      newErrors.confirmPassword = t('auth.passwordMismatch');
     }
 
     setErrors(newErrors);
@@ -118,8 +124,8 @@ const Register = () => {
             transition={{ delay: 0.2, type: 'spring' }}
             className="w-20 h-20 mx-auto mb-4 rounded-2xl"
           />
-          <h1 className="text-3xl font-bold text-text-main mb-2">Creer un compte</h1>
-          <p className="text-text-muted">Rejoins Nora et commence a apprendre !</p>
+          <h1 className="text-3xl font-bold text-text-main mb-2">{t('auth.register')}</h1>
+          <p className="text-text-muted">{t('auth.welcomeNew')}</p>
         </div>
 
         {/* Form Card */}
@@ -134,7 +140,6 @@ const Register = () => {
                 <p>{authError}</p>
                 {isEmailAlreadyUsed && (
                   <div className="mt-3 pt-3 border-t border-error/20">
-                    <p className="text-text-muted mb-2">Tu n'as pas reçu l'email de vérification ?</p>
                     <button
                       type="button"
                       onClick={handleResendVerification}
@@ -142,10 +147,10 @@ const Register = () => {
                       className="flex items-center justify-center gap-2 w-full py-2 text-primary hover:text-primary-dark transition-colors disabled:opacity-50"
                     >
                       <RefreshCw size={16} className={isResending ? 'animate-spin' : ''} />
-                      <span>{isResending ? 'Envoi en cours...' : 'Renvoyer l\'email de vérification'}</span>
+                      <span>{isResending ? t('auth.sendingEmail') : t('auth.resendVerificationEmail')}</span>
                     </button>
                     {resendMessage && (
-                      <p className={`text-center mt-2 ${resendMessage.includes('Erreur') ? 'text-error' : 'text-success'}`}>
+                      <p className={`text-center mt-2 ${resendSuccess ? 'text-success' : 'text-error'}`}>
                         {resendMessage}
                       </p>
                     )}
@@ -157,8 +162,8 @@ const Register = () => {
             <AuthInput
               type="text"
               name="name"
-              label="Prénom"
-              placeholder="Ton prénom"
+              label={t('auth.name')}
+              placeholder={t('auth.namePlaceholder')}
               value={formData.name}
               onChange={handleChange}
               error={errors.name}
@@ -169,8 +174,8 @@ const Register = () => {
             <AuthInput
               type="email"
               name="email"
-              label="Email"
-              placeholder="ton@email.com"
+              label={t('auth.email')}
+              placeholder={t('auth.emailPlaceholder')}
               value={formData.email}
               onChange={handleChange}
               error={errors.email}
@@ -181,8 +186,8 @@ const Register = () => {
             <AuthInput
               type="password"
               name="password"
-              label="Mot de passe"
-              placeholder="Minimum 8 caractères"
+              label={t('auth.password')}
+              placeholder={t('auth.passwordMin')}
               value={formData.password}
               onChange={handleChange}
               error={errors.password}
@@ -194,8 +199,8 @@ const Register = () => {
             <AuthInput
               type="password"
               name="confirmPassword"
-              label="Confirmer le mot de passe"
-              placeholder="••••••••"
+              label={t('auth.confirmPassword')}
+              placeholder={t('auth.passwordPlaceholder')}
               value={formData.confirmPassword}
               onChange={handleChange}
               error={errors.confirmPassword}
@@ -210,17 +215,17 @@ const Register = () => {
               disabled={isSubmitting}
               className="w-full bg-primary hover:bg-primary-dark text-background font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-6"
             >
-              {isSubmitting ? 'Création du compte...' : 'Créer mon compte'}
+              {isSubmitting ? t('auth.creating') : t('auth.createAccount')}
             </motion.button>
           </form>
 
           <p className="text-center text-text-muted text-sm mt-6">
-            Déjà un compte ?{' '}
+            {t('auth.hasAccount')}{' '}
             <Link
               to="/login"
               className="text-primary hover:text-primary-dark font-medium transition-colors"
             >
-              Se connecter
+              {t('auth.login')}
             </Link>
           </p>
         </div>

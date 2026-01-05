@@ -1,9 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, Square, AlertCircle, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import api from '../../lib/api';
 
 const VoiceRecorder = ({ onComplete }) => {
+    const { t } = useTranslation();
     const [isRecording, setIsRecording] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState(null);
@@ -61,9 +63,9 @@ const VoiceRecorder = ({ onComplete }) => {
         } catch (err) {
             console.error('Erreur accès microphone:', err);
             if (err.name === 'NotAllowedError') {
-                setError('Accès au microphone refusé. Veuillez autoriser l\'accès.');
+                setError(t('voice.micDenied'));
             } else {
-                setError('Impossible d\'accéder au microphone.');
+                setError(t('voice.micUnavailable'));
             }
         }
     };
@@ -84,7 +86,7 @@ const VoiceRecorder = ({ onComplete }) => {
     // Traiter l'audio avec Whisper via le backend
     const processAudio = async () => {
         if (audioChunksRef.current.length === 0) {
-            setError('Aucun audio enregistré.');
+            setError(t('voice.noAudioRecorded'));
             return;
         }
 
@@ -180,10 +182,10 @@ const VoiceRecorder = ({ onComplete }) => {
             <div className="text-center space-y-2 min-h-[100px]">
                 <h3 className="text-xl font-medium text-text-main">
                     {isProcessing
-                        ? "Transcription en cours..."
+                        ? t('voice.transcribing')
                         : isRecording
-                            ? "J'écoute..."
-                            : "Appuie pour parler"
+                            ? t('voice.listening')
+                            : t('voice.tapToSpeak')
                     }
                 </h3>
 
@@ -220,7 +222,7 @@ const VoiceRecorder = ({ onComplete }) => {
                         animate={{ opacity: 1 }}
                         className="text-text-muted text-sm"
                     >
-                        Envoi à l'IA pour transcription...
+                        {t('voice.sendingToAI')}
                     </motion.p>
                 )}
             </div>
@@ -228,10 +230,10 @@ const VoiceRecorder = ({ onComplete }) => {
             {/* Instructions supplémentaires */}
             <p className="text-text-muted text-xs text-center max-w-[250px]">
                 {isProcessing
-                    ? "La transcription peut prendre quelques secondes"
+                    ? t('voice.transcriptionTime')
                     : isRecording
-                        ? "Appuie sur le bouton rouge pour terminer"
-                        : "Dicte ton cours et il sera synthétisé"
+                        ? t('voice.tapRedToStop')
+                        : t('voice.dictateCourse')
                 }
             </p>
         </div>

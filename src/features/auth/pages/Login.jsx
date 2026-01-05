@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import AuthInput from '../components/AuthInput';
 import api from '../../../lib/api';
 
 const Login = () => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -16,12 +18,13 @@ const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState('');
+  const [resendSuccess, setResendSuccess] = useState(false);
 
   const { login, error: authError, clearError } = useAuth();
   const navigate = useNavigate();
 
   // Check if error is about email not verified
-  const isEmailNotVerified = authError?.toLowerCase().includes('verifie ton email');
+  const isEmailNotVerified = authError?.toLowerCase().includes('verifie ton email') || authError?.toLowerCase().includes('verify your email');
 
   const handleResendVerification = async () => {
     if (!formData.email || isResending) return;
@@ -31,9 +34,11 @@ const Login = () => {
 
     try {
       await api.post('/auth/resend-verification', { email: formData.email });
-      setResendMessage('Email renvoyé ! Vérifie ta boîte mail.');
+      setResendMessage(t('auth.emailResent'));
+      setResendSuccess(true);
     } catch (error) {
-      setResendMessage('Erreur lors de l\'envoi. Réessaie plus tard.');
+      setResendMessage(t('auth.resendError'));
+      setResendSuccess(false);
     } finally {
       setIsResending(false);
     }
@@ -57,13 +62,13 @@ const Login = () => {
     const newErrors = {};
 
     if (!formData.email) {
-      newErrors.email = 'L\'email est requis';
+      newErrors.email = t('auth.emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email invalide';
+      newErrors.email = t('auth.emailInvalid');
     }
 
     if (!formData.password) {
-      newErrors.password = 'Le mot de passe est requis';
+      newErrors.password = t('auth.passwordRequired');
     }
 
     setErrors(newErrors);
@@ -105,7 +110,7 @@ const Login = () => {
             className="w-20 h-20 mx-auto mb-4 rounded-2xl"
           />
           <h1 className="text-3xl font-bold text-text-main mb-2">Nora</h1>
-          <p className="text-text-muted">Content de te revoir !</p>
+          <p className="text-text-muted">{t('auth.welcomeBack')}</p>
         </div>
 
         {/* Form Card */}
@@ -127,10 +132,10 @@ const Login = () => {
                       className="flex items-center justify-center gap-2 w-full py-2 text-primary hover:text-primary-dark transition-colors disabled:opacity-50"
                     >
                       <RefreshCw size={16} className={isResending ? 'animate-spin' : ''} />
-                      <span>{isResending ? 'Envoi en cours...' : 'Renvoyer l\'email de vérification'}</span>
+                      <span>{isResending ? t('auth.sendingEmail') : t('auth.resendVerificationEmail')}</span>
                     </button>
                     {resendMessage && (
-                      <p className={`text-center mt-2 ${resendMessage.includes('Erreur') ? 'text-error' : 'text-success'}`}>
+                      <p className={`text-center mt-2 ${resendSuccess ? 'text-success' : 'text-error'}`}>
                         {resendMessage}
                       </p>
                     )}
@@ -142,8 +147,8 @@ const Login = () => {
             <AuthInput
               type="email"
               name="email"
-              label="Email"
-              placeholder="ton@email.com"
+              label={t('auth.email')}
+              placeholder={t('auth.emailPlaceholder')}
               value={formData.email}
               onChange={handleChange}
               error={errors.email}
@@ -154,8 +159,8 @@ const Login = () => {
             <AuthInput
               type="password"
               name="password"
-              label="Mot de passe"
-              placeholder="••••••••"
+              label={t('auth.password')}
+              placeholder={t('auth.passwordPlaceholder')}
               value={formData.password}
               onChange={handleChange}
               error={errors.password}
@@ -173,14 +178,14 @@ const Login = () => {
                   onChange={handleChange}
                   className="w-4 h-4 text-primary bg-surface border-white/20 rounded focus:ring-primary focus:ring-2"
                 />
-                <span className="ml-2 text-sm text-text-muted">Se souvenir de moi</span>
+                <span className="ml-2 text-sm text-text-muted">{t('auth.rememberMe')}</span>
               </label>
 
               <Link
                 to="/forgot-password"
                 className="text-sm text-primary hover:text-primary-dark transition-colors"
               >
-                Mot de passe oublié ?
+                {t('auth.forgotPassword')}
               </Link>
             </div>
 
@@ -190,17 +195,17 @@ const Login = () => {
               disabled={isSubmitting}
               className="w-full bg-primary hover:bg-primary-dark text-background font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-6"
             >
-              {isSubmitting ? 'Connexion...' : 'Se connecter'}
+              {isSubmitting ? t('auth.connecting') : t('auth.login')}
             </motion.button>
           </form>
 
           <p className="text-center text-text-muted text-sm mt-6">
-            Pas encore de compte ?{' '}
+            {t('auth.noAccount')}{' '}
             <Link
               to="/register"
               className="text-primary hover:text-primary-dark font-medium transition-colors"
             >
-              Créer un compte
+              {t('auth.register')}
             </Link>
           </p>
         </div>
