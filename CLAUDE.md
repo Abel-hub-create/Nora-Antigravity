@@ -138,8 +138,8 @@ The app is **fully bilingual** (French/English) using i18next. All UI text is tr
 src/i18n/
 ├── index.js              # i18next configuration
 └── locales/
-    ├── fr.json           # French translations (~250 keys)
-    └── en.json           # English translations (~250 keys)
+    ├── fr.json           # French translations (~320 keys)
+    └── en.json           # English translations (~320 keys)
 ```
 
 ### Usage
@@ -173,12 +173,15 @@ const MyComponent = () => {
 | `common.*` | Shared buttons, labels (save, cancel, delete, loading, today, yesterday, etc.) |
 | `home.*` | Home page content |
 | `settings.*` | Settings page (account, profile, subscription, notifications, goals) |
-| `auth.*` | Login, register, password reset, email verification |
+| `auth.*` | Login, register, password reset, email verification, all form labels/placeholders/buttons |
 | `study.*` | Study pages (search, list, empty states) |
 | `studyDetail.*` | Summary detail page |
 | `flashcards.*` | Flashcards mode (session, cards, completion) |
 | `quiz.*` | Quiz mode (questions, results, messages by score) |
 | `import.*` | Import page (voice, photo modes) |
+| `voice.*` | Voice recorder (microphone errors, transcription status, instructions) |
+| `photo.*` | Photo capture (camera errors, OCR status, instructions) |
+| `dailyProgress.*` | Daily goals (titles, messages, progress counters, motivational messages) |
 | `process.*` | AI generation steps and status |
 | `profile.*` | Profile page (level, XP, folders) |
 | `collection.*` | Creature collection (eggs, capsules) |
@@ -191,7 +194,8 @@ const MyComponent = () => {
 
 All pages and components use `t()` for text:
 - **Pages**: Home, Study, StudyDetail, StudyFlashcards, StudyQuiz, Import, Process, Profile, Collection, FolderDetail, Settings
-- **Components**: CreateFolderModal, AddSynthesesModal, LanguageSelector, DailyProgress
+- **Auth Pages**: Login, Register, ForgotPassword, ResetPassword, VerifyEmail, VerifyEmailSent
+- **Components**: CreateFolderModal, AddSynthesesModal, LanguageSelector, DailyProgress, VoiceRecorder, PhotoCapture, ProtectedRoute
 - **Context**: UserContext (notifications, goal labels)
 
 ### Adding New Translations
