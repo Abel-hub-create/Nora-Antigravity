@@ -113,7 +113,7 @@ const Collection = () => {
                                 </div>
                                 {isUnlocked && (
                                     <p className="text-[10px] font-bold truncate w-full relative z-10" style={{ color: rarityColor }}>
-                                        {creature.name}
+                                        {t(`creatures.${creature.id}`)}
                                     </p>
                                 )}
                             </div>

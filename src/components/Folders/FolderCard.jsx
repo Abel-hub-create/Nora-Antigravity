@@ -1,9 +1,11 @@
 import React from 'react';
 import { Folder, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 
 const FolderCard = ({ folder, index = 0 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
@@ -28,7 +30,7 @@ const FolderCard = ({ folder, index = 0 }) => {
           {folder.name}
         </h3>
         <p className="text-xs text-text-muted mt-0.5">
-          {folder.syntheses_count || 0} synthèse{(folder.syntheses_count || 0) !== 1 ? 's' : ''}
+          {t('folders.synthesesCount', { count: folder.syntheses_count || 0 })}
         </p>
       </div>
 

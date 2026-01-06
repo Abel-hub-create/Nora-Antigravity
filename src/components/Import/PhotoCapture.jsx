@@ -165,8 +165,8 @@ const PhotoCapture = ({ onComplete, onClose }) => {
             stopCamera();
             onComplete(data.text);
         } catch (err) {
-            console.error('Erreur OCR:', err);
-            const errorMessage = err?.response?.data?.error || err?.message || 'Erreur lors du traitement des photos';
+            console.error('OCR error:', err);
+            const errorMessage = err?.response?.data?.error || err?.message || t('errors.photoProcessing');
             setError(errorMessage);
 
             // Marquer les photos comme en erreur

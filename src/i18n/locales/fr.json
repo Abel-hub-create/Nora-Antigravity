@@ -14,6 +14,7 @@
     "warning": "Attention",
     "min": "min",
     "user": "Utilisateur",
+    "defaultUserName": "Utilisateur",
     "saving": "Enregistrement...",
     "deleting": "Suppression...",
     "creating": "Création...",
@@ -25,6 +26,14 @@
     "daysAgo": "Il y a {{count}} jours",
     "cards": "cartes",
     "questions": "questions"
+  },
+  "nav": {
+    "home": "Accueil",
+    "study": "Étude",
+    "collection": "Collection",
+    "import": "Importer",
+    "profile": "Profil",
+    "tagline": "Apprendre sans effort"
   },
   "activities": {
     "summary": "Synthèse",
@@ -307,7 +316,56 @@
     "openNow": "Ouvrir maintenant",
     "noEggs": "Pas de capsule",
     "creatures": "Créatures",
-    "locked": "Verrouillé"
+    "locked": "Verrouillé",
+    "tapToOpen": "Appuyer pour ouvrir",
+    "hatching": "Éclosion en cours...",
+    "secretDiscovered": "Secret Découvert",
+    "mysteryMessage": "Bien joué, tu as percé le mystère...",
+    "incredible": "Incroyable !",
+    "awesome": "Génial !"
+  },
+  "rarities": {
+    "rare": "Rare",
+    "veryRare": "Très Rare",
+    "epic": "Épique",
+    "legendary": "Légendaire",
+    "mythic": "Mythique",
+    "secret": "Secret"
+  },
+  "creatures": {
+    "r1": "Feuille",
+    "r2": "Goutte",
+    "r3": "Caillou",
+    "r4": "Brindille",
+    "r5": "Sable",
+    "r6": "Nuage",
+    "r7": "Fleur",
+    "r8": "Champignon",
+    "r9": "Cactus",
+    "r10": "Bambou",
+    "vr1": "Cristal",
+    "vr2": "Perle",
+    "vr3": "Saphir",
+    "vr4": "Glace",
+    "vr5": "Lune",
+    "vr6": "Étoile",
+    "vr7": "Comète",
+    "vr8": "Orage",
+    "e1": "Dragonnet",
+    "e2": "Licorne",
+    "e3": "Phénix",
+    "e4": "Griffon",
+    "e5": "Hydre",
+    "e6": "Chimère",
+    "l1": "Roi Dragon",
+    "l2": "Titan",
+    "l3": "Archange",
+    "l4": "Démon",
+    "l5": "Dieu Solaire",
+    "m1": "Cthulhu",
+    "m2": "Léviathan",
+    "m3": "Kraken",
+    "s1": "Le Néant"
   },
   "studyDetail": {
     "loadError": "Impossible de charger cette synthèse",
@@ -386,6 +444,14 @@
     "generic": "Une erreur s'est produite",
     "network": "Erreur de connexion au serveur",
     "notFound": "Non trouvé",
-    "unauthorized": "Non autorisé"
+    "unauthorized": "Non autorisé",
+    "photoProcessing": "Erreur lors du traitement des photos",
+    "transcription": "Erreur lors de la transcription",
+    "loginFailed": "Échec de la connexion",
+    "registerFailed": "Échec de l'inscription",
+    "requestFailed": "Échec de la demande",
+    "resetFailed": "Échec de la réinitialisation",
+    "profileUpdateFailed": "Échec de la mise à jour du profil",
+    "deleteAccountFailed": "Échec de la suppression du compte"
   }
 }

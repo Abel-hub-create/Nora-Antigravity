@@ -45,7 +45,7 @@ npm start          # Start Express server (production)
 
 ## Architecture
 
-**Nora** is a bilingual (French/English) gamified learning app built as a mobile-first React SPA with a phone frame wrapper.
+**Nora** is a bilingual (French/English) gamified learning app built as a responsive React SPA (mobile-first design).
 
 ### Tech Stack
 - React 19 + Vite 7
@@ -138,8 +138,8 @@ The app is **fully bilingual** (French/English) using i18next. All UI text is tr
 src/i18n/
 ├── index.js              # i18next configuration
 └── locales/
-    ├── fr.json           # French translations (~320 keys)
-    └── en.json           # English translations (~320 keys)
+    ├── fr.json           # French translations (~400 keys)
+    └── en.json           # English translations (~400 keys)
 ```
 
 ### Usage
@@ -171,6 +171,7 @@ const MyComponent = () => {
 | Namespace | Usage |
 |-----------|-------|
 | `common.*` | Shared buttons, labels (save, cancel, delete, loading, today, yesterday, etc.) |
+| `nav.*` | Navigation labels (home, study, collection, import, profile, tagline) |
 | `home.*` | Home page content |
 | `settings.*` | Settings page (account, profile, subscription, notifications, goals) |
 | `auth.*` | Login, register, password reset, email verification, all form labels/placeholders/buttons |
@@ -184,19 +185,21 @@ const MyComponent = () => {
 | `dailyProgress.*` | Daily goals (titles, messages, progress counters, motivational messages) |
 | `process.*` | AI generation steps and status |
 | `profile.*` | Profile page (level, XP, folders) |
-| `collection.*` | Creature collection (eggs, capsules) |
+| `collection.*` | Creature collection (eggs, capsules, hatching animations) |
+| `rarities.*` | Creature rarity names (rare, veryRare, epic, legendary, mythic, secret) |
+| `creatures.*` | Creature names by ID (r1-r10, vr1-vr8, e1-e6, l1-l5, m1-m3, s1) |
 | `folders.*` | Folder management (create, rename, add syntheses) |
 | `activities.*` | Activity type labels (Summary, Quiz, Flashcards) |
 | `notifications.*` | XP and goal completion notifications |
-| `errors.*` | Error messages |
+| `errors.*` | Error messages (generic, network, auth failures, etc.) |
 
 ### Translated Components
 
 All pages and components use `t()` for text:
 - **Pages**: Home, Study, StudyDetail, StudyFlashcards, StudyQuiz, Import, Process, Profile, Collection, FolderDetail, Settings
 - **Auth Pages**: Login, Register, ForgotPassword, ResetPassword, VerifyEmail, VerifyEmailSent
-- **Components**: CreateFolderModal, AddSynthesesModal, LanguageSelector, DailyProgress, VoiceRecorder, PhotoCapture, ProtectedRoute
-- **Context**: UserContext (notifications, goal labels)
+- **Components**: MobileWrapper (navigation), CreateFolderModal, AddSynthesesModal, LanguageSelector, DailyProgress, VoiceRecorder, PhotoCapture, ProtectedRoute, EggAnimation, FolderCard, NotificationStack
+- **Context**: UserContext (notifications, goal labels), AuthContext (error messages)
 
 ### Adding New Translations
 
@@ -373,8 +376,11 @@ dailyProgressPercentage = (completedGoals.length / totalGoals.length) * 100
 
 ### Key Components
 
-- `MobileWrapper` - Phone frame UI with status bar and bottom navigation
+- `MobileWrapper` - Responsive layout wrapper with:
+  - **Mobile**: Bottom navigation bar (fixed)
+  - **Desktop (md+)**: Left sidebar with logo "Nora" and navigation links
 - `UserProvider` - Global state provider wrapping entire app
+- `NotificationStack` - Toast notifications (top-right on desktop, top-center on mobile)
 
 ### Routes
 | Path | Page | Description |

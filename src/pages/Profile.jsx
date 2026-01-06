@@ -95,7 +95,7 @@ const Profile = () => {
                         </div>
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold text-text-main">{user.name}</h2>
+                        <h2 className="text-xl font-bold text-text-main">{user.name || t('common.user')}</h2>
                         <div className="flex items-center gap-2 text-sm text-primary font-medium">
                             <Star size={14} className="fill-current" />
                             {t('profile.level')} {user.level}

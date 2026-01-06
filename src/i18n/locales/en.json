@@ -14,6 +14,7 @@
     "warning": "Warning",
     "min": "min",
     "user": "User",
+    "defaultUserName": "User",
     "saving": "Saving...",
     "deleting": "Deleting...",
     "creating": "Creating...",
@@ -25,6 +26,14 @@
     "daysAgo": "{{count}} days ago",
     "cards": "cards",
     "questions": "questions"
+  },
+  "nav": {
+    "home": "Home",
+    "study": "Study",
+    "collection": "Collection",
+    "import": "Import",
+    "profile": "Profile",
+    "tagline": "Learn effortlessly"
   },
   "activities": {
     "summary": "Summary",
@@ -307,7 +316,56 @@
     "openNow": "Open now",
     "noEggs": "No capsule",
     "creatures": "Creatures",
-    "locked": "Locked"
+    "locked": "Locked",
+    "tapToOpen": "Tap to open",
+    "hatching": "Hatching...",
+    "secretDiscovered": "Secret Discovered",
+    "mysteryMessage": "Well done, you've unlocked the mystery...",
+    "incredible": "Incredible!",
+    "awesome": "Awesome!"
+  },
+  "rarities": {
+    "rare": "Rare",
+    "veryRare": "Very Rare",
+    "epic": "Epic",
+    "legendary": "Legendary",
+    "mythic": "Mythic",
+    "secret": "Secret"
+  },
+  "creatures": {
+    "r1": "Leaf",
+    "r2": "Drop",
+    "r3": "Pebble",
+    "r4": "Twig",
+    "r5": "Sand",
+    "r6": "Cloud",
+    "r7": "Flower",
+    "r8": "Mushroom",
+    "r9": "Cactus",
+    "r10": "Bamboo",
+    "vr1": "Crystal",
+    "vr2": "Pearl",
+    "vr3": "Sapphire",
+    "vr4": "Ice",
+    "vr5": "Moon",
+    "vr6": "Star",
+    "vr7": "Comet",
+    "vr8": "Storm",
+    "e1": "Dragonling",
+    "e2": "Unicorn",
+    "e3": "Phoenix",
+    "e4": "Griffin",
+    "e5": "Hydra",
+    "e6": "Chimera",
+    "l1": "Dragon King",
+    "l2": "Titan",
+    "l3": "Archangel",
+    "l4": "Demon",
+    "l5": "Sun God",
+    "m1": "Cthulhu",
+    "m2": "Leviathan",
+    "m3": "Kraken",
+    "s1": "The Void"
   },
   "studyDetail": {
     "loadError": "Unable to load this summary",
@@ -386,6 +444,14 @@
     "generic": "An error occurred",
     "network": "Connection error",
     "notFound": "Not found",
-    "unauthorized": "Unauthorized"
+    "unauthorized": "Unauthorized",
+    "photoProcessing": "Error processing photos",
+    "transcription": "Transcription error",
+    "loginFailed": "Login failed",
+    "registerFailed": "Registration failed",
+    "requestFailed": "Request failed",
+    "resetFailed": "Reset failed",
+    "profileUpdateFailed": "Failed to update profile",
+    "deleteAccountFailed": "Failed to delete account"
   }
 }

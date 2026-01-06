@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { useTranslation } from 'react-i18next';
 import { RARITIES } from '../../data/creatures';
 
 const EggAnimation = ({ onComplete, reward }) => {
+    const { t } = useTranslation();
     const [step, setStep] = useState('idle'); // idle, cracking, exploding, revealed
 
     const rarityColor = RARITIES[reward.rarity.toUpperCase()].color;
@@ -96,7 +98,7 @@ const EggAnimation = ({ onComplete, reward }) => {
                             animate={{ opacity: 1 }}
                             className="mt-12 text-white/50 text-sm font-medium tracking-[0.2em] uppercase"
                         >
-                            {step === 'idle' ? "Appuyer pour ouvrir" : "Éclosion en cours..."}
+                            {step === 'idle' ? t('collection.tapToOpen') : t('collection.hatching')}
                         </motion.p>
                     </motion.div>
                 ) : (
@@ -141,7 +143,7 @@ const EggAnimation = ({ onComplete, reward }) => {
                                         animate={{ y: 0, opacity: 1 }}
                                         className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500 mb-2 uppercase tracking-tighter"
                                     >
-                                        {reward.name}
+                                        {t(`creatures.${reward.id}`)}
                                     </motion.h3>
 
                                     <motion.div
@@ -151,7 +153,7 @@ const EggAnimation = ({ onComplete, reward }) => {
                                         className="mb-6"
                                     >
                                         <span className="text-xs font-bold uppercase tracking-[0.3em] text-white border border-white/30 px-3 py-1 rounded-full">
-                                            Secret Découvert
+                                            {t('collection.secretDiscovered')}
                                         </span>
                                     </motion.div>
 
@@ -161,7 +163,7 @@ const EggAnimation = ({ onComplete, reward }) => {
                                         transition={{ delay: 0.8 }}
                                         className="text-white/80 text-sm italic mb-8 font-serif"
                                     >
-                                        "Bien joué, tu as percé le mystère..."
+                                        "{t('collection.mysteryMessage')}"
                                     </motion.p>
                                 </div>
                             ) : (
@@ -183,10 +185,10 @@ const EggAnimation = ({ onComplete, reward }) => {
                                         animate={{ y: 0, opacity: 1 }}
                                         transition={{ delay: 0.4 }}
                                     >
-                                        <h3 className="text-2xl font-bold text-white mb-2">{reward.name}</h3>
+                                        <h3 className="text-2xl font-bold text-white mb-2">{t(`creatures.${reward.id}`)}</h3>
                                         <div className="inline-block px-4 py-1 rounded-full border border-white/10 bg-white/5 mb-8">
                                             <span className="text-xs font-bold uppercase tracking-widest" style={{ color: rarityColor }}>
-                                                {RARITIES[reward.rarity.toUpperCase()].name}
+                                                {t(RARITIES[reward.rarity.toUpperCase()].nameKey)}
                                             </span>
                                         </div>
                                     </motion.div>
@@ -201,7 +203,7 @@ const EggAnimation = ({ onComplete, reward }) => {
                                 className={`w-full py-4 font-bold rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-lg ${reward.rarity === 'secret' ? 'bg-white text-black shadow-white/20' : 'text-black shadow-white/10'}`}
                                 style={{ backgroundColor: reward.rarity === 'secret' ? '#ffffff' : rarityColor }}
                             >
-                                {reward.rarity === 'secret' ? 'Incroyable !' : 'Génial !'}
+                                {reward.rarity === 'secret' ? t('collection.incredible') : t('collection.awesome')}
                             </motion.button>
                         </div>
                     </motion.div>

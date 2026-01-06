@@ -93,7 +93,7 @@ export const UserProvider = ({ children }) => {
     const [user, setUser] = useState({
         id: authUser?.id ?? null,
         email: authUser?.email ?? null,
-        name: authUser?.name ?? "Utilisateur",
+        name: authUser?.name ?? null,
         level: authUser?.level ?? 1,
         exp: authUser?.exp ?? 0,
         nextLevelExp: authUser?.next_level_exp ?? 1000,

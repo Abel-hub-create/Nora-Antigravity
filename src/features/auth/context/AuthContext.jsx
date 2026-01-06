@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import * as authService from '../services/authService';
+import i18n from '../../../i18n';
 
 export const AuthContext = createContext();
 
@@ -42,7 +43,7 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       return userData;
     } catch (err) {
-      const message = err.response?.data?.error || 'Échec de la connexion';
+      const message = err.response?.data?.error || i18n.t('errors.loginFailed');
       setError(message);
       throw new Error(message);
     }
@@ -55,7 +56,7 @@ export const AuthProvider = ({ children }) => {
       // Don't set user - they need to verify email first
       return result;
     } catch (err) {
-      const message = err.response?.data?.error || 'Echec de l\'inscription';
+      const message = err.response?.data?.error || i18n.t('errors.registerFailed');
       setError(message);
       throw new Error(message);
     }
@@ -74,7 +75,7 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       return await authService.forgotPassword(email);
     } catch (err) {
-      const message = err.response?.data?.error || 'Échec de la demande';
+      const message = err.response?.data?.error || i18n.t('errors.requestFailed');
       setError(message);
       throw new Error(message);
     }
@@ -85,7 +86,7 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       return await authService.resetPassword(token, password);
     } catch (err) {
-      const message = err.response?.data?.error || 'Échec de la réinitialisation';
+      const message = err.response?.data?.error || i18n.t('errors.resetFailed');
       setError(message);
       throw new Error(message);
     }
@@ -111,7 +112,7 @@ export const AuthProvider = ({ children }) => {
       setUser(updatedUser);
       return updatedUser;
     } catch (err) {
-      const message = err.response?.data?.error || 'Echec de la mise a jour du profil';
+      const message = err.response?.data?.error || i18n.t('errors.profileUpdateFailed');
       setError(message);
       throw new Error(message);
     }
@@ -123,7 +124,7 @@ export const AuthProvider = ({ children }) => {
       await authService.deleteAccount();
       setUser(null);
     } catch (err) {
-      const message = err.response?.data?.error || 'Echec de la suppression du compte';
+      const message = err.response?.data?.error || i18n.t('errors.deleteAccountFailed');
       setError(message);
       throw new Error(message);
     }

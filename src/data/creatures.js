@@ -1,10 +1,10 @@
 export const RARITIES = {
-    RARE: { id: 'rare', name: 'Rare', color: '#22c55e', chance: 80 }, // Green
-    VERY_RARE: { id: 'very_rare', name: 'Très Rare', color: '#3b82f6', chance: 50 }, // Blue
-    EPIC: { id: 'epic', name: 'Épique', color: '#a855f7', chance: 30 }, // Purple
-    LEGENDARY: { id: 'legendary', name: 'Légendaire', color: '#eab308', chance: 10 }, // Yellow
-    MYTHIC: { id: 'mythic', name: 'Mythique', color: '#ef4444', chance: 1 }, // Red
-    SECRET: { id: 'secret', name: 'Secret', color: '#000000', chance: 90 }, // Black
+    RARE: { id: 'rare', name: 'Rare', nameKey: 'rarities.rare', color: '#22c55e', chance: 80 }, // Green
+    VERY_RARE: { id: 'very_rare', name: 'Très Rare', nameKey: 'rarities.veryRare', color: '#3b82f6', chance: 50 }, // Blue
+    EPIC: { id: 'epic', name: 'Épique', nameKey: 'rarities.epic', color: '#a855f7', chance: 30 }, // Purple
+    LEGENDARY: { id: 'legendary', name: 'Légendaire', nameKey: 'rarities.legendary', color: '#eab308', chance: 10 }, // Yellow
+    MYTHIC: { id: 'mythic', name: 'Mythique', nameKey: 'rarities.mythic', color: '#ef4444', chance: 1 }, // Red
+    SECRET: { id: 'secret', name: 'Secret', nameKey: 'rarities.secret', color: '#000000', chance: 90 }, // Black
 };
 
 export const CREATURES = [

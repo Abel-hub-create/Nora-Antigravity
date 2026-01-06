@@ -109,8 +109,8 @@ const VoiceRecorder = ({ onComplete }) => {
             // Le backend a validé le texte (minimum 30 caractères)
             onComplete(data.transcript);
         } catch (err) {
-            console.error('Erreur transcription:', err);
-            const errorMessage = err?.response?.data?.error || err?.message || 'Erreur lors de la transcription';
+            console.error('Transcription error:', err);
+            const errorMessage = err?.response?.data?.error || err?.message || t('errors.transcription');
             setError(errorMessage);
         } finally {
             setIsProcessing(false);

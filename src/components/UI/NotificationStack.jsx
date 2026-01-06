@@ -55,7 +55,7 @@ const NotificationStack = () => {
     };
 
     return (
-        <div className="absolute top-14 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none w-full max-w-sm px-4">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 md:left-auto md:right-4 md:translate-x-0 z-50 flex flex-col gap-2 pointer-events-none w-full max-w-sm px-4 md:px-0">
             <AnimatePresence mode="popLayout">
                 {notifications.map((notification) => (
                     <motion.div
