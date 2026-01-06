@@ -18,9 +18,9 @@ const MobileWrapper = ({ children }) => {
     ];
 
     return (
-        <div className="min-h-screen bg-background font-sans text-text-main flex">
+        <div className="min-h-screen bg-background font-sans text-text-main">
             {/* Sidebar Navigation - Desktop only */}
-            <nav className="hidden md:flex flex-col w-64 bg-surface/50 border-r border-white/5 p-4 fixed h-full">
+            <nav className="hidden md:flex flex-col w-64 bg-surface/50 border-r border-white/5 p-4 fixed h-full z-40">
                 {/* Logo */}
                 <div className="mb-8 px-2">
                     <h1 className="text-2xl font-bold text-primary">Nora</h1>
@@ -51,12 +51,12 @@ const MobileWrapper = ({ children }) => {
             </nav>
 
             {/* Main Content Area */}
-            <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
+            <div className="md:ml-64 min-h-screen">
                 {/* Notifications */}
                 <NotificationStack />
 
                 {/* Content */}
-                <main className="flex-1 overflow-y-auto pb-24 md:pb-6">
+                <main className="pb-24 md:pb-6">
                     <div className="max-w-3xl mx-auto">
                         {children}
                     </div>
