@@ -405,6 +405,34 @@ Custom colors defined in `tailwind.config.js`:
 - `secondary` - Indigo accents
 - `text-main` / `text-muted` - Light text variants
 
+### Global CSS (`/src/index.css`)
+
+```css
+body {
+  @apply bg-background text-text-main font-sans antialiased;
+}
+```
+
+**Important**: Do NOT add `overflow-hidden` to body - it breaks page scrolling.
+
+### Responsive Layout
+
+The app uses a responsive layout via `MobileWrapper`:
+
+| Breakpoint | Navigation | Content |
+|------------|------------|---------|
+| Mobile (< md) | Fixed bottom nav bar | Full width with bottom padding (pb-24) |
+| Desktop (≥ md) | Fixed left sidebar (w-64) | Left margin (ml-64) with max-w-3xl centered |
+
+**Sidebar** (desktop only):
+- Logo "Nora" with tagline
+- Navigation links with active state highlighting
+- Fixed position, full height
+
+**Bottom Nav** (mobile only):
+- 5 icons with labels
+- Fixed at bottom with blur backdrop
+
 ## Authentication System
 
 Full-stack authentication with JWT tokens and secure cookie-based refresh tokens.
