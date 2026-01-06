@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-background text-text-main font-sans antialiased overflow-hidden;
+    @apply bg-background text-text-main font-sans antialiased;
   }
 }
 
