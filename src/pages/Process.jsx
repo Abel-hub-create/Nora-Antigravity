@@ -22,7 +22,7 @@ const Process = () => {
   ];
 
   // Récupérer les données passées depuis Import
-  const { content, sourceType } = location.state || {};
+  const { content, sourceType, specificInstructions } = location.state || {};
 
   const [currentStep, setCurrentStep] = useState(0);
   const [status, setStatus] = useState('processing'); // processing, success, error
@@ -57,7 +57,7 @@ const Process = () => {
 
       try {
         // Appel unique au backend qui genere tout
-        const { title, summary, flashcards, quizQuestions } = await generateComplete(content);
+        const { title, summary, flashcards, quizQuestions } = await generateComplete(content, specificInstructions);
 
         clearInterval(stepInterval);
         setGeneratedData({ title, summary, flashcards, quizQuestions });
@@ -98,7 +98,7 @@ const Process = () => {
     };
 
     processContent();
-  }, [content, sourceType, navigate, addNotification, t]);
+  }, [content, sourceType, specificInstructions, navigate, addNotification, t]);
 
   // Réessayer en cas d'erreur
   const handleRetry = () => {

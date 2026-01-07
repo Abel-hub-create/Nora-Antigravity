@@ -18,10 +18,10 @@ const openai = new OpenAI({
  */
 export async function transcribeAudio(filePath) {
   try {
+    // Ne pas spécifier de langue pour que Whisper détecte automatiquement
     const transcription = await openai.audio.transcriptions.create({
       file: fs.createReadStream(filePath),
       model: 'whisper-1',
-      language: 'fr',
       response_format: 'text'
     });
 
@@ -76,16 +76,17 @@ export async function extractTextFromImage(base64Image) {
           content: [
             {
               type: 'text',
-              text: `TÂCHE: Extraire le texte d'un document/cours.
+              text: `TASK: Extract text from a document/course.
 
-RÈGLES STRICTES:
-1. Extrais UNIQUEMENT le texte écrit (imprimé ou manuscrit) visible dans l'image
-2. NE DÉCRIS JAMAIS l'image ou ce qu'elle montre
-3. Si tu ne vois PAS de texte de cours/document, réponds EXACTEMENT: AUCUN_TEXTE
-4. Préserve la structure (paragraphes, titres, listes)
-5. Pas de commentaires, pas d'explications
+STRICT RULES:
+1. Extract ONLY the written text (printed or handwritten) visible in the image
+2. NEVER describe the image or what it shows
+3. If you see NO course/document text, respond EXACTLY: NO_TEXT
+4. Preserve the structure (paragraphs, titles, lists)
+5. No comments, no explanations
+6. KEEP THE ORIGINAL LANGUAGE of the text - do NOT translate
 
-RÉPONSE: Le texte extrait OU "AUCUN_TEXTE"`
+RESPONSE: The extracted text OR "NO_TEXT"`
             },
             {
               type: 'image_url',
@@ -102,7 +103,7 @@ RÉPONSE: Le texte extrait OU "AUCUN_TEXTE"`
     const result = response.choices[0]?.message?.content?.trim() || '';
 
     // Vérifier si c'est une réponse "pas de texte"
-    if (result === 'AUCUN_TEXTE' || isNoTextResponse(result)) {
+    if (result === 'AUCUN_TEXTE' || result === 'NO_TEXT' || isNoTextResponse(result)) {
       return '';
     }
 

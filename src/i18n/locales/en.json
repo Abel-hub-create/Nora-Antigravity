@@ -196,7 +196,16 @@
     "photo": "Photo",
     "textPlaceholder": "Paste or type your course here...",
     "simplify": "Simplify",
-    "minChars": "Minimum 50 characters"
+    "minChars": "Minimum 50 characters",
+    "specificPrompt": {
+      "title": "Customization",
+      "question": "Do you want to mention specific elements to include in the summary, quiz and flashcards?",
+      "yes": "Yes",
+      "no": "No",
+      "instructionsLabel": "Write the elements to definitely include:",
+      "instructionsPlaceholder": "E.g.: Focus on important dates, mention physics formulas, include key definitions...",
+      "continue": "Continue"
+    }
   },
   "voice": {
     "holdToRecord": "Hold to record",

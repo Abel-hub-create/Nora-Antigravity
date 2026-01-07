@@ -301,11 +301,19 @@ export async function generateQuizQuestions(content, count = 4) {
  * Appel centralise cote serveur pour securite et optimisation
  *
  * @param {string} content - Le contenu du cours
+ * @param {string|null} specificInstructions - Instructions spécifiques de l'utilisateur (optionnel)
  * @returns {Promise<Object>} - { title, summary, flashcards, quizQuestions }
  */
-export async function generateComplete(content) {
+export async function generateComplete(content, specificInstructions = null) {
   try {
-    const data = await api.post('/ai/generate-content', { content });
+    const payload = { content };
+
+    // Ajouter les instructions spécifiques si présentes
+    if (specificInstructions && specificInstructions.trim()) {
+      payload.specificInstructions = specificInstructions.trim();
+    }
+
+    const data = await api.post('/ai/generate-content', payload);
 
     return {
       title: data.title,

@@ -146,11 +146,12 @@ router.post('/ocr', authenticate, express.json({ limit: '50mb' }), async (req, r
 /**
  * POST /api/ai/generate-content
  * Generation complete de contenu pedagogique (titre + synthese + flashcards + quiz)
- * Body: { content: "texte du cours..." }
+ * Body: { content: "texte du cours...", specificInstructions?: "instructions specifiques..." }
  */
 router.post('/generate-content', authenticate, express.json({ limit: '10mb' }), async (req, res) => {
   try {
-    const result = await generateEducationalContent(req.body.content);
+    const { content, specificInstructions } = req.body;
+    const result = await generateEducationalContent(content, specificInstructions);
     res.json(result);
   } catch (error) {
     console.error('Erreur generation contenu:', error);

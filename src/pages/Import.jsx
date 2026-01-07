@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, Camera } from 'lucide-react';
+import { Mic, Camera, ArrowRight, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import VoiceRecorder from '../components/Import/VoiceRecorder';
@@ -12,15 +12,20 @@ const Import = () => {
     const [showPhotoCapture, setShowPhotoCapture] = useState(false);
     const navigate = useNavigate();
 
+    // État pour l'écran intermédiaire (instructions spécifiques)
+    const [capturedContent, setCapturedContent] = useState(null);
+    const [capturedSourceType, setCapturedSourceType] = useState(null);
+    const [showSpecificPrompt, setShowSpecificPrompt] = useState(false);
+    const [wantsSpecific, setWantsSpecific] = useState(null); // null, true, false
+    const [specificInstructions, setSpecificInstructions] = useState('');
+
     // Gestion de la complétion vocale
     const handleVoiceComplete = (transcript) => {
         if (transcript.trim()) {
-            navigate('/process', {
-                state: {
-                    content: transcript,
-                    sourceType: 'voice'
-                }
-            });
+            // Stocker le contenu et afficher l'écran intermédiaire
+            setCapturedContent(transcript);
+            setCapturedSourceType('voice');
+            setShowSpecificPrompt(true);
         }
     };
 
@@ -28,13 +33,31 @@ const Import = () => {
     const handlePhotoComplete = (extractedText) => {
         setShowPhotoCapture(false);
         if (extractedText.trim()) {
-            navigate('/process', {
-                state: {
-                    content: extractedText,
-                    sourceType: 'photo'
-                }
-            });
+            // Stocker le contenu et afficher l'écran intermédiaire
+            setCapturedContent(extractedText);
+            setCapturedSourceType('photo');
+            setShowSpecificPrompt(true);
         }
+    };
+
+    // Continuer vers la génération
+    const handleContinueToProcess = () => {
+        navigate('/process', {
+            state: {
+                content: capturedContent,
+                sourceType: capturedSourceType,
+                specificInstructions: wantsSpecific ? specificInstructions.trim() : null
+            }
+        });
+    };
+
+    // Annuler et revenir
+    const handleCancelSpecific = () => {
+        setShowSpecificPrompt(false);
+        setCapturedContent(null);
+        setCapturedSourceType(null);
+        setWantsSpecific(null);
+        setSpecificInstructions('');
     };
 
     // Ouvrir le mode photo
@@ -101,6 +124,99 @@ const Import = () => {
                         onComplete={handlePhotoComplete}
                         onClose={() => setShowPhotoCapture(false)}
                     />
+                )}
+            </AnimatePresence>
+
+            {/* Écran intermédiaire - Instructions spécifiques */}
+            <AnimatePresence>
+                {showSpecificPrompt && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-background z-50 flex flex-col"
+                    >
+                        {/* Header */}
+                        <div className="p-4 flex items-center justify-between border-b border-white/10">
+                            <button
+                                onClick={handleCancelSpecific}
+                                className="p-2 text-text-muted hover:text-text-main transition-colors"
+                            >
+                                <X size={24} />
+                            </button>
+                            <h2 className="text-lg font-semibold text-text-main">
+                                {t('import.specificPrompt.title')}
+                            </h2>
+                            <div className="w-10" /> {/* Spacer */}
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 p-6 flex flex-col">
+                            <p className="text-text-main text-center mb-8">
+                                {t('import.specificPrompt.question')}
+                            </p>
+
+                            {/* Boutons Oui/Non */}
+                            {wantsSpecific === null && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="flex gap-4 justify-center"
+                                >
+                                    <button
+                                        onClick={() => {
+                                            setWantsSpecific(false);
+                                            // Si non, continuer directement
+                                            navigate('/process', {
+                                                state: {
+                                                    content: capturedContent,
+                                                    sourceType: capturedSourceType,
+                                                    specificInstructions: null
+                                                }
+                                            });
+                                        }}
+                                        className="px-8 py-3 bg-surface text-text-main rounded-xl font-medium hover:bg-surface/80 transition-colors"
+                                    >
+                                        {t('import.specificPrompt.no')}
+                                    </button>
+                                    <button
+                                        onClick={() => setWantsSpecific(true)}
+                                        className="px-8 py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark transition-colors"
+                                    >
+                                        {t('import.specificPrompt.yes')}
+                                    </button>
+                                </motion.div>
+                            )}
+
+                            {/* Champ de texte si Oui */}
+                            {wantsSpecific === true && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="flex-1 flex flex-col"
+                                >
+                                    <label className="text-text-muted text-sm mb-2">
+                                        {t('import.specificPrompt.instructionsLabel')}
+                                    </label>
+                                    <textarea
+                                        value={specificInstructions}
+                                        onChange={(e) => setSpecificInstructions(e.target.value)}
+                                        placeholder={t('import.specificPrompt.instructionsPlaceholder')}
+                                        className="flex-1 min-h-[150px] bg-surface text-text-main rounded-xl p-4 resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder:text-text-muted/50"
+                                        autoFocus
+                                    />
+
+                                    <button
+                                        onClick={handleContinueToProcess}
+                                        className="mt-6 w-full py-4 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        {t('import.specificPrompt.continue')}
+                                        <ArrowRight size={20} />
+                                    </button>
+                                </motion.div>
+                            )}
+                        </div>
+                    </motion.div>
                 )}
             </AnimatePresence>
         </>

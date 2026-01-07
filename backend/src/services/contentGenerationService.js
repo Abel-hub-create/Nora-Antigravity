@@ -27,12 +27,22 @@ Principes fondamentaux :
 - Ton neutre et bienveillant, jamais condescendant
 - Fidelite absolue au contenu original
 - Structure claire et logique
-- Pas d'emojis, pas de formules excessives`;
+- Pas d'emojis, pas de formules excessives
+
+REGLE IMPORTANTE SUR LA LANGUE :
+- Tu dois detecter automatiquement la langue du contenu du cours (francais, anglais, ou autre)
+- Tu dois TOUJOURS repondre dans la MEME LANGUE que le contenu original
+- Si le cours est en anglais, genere tout en anglais (titre, synthese, flashcards, quiz)
+- Si le cours est en francais, genere tout en francais
+- Ne melange jamais les langues`;
 
 /**
  * Prompt utilisateur pour la generation complete
+ * @param {string} content - Le contenu du cours
+ * @param {string|null} specificInstructions - Instructions specifiques de l'utilisateur
  */
-const buildUserPrompt = (content) => `Analyse ce contenu de cours et genere du materiel pedagogique complet.
+const buildUserPrompt = (content, specificInstructions = null) => {
+  let prompt = `Analyse ce contenu de cours et genere du materiel pedagogique complet.
 
 CONTENU DU COURS :
 """
@@ -87,6 +97,26 @@ REGLES STRICTES :
 4. Les flashcards et le quiz doivent etre bases sur la synthese
 5. Tout doit etre coherent et couvrir les points essentiels du cours
 6. Retourne UNIQUEMENT le JSON, sans texte avant ou apres`;
+
+  // Ajouter les instructions specifiques si presentes
+  if (specificInstructions && specificInstructions.trim()) {
+    prompt += `
+
+INSTRUCTIONS SPECIFIQUES DE L'UTILISATEUR :
+L'utilisateur a demande que les elements suivants soient mis en avant dans la synthese, les flashcards et le quiz :
+"""
+${specificInstructions.trim()}
+"""
+
+REGLES STRICTES POUR CES INSTRUCTIONS :
+- Tu ne peux inclure ces elements QUE s'ils figurent reellement dans le contenu du cours ci-dessus
+- Si un element demande n'existe PAS dans le cours, tu l'ignores completement
+- Tu ne dois JAMAIS inventer ou ajouter des informations qui ne sont pas dans le cours original
+- Seuls les elements demandes ET presents dans le cours doivent etre mis en avant`;
+  }
+
+  return prompt;
+};
 
 /**
  * Parse et valide la reponse JSON de l'API
@@ -176,9 +206,10 @@ function parseAndValidateResponse(text) {
  * Genere le contenu pedagogique complet en un seul appel API
  *
  * @param {string} content - Le contenu du cours a analyser
+ * @param {string|null} specificInstructions - Instructions specifiques de l'utilisateur (optionnel)
  * @returns {Promise<Object>} - { title, summary, flashcards, quizQuestions }
  */
-export async function generateEducationalContent(content) {
+export async function generateEducationalContent(content, specificInstructions = null) {
   if (!content || typeof content !== 'string') {
     throw new Error('Contenu invalide');
   }
@@ -205,7 +236,7 @@ export async function generateEducationalContent(content) {
         },
         {
           role: 'user',
-          content: buildUserPrompt(trimmedContent)
+          content: buildUserPrompt(trimmedContent, specificInstructions)
         }
       ],
       max_tokens: MAX_TOKENS,

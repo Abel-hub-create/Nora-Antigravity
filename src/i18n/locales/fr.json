@@ -196,7 +196,16 @@
     "photo": "Photo",
     "textPlaceholder": "Colle ou tape ton cours ici...",
     "simplify": "Simplifier",
-    "minChars": "Minimum 50 caractères"
+    "minChars": "Minimum 50 caractères",
+    "specificPrompt": {
+      "title": "Personnalisation",
+      "question": "Veux-tu mentionner des éléments spécifiques à inclure dans la synthèse, le quiz et les flashcards ?",
+      "yes": "Oui",
+      "no": "Non",
+      "instructionsLabel": "Écris les éléments à absolument mentionner :",
+      "instructionsPlaceholder": "Ex: Insister sur les dates importantes, mentionner les formules de physique, inclure les définitions clés...",
+      "continue": "Continuer"
+    }
   },
   "voice": {
     "holdToRecord": "Maintenir pour enregistrer",
