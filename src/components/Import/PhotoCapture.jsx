@@ -196,7 +196,7 @@ const PhotoCapture = ({ onComplete, onClose }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black z-50 flex flex-col"
+            className="fixed inset-0 bg-black z-[60] flex flex-col"
         >
             {/* Header */}
             <div className="flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent absolute top-0 left-0 right-0 z-10">
@@ -253,61 +253,60 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                 )}
             </div>
 
-            {/* Galerie de photos */}
-            {photos.length > 0 && (
-                <div className="absolute bottom-32 left-0 right-0 px-4">
-                    <div className="flex gap-2 overflow-x-auto pb-2">
-                        {photos.map((photo, index) => (
-                            <motion.div
-                                key={photo.id}
-                                initial={{ scale: 0, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                className="relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 border-white/30"
-                            >
-                                <img
-                                    src={photo.dataUrl}
-                                    alt={`Photo ${index + 1}`}
-                                    className="w-full h-full object-cover"
-                                />
-
-                                {/* Overlay de traitement */}
-                                {photo.isProcessing && (
-                                    <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-                                        <Loader2 className="w-6 h-6 text-primary animate-spin" />
-                                    </div>
-                                )}
-
-                                {/* Indicateur de succès */}
-                                {photo.success && !photo.isProcessing && (
-                                    <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
-                                        <Check className="w-6 h-6 text-green-400" />
-                                    </div>
-                                )}
-
-                                {/* Indicateur d'erreur */}
-                                {photo.error && (
-                                    <div className="absolute inset-0 bg-error/30 flex items-center justify-center">
-                                        <AlertCircle className="w-6 h-6 text-error" />
-                                    </div>
-                                )}
-
-                                {/* Bouton supprimer */}
-                                {!isProcessing && (
-                                    <button
-                                        onClick={() => removePhoto(photo.id)}
-                                        className="absolute -top-1 -right-1 w-5 h-5 bg-error rounded-full flex items-center justify-center"
-                                    >
-                                        <X size={12} className="text-white" />
-                                    </button>
-                                )}
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
             {/* Contrôles en bas */}
-            <div className="p-6 pb-10 bg-gradient-to-t from-black via-black/90 to-transparent" style={{ paddingBottom: 'max(2.5rem, env(safe-area-inset-bottom, 1rem))' }}>
+            <div className="flex-shrink-0 p-4 pt-2 bg-gradient-to-t from-black via-black/90 to-transparent" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0.5rem))' }}>
+                {/* Galerie de photos */}
+                {photos.length > 0 && (
+                    <div className="px-2 mb-3">
+                        <div className="flex gap-2 overflow-x-auto pb-2">
+                            {photos.map((photo, index) => (
+                                <motion.div
+                                    key={photo.id}
+                                    initial={{ scale: 0, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    className="relative flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 border-white/30"
+                                >
+                                    <img
+                                        src={photo.dataUrl}
+                                        alt={`Photo ${index + 1}`}
+                                        className="w-full h-full object-cover"
+                                    />
+
+                                    {/* Overlay de traitement */}
+                                    {photo.isProcessing && (
+                                        <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                                            <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                                        </div>
+                                    )}
+
+                                    {/* Indicateur de succès */}
+                                    {photo.success && !photo.isProcessing && (
+                                        <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
+                                            <Check className="w-5 h-5 text-green-400" />
+                                        </div>
+                                    )}
+
+                                    {/* Indicateur d'erreur */}
+                                    {photo.error && (
+                                        <div className="absolute inset-0 bg-error/30 flex items-center justify-center">
+                                            <AlertCircle className="w-5 h-5 text-error" />
+                                        </div>
+                                    )}
+
+                                    {/* Bouton supprimer */}
+                                    {!isProcessing && (
+                                        <button
+                                            onClick={() => removePhoto(photo.id)}
+                                            className="absolute -top-1 -right-1 w-5 h-5 bg-error rounded-full flex items-center justify-center"
+                                        >
+                                            <X size={12} className="text-white" />
+                                        </button>
+                                    )}
+                                </motion.div>
+                            ))}
+                        </div>
+                    </div>
+                )}
                 {/* Message d'erreur global */}
                 {error && (
                     <motion.div
@@ -347,45 +346,45 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                 />
 
                 {/* Boutons d'action */}
-                <div className="flex items-center justify-center gap-6">
+                <div className="flex items-center justify-center gap-5">
                     {/* Bouton Galerie */}
                     <button
                         onClick={handleGalleryClick}
                         disabled={isProcessing}
-                        className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center disabled:opacity-50 hover:bg-white/20 transition-colors"
+                        className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center disabled:opacity-50 hover:bg-white/20 transition-colors"
                     >
-                        <Image size={24} className="text-white" />
+                        <Image size={22} className="text-white" />
                     </button>
 
                     {/* Bouton Capture */}
                     <button
                         onClick={capturePhoto}
                         disabled={!isCapturing || isProcessing || cameraError}
-                        className="w-20 h-20 rounded-full bg-white flex items-center justify-center disabled:opacity-50 disabled:bg-white/50"
+                        className="w-16 h-16 rounded-full bg-white flex items-center justify-center disabled:opacity-50 disabled:bg-white/50"
                     >
-                        <div className="w-16 h-16 rounded-full border-4 border-black/20" />
+                        <div className="w-12 h-12 rounded-full border-4 border-black/20" />
                     </button>
 
                     {/* Bouton Traiter */}
                     <button
                         onClick={processPhotos}
                         disabled={photos.length === 0 || isProcessing}
-                        className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
+                        className={`w-11 h-11 rounded-full flex items-center justify-center transition-colors ${
                             photos.length > 0 && !isProcessing
                                 ? 'bg-primary'
                                 : 'bg-white/10'
                         } disabled:opacity-50`}
                     >
                         {isProcessing ? (
-                            <Loader2 size={24} className="text-white animate-spin" />
+                            <Loader2 size={22} className="text-white animate-spin" />
                         ) : (
-                            <Check size={24} className="text-white" />
+                            <Check size={22} className="text-white" />
                         )}
                     </button>
                 </div>
 
                 {/* Instructions */}
-                <p className="text-center text-white/60 text-sm mt-4">
+                <p className="text-center text-white/60 text-xs mt-2">
                     {isProcessing
                         ? t('photo.aiAnalyzing')
                         : photos.length > 0
