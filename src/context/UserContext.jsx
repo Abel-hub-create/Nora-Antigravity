@@ -191,54 +191,39 @@ export const UserProvider = ({ children }) => {
             console.log(`[NORA] User changed from ${previousUserId} to ${newUserId}`);
             currentUserIdRef.current = newUserId;
 
-            // Load data from backend first, fallback to localStorage
-            const loadData = async () => {
-                if (newUserId) {
-                    try {
-                        const backendData = await notificationService.getDailyProgress();
-                        console.log('[NORA] Loaded data from backend:', backendData);
+            // Load data for the new user - localStorage first, then sync with backend
+            const localData = loadUserData(newUserId);
 
-                        // Use backend data if available, otherwise use localStorage
+            // Set localStorage data immediately
+            setDailyStats(localData.dailyStats);
+            setDailyGoalsState(localData.dailyGoals);
+            setDailyGoalsRewardClaimed(localData.dailyGoalsRewardClaimed);
+            setStudyHistory(localData.studyHistory);
+
+            // Then try to load from backend and merge if available
+            if (newUserId) {
+                notificationService.getDailyProgress()
+                    .then(backendData => {
+                        console.log('[NORA] Backend data:', backendData);
+
+                        // Only use backend data if it exists and is more recent
                         if (backendData.dailyStats) {
                             setDailyStats(backendData.dailyStats);
-                        } else {
-                            const localData = loadUserData(newUserId);
-                            setDailyStats(localData.dailyStats);
                         }
-
-                        if (backendData.dailyGoals) {
+                        if (backendData.dailyGoals && backendData.dailyGoals.length > 0) {
                             setDailyGoalsState(backendData.dailyGoals);
-                        } else {
-                            const localData = loadUserData(newUserId);
-                            setDailyGoalsState(localData.dailyGoals);
                         }
-
-                        setDailyGoalsRewardClaimed(backendData.dailyGoalsRewardClaimed ?? false);
-
+                        if (backendData.dailyGoalsRewardClaimed) {
+                            setDailyGoalsRewardClaimed(true);
+                        }
                         if (backendData.studyHistory && backendData.studyHistory.length > 0) {
                             setStudyHistory(backendData.studyHistory);
-                        } else {
-                            const localData = loadUserData(newUserId);
-                            setStudyHistory(localData.studyHistory);
                         }
-                    } catch (error) {
-                        console.log('[NORA] Failed to load from backend, using localStorage:', error);
-                        const userData = loadUserData(newUserId);
-                        setDailyStats(userData.dailyStats);
-                        setDailyGoalsState(userData.dailyGoals);
-                        setDailyGoalsRewardClaimed(userData.dailyGoalsRewardClaimed);
-                        setStudyHistory(userData.studyHistory);
-                    }
-                } else {
-                    // No user, use defaults
-                    setDailyStats(getDefaultDailyStats());
-                    setDailyGoalsState(getDefaultDailyGoals());
-                    setDailyGoalsRewardClaimed(false);
-                    setStudyHistory([]);
-                }
-            };
-
-            loadData();
+                    })
+                    .catch(error => {
+                        console.debug('[NORA] Backend sync failed, using localStorage:', error);
+                    });
+            }
         }
     }, [authUser?.id, loadUserData]);
 
