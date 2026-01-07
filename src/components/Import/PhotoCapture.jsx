@@ -166,7 +166,13 @@ const PhotoCapture = ({ onComplete, onClose }) => {
             onComplete(data.text);
         } catch (err) {
             console.error('OCR error:', err);
-            const errorMessage = err?.response?.data?.error || err?.message || t('errors.photoProcessing');
+            const errorCode = err?.response?.data?.errorCode || err?.response?.data?.error;
+            let errorMessage;
+            if (errorCode === 'NO_TEXT_DETECTED_PHOTO') {
+                errorMessage = t('errors.noTextDetectedPhoto');
+            } else {
+                errorMessage = err?.message || t('errors.photoProcessing');
+            }
             setError(errorMessage);
 
             // Marquer les photos comme en erreur
@@ -216,19 +222,19 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                 <div className="w-10" />
             </div>
 
-            {/* Zone de caméra ou erreur */}
-            <div className="flex-1 relative flex items-center justify-center">
+            {/* Zone de caméra ou erreur - limitée en hauteur */}
+            <div className="relative flex items-center justify-center mt-16 mx-4 rounded-2xl overflow-hidden bg-black/50" style={{ height: 'min(55vh, 400px)' }}>
                 {cameraError ? (
                     <div className="text-center p-6">
-                        <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-error/20 flex items-center justify-center">
-                            <AlertCircle className="w-10 h-10 text-error" />
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-error/20 flex items-center justify-center">
+                            <AlertCircle className="w-8 h-8 text-error" />
                         </div>
-                        <p className="text-white mb-4">{cameraError}</p>
+                        <p className="text-white text-sm mb-4">{cameraError}</p>
                         <button
                             onClick={retryCamera}
-                            className="flex items-center gap-2 mx-auto px-4 py-2 bg-primary rounded-xl text-white"
+                            className="flex items-center gap-2 mx-auto px-4 py-2 bg-primary rounded-xl text-white text-sm"
                         >
-                            <RotateCcw size={18} />
+                            <RotateCcw size={16} />
                             {t('photo.retry')}
                         </button>
                     </div>
@@ -246,15 +252,15 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                         {/* Overlay de guidage */}
                         {isCapturing && (
                             <div className="absolute inset-0 pointer-events-none">
-                                <div className="absolute inset-8 border-2 border-white/30 rounded-2xl" />
+                                <div className="absolute inset-4 border-2 border-white/30 rounded-xl" />
                             </div>
                         )}
                     </>
                 )}
             </div>
 
-            {/* Contrôles en bas */}
-            <div className="flex-shrink-0 p-4 pt-2 bg-gradient-to-t from-black via-black/90 to-transparent" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0.5rem))' }}>
+            {/* Contrôles en bas - prend le reste de l'espace */}
+            <div className="flex-1 flex flex-col justify-center p-4 bg-gradient-to-t from-black via-black/95 to-black/80" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0.5rem))' }}>
                 {/* Galerie de photos */}
                 {photos.length > 0 && (
                     <div className="px-2 mb-3">

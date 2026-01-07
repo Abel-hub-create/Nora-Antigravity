@@ -110,7 +110,13 @@ const VoiceRecorder = ({ onComplete }) => {
             onComplete(data.transcript);
         } catch (err) {
             console.error('Transcription error:', err);
-            const errorMessage = err?.response?.data?.error || err?.message || t('errors.transcription');
+            const errorCode = err?.response?.data?.errorCode || err?.response?.data?.error;
+            let errorMessage;
+            if (errorCode === 'NO_TEXT_DETECTED_VOICE') {
+                errorMessage = t('errors.noTextDetectedVoice');
+            } else {
+                errorMessage = err?.message || t('errors.transcription');
+            }
             setError(errorMessage);
         } finally {
             setIsProcessing(false);

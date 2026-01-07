@@ -86,7 +86,8 @@ router.post('/transcribe', authenticate, (req, res, next) => {
     // Vérifier si la transcription est suffisante (minimum 30 caractères)
     if (!transcript || transcript.trim().length < 30) {
       return res.status(400).json({
-        error: 'Aucun texte détecté. Dicte ton cours pour que je puisse le synthétiser.'
+        error: 'NO_TEXT_DETECTED_VOICE',
+        errorCode: 'NO_TEXT_DETECTED_VOICE'
       });
     }
 
@@ -130,7 +131,8 @@ router.post('/ocr', authenticate, express.json({ limit: '50mb' }), async (req, r
     // Vérifier si le texte est suffisant (minimum 30 caractères)
     if (!extractedText || extractedText.trim().length < 30) {
       return res.status(400).json({
-        error: 'Aucun texte détecté. Prends en photo ton cours pour que je puisse le synthétiser.'
+        error: 'NO_TEXT_DETECTED_PHOTO',
+        errorCode: 'NO_TEXT_DETECTED_PHOTO'
       });
     }
 

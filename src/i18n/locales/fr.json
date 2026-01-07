@@ -452,6 +452,8 @@
     "requestFailed": "Échec de la demande",
     "resetFailed": "Échec de la réinitialisation",
     "profileUpdateFailed": "Échec de la mise à jour du profil",
-    "deleteAccountFailed": "Échec de la suppression du compte"
+    "deleteAccountFailed": "Échec de la suppression du compte",
+    "noTextDetectedPhoto": "Aucun texte détecté. Prends en photo ton cours pour que je puisse le synthétiser.",
+    "noTextDetectedVoice": "Aucun texte détecté. Dicte ton cours pour que je puisse le synthétiser."
   }
 }

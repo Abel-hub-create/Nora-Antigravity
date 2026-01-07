@@ -452,6 +452,8 @@
     "requestFailed": "Request failed",
     "resetFailed": "Reset failed",
     "profileUpdateFailed": "Failed to update profile",
-    "deleteAccountFailed": "Failed to delete account"
+    "deleteAccountFailed": "Failed to delete account",
+    "noTextDetectedPhoto": "No text detected. Take a photo of your course so I can summarize it.",
+    "noTextDetectedVoice": "No text detected. Dictate your course so I can summarize it."
   }
 }
