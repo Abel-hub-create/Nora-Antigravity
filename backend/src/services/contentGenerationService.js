@@ -15,6 +15,26 @@ const MODEL = 'gpt-4o-mini';
 const MAX_TOKENS = 4500;
 
 /**
+ * Detecte la langue dominante du contenu
+ * @param {string} content - Le contenu a analyser
+ * @returns {string} - 'english' ou 'french'
+ */
+function detectLanguage(content) {
+  // Mots francais courants
+  const frenchWords = /\b(le|la|les|de|du|des|un|une|est|sont|dans|pour|avec|sur|par|que|qui|ce|cette|ces|nous|vous|ils|elles|mais|ou|et|donc|car|avoir|etre|faire|dit|peut|plus|tout|comme|bien|aussi|entre|deux|tres|sans|fait|encore|leurs|notre|votre|meme|quand|apres|avant|depuis|sous|chez|vers|cette)\b/gi;
+
+  // Mots anglais courants
+  const englishWords = /\b(the|a|an|is|are|was|were|be|been|being|have|has|had|do|does|did|will|would|could|should|may|might|must|can|this|that|these|those|it|its|they|them|their|we|our|you|your|he|she|him|her|his|with|for|from|into|onto|upon|about|after|before|between|through|during|without|within|along|among|against|because|since|until|while|where|when|which|who|whom|whose|what|how|why|but|and|or|nor|so|yet|both|either|neither|not|only|also|just|even|still|already|always|never|often|sometimes|usually|very|really|quite|rather|too|much|many|more|most|some|any|few|all|each|every)\b/gi;
+
+  const frenchCount = (content.match(frenchWords) || []).length;
+  const englishCount = (content.match(englishWords) || []).length;
+
+  console.log(`[Lang] French words: ${frenchCount}, English words: ${englishCount}`);
+
+  return englishCount > frenchCount ? 'english' : 'french';
+}
+
+/**
  * Prompt systeme definissant la personnalite de Nora
  */
 const SYSTEM_PROMPT = `Tu es Nora, une application d'etude calme, structuree et pedagogique.
@@ -42,11 +62,16 @@ REGLE IMPORTANTE SUR LA LANGUE :
  * @param {string|null} specificInstructions - Instructions specifiques de l'utilisateur
  */
 const buildUserPrompt = (content, specificInstructions = null) => {
-  let prompt = `REGLE ABSOLUE ET PRIORITAIRE - LANGUE :
-Detecte la langue du contenu ci-dessous. Tu DOIS generer TOUT le contenu (titre, synthese, flashcards, quiz) dans EXACTEMENT la meme langue que le cours original.
-- Si le cours est en ANGLAIS -> titre, synthese, flashcards et quiz DOIVENT etre en ANGLAIS
-- Si le cours est en FRANCAIS -> titre, synthese, flashcards et quiz DOIVENT etre en FRANCAIS
-- NE TRADUIS JAMAIS. Garde la langue originale du cours.
+  // Detecter la langue du contenu
+  const detectedLang = detectLanguage(content);
+  const langInstruction = detectedLang === 'english'
+    ? 'The course content is in ENGLISH. You MUST generate ALL content (title, summary, flashcards, quiz) in ENGLISH. Do NOT translate to French.'
+    : 'Le contenu du cours est en FRANCAIS. Tu DOIS generer TOUT le contenu (titre, synthese, flashcards, quiz) en FRANCAIS. Ne traduis PAS en anglais.';
+
+  console.log(`[ContentGen] Detected language: ${detectedLang}`);
+
+  let prompt = `MANDATORY LANGUAGE RULE / REGLE DE LANGUE OBLIGATOIRE:
+${langInstruction}
 
 Analyse ce contenu de cours et genere du materiel pedagogique complet.
 
@@ -103,7 +128,7 @@ REGLES STRICTES :
 4. Les flashcards et le quiz doivent etre bases sur la synthese
 5. Tout doit etre coherent et couvrir les points essentiels du cours
 6. Retourne UNIQUEMENT le JSON, sans texte avant ou apres
-7. LANGUE : Tout le contenu genere (titre, summary, flashcards, quiz) DOIT etre dans la MEME LANGUE que le cours original. Si le cours est en anglais, reponds en anglais. Si en francais, reponds en francais.`;
+7. RAPPEL LANGUE : Respecte la langue indiquee au debut. English content = English output. Contenu francais = sortie francaise.`;
 
   // Ajouter les instructions specifiques si presentes
   if (specificInstructions && specificInstructions.trim()) {
