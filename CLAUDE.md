@@ -646,6 +646,7 @@ Import Page (text/voice/photo)
 - Displays recording time and processing status
 - Microphone permission handling
 - Visual feedback with animations
+- **Error handling**: Backend returns error codes (`NO_TEXT_DETECTED_VOICE`), frontend translates via i18n
 
 **`/src/components/Import/PhotoCapture.jsx`**
 - Camera access via getUserMedia
@@ -654,6 +655,8 @@ Import Page (text/voice/photo)
 - Sends images to backend for GPT-4 Vision OCR
 - Progress indicator during processing
 - Combined text extraction from multiple photos
+- **Layout**: Full-screen modal (`z-[60]` to overlay mobile nav), camera zone takes available space (`flex-1`), compact controls band at bottom
+- **Error handling**: Backend returns error codes (`NO_TEXT_DETECTED_PHOTO`), frontend translates via i18n
 
 **`/src/pages/Process.jsx`**
 - Single backend call generates all content (title, summary, flashcards, quiz)
