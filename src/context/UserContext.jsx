@@ -98,7 +98,7 @@ export const UserProvider = ({ children }) => {
         exp: authUser?.exp ?? 0,
         nextLevelExp: authUser?.next_level_exp ?? 1000,
         streak: authUser?.streak ?? 0,
-        eggs: authUser?.eggs ?? 999, // TODO: remettre à 0 après les tests
+        eggs: authUser?.eggs ?? 0,
         collection: authUser?.collection ?? []
     });
 

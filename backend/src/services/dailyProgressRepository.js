@@ -65,7 +65,11 @@ export const resetDailyProgressIfNeeded = async (userId) => {
 
     if (yesterday && yesterday.daily_goals) {
       // Keep goal definitions but reset completion status
-      const resetGoals = JSON.parse(yesterday.daily_goals).map(goal => ({
+      // Handle both string and already-parsed object (MySQL2 auto-parses JSON columns)
+      const goals = typeof yesterday.daily_goals === 'string'
+        ? JSON.parse(yesterday.daily_goals)
+        : yesterday.daily_goals;
+      const resetGoals = goals.map(goal => ({
         ...goal,
         completed: false
       }));
@@ -143,20 +147,31 @@ export const getFullDailyProgress = async (userId) => {
   const isToday = progress && progress.progress_date &&
     new Date(progress.progress_date).toISOString().split('T')[0] === today;
 
+  // Helper to safely parse JSON (handles both string and already-parsed object)
+  const safeJsonParse = (data, defaultValue = null) => {
+    if (!data) return defaultValue;
+    if (typeof data === 'object') return data; // Already parsed by MySQL2
+    try {
+      return JSON.parse(data);
+    } catch {
+      return defaultValue;
+    }
+  };
+
   return {
     dailyStats: isToday ? {
       date: new Date(progress.progress_date).toDateString(),
       quizTime: progress.quiz_time || 0,
       flashcardsTime: progress.flashcards_time || 0,
       summaryTime: progress.summary_time || 0,
-      xpAwarded: progress.xp_awarded ? JSON.parse(progress.xp_awarded) : {
+      xpAwarded: safeJsonParse(progress.xp_awarded, {
         quiz: false,
         flashcards: false,
         summary: false,
         allBonus: false
-      }
+      })
     } : null,
-    dailyGoals: progress?.daily_goals ? JSON.parse(progress.daily_goals) : null,
+    dailyGoals: safeJsonParse(progress?.daily_goals, null),
     dailyGoalsRewardClaimed: isToday ? progress.reward_claimed : false,
     studyHistory: history
   };

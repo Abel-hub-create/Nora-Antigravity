@@ -324,6 +324,8 @@ study_history (id, user_id, study_date, total_seconds, created_at)
 
 **Migration**: `013_add_study_stats.sql`
 
+**Important Technical Note**: MySQL2 automatically parses JSON columns into JavaScript objects. When reading JSON columns like `daily_goals` or `xp_awarded`, use `safeJsonParse()` helper in `dailyProgressRepository.js` to handle both string and already-parsed object cases. Never use `JSON.parse()` directly on MySQL JSON columns.
+
 ## Daily Goals & Progress System
 
 Personalized daily objectives system with global progress tracking and XP rewards.
