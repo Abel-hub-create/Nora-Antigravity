@@ -259,8 +259,8 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                 )}
             </div>
 
-            {/* Contrôles en bas - prend le reste de l'espace */}
-            <div className="flex-1 flex flex-col justify-center p-4 bg-gradient-to-t from-black via-black/95 to-black/80" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0.5rem))' }}>
+            {/* Contrôles en bas */}
+            <div className="mt-auto p-4 pt-6 bg-gradient-to-t from-black via-black/95 to-transparent" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0.5rem))' }}>
                 {/* Galerie de photos */}
                 {photos.length > 0 && (
                     <div className="px-2 mb-3">
