@@ -260,7 +260,7 @@ const PhotoCapture = ({ onComplete, onClose }) => {
             </div>
 
             {/* Contrôles en bas */}
-            <div className="mt-auto p-4 pt-6 bg-gradient-to-t from-black via-black/95 to-transparent" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0.5rem))' }}>
+            <div className="mt-auto p-4 pt-3 bg-gradient-to-t from-black to-transparent" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0.5rem))' }}>
                 {/* Galerie de photos */}
                 {photos.length > 0 && (
                     <div className="px-2 mb-3">
