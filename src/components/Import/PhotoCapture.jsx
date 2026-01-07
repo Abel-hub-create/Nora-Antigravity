@@ -222,8 +222,8 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                 <div className="w-10" />
             </div>
 
-            {/* Zone de caméra ou erreur - limitée en hauteur */}
-            <div className="relative flex items-center justify-center mt-16 mx-4 rounded-2xl overflow-hidden bg-black/50" style={{ height: 'min(55vh, 400px)' }}>
+            {/* Zone de caméra - prend tout l'espace disponible */}
+            <div className="flex-1 relative flex items-center justify-center mt-16 mx-4 mb-2 rounded-2xl overflow-hidden bg-black/50">
                 {cameraError ? (
                     <div className="text-center p-6">
                         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-error/20 flex items-center justify-center">
@@ -259,8 +259,8 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                 )}
             </div>
 
-            {/* Contrôles en bas */}
-            <div className="mt-auto px-4 pb-4 pt-2 bg-black/90" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0.5rem))' }}>
+            {/* Contrôles en bas - compact */}
+            <div className="px-4 py-2 bg-black/90" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0.5rem))' }}>
                 {/* Galerie de photos */}
                 {photos.length > 0 && (
                     <div className="px-2 mb-2">
