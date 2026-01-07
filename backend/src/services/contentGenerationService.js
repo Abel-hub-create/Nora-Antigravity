@@ -42,7 +42,13 @@ REGLE IMPORTANTE SUR LA LANGUE :
  * @param {string|null} specificInstructions - Instructions specifiques de l'utilisateur
  */
 const buildUserPrompt = (content, specificInstructions = null) => {
-  let prompt = `Analyse ce contenu de cours et genere du materiel pedagogique complet.
+  let prompt = `REGLE ABSOLUE ET PRIORITAIRE - LANGUE :
+Detecte la langue du contenu ci-dessous. Tu DOIS generer TOUT le contenu (titre, synthese, flashcards, quiz) dans EXACTEMENT la meme langue que le cours original.
+- Si le cours est en ANGLAIS -> titre, synthese, flashcards et quiz DOIVENT etre en ANGLAIS
+- Si le cours est en FRANCAIS -> titre, synthese, flashcards et quiz DOIVENT etre en FRANCAIS
+- NE TRADUIS JAMAIS. Garde la langue originale du cours.
+
+Analyse ce contenu de cours et genere du materiel pedagogique complet.
 
 CONTENU DU COURS :
 """
@@ -96,7 +102,8 @@ REGLES STRICTES :
 3. correctAnswer est l'index (0, 1, 2 ou 3) de la bonne reponse
 4. Les flashcards et le quiz doivent etre bases sur la synthese
 5. Tout doit etre coherent et couvrir les points essentiels du cours
-6. Retourne UNIQUEMENT le JSON, sans texte avant ou apres`;
+6. Retourne UNIQUEMENT le JSON, sans texte avant ou apres
+7. LANGUE : Tout le contenu genere (titre, summary, flashcards, quiz) DOIT etre dans la MEME LANGUE que le cours original. Si le cours est en anglais, reponds en anglais. Si en francais, reponds en francais.`;
 
   // Ajouter les instructions specifiques si presentes
   if (specificInstructions && specificInstructions.trim()) {
