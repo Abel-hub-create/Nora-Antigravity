@@ -80,14 +80,52 @@ router.post('/unsubscribe', authenticate, async (req, res, next) => {
 // Sync daily progress (called from frontend to update goals status)
 router.post('/sync-progress', authenticate, async (req, res, next) => {
   try {
-    const { dailyGoals, progressPercentage, rewardClaimed } = req.body;
+    const {
+      dailyGoals,
+      progressPercentage,
+      rewardClaimed,
+      quizTime,
+      flashcardsTime,
+      summaryTime,
+      xpAwarded
+    } = req.body;
 
     await dailyProgressRepository.syncDailyProgress(req.user.id, {
       dailyGoals,
       progressPercentage,
-      rewardClaimed
+      rewardClaimed,
+      quizTime,
+      flashcardsTime,
+      summaryTime,
+      xpAwarded
     });
 
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get full daily progress (called on app load)
+router.get('/daily-progress', authenticate, async (req, res, next) => {
+  try {
+    const data = await dailyProgressRepository.getFullDailyProgress(req.user.id);
+    res.json(data);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Save study history (called when day changes)
+router.post('/study-history', authenticate, async (req, res, next) => {
+  try {
+    const { studyDate, totalSeconds } = req.body;
+
+    if (!studyDate || typeof totalSeconds !== 'number') {
+      return res.status(400).json({ error: 'studyDate and totalSeconds required' });
+    }
+
+    await dailyProgressRepository.saveStudyHistory(req.user.id, studyDate, totalSeconds);
     res.json({ success: true });
   } catch (error) {
     next(error);

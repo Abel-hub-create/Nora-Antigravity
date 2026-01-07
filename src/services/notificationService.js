@@ -102,11 +102,34 @@ export const updateNotificationSettings = async (enabled) => {
 };
 
 // Sync daily progress to backend (for notification eligibility check)
-export const syncDailyProgress = async (dailyGoals, progressPercentage, rewardClaimed) => {
-  return await api.post('/notifications/sync-progress', {
+export const syncDailyProgress = async (dailyGoals, progressPercentage, rewardClaimed, dailyStats = null) => {
+  const payload = {
     dailyGoals,
     progressPercentage,
     rewardClaimed
+  };
+
+  // Include study times if provided
+  if (dailyStats) {
+    payload.quizTime = dailyStats.quizTime || 0;
+    payload.flashcardsTime = dailyStats.flashcardsTime || 0;
+    payload.summaryTime = dailyStats.summaryTime || 0;
+    payload.xpAwarded = dailyStats.xpAwarded || {};
+  }
+
+  return await api.post('/notifications/sync-progress', payload);
+};
+
+// Get full daily progress from backend (on app load)
+export const getDailyProgress = async () => {
+  return await api.get('/notifications/daily-progress');
+};
+
+// Save study history when day changes
+export const saveStudyHistory = async (studyDate, totalSeconds) => {
+  return await api.post('/notifications/study-history', {
+    studyDate,
+    totalSeconds
   });
 };
 

@@ -191,12 +191,54 @@ export const UserProvider = ({ children }) => {
             console.log(`[NORA] User changed from ${previousUserId} to ${newUserId}`);
             currentUserIdRef.current = newUserId;
 
-            // Load data for the new user
-            const userData = loadUserData(newUserId);
-            setDailyStats(userData.dailyStats);
-            setDailyGoalsState(userData.dailyGoals);
-            setDailyGoalsRewardClaimed(userData.dailyGoalsRewardClaimed);
-            setStudyHistory(userData.studyHistory);
+            // Load data from backend first, fallback to localStorage
+            const loadData = async () => {
+                if (newUserId) {
+                    try {
+                        const backendData = await notificationService.getDailyProgress();
+                        console.log('[NORA] Loaded data from backend:', backendData);
+
+                        // Use backend data if available, otherwise use localStorage
+                        if (backendData.dailyStats) {
+                            setDailyStats(backendData.dailyStats);
+                        } else {
+                            const localData = loadUserData(newUserId);
+                            setDailyStats(localData.dailyStats);
+                        }
+
+                        if (backendData.dailyGoals) {
+                            setDailyGoalsState(backendData.dailyGoals);
+                        } else {
+                            const localData = loadUserData(newUserId);
+                            setDailyGoalsState(localData.dailyGoals);
+                        }
+
+                        setDailyGoalsRewardClaimed(backendData.dailyGoalsRewardClaimed ?? false);
+
+                        if (backendData.studyHistory && backendData.studyHistory.length > 0) {
+                            setStudyHistory(backendData.studyHistory);
+                        } else {
+                            const localData = loadUserData(newUserId);
+                            setStudyHistory(localData.studyHistory);
+                        }
+                    } catch (error) {
+                        console.log('[NORA] Failed to load from backend, using localStorage:', error);
+                        const userData = loadUserData(newUserId);
+                        setDailyStats(userData.dailyStats);
+                        setDailyGoalsState(userData.dailyGoals);
+                        setDailyGoalsRewardClaimed(userData.dailyGoalsRewardClaimed);
+                        setStudyHistory(userData.studyHistory);
+                    }
+                } else {
+                    // No user, use defaults
+                    setDailyStats(getDefaultDailyStats());
+                    setDailyGoalsState(getDefaultDailyGoals());
+                    setDailyGoalsRewardClaimed(false);
+                    setStudyHistory([]);
+                }
+            };
+
+            loadData();
         }
     }, [authUser?.id, loadUserData]);
 
@@ -270,7 +312,8 @@ export const UserProvider = ({ children }) => {
                 await notificationService.syncDailyProgress(
                     dailyGoals,
                     progressPercentage,
-                    dailyGoalsRewardClaimed
+                    dailyGoalsRewardClaimed,
+                    dailyStats // Include study times
                 );
             } catch (error) {
                 // Silently fail - notification sync is not critical
@@ -279,7 +322,7 @@ export const UserProvider = ({ children }) => {
         }, 2000);
 
         return () => clearTimeout(syncTimer);
-    }, [authUser?.id, dailyGoals, dailyGoalsRewardClaimed]);
+    }, [authUser?.id, dailyGoals, dailyGoalsRewardClaimed, dailyStats]);
 
     // Check for day change - robust implementation with interval
     const checkAndResetForNewDay = useCallback(() => {
@@ -291,6 +334,12 @@ export const UserProvider = ({ children }) => {
             // Save yesterday's study time to history before resetting
             const totalSeconds = getTotalStudyTime(dailyStats);
             if (totalSeconds > 0) {
+                // Save to backend
+                const yesterdayDate = new Date(dailyStats.date).toISOString().split('T')[0];
+                notificationService.saveStudyHistory(yesterdayDate, totalSeconds).catch(err => {
+                    console.debug('Failed to save study history to backend:', err);
+                });
+
                 setStudyHistory(prev => {
                     // Check if this day already exists in history
                     const existingIndex = prev.findIndex(h => h.date === dailyStats.date);

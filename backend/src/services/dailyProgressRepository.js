@@ -1,17 +1,29 @@
 import { query } from '../config/database.js';
 
-// Sync daily progress from frontend
-export const syncDailyProgress = async (userId, { dailyGoals, progressPercentage, rewardClaimed }) => {
+// Sync daily progress from frontend (includes study times)
+export const syncDailyProgress = async (userId, {
+  dailyGoals,
+  progressPercentage,
+  rewardClaimed,
+  quizTime,
+  flashcardsTime,
+  summaryTime,
+  xpAwarded
+}) => {
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
   // Upsert: insert or update if exists
   const sql = `
-    INSERT INTO daily_progress (user_id, daily_goals, progress_percentage, reward_claimed, progress_date)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO daily_progress (user_id, daily_goals, progress_percentage, reward_claimed, quiz_time, flashcards_time, summary_time, xp_awarded, progress_date)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE
       daily_goals = VALUES(daily_goals),
       progress_percentage = VALUES(progress_percentage),
       reward_claimed = VALUES(reward_claimed),
+      quiz_time = VALUES(quiz_time),
+      flashcards_time = VALUES(flashcards_time),
+      summary_time = VALUES(summary_time),
+      xp_awarded = VALUES(xp_awarded),
       progress_date = VALUES(progress_date)
   `;
 
@@ -20,6 +32,10 @@ export const syncDailyProgress = async (userId, { dailyGoals, progressPercentage
     JSON.stringify(dailyGoals || []),
     progressPercentage || 0,
     rewardClaimed || false,
+    quizTime || 0,
+    flashcardsTime || 0,
+    summaryTime || 0,
+    JSON.stringify(xpAwarded || {}),
     today
   ]);
 };
@@ -74,4 +90,74 @@ const getLatestProgress = async (userId) => {
 
   const results = await query(sql, [userId]);
   return results[0] || null;
+};
+
+// Save to study history (called when day changes)
+export const saveStudyHistory = async (userId, studyDate, totalSeconds) => {
+  if (totalSeconds <= 0) return;
+
+  const sql = `
+    INSERT INTO study_history (user_id, study_date, total_seconds)
+    VALUES (?, ?, ?)
+    ON DUPLICATE KEY UPDATE total_seconds = VALUES(total_seconds)
+  `;
+
+  await query(sql, [userId, studyDate, totalSeconds]);
+};
+
+// Get study history for average calculation (last 30 days)
+export const getStudyHistory = async (userId) => {
+  const sql = `
+    SELECT study_date, total_seconds
+    FROM study_history
+    WHERE user_id = ?
+    ORDER BY study_date DESC
+    LIMIT 30
+  `;
+
+  const results = await query(sql, [userId]);
+  return results.map(r => ({
+    date: r.study_date,
+    totalSeconds: r.total_seconds
+  }));
+};
+
+// Get full daily progress with history for initial load
+export const getFullDailyProgress = async (userId) => {
+  const today = new Date().toISOString().split('T')[0];
+
+  // Get today's progress
+  const progressSql = `
+    SELECT * FROM daily_progress
+    WHERE user_id = ?
+    ORDER BY progress_date DESC
+    LIMIT 1
+  `;
+  const progressResults = await query(progressSql, [userId]);
+  const progress = progressResults[0] || null;
+
+  // Get study history
+  const history = await getStudyHistory(userId);
+
+  // Check if progress is from today
+  const isToday = progress && progress.progress_date &&
+    new Date(progress.progress_date).toISOString().split('T')[0] === today;
+
+  return {
+    dailyStats: isToday ? {
+      date: new Date(progress.progress_date).toDateString(),
+      quizTime: progress.quiz_time || 0,
+      flashcardsTime: progress.flashcards_time || 0,
+      summaryTime: progress.summary_time || 0,
+      xpAwarded: progress.xp_awarded ? JSON.parse(progress.xp_awarded) : {
+        quiz: false,
+        flashcards: false,
+        summary: false,
+        allBonus: false
+      }
+    } : null,
+    dailyGoals: progress?.daily_goals ? JSON.parse(progress.daily_goals) : null,
+    dailyGoalsRewardClaimed: isToday ? progress.reward_claimed : false,
+    studyHistory: history
+  };
 };
