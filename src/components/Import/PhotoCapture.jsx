@@ -260,7 +260,7 @@ const PhotoCapture = ({ onComplete, onClose }) => {
             </div>
 
             {/* Contrôles en bas - compact */}
-            <div className="px-4 py-2 bg-black/90" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0.5rem))' }}>
+            <div className="px-4 pt-2 pb-3 bg-black/90" style={{ paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom, 0px) + 0.75rem))' }}>
                 {/* Galerie de photos */}
                 {photos.length > 0 && (
                     <div className="px-2 mb-2">
