@@ -260,10 +260,10 @@ const PhotoCapture = ({ onComplete, onClose }) => {
             </div>
 
             {/* Contrôles en bas */}
-            <div className="mt-auto p-4 pt-3 bg-gradient-to-t from-black to-transparent" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0.5rem))' }}>
+            <div className="mt-auto px-4 pb-4 pt-2 bg-black/90" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0.5rem))' }}>
                 {/* Galerie de photos */}
                 {photos.length > 0 && (
-                    <div className="px-2 mb-3">
+                    <div className="px-2 mb-2">
                         <div className="flex gap-2 overflow-x-auto pb-2">
                             {photos.map((photo, index) => (
                                 <motion.div
