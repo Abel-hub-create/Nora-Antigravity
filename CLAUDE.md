@@ -225,7 +225,7 @@ const label = t(ACTIVITY_TYPES[type].labelKey);
 
 ## Study Time & XP System
 
-Comprehensive daily study time tracking with XP rewards. Data persists in localStorage and resets at midnight.
+Comprehensive daily study time tracking with XP rewards. Data persists in both localStorage AND backend database, ensuring data survives page refreshes and device changes.
 
 ### XP Thresholds (Once per day)
 
@@ -302,6 +302,27 @@ Format: `{baseKey}_{userId}`
 | `nora_studyHistory` | `nora_studyHistory_42` | Array of last 30 days study time |
 
 **Important**: When user changes (login/logout), data is automatically loaded for the new user. Data is only saved when a user is authenticated.
+
+### Backend Persistence
+
+Study stats and history are synced to the backend database for persistence across devices and sessions.
+
+**Database Tables**:
+```sql
+-- daily_progress: Daily stats synced from frontend
+daily_progress (id, user_id, daily_goals JSON, progress_percentage, reward_claimed,
+                quiz_time, flashcards_time, summary_time, xp_awarded JSON, progress_date)
+
+-- study_history: Historical study time for average calculation
+study_history (id, user_id, study_date, total_seconds, created_at)
+```
+
+**Sync Flow**:
+1. On app load: Load from localStorage immediately, then fetch from backend and merge
+2. Every 2 seconds: Sync current stats to backend (debounced)
+3. On day change: Save previous day's total to `study_history` table
+
+**Migration**: `013_add_study_stats.sql`
 
 ## Daily Goals & Progress System
 
@@ -625,12 +646,32 @@ Multi-modal content import system supporting text, voice, and photo input. All A
 ```
 Import Page (text/voice/photo)
        ↓
+   Specific Instructions Prompt (optional)
+       ↓
    /process (AI generation)
        ↓
    POST /api/syntheses
        ↓
    /study/:id
 ```
+
+### Specific Instructions Feature
+
+After capturing content via voice or photo, users can optionally specify elements to include in the summary, flashcards, and quiz.
+
+**Flow**:
+1. User captures content (voice/photo)
+2. Intermediate screen appears: "Do you want to mention specific elements?"
+3. If "No" → Continue directly to generation
+4. If "Yes" → Text field appears to write instructions
+5. Instructions are passed to AI generation
+
+**Rules**:
+- Only elements that **exist in the original content** will be included
+- AI will NOT invent or add information not present in the course
+- Instructions are prioritized but must be faithful to source material
+
+**i18n Keys**: `import.specificPrompt.*`
 
 ### Components
 
@@ -691,6 +732,14 @@ Import Page (text/voice/photo)
 ### Content Generation Service (`/backend/src/services/contentGenerationService.js`)
 
 Centralized educational content generation with the Nora personality.
+
+**Automatic Language Detection**:
+- Content language is detected by counting French vs English common words
+- Generated content (title, summary, flashcards, quiz) is in the SAME language as the source
+- English course → English output (regardless of app UI language)
+- French course → French output (regardless of app UI language)
+- Detection function: `detectLanguage(content)` returns `'english'` or `'french'`
+- Explicit language instruction added to prompt based on detection
 
 **Nora Prompt Characteristics**:
 - Calm, structured, pedagogical tone
@@ -878,8 +927,11 @@ daily_progress (id, user_id, daily_goals JSON, progress_percentage, reward_claim
 - `sendDailyReminders()` - Send notifications to all eligible users (called by cron)
 
 **`/backend/src/services/dailyProgressRepository.js`**
-- `syncDailyProgress(userId, data)` - Sync frontend progress to backend
+- `syncDailyProgress(userId, data)` - Sync frontend progress to backend (includes study times)
 - `getDailyProgress(userId)` - Get current day progress
+- `getFullDailyProgress(userId)` - Get daily stats + study history for initial load
+- `saveStudyHistory(userId, date, seconds)` - Save study time when day changes
+- `getStudyHistory(userId)` - Get last 30 days study history
 
 **`/backend/src/cron/notificationCron.js`**
 - Runs at 18:00 Europe/Paris every day
@@ -894,7 +946,9 @@ daily_progress (id, user_id, daily_goals JSON, progress_percentage, reward_claim
 | PATCH | `/settings` | Enable/disable notifications | Yes |
 | POST | `/subscribe` | Subscribe to push | Yes |
 | POST | `/unsubscribe` | Unsubscribe from push | Yes |
-| POST | `/sync-progress` | Sync daily progress | Yes |
+| POST | `/sync-progress` | Sync daily progress + study times | Yes |
+| GET | `/daily-progress` | Get full daily progress for initial load | Yes |
+| POST | `/study-history` | Save study history when day changes | Yes |
 
 ### Frontend Integration
 
