@@ -9,20 +9,77 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Helper to merge user data, keeping higher progression values
+  const mergeUserData = (localUser, backendUser) => {
+    if (!localUser) return backendUser;
+    if (!backendUser) return localUser;
+
+    // For progression values (level, exp, eggs), keep the higher value
+    // This ensures recent local progress isn't lost if backend hasn't synced yet
+    const mergedUser = { ...backendUser };
+
+    // Keep higher level
+    if (localUser.level > backendUser.level) {
+      mergedUser.level = localUser.level;
+      mergedUser.exp = localUser.exp;
+      mergedUser.next_level_exp = localUser.next_level_exp;
+    } else if (localUser.level === backendUser.level && localUser.exp > backendUser.exp) {
+      // Same level but more exp locally
+      mergedUser.exp = localUser.exp;
+    }
+
+    // Keep higher eggs count
+    if (localUser.eggs > backendUser.eggs) {
+      mergedUser.eggs = localUser.eggs;
+    }
+
+    // Merge collections (union of both)
+    const localCollection = localUser.collection || [];
+    const backendCollection = backendUser.collection || [];
+    const mergedCollection = [...new Set([...localCollection, ...backendCollection])];
+    mergedUser.collection = mergedCollection;
+
+    console.log('[Auth] Merged user data:', { local: localUser, backend: backendUser, merged: mergedUser });
+    return mergedUser;
+  };
+
   // Check if user is logged in on mount
   useEffect(() => {
     const initAuth = async () => {
       try {
         // Check localStorage first for faster initial load
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
+        const storedUserStr = localStorage.getItem('user');
+        let storedUser = null;
+        if (storedUserStr) {
+          storedUser = JSON.parse(storedUserStr);
+          setUser(storedUser);
         }
 
         // Verify with backend
-        const currentUser = await authService.getCurrentUser();
-        setUser(currentUser);
-        localStorage.setItem('user', JSON.stringify(currentUser));
+        const backendUser = await authService.getCurrentUser();
+
+        // Merge local and backend data to preserve unsync'd progress
+        const mergedUser = mergeUserData(storedUser, backendUser);
+
+        setUser(mergedUser);
+        localStorage.setItem('user', JSON.stringify(mergedUser));
+
+        // If local had higher values, sync them back to backend
+        if (storedUser && (
+          storedUser.level > backendUser.level ||
+          (storedUser.level === backendUser.level && storedUser.exp > backendUser.exp) ||
+          storedUser.eggs > backendUser.eggs ||
+          (storedUser.collection?.length || 0) > (backendUser.collection?.length || 0)
+        )) {
+          console.log('[Auth] Syncing local progress to backend...');
+          authService.syncUserData({
+            level: mergedUser.level,
+            exp: mergedUser.exp,
+            next_level_exp: mergedUser.next_level_exp,
+            eggs: mergedUser.eggs,
+            collection: mergedUser.collection
+          }).catch(err => console.error('[Auth] Failed to sync local progress:', err));
+        }
       } catch {
         // Not authenticated
         setUser(null);

@@ -205,14 +205,47 @@ export const UserProvider = ({ children }) => {
                 notificationService.getDailyProgress()
                     .then(backendData => {
                         console.log('[NORA] Backend data:', backendData);
+                        console.log('[NORA] Local data:', localData);
 
-                        // Only use backend data if it exists and is more recent
+                        // For dailyStats: compare localStorage and backend data
+                        // Prioritize the one with more accumulated time (more recent data)
                         if (backendData.dailyStats) {
-                            setDailyStats(backendData.dailyStats);
+                            const localTotalTime = (localData.dailyStats?.quizTime || 0) +
+                                (localData.dailyStats?.flashcardsTime || 0) +
+                                (localData.dailyStats?.summaryTime || 0);
+                            const backendTotalTime = (backendData.dailyStats.quizTime || 0) +
+                                (backendData.dailyStats.flashcardsTime || 0) +
+                                (backendData.dailyStats.summaryTime || 0);
+
+                            // Use backend data only if it has more accumulated time
+                            // or if localStorage has default (today but 0 time)
+                            if (backendTotalTime >= localTotalTime) {
+                                console.log('[NORA] Using backend dailyStats (more time)');
+                                setDailyStats(backendData.dailyStats);
+                            } else {
+                                console.log('[NORA] Keeping local dailyStats (more time)');
+                            }
                         }
+
+                        // For dailyGoals: prioritize localStorage over backend
+                        // This ensures recent local changes aren't overwritten by stale backend data
+                        // Only use backend goals if localStorage has defaults (30min summary, 20min quiz)
+                        const hasLocalGoals = localData.dailyGoals && localData.dailyGoals.length > 0;
+                        const isDefaultGoals = hasLocalGoals &&
+                            localData.dailyGoals.length === 2 &&
+                            localData.dailyGoals.some(g => g.type === 'summary' && g.targetMinutes === 30) &&
+                            localData.dailyGoals.some(g => g.type === 'quiz' && g.targetMinutes === 20);
+
                         if (backendData.dailyGoals && backendData.dailyGoals.length > 0) {
-                            setDailyGoalsState(backendData.dailyGoals);
+                            // Only overwrite with backend data if local has defaults or is empty
+                            if (!hasLocalGoals || isDefaultGoals) {
+                                console.log('[NORA] Using backend goals (local has defaults)');
+                                setDailyGoalsState(backendData.dailyGoals);
+                            } else {
+                                console.log('[NORA] Keeping local goals (user customized)');
+                            }
                         }
+
                         if (backendData.dailyGoalsRewardClaimed) {
                             setDailyGoalsRewardClaimed(true);
                         }
@@ -280,6 +313,27 @@ export const UserProvider = ({ children }) => {
         const key = getUserStorageKey('nora_studyHistory', userId);
         saveToStorage(key, studyHistory);
     }, [studyHistory, authUser?.id]);
+
+    // Immediate sync function for goals modifications
+    const syncGoalsImmediately = useCallback(async (goals) => {
+        if (!authUser?.id) return;
+
+        const progressPercentage = goals.length > 0
+            ? Math.round((goals.filter(g => g.completed).length / goals.length) * 100)
+            : 0;
+
+        try {
+            await notificationService.syncDailyProgress(
+                goals,
+                progressPercentage,
+                dailyGoalsRewardClaimed,
+                dailyStats
+            );
+            console.log('[NORA] Goals synced immediately');
+        } catch (error) {
+            console.debug('Failed to sync goals immediately:', error);
+        }
+    }, [authUser?.id, dailyGoalsRewardClaimed, dailyStats]);
 
     // Sync daily progress to backend for notification eligibility
     useEffect(() => {
@@ -547,7 +601,9 @@ export const UserProvider = ({ children }) => {
             completed: false
         }));
         setDailyGoalsState(resetGoals);
-    }, []);
+        // Sync immediately to avoid data loss on refresh
+        syncGoalsImmediately(resetGoals);
+    }, [syncGoalsImmediately]);
 
     // Add a new goal
     const addDailyGoal = useCallback((type, targetMinutes) => {
@@ -558,29 +614,38 @@ export const UserProvider = ({ children }) => {
             }
             const newId = Math.max(...prev.map(g => g.id), 0) + 1;
             const newGoals = [...prev, { id: newId, type, targetMinutes, completed: false }];
-            return newGoals.map(g => ({ ...g, completed: false }));
+            const resetGoals = newGoals.map(g => ({ ...g, completed: false }));
+            // Sync immediately to avoid data loss on refresh
+            syncGoalsImmediately(resetGoals);
+            return resetGoals;
         });
-    }, [addNotification, t]);
+    }, [addNotification, t, syncGoalsImmediately]);
 
     // Remove a goal
     const removeDailyGoal = useCallback((goalId) => {
         setDailyGoalsState(prev => {
             const newGoals = prev.filter(g => g.id !== goalId);
-            return newGoals.map(g => ({ ...g, completed: false }));
+            const resetGoals = newGoals.map(g => ({ ...g, completed: false }));
+            // Sync immediately to avoid data loss on refresh
+            syncGoalsImmediately(resetGoals);
+            return resetGoals;
         });
-    }, []);
+    }, [syncGoalsImmediately]);
 
     // Update a specific goal's target time
     const updateGoalTarget = useCallback((goalId, newTargetMinutes) => {
         setDailyGoalsState(prev => {
-            return prev.map(g => {
+            const updatedGoals = prev.map(g => {
                 if (g.id === goalId) {
                     return { ...g, targetMinutes: newTargetMinutes, completed: false };
                 }
                 return { ...g, completed: false };
             });
+            // Sync immediately to avoid data loss on refresh
+            syncGoalsImmediately(updatedGoals);
+            return updatedGoals;
         });
-    }, []);
+    }, [syncGoalsImmediately]);
 
     // Calculate daily progress percentage based on completed goals
     const dailyProgressPercentage = dailyGoals.length > 0
