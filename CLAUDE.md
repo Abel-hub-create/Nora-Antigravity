@@ -225,7 +225,7 @@ const label = t(ACTIVITY_TYPES[type].labelKey);
 
 ## Study Time & XP System
 
-Comprehensive daily study time tracking with XP rewards. Data persists in both localStorage AND backend database, ensuring data survives page refreshes and device changes.
+Comprehensive daily study time tracking with XP rewards. Data persists in backend database only (single source of truth), ensuring synchronization across all devices and browsers.
 
 ### XP Thresholds (Once per day)
 
@@ -288,24 +288,9 @@ Pages using the timer:
 - `StudyFlashcards.jsx` → `useActiveTimer('flashcards')`
 - `StudyQuiz.jsx` → `useActiveTimer('quiz')`
 
-### localStorage Keys
+### Backend Storage
 
-All localStorage keys are **user-specific** to ensure data isolation between accounts on the same browser.
-
-Format: `{baseKey}_{userId}`
-
-| Base Key | Example | Description |
-|----------|---------|-------------|
-| `nora_dailyStats` | `nora_dailyStats_42` | Daily time counters and XP flags |
-| `nora_dailyGoals` | `nora_dailyGoals_42` | User's daily goal configuration |
-| `nora_dailyGoalsRewardClaimed` | `nora_dailyGoalsRewardClaimed_42` | Whether 10XP goals bonus was claimed |
-| `nora_studyHistory` | `nora_studyHistory_42` | Array of last 30 days study time |
-
-**Important**: When user changes (login/logout), data is automatically loaded for the new user. Data is only saved when a user is authenticated.
-
-### Backend Persistence
-
-Study stats and history are synced to the backend database for persistence across devices and sessions.
+Study stats and history are stored in the backend database as the single source of truth. This ensures synchronization across all browsers and devices.
 
 **Database Tables**:
 ```sql
@@ -317,8 +302,8 @@ daily_progress (id, user_id, daily_goals JSON, progress_percentage, reward_claim
 study_history (id, user_id, study_date, total_seconds, created_at)
 ```
 
-**Sync Flow**:
-1. On app load: Load from localStorage immediately, then fetch from backend and merge
+**Data Flow**:
+1. On app load: Fetch data from backend (DB is the only source of truth)
 2. Every 2 seconds: Sync current stats to backend (debounced)
 3. On day change: Save previous day's total to `study_history` table
 

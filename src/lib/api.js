@@ -37,7 +37,6 @@ class ApiClient {
         }
         // Refresh failed, redirect to login
         localStorage.removeItem('accessToken');
-        localStorage.removeItem('user');
         window.location.href = '/login';
         throw new Error('Session expired');
       }
@@ -141,7 +140,6 @@ class ApiClient {
           return data;
         }
         localStorage.removeItem('accessToken');
-        localStorage.removeItem('user');
         window.location.href = '/login';
         throw new Error('Session expired');
       }

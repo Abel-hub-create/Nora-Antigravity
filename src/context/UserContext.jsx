@@ -31,36 +31,6 @@ export const DAILY_GOALS_BONUS_XP = 10;
 // Helper to get today's date string
 const getTodayString = () => new Date().toDateString();
 
-// Helper to get user-specific storage key
-const getUserStorageKey = (baseKey, userId) => {
-    if (!userId) return null;
-    return `${baseKey}_${userId}`;
-};
-
-// Helper to load from localStorage with default value
-const loadFromStorage = (key, defaultValue) => {
-    if (!key) return defaultValue;
-    try {
-        const stored = localStorage.getItem(key);
-        if (stored) {
-            return JSON.parse(stored);
-        }
-    } catch (e) {
-        console.error(`Error loading ${key} from localStorage:`, e);
-    }
-    return defaultValue;
-};
-
-// Helper to save to localStorage
-const saveToStorage = (key, value) => {
-    if (!key) return;
-    try {
-        localStorage.setItem(key, JSON.stringify(value));
-    } catch (e) {
-        console.error(`Error saving ${key} to localStorage:`, e);
-    }
-};
-
 // Default daily stats
 const getDefaultDailyStats = () => ({
     date: getTodayString(),
@@ -90,6 +60,9 @@ export const UserProvider = ({ children }) => {
     const { t } = useTranslation();
     const { user: authUser, syncUserData } = useAuth();
 
+    // Track if initial data has been loaded from backend
+    const [isDataLoaded, setIsDataLoaded] = useState(false);
+
     const [user, setUser] = useState({
         id: authUser?.id ?? null,
         email: authUser?.email ?? null,
@@ -105,83 +78,36 @@ export const UserProvider = ({ children }) => {
     // Track the current user ID to detect user changes
     const currentUserIdRef = useRef(authUser?.id ?? null);
 
-    // Sync with auth user on mount and when authUser changes
+    // Sync with auth user when authUser changes (data from DB)
     useEffect(() => {
         if (authUser) {
-            setUser(prev => ({
-                ...prev,
+            setUser({
                 id: authUser.id,
                 email: authUser.email,
                 name: authUser.name,
-                level: authUser.level ?? prev.level,
-                exp: authUser.exp ?? prev.exp,
-                nextLevelExp: authUser.next_level_exp ?? prev.nextLevelExp,
-                streak: authUser.streak ?? prev.streak,
-                eggs: authUser.eggs ?? prev.eggs,
-                collection: authUser.collection ?? prev.collection
-            }));
+                level: authUser.level ?? 1,
+                exp: authUser.exp ?? 0,
+                nextLevelExp: authUser.next_level_exp ?? 1000,
+                streak: authUser.streak ?? 0,
+                eggs: authUser.eggs ?? 0,
+                collection: authUser.collection ?? []
+            });
         }
     }, [authUser]);
 
-    // Helper function to load user-specific data from localStorage
-    const loadUserData = useCallback((userId) => {
-        if (!userId) {
-            return {
-                dailyStats: getDefaultDailyStats(),
-                dailyGoals: getDefaultDailyGoals(),
-                dailyGoalsRewardClaimed: false,
-                studyHistory: []
-            };
-        }
-
-        const statsKey = getUserStorageKey('nora_dailyStats', userId);
-        const goalsKey = getUserStorageKey('nora_dailyGoals', userId);
-        const rewardKey = getUserStorageKey('nora_dailyGoalsRewardClaimed', userId);
-        const historyKey = getUserStorageKey('nora_studyHistory', userId);
-
-        // Load daily stats
-        let dailyStats = loadFromStorage(statsKey, null);
-        if (!dailyStats || dailyStats.date !== getTodayString()) {
-            dailyStats = getDefaultDailyStats();
-        }
-
-        // Load daily goals
-        let dailyGoals = loadFromStorage(goalsKey, null);
-        if (dailyGoals) {
-            // Reset completed status if it's a new day
-            if (dailyStats.date !== getTodayString()) {
-                dailyGoals = dailyGoals.map(g => ({ ...g, completed: false }));
-            }
-        } else {
-            dailyGoals = getDefaultDailyGoals();
-        }
-
-        // Load reward claimed status
-        const storedReward = loadFromStorage(rewardKey, null);
-        const dailyGoalsRewardClaimed = storedReward && storedReward.date === getTodayString()
-            ? storedReward.claimed
-            : false;
-
-        // Load study history
-        const studyHistory = loadFromStorage(historyKey, []);
-
-        return { dailyStats, dailyGoals, dailyGoalsRewardClaimed, studyHistory };
-    }, []);
-
-    // Daily Stats State - Initialize with defaults, will be loaded when user is available
+    // Daily Stats State - Initialize with defaults, loaded from backend
     const [dailyStats, setDailyStats] = useState(getDefaultDailyStats);
 
-    // Daily Goals State - Initialize with defaults, will be loaded when user is available
+    // Daily Goals State - Initialize with defaults, loaded from backend
     const [dailyGoals, setDailyGoalsState] = useState(getDefaultDailyGoals);
 
     // Track if daily goals reward has been claimed today
     const [dailyGoalsRewardClaimed, setDailyGoalsRewardClaimed] = useState(false);
 
     // Study history - stores total study time per day for average calculation
-    // Format: [{ date: "Mon Dec 30 2024", totalSeconds: 3600 }, ...]
     const [studyHistory, setStudyHistory] = useState([]);
 
-    // Load user-specific data when user changes
+    // Load data from backend when user changes
     useEffect(() => {
         const newUserId = authUser?.id ?? null;
         const previousUserId = currentUserIdRef.current;
@@ -190,75 +116,59 @@ export const UserProvider = ({ children }) => {
         if (newUserId !== previousUserId) {
             console.log(`[NORA] User changed from ${previousUserId} to ${newUserId}`);
             currentUserIdRef.current = newUserId;
+            setIsDataLoaded(false);
 
-            // Load data for the new user - localStorage first, then sync with backend
-            const localData = loadUserData(newUserId);
-
-            // Set localStorage data immediately
-            setDailyStats(localData.dailyStats);
-            setDailyGoalsState(localData.dailyGoals);
-            setDailyGoalsRewardClaimed(localData.dailyGoalsRewardClaimed);
-            setStudyHistory(localData.studyHistory);
-
-            // Then try to load from backend and merge if available
             if (newUserId) {
+                // Load all data from backend (DB is the only source of truth)
                 notificationService.getDailyProgress()
                     .then(backendData => {
-                        console.log('[NORA] Backend data:', backendData);
-                        console.log('[NORA] Local data:', localData);
+                        console.log('[NORA] Loaded data from backend:', backendData);
 
-                        // For dailyStats: compare localStorage and backend data
-                        // Prioritize the one with more accumulated time (more recent data)
+                        // Use backend data for dailyStats (or defaults if not today)
                         if (backendData.dailyStats) {
-                            const localTotalTime = (localData.dailyStats?.quizTime || 0) +
-                                (localData.dailyStats?.flashcardsTime || 0) +
-                                (localData.dailyStats?.summaryTime || 0);
-                            const backendTotalTime = (backendData.dailyStats.quizTime || 0) +
-                                (backendData.dailyStats.flashcardsTime || 0) +
-                                (backendData.dailyStats.summaryTime || 0);
-
-                            // Use backend data only if it has more accumulated time
-                            // or if localStorage has default (today but 0 time)
-                            if (backendTotalTime >= localTotalTime) {
-                                console.log('[NORA] Using backend dailyStats (more time)');
-                                setDailyStats(backendData.dailyStats);
-                            } else {
-                                console.log('[NORA] Keeping local dailyStats (more time)');
-                            }
+                            setDailyStats(backendData.dailyStats);
+                        } else {
+                            setDailyStats(getDefaultDailyStats());
                         }
 
-                        // For dailyGoals: prioritize localStorage over backend
-                        // This ensures recent local changes aren't overwritten by stale backend data
-                        // Only use backend goals if localStorage has defaults (30min summary, 20min quiz)
-                        const hasLocalGoals = localData.dailyGoals && localData.dailyGoals.length > 0;
-                        const isDefaultGoals = hasLocalGoals &&
-                            localData.dailyGoals.length === 2 &&
-                            localData.dailyGoals.some(g => g.type === 'summary' && g.targetMinutes === 30) &&
-                            localData.dailyGoals.some(g => g.type === 'quiz' && g.targetMinutes === 20);
-
+                        // Use backend data for dailyGoals (or defaults if none)
                         if (backendData.dailyGoals && backendData.dailyGoals.length > 0) {
-                            // Only overwrite with backend data if local has defaults or is empty
-                            if (!hasLocalGoals || isDefaultGoals) {
-                                console.log('[NORA] Using backend goals (local has defaults)');
-                                setDailyGoalsState(backendData.dailyGoals);
-                            } else {
-                                console.log('[NORA] Keeping local goals (user customized)');
-                            }
+                            setDailyGoalsState(backendData.dailyGoals);
+                        } else {
+                            setDailyGoalsState(getDefaultDailyGoals());
                         }
 
-                        if (backendData.dailyGoalsRewardClaimed) {
-                            setDailyGoalsRewardClaimed(true);
-                        }
+                        // Set reward claimed status
+                        setDailyGoalsRewardClaimed(backendData.dailyGoalsRewardClaimed || false);
+
+                        // Set study history
                         if (backendData.studyHistory && backendData.studyHistory.length > 0) {
                             setStudyHistory(backendData.studyHistory);
+                        } else {
+                            setStudyHistory([]);
                         }
+
+                        setIsDataLoaded(true);
                     })
                     .catch(error => {
-                        console.debug('[NORA] Backend sync failed, using localStorage:', error);
+                        console.error('[NORA] Failed to load data from backend:', error);
+                        // Use defaults on error
+                        setDailyStats(getDefaultDailyStats());
+                        setDailyGoalsState(getDefaultDailyGoals());
+                        setDailyGoalsRewardClaimed(false);
+                        setStudyHistory([]);
+                        setIsDataLoaded(true);
                     });
+            } else {
+                // No user, reset to defaults
+                setDailyStats(getDefaultDailyStats());
+                setDailyGoalsState(getDefaultDailyGoals());
+                setDailyGoalsRewardClaimed(false);
+                setStudyHistory([]);
+                setIsDataLoaded(true);
             }
         }
-    }, [authUser?.id, loadUserData]);
+    }, [authUser?.id]);
 
     // Notifications state for goal completions and XP gains
     const [notifications, setNotifications] = useState([]);
@@ -279,43 +189,8 @@ export const UserProvider = ({ children }) => {
         setNotifications(prev => prev.filter(n => n.id !== id));
     }, []);
 
-    // Persist dailyStats to localStorage (user-specific)
-    useEffect(() => {
-        const userId = authUser?.id;
-        if (!userId) return;
-        const key = getUserStorageKey('nora_dailyStats', userId);
-        saveToStorage(key, dailyStats);
-    }, [dailyStats, authUser?.id]);
-
-    // Persist dailyGoals to localStorage (user-specific)
-    useEffect(() => {
-        const userId = authUser?.id;
-        if (!userId) return;
-        const key = getUserStorageKey('nora_dailyGoals', userId);
-        saveToStorage(key, dailyGoals);
-    }, [dailyGoals, authUser?.id]);
-
-    // Persist dailyGoalsRewardClaimed to localStorage (user-specific)
-    useEffect(() => {
-        const userId = authUser?.id;
-        if (!userId) return;
-        const key = getUserStorageKey('nora_dailyGoalsRewardClaimed', userId);
-        saveToStorage(key, {
-            date: getTodayString(),
-            claimed: dailyGoalsRewardClaimed
-        });
-    }, [dailyGoalsRewardClaimed, authUser?.id]);
-
-    // Persist studyHistory to localStorage (user-specific)
-    useEffect(() => {
-        const userId = authUser?.id;
-        if (!userId) return;
-        const key = getUserStorageKey('nora_studyHistory', userId);
-        saveToStorage(key, studyHistory);
-    }, [studyHistory, authUser?.id]);
-
-    // Immediate sync function for goals modifications
-    const syncGoalsImmediately = useCallback(async (goals) => {
+    // Sync daily progress to backend immediately
+    const syncDailyProgressToBackend = useCallback(async (goals, stats, rewardClaimed) => {
         if (!authUser?.id) return;
 
         const progressPercentage = goals.length > 0
@@ -326,42 +201,38 @@ export const UserProvider = ({ children }) => {
             await notificationService.syncDailyProgress(
                 goals,
                 progressPercentage,
-                dailyGoalsRewardClaimed,
-                dailyStats
+                rewardClaimed,
+                stats
             );
-            console.log('[NORA] Goals synced immediately');
+            console.log('[NORA] Daily progress synced to backend');
         } catch (error) {
-            console.debug('Failed to sync goals immediately:', error);
+            console.error('[NORA] Failed to sync daily progress:', error);
         }
-    }, [authUser?.id, dailyGoalsRewardClaimed, dailyStats]);
+    }, [authUser?.id]);
 
-    // Sync daily progress to backend for notification eligibility
+    // Debounced sync for automatic updates (study time changes)
     useEffect(() => {
-        // Only sync if user is authenticated
-        if (!authUser?.id) return;
+        if (!authUser?.id || !isDataLoaded) return;
 
-        // Calculate progress percentage
         const progressPercentage = dailyGoals.length > 0
             ? Math.round((dailyGoals.filter(g => g.completed).length / dailyGoals.length) * 100)
             : 0;
 
-        // Debounce sync to avoid too many requests
         const syncTimer = setTimeout(async () => {
             try {
                 await notificationService.syncDailyProgress(
                     dailyGoals,
                     progressPercentage,
                     dailyGoalsRewardClaimed,
-                    dailyStats // Include study times
+                    dailyStats
                 );
             } catch (error) {
-                // Silently fail - notification sync is not critical
                 console.debug('Failed to sync daily progress:', error);
             }
         }, 2000);
 
         return () => clearTimeout(syncTimer);
-    }, [authUser?.id, dailyGoals, dailyGoalsRewardClaimed, dailyStats]);
+    }, [authUser?.id, dailyGoals, dailyGoalsRewardClaimed, dailyStats, isDataLoaded]);
 
     // Check for day change - robust implementation with interval
     const checkAndResetForNewDay = useCallback(() => {
@@ -380,45 +251,46 @@ export const UserProvider = ({ children }) => {
                 });
 
                 setStudyHistory(prev => {
-                    // Check if this day already exists in history
                     const existingIndex = prev.findIndex(h => h.date === dailyStats.date);
                     if (existingIndex >= 0) {
-                        // Update existing entry
                         const updated = [...prev];
                         updated[existingIndex] = { date: dailyStats.date, totalSeconds };
                         return updated;
                     }
-                    // Add new entry, keep last 30 days
                     const newHistory = [...prev, { date: dailyStats.date, totalSeconds }];
                     return newHistory.slice(-30);
                 });
             }
 
             // Reset daily stats
-            setDailyStats(getDefaultDailyStats());
+            const newStats = getDefaultDailyStats();
+            setDailyStats(newStats);
 
             // Reset daily goals completion status
-            setDailyGoalsState(prev => prev.map(g => ({ ...g, completed: false })));
+            const resetGoals = dailyGoals.map(g => ({ ...g, completed: false }));
+            setDailyGoalsState(resetGoals);
 
             // Reset daily goals reward claimed status
             setDailyGoalsRewardClaimed(false);
 
+            // Sync reset state to backend
+            syncDailyProgressToBackend(resetGoals, newStats, false);
+
             return true;
         }
         return false;
-    }, [dailyStats]);
+    }, [dailyStats, dailyGoals, syncDailyProgressToBackend]);
 
     // Check for day change on mount and set up interval
     useEffect(() => {
-        // Check immediately
+        if (!isDataLoaded) return;
+
         checkAndResetForNewDay();
 
-        // Check every minute for day change
         const interval = setInterval(() => {
             checkAndResetForNewDay();
         }, 60000);
 
-        // Also check when visibility changes (user comes back to app)
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'visible') {
                 checkAndResetForNewDay();
@@ -430,9 +302,9 @@ export const UserProvider = ({ children }) => {
             clearInterval(interval);
             document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
-    }, [checkAndResetForNewDay]);
+    }, [checkAndResetForNewDay, isDataLoaded]);
 
-    // Sync user data to backend periodically
+    // Sync user data to backend
     const syncToBackend = useCallback(async (userData) => {
         if (syncUserData && authUser?.id) {
             try {
@@ -478,21 +350,18 @@ export const UserProvider = ({ children }) => {
             return newUser;
         });
 
-        // Show notification if requested
         if (showNotification && notificationMessage) {
             addNotification(notificationMessage, 'xp');
         }
     }, [syncToBackend, addNotification]);
 
     const updateTime = useCallback((activityType, seconds) => {
-        // First check if it's a new day
         const today = getTodayString();
         if (dailyStats.date !== today) {
             checkAndResetForNewDay();
-            return; // Don't update time, will be called again on next tick
+            return;
         }
 
-        // Store the updated time values for goal checking
         let updatedTimes = {
             quizTime: dailyStats.quizTime,
             flashcardsTime: dailyStats.flashcardsTime,
@@ -506,7 +375,6 @@ export const UserProvider = ({ children }) => {
             if (activityType === 'flashcards') newStats.flashcardsTime += seconds;
             if (activityType === 'summary') newStats.summaryTime += seconds;
 
-            // Update the times for goal checking
             updatedTimes = {
                 quizTime: newStats.quizTime,
                 flashcardsTime: newStats.flashcardsTime,
@@ -525,14 +393,13 @@ export const UserProvider = ({ children }) => {
                     newStats.xpAwarded[activityType] = true;
                     const labelKey = ACTIVITY_TYPES[activityType]?.labelKey;
                     const label = labelKey ? t(labelKey) : activityType;
-                    // Use setTimeout to call addExp outside of setState
                     setTimeout(() => {
                         addExp(threshold.xp, true, t('notifications.xpGained', { amount: threshold.xp, label, time: threshold.timeMinutes }));
                     }, 0);
                 }
             }
 
-            // Check All Bonus (100 XP) - awarded when all three thresholds are reached
+            // Check All Bonus
             if (!newStats.xpAwarded.allBonus &&
                 newStats.xpAwarded.flashcards &&
                 newStats.xpAwarded.quiz &&
@@ -546,21 +413,18 @@ export const UserProvider = ({ children }) => {
             return newStats;
         });
 
-        // Update Daily Goals Progress with notifications
+        // Update Daily Goals Progress
         setDailyGoalsState(prev => {
             const goalsToNotify = [];
 
             const updatedGoals = prev.map(goal => {
                 if (goal.completed) return goal;
 
-                // Get current time for this goal's activity type
                 const timeKey = ACTIVITY_TYPES[goal.type]?.key;
                 if (!timeKey) return goal;
 
-                // Use the updated time values
                 const currentTime = updatedTimes[timeKey] || 0;
 
-                // Check if goal is now completed
                 if (currentTime >= goal.targetMinutes * 60) {
                     goalsToNotify.push(goal.type);
                     return { ...goal, completed: true };
@@ -568,7 +432,6 @@ export const UserProvider = ({ children }) => {
                 return goal;
             });
 
-            // Show notifications outside of setState
             goalsToNotify.forEach(type => {
                 const labelKey = ACTIVITY_TYPES[type]?.labelKey;
                 const label = labelKey ? t(labelKey) : type;
@@ -581,10 +444,6 @@ export const UserProvider = ({ children }) => {
 
     // Check Daily Goals Completion Bonus (10 XP) - only once per day
     useEffect(() => {
-        // Only award if:
-        // 1. There are goals defined
-        // 2. All goals are completed
-        // 3. Reward hasn't been claimed today
         if (dailyGoals.length > 0 &&
             dailyGoals.every(g => g.completed) &&
             !dailyGoalsRewardClaimed) {
@@ -601,9 +460,9 @@ export const UserProvider = ({ children }) => {
             completed: false
         }));
         setDailyGoalsState(resetGoals);
-        // Sync immediately to avoid data loss on refresh
-        syncGoalsImmediately(resetGoals);
-    }, [syncGoalsImmediately]);
+        // Sync immediately to backend
+        syncDailyProgressToBackend(resetGoals, dailyStats, dailyGoalsRewardClaimed);
+    }, [syncDailyProgressToBackend, dailyStats, dailyGoalsRewardClaimed]);
 
     // Add a new goal
     const addDailyGoal = useCallback((type, targetMinutes) => {
@@ -615,22 +474,22 @@ export const UserProvider = ({ children }) => {
             const newId = Math.max(...prev.map(g => g.id), 0) + 1;
             const newGoals = [...prev, { id: newId, type, targetMinutes, completed: false }];
             const resetGoals = newGoals.map(g => ({ ...g, completed: false }));
-            // Sync immediately to avoid data loss on refresh
-            syncGoalsImmediately(resetGoals);
+            // Sync immediately to backend
+            syncDailyProgressToBackend(resetGoals, dailyStats, dailyGoalsRewardClaimed);
             return resetGoals;
         });
-    }, [addNotification, t, syncGoalsImmediately]);
+    }, [addNotification, t, syncDailyProgressToBackend, dailyStats, dailyGoalsRewardClaimed]);
 
     // Remove a goal
     const removeDailyGoal = useCallback((goalId) => {
         setDailyGoalsState(prev => {
             const newGoals = prev.filter(g => g.id !== goalId);
             const resetGoals = newGoals.map(g => ({ ...g, completed: false }));
-            // Sync immediately to avoid data loss on refresh
-            syncGoalsImmediately(resetGoals);
+            // Sync immediately to backend
+            syncDailyProgressToBackend(resetGoals, dailyStats, dailyGoalsRewardClaimed);
             return resetGoals;
         });
-    }, [syncGoalsImmediately]);
+    }, [syncDailyProgressToBackend, dailyStats, dailyGoalsRewardClaimed]);
 
     // Update a specific goal's target time
     const updateGoalTarget = useCallback((goalId, newTargetMinutes) => {
@@ -641,11 +500,11 @@ export const UserProvider = ({ children }) => {
                 }
                 return { ...g, completed: false };
             });
-            // Sync immediately to avoid data loss on refresh
-            syncGoalsImmediately(updatedGoals);
+            // Sync immediately to backend
+            syncDailyProgressToBackend(updatedGoals, dailyStats, dailyGoalsRewardClaimed);
             return updatedGoals;
         });
-    }, [syncGoalsImmediately]);
+    }, [syncDailyProgressToBackend, dailyStats, dailyGoalsRewardClaimed]);
 
     // Calculate daily progress percentage based on completed goals
     const dailyProgressPercentage = dailyGoals.length > 0
@@ -673,24 +532,19 @@ export const UserProvider = ({ children }) => {
 
     // Get average daily study time in minutes (includes today)
     const getAverageDailyStudyTime = useCallback(() => {
-        // Include today's time in the calculation
         const todaySeconds = getTotalStudyTime(dailyStats);
 
-        // If no history and no time today, return 0
         if (studyHistory.length === 0 && todaySeconds === 0) {
             return 0;
         }
 
-        // Calculate total from history
         const historyTotal = studyHistory.reduce((sum, day) => sum + day.totalSeconds, 0);
-
-        // Total days = history days + today (if there's time today)
         const totalDays = studyHistory.length + (todaySeconds > 0 ? 1 : 0);
 
         if (totalDays === 0) return 0;
 
         const averageSeconds = (historyTotal + todaySeconds) / totalDays;
-        return Math.round(averageSeconds / 60); // Return in minutes
+        return Math.round(averageSeconds / 60);
     }, [dailyStats, studyHistory]);
 
     const unlockCreature = useCallback((creatureId) => {
