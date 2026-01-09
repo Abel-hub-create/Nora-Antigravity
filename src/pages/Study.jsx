@@ -59,15 +59,8 @@ const Study = () => {
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
-        const now = new Date();
-        const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 0) return t('common.today');
-        if (diffDays === 1) return t('common.yesterday');
-        if (diffDays < 7) return t('common.daysAgo', { count: diffDays });
-
         const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
-        return date.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+        return date.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
     };
 
     return (

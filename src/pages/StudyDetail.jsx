@@ -44,12 +44,9 @@ const StudyDetail = () => {
     };
 
     const formatDate = (dateString) => {
+        const date = new Date(dateString);
         const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
-        return new Date(dateString).toLocaleDateString(locale, {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-        });
+        return date.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
     };
 
     if (isLoading) {
