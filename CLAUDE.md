@@ -555,6 +555,14 @@ getQuizQuestions(syntheseId)
 updateQuizProgress(syntheseId, questionId, isCorrect)
 ```
 
+### Date Display
+
+Syntheses display their full creation date (not relative time like "Il y a 3 jours"):
+- **French**: "9 janvier 2026"
+- **English**: "January 9, 2026"
+
+Shown in both `/study` (list) and `/study/:id` (detail) pages.
+
 ## Environment Variables
 
 Copy `.env.example` files and configure:
