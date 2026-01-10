@@ -34,7 +34,10 @@ const StudyRevision = () => {
 
     // Navigation blocker - block when session is active and not complete
     const shouldBlock = session && session.phase !== 'complete' && !expired && !error;
-    const blocker = useBlocker(shouldBlock);
+    const blocker = useBlocker(
+        ({ currentLocation, nextLocation }) =>
+            shouldBlock && currentLocation.pathname !== nextLocation.pathname
+    );
 
     // Sync interval ref
     const syncIntervalRef = useRef(null);
