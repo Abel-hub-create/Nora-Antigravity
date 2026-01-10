@@ -107,21 +107,28 @@ export const UserProvider = ({ children }) => {
     // Study history - stores total study time per day for average calculation
     const [studyHistory, setStudyHistory] = useState([]);
 
-    // Load data from backend when user changes
+    // Track if this is the first load for this user (vs page refresh)
+    const isFirstLoadRef = useRef(true);
+
+    // Load data from backend when user changes OR on initial mount
     useEffect(() => {
         const newUserId = authUser?.id ?? null;
         const previousUserId = currentUserIdRef.current;
+        const userChanged = newUserId !== previousUserId;
+        const needsInitialLoad = !isDataLoaded && newUserId;
 
-        // Detect user change
-        if (newUserId !== previousUserId) {
-            console.log(`[NORA] User changed from ${previousUserId} to ${newUserId}`);
+        console.log(`[NORA] useEffect - userId: ${newUserId}, prev: ${previousUserId}, isDataLoaded: ${isDataLoaded}, needsLoad: ${userChanged || needsInitialLoad}`);
+
+        // Load if user changed OR if data not loaded yet (initial mount/refresh)
+        if (userChanged || needsInitialLoad) {
+            console.log(`[NORA] Loading data - reason: ${userChanged ? 'user changed' : 'initial load'}`);
             currentUserIdRef.current = newUserId;
-            setIsDataLoaded(false);
 
             if (newUserId) {
                 // Load all data from backend (DB is the only source of truth)
-                notificationService.getDailyProgress()
-                    .then(backendData => {
+                const loadData = async (retryCount = 0) => {
+                    try {
+                        const backendData = await notificationService.getDailyProgress();
                         console.log('[NORA] Loaded data from backend:', backendData);
 
                         // Use backend data for dailyStats (or defaults if not today)
@@ -131,10 +138,13 @@ export const UserProvider = ({ children }) => {
                             setDailyStats(getDefaultDailyStats());
                         }
 
-                        // Use backend data for dailyGoals (or defaults if none)
+                        // Use backend data for dailyGoals
                         if (backendData.dailyGoals && backendData.dailyGoals.length > 0) {
+                            console.log('[NORA] Setting goals from backend:', backendData.dailyGoals);
                             setDailyGoalsState(backendData.dailyGoals);
                         } else {
+                            // Only set defaults for new users with no data
+                            console.log('[NORA] No goals in backend, using defaults');
                             setDailyGoalsState(getDefaultDailyGoals());
                         }
 
@@ -149,16 +159,26 @@ export const UserProvider = ({ children }) => {
                         }
 
                         setIsDataLoaded(true);
-                    })
-                    .catch(error => {
+                    } catch (error) {
                         console.error('[NORA] Failed to load data from backend:', error);
-                        // Use defaults on error
+
+                        // Retry up to 2 times with exponential backoff
+                        if (retryCount < 2) {
+                            console.log(`[NORA] Retrying load (attempt ${retryCount + 2})...`);
+                            setTimeout(() => loadData(retryCount + 1), 1000 * (retryCount + 1));
+                            return;
+                        }
+
+                        // After retries failed, use defaults
                         setDailyStats(getDefaultDailyStats());
                         setDailyGoalsState(getDefaultDailyGoals());
                         setDailyGoalsRewardClaimed(false);
                         setStudyHistory([]);
                         setIsDataLoaded(true);
-                    });
+                    }
+                };
+
+                loadData();
             } else {
                 // No user, reset to defaults
                 setDailyStats(getDefaultDailyStats());
@@ -168,7 +188,7 @@ export const UserProvider = ({ children }) => {
                 setIsDataLoaded(true);
             }
         }
-    }, [authUser?.id]);
+    }, [authUser?.id, isDataLoaded]);
 
     // Notifications state for goal completions and XP gains
     const [notifications, setNotifications] = useState([]);
@@ -191,11 +211,16 @@ export const UserProvider = ({ children }) => {
 
     // Sync daily progress to backend immediately
     const syncDailyProgressToBackend = useCallback(async (goals, stats, rewardClaimed) => {
-        if (!authUser?.id) return;
+        if (!authUser?.id) {
+            console.log('[NORA] Cannot sync: no user ID');
+            return false;
+        }
 
         const progressPercentage = goals.length > 0
             ? Math.round((goals.filter(g => g.completed).length / goals.length) * 100)
             : 0;
+
+        console.log('[NORA] Syncing to backend:', { goals, progressPercentage, rewardClaimed });
 
         try {
             await notificationService.syncDailyProgress(
@@ -204,9 +229,11 @@ export const UserProvider = ({ children }) => {
                 rewardClaimed,
                 stats
             );
-            console.log('[NORA] Daily progress synced to backend');
+            console.log('[NORA] Sync SUCCESS - goals saved to database');
+            return true;
         } catch (error) {
-            console.error('[NORA] Failed to sync daily progress:', error);
+            console.error('[NORA] Sync FAILED:', error);
+            return false;
         }
     }, [authUser?.id]);
 

@@ -70,7 +70,8 @@ const Process = () => {
           summaryContent: summary,
           sourceType: sourceType || 'text',
           flashcards,
-          quizQuestions
+          quizQuestions,
+          specificInstructions: specificInstructions || null
         });
 
         // Succes !

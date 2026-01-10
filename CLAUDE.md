@@ -1035,3 +1035,102 @@ sendVerificationEmail(email, token, name) // Send verification link
 - `forgotPassword()` → sends reset email
 - `resendVerificationEmail()` → resend verification if needed
 - Errors are logged but don't block user creation
+
+## Guided Revision Program (Feuille Blanche)
+
+A structured revision system based on the active recall / blank sheet technique, linked to each synthese.
+
+### Overview
+
+The revision program follows 6 strict phases that cannot be skipped:
+
+| Phase | Duration | Description |
+|-------|----------|-------------|
+| 1. Study | 10 min | Review synthese, flashcards, quiz (3 tabs) |
+| 2. Pause | 5 min | Forced break with countdown timer |
+| 3. Recall | No limit | Write or dictate from memory |
+| 4. Compare | - | AI semantic comparison (green=understood, red=missing) |
+| 5. Loop | Max 5x | Re-read missing concepts, repeat recall |
+| 6. Complete | - | Success message, session recorded |
+
+### Key Features
+
+**Session Persistence**:
+- Session survives page refresh, app close, browser restart
+- Based on timestamps stored in database
+- Expires after 15 minutes of inactivity → "Vous êtes revenu trop tard"
+- Syncs to backend every 5 seconds
+
+**Semantic Comparison (AI)**:
+- Accepts reformulations and synonyms
+- Stricter on definitions
+- User's "important elements" (from import specificInstructions) MUST be present
+- Detailed feedback: each concept annotated with userText ↔ originalText mapping
+
+**No XP Reward**: Completing a revision does not give XP (per user request)
+
+### Route
+
+| Path | Page | Description |
+|------|------|-------------|
+| `/study/:id/revision` | StudyRevision | Guided revision program |
+
+### Database Schema
+
+```sql
+-- revision_sessions: Active revision session state
+revision_sessions (id, user_id, synthese_id, phase, study_time_remaining, pause_time_remaining,
+                   current_iteration, user_recall, missing_concepts JSON, understood_concepts JSON,
+                   last_activity_at, started_at, completed_at)
+
+-- revision_completions: History of completed revisions
+revision_completions (id, user_id, synthese_id, iterations_count, completed_at)
+
+-- syntheses: Added specific_instructions column for important elements
+syntheses.specific_instructions TEXT -- User-defined important elements
+```
+
+### API Endpoints (`/api/revision/`)
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/:syntheseId/session` | Get active session or null (checks 15min expiration) |
+| POST | `/:syntheseId/start` | Start new session |
+| PATCH | `/:syntheseId/sync` | Sync state (timer, phase, iteration) |
+| POST | `/:syntheseId/recall` | Submit user recall text |
+| POST | `/:syntheseId/compare` | Run AI semantic comparison |
+| POST | `/:syntheseId/next-iteration` | Move to next loop iteration |
+| POST | `/:syntheseId/complete` | Mark session complete |
+| DELETE | `/:syntheseId/stop` | Stop/cancel session |
+| GET | `/:syntheseId/completions` | Get completion count |
+
+### Frontend Components
+
+**`/src/pages/StudyRevision.jsx`** - Main container managing phase transitions
+
+**`/src/components/Revision/`**:
+- `RevisionStudyPhase.jsx` - Phase 1: 10min timer with tabs (Synthèse, Flashcards, Quiz)
+- `RevisionPausePhase.jsx` - Phase 2: 5min forced break
+- `RevisionRecallPhase.jsx` - Phase 3: Textarea + voice recorder
+- `RevisionComparePhase.jsx` - Phase 4: AI comparison display (green/red)
+- `RevisionLoopPhase.jsx` - Phase 5: Show missing concepts, retry
+- `RevisionCompletePhase.jsx` - Phase 6: Success with confetti
+
+**`/src/hooks/useRevisionTimer.js`** - Visibility-aware countdown timer
+
+**`/src/services/revisionService.js`** - API calls to revision endpoints
+
+### Backend Services
+
+**`/backend/src/services/revisionRepository.js`** - Database operations for sessions
+
+**`/backend/src/services/revisionCompareService.js`** - AI semantic comparison using GPT-4o-mini
+
+### i18n Keys
+
+All revision UI text is translated under `revision.*` namespace in both `fr.json` and `en.json`.
+
+### Migrations
+
+- `014_create_revision_sessions.sql` - Creates revision_sessions and revision_completions tables
+- `015_add_specific_instructions.sql` - Adds specific_instructions column to syntheses

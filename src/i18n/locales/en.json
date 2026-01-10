@@ -25,7 +25,10 @@
     "yesterday": "Yesterday",
     "daysAgo": "{{count}} days ago",
     "cards": "cards",
-    "questions": "questions"
+    "questions": "questions",
+    "continue": "Continue",
+    "next": "Next",
+    "previous": "Previous"
   },
   "nav": {
     "home": "Home",
@@ -186,6 +189,60 @@
       "medium": ["Pretty good", "Well done!"],
       "high": ["Keep it up!", "Very good!"],
       "perfect": ["Simply perfect", "Congratulations, you got them all right!"]
+    }
+  },
+  "revision": {
+    "title": "Guided Revision",
+    "subtitle": "Blank sheet technique",
+    "loadError": "Error loading revision",
+    "expired": "Session Expired",
+    "expiredMessage": "You were away too long. The session expired after 15 minutes of inactivity.",
+    "stopButton": "Stop",
+    "stopConfirmTitle": "Stop revision?",
+    "stopConfirmMessage": "Your progress will be lost if you stop now.",
+    "phases": {
+      "study": "Phase 1: Study",
+      "studyMessage": "Review the summary, practice flashcards and take the quiz.",
+      "pause": "5-minute break",
+      "pauseMessage": "Relax. Come back when the timer ends.",
+      "pauseHint": "You can close the app, we'll wait for you",
+      "recall": "Phase 3: Active Recall",
+      "recallMessage": "Write everything you remember from memory. Don't look at the summary!",
+      "recallPlaceholder": "Write what you remember...",
+      "recallVoice": "Dictate with voice",
+      "recallSubmit": "I'm done",
+      "recallMinChars": "{{remaining}} more characters needed",
+      "compare": "Phase 4: Comparison",
+      "compareLoading": "Analyzing...",
+      "loop": "Phase 5: Review Gaps",
+      "loopMessage": "Carefully read the missing concepts, then try recalling again.",
+      "loopContinue": "I've reviewed, continue",
+      "loopIteration": "Attempt {{current}}/{{max}}",
+      "loopHint": "You have {{remaining}} more attempts",
+      "complete": "Well done!",
+      "completeMessage": "You've mastered this summary!",
+      "completeButton": "Finish"
+    },
+    "compare": {
+      "yourRecall": "Your recall",
+      "original": "Original summary",
+      "understood": "Understood",
+      "missing": "To review",
+      "important": "Important",
+      "score": "Score: {{score}}%",
+      "error": "Analysis error. Please try again.",
+      "analyzing": "Comparing with original..."
+    },
+    "tabs": {
+      "summary": "Summary",
+      "flashcards": "Flashcards",
+      "quiz": "Quiz"
+    },
+    "complete": {
+      "iterations": "Attempts",
+      "perfectMessage": "Perfect on first try!",
+      "goodMessage": "Great job, you're improving!",
+      "doneMessage": "You persevered, well done!"
     }
   },
   "import": {

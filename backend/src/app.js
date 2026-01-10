@@ -9,6 +9,7 @@ import syntheseRoutes from './routes/syntheseRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 import folderRoutes from './routes/folderRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import revisionRoutes from './routes/revisionRoutes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
 dotenv.config();
@@ -38,6 +39,7 @@ app.use('/api/syntheses', syntheseRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/folders', folderRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/revision', revisionRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

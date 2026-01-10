@@ -1,11 +1,11 @@
 import { query } from '../config/database.js';
 
 // Syntheses CRUD
-export const create = async ({ userId, title, originalContent, summaryContent, sourceType = 'text' }) => {
-  const sql = `INSERT INTO syntheses (user_id, title, original_content, summary_content, source_type)
-               VALUES (?, ?, ?, ?, ?)`;
-  const result = await query(sql, [userId, title, originalContent, summaryContent, sourceType]);
-  return { id: result.insertId, userId, title, summaryContent, sourceType };
+export const create = async ({ userId, title, originalContent, summaryContent, sourceType = 'text', specificInstructions = null }) => {
+  const sql = `INSERT INTO syntheses (user_id, title, original_content, summary_content, source_type, specific_instructions)
+               VALUES (?, ?, ?, ?, ?, ?)`;
+  const result = await query(sql, [userId, title, originalContent, summaryContent, sourceType, specificInstructions]);
+  return { id: result.insertId, userId, title, summaryContent, sourceType, specificInstructions };
 };
 
 export const findById = async (id, userId) => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Layers, Brain, Calendar, Trash2, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Layers, Brain, Calendar, Trash2, Loader2, AlertCircle, BookOpen } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -128,6 +128,27 @@ const StudyDetail = () => {
                     <span className="text-xs text-text-muted">
                         {synthese.quizQuestions?.length || 0} {t('common.questions')}
                     </span>
+                </Link>
+            </motion.div>
+
+            {/* Revision Button */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+                className="mb-6"
+            >
+                <Link
+                    to={`/study/${id}/revision`}
+                    className="w-full bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition-transform"
+                >
+                    <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
+                        <BookOpen className="text-emerald-500" size={24} />
+                    </div>
+                    <div className="flex-1">
+                        <span className="font-medium text-text-main block">{t('revision.title')}</span>
+                        <span className="text-xs text-text-muted">{t('revision.subtitle')}</span>
+                    </div>
                 </Link>
             </motion.div>
 

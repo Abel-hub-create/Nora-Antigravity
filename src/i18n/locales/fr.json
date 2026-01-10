@@ -25,7 +25,10 @@
     "yesterday": "Hier",
     "daysAgo": "Il y a {{count}} jours",
     "cards": "cartes",
-    "questions": "questions"
+    "questions": "questions",
+    "continue": "Continuer",
+    "next": "Suivant",
+    "previous": "Précédent"
   },
   "nav": {
     "home": "Accueil",
@@ -186,6 +189,60 @@
       "medium": ["C'est plutôt pas mal", "Bien joué !"],
       "high": ["Continue comme ça !", "C'est très bien !"],
       "perfect": ["C'est tout simplement parfait", "Bravo, tu as tout bon !"]
+    }
+  },
+  "revision": {
+    "title": "Révision guidée",
+    "subtitle": "Technique de la feuille blanche",
+    "loadError": "Erreur lors du chargement",
+    "expired": "Session expirée",
+    "expiredMessage": "Tu es revenu trop tard. La session a expiré après 15 minutes d'inactivité.",
+    "stopButton": "Arrêter",
+    "stopConfirmTitle": "Arrêter la révision ?",
+    "stopConfirmMessage": "Ta progression sera perdue si tu arrêtes maintenant.",
+    "phases": {
+      "study": "Phase 1 : Révision",
+      "studyMessage": "Relis la synthèse, révise les flashcards et refais le quiz.",
+      "pause": "Pause de 5 minutes",
+      "pauseMessage": "Détends-toi. Reviens quand le timer sera terminé.",
+      "pauseHint": "Tu peux fermer l'app, on t'attendra",
+      "recall": "Phase 3 : Rappel actif",
+      "recallMessage": "Écris tout ce que tu as retenu de mémoire. Ne regarde pas la synthèse !",
+      "recallPlaceholder": "Écris ce que tu as retenu...",
+      "recallVoice": "Dicter à voix haute",
+      "recallSubmit": "J'ai terminé",
+      "recallMinChars": "Encore {{remaining}} caractères minimum",
+      "compare": "Phase 4 : Comparaison",
+      "compareLoading": "Analyse en cours...",
+      "loop": "Phase 5 : Révision des lacunes",
+      "loopMessage": "Relis attentivement les concepts manquants, puis recommence le rappel.",
+      "loopContinue": "J'ai relu, continuer",
+      "loopIteration": "Tentative {{current}}/{{max}}",
+      "loopHint": "Tu peux faire encore {{remaining}} tentatives",
+      "complete": "Bravo !",
+      "completeMessage": "Tu maîtrises cette synthèse !",
+      "completeButton": "Terminer"
+    },
+    "compare": {
+      "yourRecall": "Ton rappel",
+      "original": "Synthèse originale",
+      "understood": "Concepts compris",
+      "missing": "À revoir",
+      "important": "Important",
+      "score": "Score : {{score}}%",
+      "error": "Erreur lors de l'analyse. Réessaie.",
+      "analyzing": "Comparaison avec l'original..."
+    },
+    "tabs": {
+      "summary": "Synthèse",
+      "flashcards": "Flashcards",
+      "quiz": "Quiz"
+    },
+    "complete": {
+      "iterations": "Tentatives",
+      "perfectMessage": "Premier essai parfait !",
+      "goodMessage": "Bien joué, tu progresses !",
+      "doneMessage": "Tu as persévéré, bravo !"
     }
   },
   "import": {

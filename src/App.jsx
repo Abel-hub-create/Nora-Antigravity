@@ -19,6 +19,7 @@ import Study from './pages/Study';
 import StudyDetail from './pages/StudyDetail';
 import StudyFlashcards from './pages/StudyFlashcards';
 import StudyQuiz from './pages/StudyQuiz';
+import StudyRevision from './pages/StudyRevision';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Collection from './pages/Collection';
@@ -54,6 +55,7 @@ function App() {
                       <Route path="/study/:id" element={<StudyDetail />} />
                       <Route path="/study/:id/flashcards" element={<StudyFlashcards />} />
                       <Route path="/study/:id/quiz" element={<StudyQuiz />} />
+                      <Route path="/study/:id/revision" element={<StudyRevision />} />
                       <Route path="/profile" element={<Profile />} />
                       <Route path="/folders/:id" element={<FolderDetail />} />
                       <Route path="/settings" element={<Settings />} />
