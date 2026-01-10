@@ -12,7 +12,7 @@ const openai = new OpenAI({
 });
 
 const MODEL = 'gpt-4o-mini';
-const MAX_TOKENS = 4500;
+const MAX_TOKENS = 6000;
 
 /**
  * Detecte la langue dominante du contenu
@@ -84,7 +84,7 @@ Tu dois generer un JSON avec exactement cette structure :
 
 {
   "title": "Titre court et precis du cours (maximum 50 caracteres)",
-  "summary": "INSTRUCTIONS POUR LA SYNTHESE - CONTRAINTES GENERALES: La synthese doit toujours etre plus courte que le cours original. Langage simple, clair, familier. Precise mais synthetique. STRUCTURE OBLIGATOIRE: 1) TITRE CLAIR en premiere ligne, 2) DEFINITIONS - toutes les definitions importantes, formulees simplement, 3) POINTS CLES DU COURS - extraits dans un ordre logique si l'ordre existe, expliques precisement mais de maniere synthetique, 4) LIENS LOGIQUES ENTRE NOTIONS - uniquement lorsque pertinent, 5) METAPHORES SIMPLES - pour expliquer les notions complexes, sans alourdir la synthese. FORMAT: Utilise des titres clairs (## Titre), des bullet points (- item), des paragraphes courts, une idee par ligne. OBJECTIF PEDAGOGIQUE: Permettre a l'utilisateur de reexpliquer le cours sans le relire. Faciliter le rappel actif et la memorisation long terme. Rester clair, structure et efficace.",
+  "summary": "La synthese complete selon les regles ci-dessous",
   "flashcards": [
     {"front": "Question ou concept a retenir", "back": "Reponse claire et complete", "difficulty": "easy"},
     {"front": "...", "back": "...", "difficulty": "easy"},
@@ -121,7 +121,50 @@ Tu dois generer un JSON avec exactement cette structure :
   ]
 }
 
-REGLES STRICTES :
+===== REGLES DETAILLEES POUR LA SYNTHESE =====
+
+REGLES GENERALES (OBLIGATOIRES) :
+- La synthese doit toujours etre plus courte que le cours original
+- Il n'y a aucune longueur minimale ou maximale, mais chaque phrase doit etre utile
+- Le langage doit etre : simple, familier, clair, sans jargon inutile
+- La synthese doit rester : precise, rigoureuse, comprehensible par un collegien ou lyceen
+- Aucun ajout d'information exterieure au cours
+
+STRUCTURE OBLIGATOIRE DE LA SYNTHESE :
+
+1. TITRE
+   - Clair et representatif du contenu
+
+2. DEFINITIONS
+   - Toutes les definitions importantes du cours
+   - Formulees simplement
+   - Une idee par definition
+   - Pas de paraphrase inutile
+
+3. POINTS CLES DU COURS
+   - Extraire les idees reellement importantes
+   - Respecter l'ordre logique du cours s'il existe
+   - Expliquer chaque point : clairement, precisement, mais toujours de maniere synthetique
+   - Eviter les details secondaires non essentiels
+
+4. LIENS LOGIQUES ENTRE NOTIONS
+   - Ajouter des liens uniquement lorsque cela aide la comprehension
+   - Expliquer les relations de cause a effet, de comparaison ou d'opposition si importantes
+   - Ne pas forcer des liens inutiles
+
+5. METAPHORES PEDAGOGIQUES (si pertinent)
+   - Utiliser des metaphores simples pour expliquer les notions complexes
+   - Les metaphores doivent aider a comprendre, rester courtes, ne jamais remplacer l'explication reelle
+
+FORMAT DE LA SYNTHESE (TRES IMPORTANT) :
+- Utilise des titres clairs avec ## pour les sections
+- REDIGE DE VRAIES PHRASES EN PARAGRAPHES, pas uniquement des tirets
+- Les bullet points (- item) sont autorises pour les listes, mais accompagnes d'explications en phrases completes
+- Une synthese peut faire plusieurs pages si le cours original est long
+- Objectif : permettre a l'utilisateur de reexpliquer le cours sans le relire
+
+===== REGLES POUR FLASHCARDS ET QUIZ =====
+
 1. Exactement 6 flashcards : 2 easy, 3 medium, 1 hard
 2. Exactement 4 questions quiz avec 4 options chacune
 3. correctAnswer est l'index (0, 1, 2 ou 3) de la bonne reponse
@@ -134,17 +177,19 @@ REGLES STRICTES :
   if (specificInstructions && specificInstructions.trim()) {
     prompt += `
 
-INSTRUCTIONS SPECIFIQUES DE L'UTILISATEUR :
-L'utilisateur a demande que les elements suivants soient mis en avant dans la synthese, les flashcards et le quiz :
+===== ELEMENTS IMPORTANTS INDIQUES PAR L'UTILISATEUR =====
+
+L'utilisateur a indique que les elements suivants sont importants :
 """
 ${specificInstructions.trim()}
 """
 
-REGLES STRICTES POUR CES INSTRUCTIONS :
-- Tu ne peux inclure ces elements QUE s'ils figurent reellement dans le contenu du cours ci-dessus
+REGLES STRICTES POUR CES ELEMENTS :
+- Ces elements DOIVENT toujours etre inclus dans la synthese
+- Ils doivent etre clairement expliques, jamais supprimes ou dilues
+- Tu ne peux les inclure QUE s'ils figurent reellement dans le contenu du cours
 - Si un element demande n'existe PAS dans le cours, tu l'ignores completement
-- Tu ne dois JAMAIS inventer ou ajouter des informations qui ne sont pas dans le cours original
-- Seuls les elements demandes ET presents dans le cours doivent etre mis en avant`;
+- Tu ne dois JAMAIS inventer ou ajouter des informations qui ne sont pas dans le cours original`;
   }
 
   return prompt;
