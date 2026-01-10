@@ -84,10 +84,23 @@ const RevisionComparePhase = ({ syntheseId, userRecall, originalSummary, onCompl
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-surface rounded-2xl p-6 mb-4 text-center"
+                className={`rounded-2xl p-6 mb-4 text-center ${
+                    missingCount === 0
+                        ? 'bg-success/10 border border-success/20'
+                        : 'bg-surface'
+                }`}
             >
-                <div className="text-4xl font-bold text-primary mb-2">{score}%</div>
-                <p className="text-text-muted text-sm">{result?.feedback}</p>
+                <div className={`text-4xl font-bold mb-2 ${
+                    missingCount === 0 ? 'text-success' : 'text-primary'
+                }`}>
+                    {score}%
+                </div>
+                <p className="text-text-muted text-sm">
+                    {missingCount === 0
+                        ? result?.feedback
+                        : t('revision.compare.partialFeedback')
+                    }
+                </p>
             </motion.div>
 
             {/* Stats */}

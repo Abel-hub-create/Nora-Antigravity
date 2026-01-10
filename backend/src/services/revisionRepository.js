@@ -27,13 +27,13 @@ export const startSession = async (userId, syntheseId) => {
  * Sync session state (timer, phase)
  */
 export const syncSession = async (userId, syntheseId, data) => {
-    const { phase, studyTimeRemaining, pauseTimeRemaining, currentIteration } = data;
+    const { phase, studyTimeRemaining, pauseTimeRemaining, loopTimeRemaining, currentIteration } = data;
     const sql = `
         UPDATE revision_sessions
-        SET phase = ?, study_time_remaining = ?, pause_time_remaining = ?, current_iteration = ?, last_activity_at = NOW()
+        SET phase = ?, study_time_remaining = ?, pause_time_remaining = ?, loop_time_remaining = ?, current_iteration = ?, last_activity_at = NOW()
         WHERE user_id = ? AND synthese_id = ?
     `;
-    await query(sql, [phase, studyTimeRemaining, pauseTimeRemaining, currentIteration, userId, syntheseId]);
+    await query(sql, [phase, studyTimeRemaining, pauseTimeRemaining, loopTimeRemaining ?? 300, currentIteration, userId, syntheseId]);
 };
 
 /**

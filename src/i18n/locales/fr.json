@@ -193,33 +193,42 @@
   },
   "revision": {
     "title": "Révision guidée",
-    "subtitle": "Technique de la feuille blanche",
+    "subtitle": "La méthode la plus efficace pour retenir",
+    "description": "Plus efficace qu'une simple relecture. Cette technique de rappel actif ancre les informations en mémoire long terme.",
     "loadError": "Erreur lors du chargement",
     "expired": "Session expirée",
     "expiredMessage": "Tu es revenu trop tard. La session a expiré après 15 minutes d'inactivité.",
     "stopButton": "Arrêter",
     "stopConfirmTitle": "Arrêter la révision ?",
     "stopConfirmMessage": "Ta progression sera perdue si tu arrêtes maintenant.",
+    "leaveConfirmTitle": "Quitter la révision ?",
+    "leaveConfirmMessage": "Une session de révision est en cours. Si tu quittes, ta progression sera perdue.",
+    "stayButton": "Rester",
+    "leaveButton": "Quitter",
     "phases": {
       "study": "Phase 1 : Révision",
       "studyMessage": "Relis la synthèse, révise les flashcards et refais le quiz.",
+      "studyLoop": "Relecture des lacunes",
+      "studyLoopMessage": "Relis attentivement les éléments manquants pendant 5 minutes.",
       "pause": "Pause de 5 minutes",
-      "pauseMessage": "Détends-toi. Reviens quand le timer sera terminé.",
-      "pauseHint": "Tu peux fermer l'app, on t'attendra",
-      "recall": "Phase 3 : Rappel actif",
+      "pauseMessage": "Détends-toi, éteins ton téléphone si tu veux. Reviens dans 5 minutes.",
+      "pauseHint": "Ne ferme pas cette page",
+      "pauseWarning": "Important : ne ferme pas la page, la session est en cours",
+      "recall": "Rappel actif",
       "recallMessage": "Écris tout ce que tu as retenu de mémoire. Ne regarde pas la synthèse !",
       "recallPlaceholder": "Écris ce que tu as retenu...",
       "recallVoice": "Dicter à voix haute",
       "recallSubmit": "J'ai terminé",
       "recallMinChars": "Encore {{remaining}} caractères minimum",
-      "compare": "Phase 4 : Comparaison",
+      "compare": "Comparaison",
       "compareLoading": "Analyse en cours...",
-      "loop": "Phase 5 : Révision des lacunes",
-      "loopMessage": "Relis attentivement les concepts manquants, puis recommence le rappel.",
-      "loopContinue": "J'ai relu, continuer",
+      "loop": "Révision des lacunes",
+      "loopMessage": "Voici les éléments que tu n'as pas encore maîtrisés. Relis-les dans la synthèse ci-dessous.",
+      "loopContinue": "J'ai relu, passer au rappel",
       "loopIteration": "Tentative {{current}}/{{max}}",
       "loopHint": "Tu peux faire encore {{remaining}} tentatives",
-      "complete": "Bravo !",
+      "loopStudyTime": "5 minutes de relecture",
+      "complete": "Félicitations !",
       "completeMessage": "Tu maîtrises cette synthèse !",
       "completeButton": "Terminer"
     },
@@ -231,7 +240,9 @@
       "important": "Important",
       "score": "Score : {{score}}%",
       "error": "Erreur lors de l'analyse. Réessaie.",
-      "analyzing": "Comparaison avec l'original..."
+      "analyzing": "Comparaison avec l'original...",
+      "partialFeedback": "Continue, tu progresses. Revois les éléments en rouge.",
+      "encouragement": "Tu avances bien. Concentre-toi sur les points manquants."
     },
     "tabs": {
       "summary": "Synthèse",
@@ -241,8 +252,8 @@
     "complete": {
       "iterations": "Tentatives",
       "perfectMessage": "Premier essai parfait !",
-      "goodMessage": "Bien joué, tu progresses !",
-      "doneMessage": "Tu as persévéré, bravo !"
+      "goodMessage": "Tu as réussi !",
+      "doneMessage": "Tu as persévéré jusqu'au bout !"
     }
   },
   "import": {

@@ -84,15 +84,20 @@ const RevisionPausePhase = ({ timeRemaining, onTimeUpdate, onComplete }) => {
                 {t('revision.phases.pauseMessage')}
             </motion.p>
 
-            {/* Hint */}
+            {/* Warning - Don't close page */}
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.6 }}
-                className="mt-8 flex items-center gap-2 text-text-muted text-sm"
+                className="mt-8 bg-warning/10 border border-warning/30 rounded-xl p-4 max-w-xs"
             >
-                <Clock size={14} />
-                <span>{t('revision.phases.pauseHint')}</span>
+                <div className="flex items-center gap-2 text-warning text-sm font-medium">
+                    <Clock size={16} />
+                    <span>{t('revision.phases.pauseHint')}</span>
+                </div>
+                <p className="text-xs text-text-muted mt-2">
+                    {t('revision.phases.pauseWarning')}
+                </p>
             </motion.div>
         </div>
     );

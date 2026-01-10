@@ -193,33 +193,42 @@
   },
   "revision": {
     "title": "Guided Revision",
-    "subtitle": "Blank sheet technique",
+    "subtitle": "The most effective method to retain",
+    "description": "More effective than simple rereading. This active recall technique anchors information in long-term memory.",
     "loadError": "Error loading revision",
     "expired": "Session Expired",
     "expiredMessage": "You were away too long. The session expired after 15 minutes of inactivity.",
     "stopButton": "Stop",
     "stopConfirmTitle": "Stop revision?",
     "stopConfirmMessage": "Your progress will be lost if you stop now.",
+    "leaveConfirmTitle": "Leave revision?",
+    "leaveConfirmMessage": "A revision session is in progress. If you leave, your progress will be lost.",
+    "stayButton": "Stay",
+    "leaveButton": "Leave",
     "phases": {
       "study": "Phase 1: Study",
       "studyMessage": "Review the summary, practice flashcards and take the quiz.",
+      "studyLoop": "Review missing concepts",
+      "studyLoopMessage": "Carefully read the missing elements for 5 minutes.",
       "pause": "5-minute break",
-      "pauseMessage": "Relax. Come back when the timer ends.",
-      "pauseHint": "You can close the app, we'll wait for you",
-      "recall": "Phase 3: Active Recall",
+      "pauseMessage": "Relax, turn off your phone if you want. Come back in 5 minutes.",
+      "pauseHint": "Don't close this page",
+      "pauseWarning": "Important: don't close the page, session is in progress",
+      "recall": "Active Recall",
       "recallMessage": "Write everything you remember from memory. Don't look at the summary!",
       "recallPlaceholder": "Write what you remember...",
       "recallVoice": "Dictate with voice",
       "recallSubmit": "I'm done",
       "recallMinChars": "{{remaining}} more characters needed",
-      "compare": "Phase 4: Comparison",
+      "compare": "Comparison",
       "compareLoading": "Analyzing...",
-      "loop": "Phase 5: Review Gaps",
-      "loopMessage": "Carefully read the missing concepts, then try recalling again.",
-      "loopContinue": "I've reviewed, continue",
+      "loop": "Review Gaps",
+      "loopMessage": "Here are the elements you haven't mastered yet. Review them in the summary below.",
+      "loopContinue": "I've reviewed, start recall",
       "loopIteration": "Attempt {{current}}/{{max}}",
       "loopHint": "You have {{remaining}} more attempts",
-      "complete": "Well done!",
+      "loopStudyTime": "5 minutes of review",
+      "complete": "Congratulations!",
       "completeMessage": "You've mastered this summary!",
       "completeButton": "Finish"
     },
@@ -231,7 +240,9 @@
       "important": "Important",
       "score": "Score: {{score}}%",
       "error": "Analysis error. Please try again.",
-      "analyzing": "Comparing with original..."
+      "analyzing": "Comparing with original...",
+      "partialFeedback": "Keep going, you're progressing. Review the items in red.",
+      "encouragement": "You're doing well. Focus on the missing points."
     },
     "tabs": {
       "summary": "Summary",
@@ -241,8 +252,8 @@
     "complete": {
       "iterations": "Attempts",
       "perfectMessage": "Perfect on first try!",
-      "goodMessage": "Great job, you're improving!",
-      "doneMessage": "You persevered, well done!"
+      "goodMessage": "You did it!",
+      "doneMessage": "You persevered to the end!"
     }
   },
   "import": {

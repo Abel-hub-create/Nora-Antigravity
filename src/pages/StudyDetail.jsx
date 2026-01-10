@@ -131,7 +131,7 @@ const StudyDetail = () => {
                 </Link>
             </motion.div>
 
-            {/* Revision Button */}
+            {/* Revision Button - Primary CTA */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -140,14 +140,15 @@ const StudyDetail = () => {
             >
                 <Link
                     to={`/study/${id}/revision`}
-                    className="w-full bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition-transform"
+                    className="w-full bg-gradient-to-br from-emerald-500/30 to-emerald-600/10 border-2 border-emerald-500/40 rounded-2xl p-5 flex items-center gap-4 active:scale-[0.98] transition-transform shadow-lg shadow-emerald-500/10"
                 >
-                    <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
-                        <BookOpen className="text-emerald-500" size={24} />
+                    <div className="w-14 h-14 bg-emerald-500/30 rounded-xl flex items-center justify-center">
+                        <BookOpen className="text-emerald-400" size={28} />
                     </div>
                     <div className="flex-1">
-                        <span className="font-medium text-text-main block">{t('revision.title')}</span>
-                        <span className="text-xs text-text-muted">{t('revision.subtitle')}</span>
+                        <span className="font-bold text-emerald-400 block text-lg">{t('revision.title')}</span>
+                        <span className="text-xs text-text-main font-medium">{t('revision.subtitle')}</span>
+                        <p className="text-xs text-text-muted mt-1 leading-relaxed">{t('revision.description')}</p>
                     </div>
                 </Link>
             </motion.div>

@@ -40,29 +40,47 @@ ${specificInstructions ? `ELEMENTS IMPORTANTS MARQUES PAR L'UTILISATEUR (DOIVENT
 ${specificInstructions}
 """` : ''}
 
-REGLES D'EVALUATION:
-- Accepte les reformulations et synonymes
-- Sois plus strict sur les definitions exactes
-- Les elements importants marques par l'utilisateur sont OBLIGATOIRES
-- Evalue la comprehension globale, pas la memorisation mot a mot
-- Un concept est "compris" meme si l'utilisateur l'a reformule differemment
+REGLES D'EVALUATION STRICTES:
+
+1. REFORMULATION ACCEPTEE vs JUXTAPOSITION REFUSEE:
+   - ACCEPTE: "La chlorophylle donne la couleur verte aux plantes" (reformulation avec sens)
+   - REFUSE: "chlorophylle vert plante" (simple juxtaposition de mots-cles)
+   - Une reponse est valide seulement si:
+     * Les concepts cles sont presents
+     * La relation logique entre concepts est exprimee
+     * La phrase montre une comprehension reelle (pas juste des mots isoles)
+
+2. DEFINITIONS:
+   - Sois plus strict sur les definitions exactes
+   - Le sens doit etre preserve, meme avec des mots differents
+
+3. ELEMENTS IMPORTANTS:
+   - Les elements marques par l'utilisateur sont OBLIGATOIRES
+   - S'ils manquent, ils sont automatiquement "high" importance
+
+4. FEEDBACK NEUTRE SI INCOMPLET:
+   - Si missingConcepts n'est pas vide, le feedback doit etre NEUTRE et ENCOURAGEANT
+   - NE JAMAIS dire "bien joue", "bravo", "super" s'il reste des elements manquants
+   - Exemples de feedback neutre: "Continue, tu progresses", "Concentre-toi sur les points manquants", "Tu avances, revois les elements en rouge"
+   - Le message de succes/felicitations est RESERVE au cas ou missingConcepts est VIDE
 
 Retourne UNIQUEMENT ce JSON (sans markdown, sans backticks):
 {
     "understoodConcepts": [
-        {"concept": "Nom du concept", "userText": "Ce que l'utilisateur a ecrit", "originalText": "Texte original correspondant"}
+        {"concept": "Nom du concept", "userText": "Ce que l'utilisateur a ecrit (phrase complete)", "originalText": "Texte original correspondant"}
     ],
     "missingConcepts": [
-        {"concept": "Nom du concept manquant", "originalText": "Ce qui manque dans le rappel", "importance": "high"}
+        {"concept": "Nom du concept manquant", "originalText": "Ce qui manque dans le rappel (pour surlignage)", "importance": "high"}
     ],
     "overallScore": 75,
-    "feedback": "Message encourageant personnalise en francais"
+    "feedback": "Message neutre si manquants, felicitations seulement si tout est compris"
 }
 
 Notes:
-- "importance" peut etre "high" ou "medium"
-- "overallScore" est un nombre entre 0 et 100
-- Si le rappel est vide ou sans rapport, retourne understoodConcepts=[] et tous les concepts comme manquants`;
+- "importance": "high" pour definitions et elements importants, "medium" pour details secondaires
+- "overallScore": 0-100 base sur le ratio compris/total
+- "originalText" dans missingConcepts doit etre le texte EXACT de la synthese pour permettre le surlignage
+- Si le rappel est vide ou juste des mots sans sens, TOUS les concepts sont manquants`;
 
     try {
         const response = await openai.chat.completions.create({

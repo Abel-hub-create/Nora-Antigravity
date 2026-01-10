@@ -1,17 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Layers, Brain, X, Clock } from 'lucide-react';
+import { BookOpen, Layers, Brain, X, Clock, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import confetti from 'canvas-confetti';
 import useRevisionTimer from '../../hooks/useRevisionTimer';
+import { useUser } from '../../context/UserContext';
 
 const RevisionStudyPhase = ({ synthese, timeRemaining, onTimeUpdate, onComplete, onStop }) => {
     const { t } = useTranslation();
+    const { updateTime } = useUser();
     const [activeTab, setActiveTab] = useState('summary');
     const [showGuide, setShowGuide] = useState(true);
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [selectedOption, setSelectedOption] = useState(null);
+    const [quizScore, setQuizScore] = useState(0);
+    const [showQuizResult, setShowQuizResult] = useState(false);
+    const dailyGoalsIntervalRef = useRef(null);
 
     // Timer hook
     const { formattedTime, timeRemaining: currentTime } = useRevisionTimer(
@@ -19,6 +25,47 @@ const RevisionStudyPhase = ({ synthese, timeRemaining, onTimeUpdate, onComplete,
         onComplete,
         true
     );
+
+    // Track study time for daily goals based on active tab
+    useEffect(() => {
+        const activityTypeMap = {
+            summary: 'summary',
+            flashcards: 'flashcards',
+            quiz: 'quiz'
+        };
+
+        const startTracking = () => {
+            if (dailyGoalsIntervalRef.current) return;
+            dailyGoalsIntervalRef.current = setInterval(() => {
+                if (document.visibilityState === 'visible') {
+                    updateTime(activityTypeMap[activeTab], 1);
+                }
+            }, 1000);
+        };
+
+        const stopTracking = () => {
+            if (dailyGoalsIntervalRef.current) {
+                clearInterval(dailyGoalsIntervalRef.current);
+                dailyGoalsIntervalRef.current = null;
+            }
+        };
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                startTracking();
+            } else {
+                stopTracking();
+            }
+        };
+
+        startTracking();
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            stopTracking();
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [activeTab, updateTime]);
 
     // Update parent with current time
     useEffect(() => {
@@ -59,12 +106,50 @@ const RevisionStudyPhase = ({ synthese, timeRemaining, onTimeUpdate, onComplete,
     const handleOptionClick = (index) => {
         if (selectedOption !== null) return;
         setSelectedOption(index);
+        const correct = index === questions[currentQuestionIndex].correct_answer;
+
+        if (correct) {
+            setQuizScore(prev => prev + 1);
+            confetti({
+                particleCount: 80,
+                spread: 60,
+                origin: { y: 0.7 },
+                colors: ['#38bdf8', '#818cf8', '#ffffff']
+            });
+        }
+
         setTimeout(() => {
             if (currentQuestionIndex < questions.length - 1) {
                 setCurrentQuestionIndex(prev => prev + 1);
                 setSelectedOption(null);
+            } else {
+                setShowQuizResult(true);
             }
-        }, 1000);
+        }, 1200);
+    };
+
+    const restartQuiz = () => {
+        setCurrentQuestionIndex(0);
+        setSelectedOption(null);
+        setQuizScore(0);
+        setShowQuizResult(false);
+    };
+
+    // Get result message based on percentage
+    const getResultMessage = () => {
+        if (questions.length === 0) return '';
+        const percentage = Math.round((quizScore / questions.length) * 100);
+        const messages = t('quiz.messages', { returnObjects: true });
+
+        let category;
+        if (percentage === 0) category = 'zero';
+        else if (percentage <= 50) category = 'low';
+        else if (percentage <= 69) category = 'medium';
+        else if (percentage < 100) category = 'high';
+        else category = 'perfect';
+
+        const categoryMessages = messages[category];
+        return categoryMessages[Math.floor(Math.random() * categoryMessages.length)];
     };
 
     return (
@@ -201,40 +286,95 @@ const RevisionStudyPhase = ({ synthese, timeRemaining, onTimeUpdate, onComplete,
                         animate={{ opacity: 1 }}
                         className="space-y-4"
                     >
-                        <div className="text-xs text-text-muted text-right">
-                            {currentQuestionIndex + 1} / {questions.length}
-                        </div>
-
-                        <h3 className="text-lg font-medium text-text-main mb-4">
-                            {questions[currentQuestionIndex].question}
-                        </h3>
-
-                        <div className="space-y-2">
-                            {(typeof questions[currentQuestionIndex].options === 'string'
-                                ? JSON.parse(questions[currentQuestionIndex].options)
-                                : questions[currentQuestionIndex].options
-                            ).map((option, index) => {
-                                let style = "bg-surface border-white/5";
-                                if (selectedOption !== null) {
-                                    if (index === questions[currentQuestionIndex].correct_answer) {
-                                        style = "bg-success/20 border-success";
-                                    } else if (index === selectedOption) {
-                                        style = "bg-error/20 border-error";
-                                    }
-                                }
-
-                                return (
+                        {showQuizResult ? (
+                            // Quiz Results
+                            <div className="flex flex-col items-center justify-center py-8 text-center">
+                                <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="w-24 h-24 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center mb-4 shadow-xl shadow-primary/30"
+                                >
+                                    <span className="text-3xl">
+                                        {Math.round((quizScore / questions.length) * 100) === 100 ? '🏆' :
+                                         Math.round((quizScore / questions.length) * 100) >= 70 ? '🎯' :
+                                         Math.round((quizScore / questions.length) * 100) >= 51 ? '👏' :
+                                         Math.round((quizScore / questions.length) * 100) >= 1 ? '💪' : '📚'}
+                                    </span>
+                                </motion.div>
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.2 }}
+                                >
+                                    <h3 className="text-xl font-bold text-text-main mb-2">{t('quiz.completed')}</h3>
+                                    <p className="text-3xl font-bold text-primary mb-2">{quizScore}/{questions.length}</p>
+                                    <p className="text-text-muted mb-6">{getResultMessage()}</p>
                                     <button
-                                        key={index}
-                                        onClick={() => handleOptionClick(index)}
-                                        disabled={selectedOption !== null}
-                                        className={`w-full p-3 rounded-xl border text-left transition-colors ${style}`}
+                                        onClick={restartQuiz}
+                                        className="flex items-center gap-2 mx-auto bg-surface border border-white/10 text-text-main px-6 py-3 rounded-xl hover:bg-surface/80 transition-colors"
                                     >
-                                        {option}
+                                        <RotateCcw size={18} />
+                                        {t('quiz.retry')}
                                     </button>
-                                );
-                            })}
-                        </div>
+                                </motion.div>
+                            </div>
+                        ) : (
+                            // Quiz Questions
+                            <>
+                                <div className="text-xs text-text-muted text-right">
+                                    {currentQuestionIndex + 1} / {questions.length}
+                                </div>
+
+                                <h3 className="text-lg font-medium text-text-main mb-4">
+                                    {questions[currentQuestionIndex].question}
+                                </h3>
+
+                                <div className="space-y-2">
+                                    {(typeof questions[currentQuestionIndex].options === 'string'
+                                        ? JSON.parse(questions[currentQuestionIndex].options)
+                                        : questions[currentQuestionIndex].options
+                                    ).map((option, index) => {
+                                        let style = "bg-surface border-white/5";
+                                        if (selectedOption !== null) {
+                                            if (index === questions[currentQuestionIndex].correct_answer) {
+                                                style = "bg-success/20 border-success";
+                                            } else if (index === selectedOption) {
+                                                style = "bg-error/20 border-error";
+                                            }
+                                        }
+
+                                        return (
+                                            <motion.button
+                                                key={index}
+                                                whileTap={selectedOption === null ? { scale: 0.98 } : {}}
+                                                onClick={() => handleOptionClick(index)}
+                                                disabled={selectedOption !== null}
+                                                className={`w-full p-3 rounded-xl border text-left transition-colors flex justify-between items-center ${style}`}
+                                            >
+                                                <span>{option}</span>
+                                                {selectedOption !== null && index === questions[currentQuestionIndex].correct_answer && (
+                                                    <CheckCircle size={18} className="text-success shrink-0" />
+                                                )}
+                                                {selectedOption === index && index !== questions[currentQuestionIndex].correct_answer && (
+                                                    <XCircle size={18} className="text-error shrink-0" />
+                                                )}
+                                            </motion.button>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Explanation */}
+                                {selectedOption !== null && questions[currentQuestionIndex].explanation && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="mt-4 p-3 bg-primary/10 border border-primary/20 rounded-xl"
+                                    >
+                                        <p className="text-sm text-text-main">{questions[currentQuestionIndex].explanation}</p>
+                                    </motion.div>
+                                )}
+                            </>
+                        )}
                     </motion.div>
                 )}
             </div>

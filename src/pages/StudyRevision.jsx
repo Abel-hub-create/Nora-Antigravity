@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useBlocker } from 'react-router-dom';
 import { ArrowLeft, Loader2, AlertCircle, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -32,8 +32,25 @@ const StudyRevision = () => {
     // Stop confirmation modal
     const [showStopConfirm, setShowStopConfirm] = useState(false);
 
+    // Navigation blocker - block when session is active and not complete
+    const shouldBlock = session && session.phase !== 'complete' && !expired && !error;
+    const blocker = useBlocker(shouldBlock);
+
     // Sync interval ref
     const syncIntervalRef = useRef(null);
+
+    // Handle browser close/refresh
+    useEffect(() => {
+        if (!shouldBlock) return;
+
+        const handleBeforeUnload = (e) => {
+            e.preventDefault();
+            e.returnValue = '';
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [shouldBlock]);
 
     // Load session and synthese on mount
     useEffect(() => {
@@ -83,6 +100,7 @@ const StudyRevision = () => {
                     phase: session.phase,
                     studyTimeRemaining: session.study_time_remaining,
                     pauseTimeRemaining: session.pause_time_remaining,
+                    loopTimeRemaining: session.loop_time_remaining,
                     currentIteration: session.current_iteration
                 });
             } catch (err) {
@@ -147,7 +165,8 @@ const StudyRevision = () => {
                 updateSession({
                     phase: 'recall',
                     current_iteration: result.iteration,
-                    user_recall: null
+                    user_recall: null,
+                    loop_time_remaining: 300 // Reset loop timer for next iteration
                 });
                 setComparisonResult(null);
             }
@@ -183,6 +202,10 @@ const StudyRevision = () => {
 
     const updatePauseTime = useCallback((time) => {
         updateSession({ pause_time_remaining: time });
+    }, [updateSession]);
+
+    const updateLoopTime = useCallback((time) => {
+        updateSession({ loop_time_remaining: time });
     }, [updateSession]);
 
     // Loading state
@@ -283,6 +306,9 @@ const StudyRevision = () => {
                     <RevisionLoopPhase
                         missingConcepts={session.missing_concepts || comparisonResult?.missingConcepts || []}
                         iteration={session.current_iteration}
+                        originalSummary={synthese.summary_content}
+                        loopTimeRemaining={session.loop_time_remaining ?? 300}
+                        onTimeUpdate={updateLoopTime}
                         onContinue={handleLoopContinue}
                     />
                 );
@@ -350,6 +376,51 @@ const StudyRevision = () => {
                                     className="flex-1 py-3 bg-error text-white rounded-xl font-medium hover:bg-error/90 transition-colors"
                                 >
                                     {t('revision.stopButton')}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Navigation Blocker Modal */}
+            <AnimatePresence>
+                {blocker.state === 'blocked' && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-6"
+                        onClick={() => blocker.reset()}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-surface rounded-2xl p-6 max-w-sm w-full"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <h3 className="text-lg font-bold text-text-main mb-2">
+                                {t('revision.leaveConfirmTitle')}
+                            </h3>
+                            <p className="text-text-muted text-sm mb-6">
+                                {t('revision.leaveConfirmMessage')}
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => blocker.reset()}
+                                    className="flex-1 py-3 bg-white/5 text-text-main rounded-xl font-medium hover:bg-white/10 transition-colors"
+                                >
+                                    {t('revision.stayButton')}
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        await revisionService.stopSession(id);
+                                        blocker.proceed();
+                                    }}
+                                    className="flex-1 py-3 bg-error text-white rounded-xl font-medium hover:bg-error/90 transition-colors"
+                                >
+                                    {t('revision.leaveButton')}
                                 </button>
                             </div>
                         </motion.div>
