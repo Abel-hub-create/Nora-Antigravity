@@ -1,9 +1,9 @@
-import React, { useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, ChevronRight, AlertCircle, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import useRevisionTimer from '../../hooks/useRevisionTimer';
-import { useUser } from '../../context/UserContext';
+import useActiveTimer from '../../hooks/useActiveTimer';
 
 /**
  * RevisionLoopPhase - Phase 5
@@ -19,43 +19,9 @@ const RevisionLoopPhase = ({
     onContinue
 }) => {
     const { t } = useTranslation();
-    const { updateTime } = useUser();
-    const dailyGoalsIntervalRef = useRef(null);
 
     // Track study time for daily goals (summary activity)
-    useEffect(() => {
-        const startTracking = () => {
-            if (dailyGoalsIntervalRef.current) return;
-            dailyGoalsIntervalRef.current = setInterval(() => {
-                if (document.visibilityState === 'visible') {
-                    updateTime('summary', 1);
-                }
-            }, 1000);
-        };
-
-        const stopTracking = () => {
-            if (dailyGoalsIntervalRef.current) {
-                clearInterval(dailyGoalsIntervalRef.current);
-                dailyGoalsIntervalRef.current = null;
-            }
-        };
-
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
-                startTracking();
-            } else {
-                stopTracking();
-            }
-        };
-
-        startTracking();
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-
-        return () => {
-            stopTracking();
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-        };
-    }, [updateTime]);
+    useActiveTimer('summary');
 
     // 5-minute timer for loop study (300 seconds)
     const initialTime = loopTimeRemaining ?? 300;

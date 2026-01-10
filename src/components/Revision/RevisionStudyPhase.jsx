@@ -1,14 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Layers, Brain, X, Clock, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import confetti from 'canvas-confetti';
 import useRevisionTimer from '../../hooks/useRevisionTimer';
-import { useUser } from '../../context/UserContext';
+import useActiveTimer from '../../hooks/useActiveTimer';
 
 const RevisionStudyPhase = ({ synthese, timeRemaining, onTimeUpdate, onComplete, onStop }) => {
     const { t } = useTranslation();
-    const { updateTime } = useUser();
     const [activeTab, setActiveTab] = useState('summary');
     const [showGuide, setShowGuide] = useState(true);
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -17,7 +16,6 @@ const RevisionStudyPhase = ({ synthese, timeRemaining, onTimeUpdate, onComplete,
     const [selectedOption, setSelectedOption] = useState(null);
     const [quizScore, setQuizScore] = useState(0);
     const [showQuizResult, setShowQuizResult] = useState(false);
-    const dailyGoalsIntervalRef = useRef(null);
 
     // Timer hook
     const { formattedTime, timeRemaining: currentTime } = useRevisionTimer(
@@ -27,45 +25,7 @@ const RevisionStudyPhase = ({ synthese, timeRemaining, onTimeUpdate, onComplete,
     );
 
     // Track study time for daily goals based on active tab
-    useEffect(() => {
-        const activityTypeMap = {
-            summary: 'summary',
-            flashcards: 'flashcards',
-            quiz: 'quiz'
-        };
-
-        const startTracking = () => {
-            if (dailyGoalsIntervalRef.current) return;
-            dailyGoalsIntervalRef.current = setInterval(() => {
-                if (document.visibilityState === 'visible') {
-                    updateTime(activityTypeMap[activeTab], 1);
-                }
-            }, 1000);
-        };
-
-        const stopTracking = () => {
-            if (dailyGoalsIntervalRef.current) {
-                clearInterval(dailyGoalsIntervalRef.current);
-                dailyGoalsIntervalRef.current = null;
-            }
-        };
-
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
-                startTracking();
-            } else {
-                stopTracking();
-            }
-        };
-
-        startTracking();
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-
-        return () => {
-            stopTracking();
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-        };
-    }, [activeTab, updateTime]);
+    useActiveTimer(activeTab);
 
     // Update parent with current time
     useEffect(() => {
