@@ -1061,6 +1061,18 @@ The revision program follows 6 strict phases that cannot be skipped:
 - Expires after 15 minutes of inactivity → "Vous êtes revenu trop tard"
 - Syncs to backend every 5 seconds
 
+**Real-Time Timers**:
+- Timers use `phase_started_at` timestamp to calculate remaining time
+- Time continues even when phone is locked or app is in background
+- On return, timer shows actual remaining time (not where it paused)
+- Uses `useRevisionTimer(totalDuration, phaseStartedAt, onComplete, isActive)` hook
+
+**Exit Confirmation**:
+- `beforeunload` event warns when closing browser/tab during active session
+- React Router `useBlocker` shows modal when navigating away
+- Modal offers "Rester" (stay) or "Quitter" (leave) options
+- Only active during revision phases (not on complete or expired)
+
 **Semantic Comparison (AI)**:
 - Accepts reformulations and synonyms
 - Stricter on definitions
@@ -1079,9 +1091,9 @@ The revision program follows 6 strict phases that cannot be skipped:
 
 ```sql
 -- revision_sessions: Active revision session state
-revision_sessions (id, user_id, synthese_id, phase, study_time_remaining, pause_time_remaining,
-                   current_iteration, user_recall, missing_concepts JSON, understood_concepts JSON,
-                   last_activity_at, started_at, completed_at)
+revision_sessions (id, user_id, synthese_id, phase, phase_started_at, study_time_remaining,
+                   pause_time_remaining, current_iteration, user_recall, missing_concepts JSON,
+                   understood_concepts JSON, last_activity_at, started_at, completed_at)
 
 -- revision_completions: History of completed revisions
 revision_completions (id, user_id, synthese_id, iterations_count, completed_at)
@@ -1134,3 +1146,4 @@ All revision UI text is translated under `revision.*` namespace in both `fr.json
 
 - `014_create_revision_sessions.sql` - Creates revision_sessions and revision_completions tables
 - `015_add_specific_instructions.sql` - Adds specific_instructions column to syntheses
+- `017_add_phase_started_at.sql` - Adds phase_started_at timestamp for real-time timer calculation
