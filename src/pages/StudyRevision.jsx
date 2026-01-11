@@ -133,11 +133,11 @@ const StudyRevision = () => {
 
     // Phase transition handlers
     const handleStudyComplete = useCallback(() => {
-        updateSession({ phase: 'pause' });
+        updateSession({ phase: 'pause', phase_started_at: new Date().toISOString() });
     }, [updateSession]);
 
     const handlePauseComplete = useCallback(() => {
-        updateSession({ phase: 'recall' });
+        updateSession({ phase: 'recall', phase_started_at: new Date().toISOString() });
     }, [updateSession]);
 
     const handleRecallSubmit = useCallback(async (userRecall) => {
@@ -154,10 +154,11 @@ const StudyRevision = () => {
 
         // If no missing concepts, go to complete
         if (!result.missingConcepts || result.missingConcepts.length === 0) {
-            updateSession({ phase: 'complete' });
+            updateSession({ phase: 'complete', phase_started_at: new Date().toISOString() });
         } else {
             updateSession({
                 phase: 'loop',
+                phase_started_at: new Date().toISOString(),
                 missing_concepts: result.missingConcepts,
                 understood_concepts: result.understoodConcepts
             });
@@ -169,10 +170,11 @@ const StudyRevision = () => {
             const result = await revisionService.nextIteration(id);
 
             if (result.completed) {
-                updateSession({ phase: 'complete' });
+                updateSession({ phase: 'complete', phase_started_at: new Date().toISOString() });
             } else {
                 updateSession({
                     phase: 'recall',
+                    phase_started_at: new Date().toISOString(),
                     current_iteration: result.iteration,
                     user_recall: null,
                     loop_time_remaining: 300 // Reset loop timer for next iteration
