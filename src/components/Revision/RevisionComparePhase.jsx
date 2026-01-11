@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Loader2, CheckCircle, XCircle, ChevronRight } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, ChevronRight, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import * as revisionService from '../../services/revisionService';
 
-const RevisionComparePhase = ({ syntheseId, userRecall, originalSummary, onComplete }) => {
+const RevisionComparePhase = ({ syntheseId, userRecall, originalSummary, onComplete, onStop }) => {
     const { t } = useTranslation();
     const [isLoading, setIsLoading] = useState(true);
     const [result, setResult] = useState(null);
@@ -76,8 +76,14 @@ const RevisionComparePhase = ({ syntheseId, userRecall, originalSummary, onCompl
     return (
         <div className="min-h-full flex flex-col p-4 pb-24">
             {/* Header */}
-            <header className="mb-4">
+            <header className="flex items-center justify-between mb-4">
                 <h1 className="text-lg font-bold text-text-main">{t('revision.phases.compare')}</h1>
+                <button
+                    onClick={onStop}
+                    className="p-2 text-text-muted hover:text-error transition-colors"
+                >
+                    <X size={20} />
+                </button>
             </header>
 
             {/* Score */}
@@ -90,17 +96,11 @@ const RevisionComparePhase = ({ syntheseId, userRecall, originalSummary, onCompl
                         : 'bg-surface'
                 }`}
             >
-                <div className={`text-4xl font-bold mb-2 ${
+                <div className={`text-4xl font-bold ${
                     missingCount === 0 ? 'text-success' : 'text-primary'
                 }`}>
                     {score}%
                 </div>
-                <p className="text-text-muted text-sm">
-                    {missingCount === 0
-                        ? result?.feedback
-                        : t('revision.compare.partialFeedback')
-                    }
-                </p>
             </motion.div>
 
             {/* Stats */}

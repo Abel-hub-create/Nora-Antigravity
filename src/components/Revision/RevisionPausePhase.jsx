@@ -1,12 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Coffee, Clock } from 'lucide-react';
+import { Coffee, Clock, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import useRevisionTimer from '../../hooks/useRevisionTimer';
 
 const PAUSE_DURATION = 15; // 15 seconds (testing)
 
-const RevisionPausePhase = ({ phaseStartedAt, onComplete }) => {
+const RevisionPausePhase = ({ phaseStartedAt, onComplete, onStop }) => {
     const { t } = useTranslation();
 
     // Timer hook - calculates remaining time from phase start timestamp
@@ -21,7 +21,15 @@ const RevisionPausePhase = ({ phaseStartedAt, onComplete }) => {
     const progress = ((PAUSE_DURATION - timeRemaining) / PAUSE_DURATION) * 100;
 
     return (
-        <div className="min-h-full flex flex-col items-center justify-center p-6 text-center">
+        <div className="min-h-full flex flex-col items-center justify-center p-6 text-center relative">
+            {/* Close button */}
+            <button
+                onClick={onStop}
+                className="absolute top-4 right-4 p-2 text-text-muted hover:text-error transition-colors"
+            >
+                <X size={24} />
+            </button>
+
             {/* Animated Icon */}
             <motion.div
                 initial={{ scale: 0 }}

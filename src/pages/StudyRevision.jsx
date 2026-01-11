@@ -275,6 +275,7 @@ const StudyRevision = () => {
                     <RevisionPausePhase
                         phaseStartedAt={session.phase_started_at}
                         onComplete={handlePauseComplete}
+                        onStop={() => setShowStopConfirm(true)}
                     />
                 );
 
@@ -294,6 +295,7 @@ const StudyRevision = () => {
                         userRecall={session.user_recall}
                         originalSummary={synthese.summary_content}
                         onComplete={handleCompareComplete}
+                        onStop={() => setShowStopConfirm(true)}
                     />
                 );
 
@@ -305,6 +307,7 @@ const StudyRevision = () => {
                         originalSummary={synthese.summary_content}
                         phaseStartedAt={session.phase_started_at}
                         onContinue={handleLoopContinue}
+                        onStop={() => setShowStopConfirm(true)}
                     />
                 );
 

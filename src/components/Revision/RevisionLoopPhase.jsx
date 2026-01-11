@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, ChevronRight, AlertCircle, Clock } from 'lucide-react';
+import { BookOpen, ChevronRight, AlertCircle, Clock, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import useRevisionTimer from '../../hooks/useRevisionTimer';
 import useActiveTimer from '../../hooks/useActiveTimer';
@@ -17,16 +17,18 @@ const RevisionLoopPhase = ({
     iteration,
     originalSummary,
     phaseStartedAt,
-    onContinue
+    onContinue,
+    onStop
 }) => {
     const { t } = useTranslation();
 
     // Track study time for daily goals (summary activity)
     useActiveTimer('summary');
 
+    // Auto-continue when timer completes
     const handleTimerComplete = useCallback(() => {
-        // Timer completed - user can now continue
-    }, []);
+        onContinue();
+    }, [onContinue]);
 
     // Timer hook - calculates remaining time from phase start timestamp
     const { formattedTime, timeRemaining } = useRevisionTimer(
@@ -154,9 +156,17 @@ const RevisionLoopPhase = ({
             <header className="mb-4">
                 <div className="flex items-center justify-between mb-2">
                     <h1 className="text-lg font-bold text-text-main">{t('revision.phases.loop')}</h1>
-                    <div className="flex items-center gap-2 bg-surface px-3 py-1.5 rounded-full">
-                        <Clock size={14} className="text-primary" />
-                        <span className="font-mono text-sm font-bold text-primary">{formattedTime}</span>
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 bg-surface px-3 py-1.5 rounded-full">
+                            <Clock size={14} className="text-primary" />
+                            <span className="font-mono text-sm font-bold text-primary">{formattedTime}</span>
+                        </div>
+                        <button
+                            onClick={onStop}
+                            className="p-2 text-text-muted hover:text-error transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
                     </div>
                 </div>
                 <p className="text-xs text-primary">
