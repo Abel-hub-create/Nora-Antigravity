@@ -1042,18 +1042,29 @@ A structured revision system based on the active recall / blank sheet technique,
 
 ### Overview
 
-The revision program follows 6 strict phases that cannot be skipped:
+The revision program follows 5 phases:
 
 | Phase | Duration | Description |
 |-------|----------|-------------|
-| 1. Study | 10 min | Review synthese, flashcards, quiz (3 tabs) |
-| 2. Pause | 5 min | Forced break with countdown timer |
+| 1. Study | 15s (testing) | Review synthese, flashcards, quiz (3 tabs) |
+| 2. Pause | 15s (testing) | Forced break with countdown timer |
 | 3. Recall | No limit | Write or dictate from memory |
-| 4. Compare | - | AI semantic comparison (green=understood, red=missing) |
-| 5. Loop | Max 5x | Re-read missing concepts, repeat recall |
-| 6. Complete | - | Success message, session recorded |
+| 4. Loop | 15s (testing), Max 5x | Re-read missing concepts (highlighted in red), auto-continues when timer ends |
+| 5. Complete | - | Success message, session recorded |
+
+**Note**: Timers are currently set to 15 seconds for testing. Production values: Study=10min, Pause=5min, Loop=5min.
 
 ### Key Features
+
+**Simplified Flow**:
+- After Recall, AI analysis runs in background (loading screen shown)
+- No separate "Compare" phase - goes directly to Loop (if missing concepts) or Complete
+- Loop phase shows message: "Relis attentivement tout ce qui est surligné en rouge."
+- Loop auto-continues to next iteration when timer ends (no manual button)
+
+**Exit Button (X)**:
+- All phases (Study, Pause, Recall, Loop) have a close button (X) in the header
+- Shows confirmation modal before stopping the session
 
 **Session Persistence**:
 - Session survives page refresh, app close, browser restart
@@ -1066,6 +1077,7 @@ The revision program follows 6 strict phases that cannot be skipped:
 - Time continues even when phone is locked or app is in background
 - On return, timer shows actual remaining time (not where it paused)
 - Uses `useRevisionTimer(totalDuration, phaseStartedAt, onComplete, isActive)` hook
+- `phase_started_at` is updated on every phase transition
 
 **Exit Confirmation**:
 - `beforeunload` event warns when closing browser/tab during active session
@@ -1075,10 +1087,11 @@ The revision program follows 6 strict phases that cannot be skipped:
 - Only active during revision phases (not on complete or expired)
 
 **Semantic Comparison (AI)**:
+- Runs in background after Recall phase (shows loading screen)
 - Accepts reformulations and synonyms
 - Stricter on definitions
 - User's "important elements" (from import specificInstructions) MUST be present
-- Detailed feedback: each concept annotated with userText ↔ originalText mapping
+- Results used to highlight missing concepts in red in Loop phase
 
 **No XP Reward**: Completing a revision does not give XP (per user request)
 
@@ -1120,14 +1133,16 @@ syntheses.specific_instructions TEXT -- User-defined important elements
 ### Frontend Components
 
 **`/src/pages/StudyRevision.jsx`** - Main container managing phase transitions
+- Handles `analyzing` phase (loading screen while AI comparison runs)
+- All phase transitions update `phase_started_at` for timer accuracy
 
 **`/src/components/Revision/`**:
-- `RevisionStudyPhase.jsx` - Phase 1: 10min timer with tabs (Synthèse, Flashcards, Quiz)
-- `RevisionPausePhase.jsx` - Phase 2: 5min forced break
-- `RevisionRecallPhase.jsx` - Phase 3: Textarea + voice recorder
-- `RevisionComparePhase.jsx` - Phase 4: AI comparison display (green/red)
-- `RevisionLoopPhase.jsx` - Phase 5: Show missing concepts, retry
-- `RevisionCompletePhase.jsx` - Phase 6: Success with confetti
+- `RevisionStudyPhase.jsx` - Phase 1: Timer with tabs (Synthèse, Flashcards, Quiz), X button
+- `RevisionPausePhase.jsx` - Phase 2: Forced break with timer, X button
+- `RevisionRecallPhase.jsx` - Phase 3: Textarea + voice recorder, no timer, X button
+- `RevisionLoopPhase.jsx` - Phase 4: Show missing concepts in red, auto-continues on timer end, X button
+- `RevisionCompletePhase.jsx` - Phase 5: Success with confetti
+- `RevisionComparePhase.jsx` - **REMOVED** (comparison now runs in background)
 
 **`/src/hooks/useRevisionTimer.js`** - Real-time countdown timer based on phase_started_at timestamp
 
