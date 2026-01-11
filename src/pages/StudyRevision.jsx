@@ -11,7 +11,6 @@ import { useRevision } from '../context/RevisionContext';
 import RevisionStudyPhase from '../components/Revision/RevisionStudyPhase';
 import RevisionPausePhase from '../components/Revision/RevisionPausePhase';
 import RevisionRecallPhase from '../components/Revision/RevisionRecallPhase';
-import RevisionComparePhase from '../components/Revision/RevisionComparePhase';
 import RevisionLoopPhase from '../components/Revision/RevisionLoopPhase';
 import RevisionCompletePhase from '../components/Revision/RevisionCompletePhase';
 
@@ -142,28 +141,30 @@ const StudyRevision = () => {
 
     const handleRecallSubmit = useCallback(async (userRecall) => {
         try {
+            // Submit recall and run comparison in background
             await revisionService.submitRecall(id, userRecall);
-            updateSession({ phase: 'compare', user_recall: userRecall });
+            updateSession({ phase: 'analyzing', user_recall: userRecall });
+
+            // Run AI comparison
+            const result = await revisionService.compare(id);
+            setComparisonResult(result);
+
+            // Go directly to loop or complete based on results
+            if (!result.missingConcepts || result.missingConcepts.length === 0) {
+                updateSession({ phase: 'complete', phase_started_at: new Date().toISOString() });
+            } else {
+                updateSession({
+                    phase: 'loop',
+                    phase_started_at: new Date().toISOString(),
+                    missing_concepts: result.missingConcepts,
+                    understood_concepts: result.understoodConcepts
+                });
+            }
         } catch (err) {
             console.error('Error submitting recall:', err);
+            setError(t('revision.compare.error'));
         }
-    }, [id, updateSession]);
-
-    const handleCompareComplete = useCallback(async (result) => {
-        setComparisonResult(result);
-
-        // If no missing concepts, go to complete
-        if (!result.missingConcepts || result.missingConcepts.length === 0) {
-            updateSession({ phase: 'complete', phase_started_at: new Date().toISOString() });
-        } else {
-            updateSession({
-                phase: 'loop',
-                phase_started_at: new Date().toISOString(),
-                missing_concepts: result.missingConcepts,
-                understood_concepts: result.understoodConcepts
-            });
-        }
-    }, [updateSession]);
+    }, [id, updateSession, t]);
 
     const handleLoopContinue = useCallback(async () => {
         try {
@@ -288,15 +289,19 @@ const StudyRevision = () => {
                     />
                 );
 
-            case 'compare':
+            case 'analyzing':
                 return (
-                    <RevisionComparePhase
-                        syntheseId={id}
-                        userRecall={session.user_recall}
-                        originalSummary={synthese.summary_content}
-                        onComplete={handleCompareComplete}
-                        onStop={() => setShowStopConfirm(true)}
-                    />
+                    <div className="min-h-full flex flex-col items-center justify-center p-6 text-center">
+                        <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="w-24 h-24 bg-primary/20 rounded-full flex items-center justify-center mb-6"
+                        >
+                            <Loader2 size={40} className="text-primary animate-spin" />
+                        </motion.div>
+                        <h2 className="text-xl font-bold text-text-main mb-2">{t('revision.phases.analyzing')}</h2>
+                        <p className="text-text-muted">{t('revision.compare.analyzing')}</p>
+                    </div>
                 );
 
             case 'loop':

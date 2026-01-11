@@ -187,16 +187,11 @@ const RevisionLoopPhase = ({
             <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-warning/10 border border-warning/20 rounded-xl p-4 mb-4"
+                className="bg-error/10 border border-error/20 rounded-xl p-4 mb-4"
             >
                 <div className="flex items-start gap-3">
-                    <AlertCircle size={20} className="text-warning shrink-0 mt-0.5" />
-                    <div>
-                        <p className="text-sm text-text-main font-medium">{t('revision.phases.loopMessage')}</p>
-                        <p className="text-xs text-text-muted mt-1">
-                            {t('revision.phases.loopStudyTime')}
-                        </p>
-                    </div>
+                    <AlertCircle size={20} className="text-error shrink-0 mt-0.5" />
+                    <p className="text-sm text-text-main font-medium">{t('revision.phases.loopReviewRed')}</p>
                 </div>
             </motion.div>
 
