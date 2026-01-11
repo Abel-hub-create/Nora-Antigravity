@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, ChevronRight, AlertCircle, Clock, X } from 'lucide-react';
+import { BookOpen, AlertCircle, Clock, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import useRevisionTimer from '../../hooks/useRevisionTimer';
 import useActiveTimer from '../../hooks/useActiveTimer';
@@ -147,7 +147,6 @@ const RevisionLoopPhase = ({
         return parts;
     };
 
-    const canContinue = timeRemaining === 0;
     const progress = ((LOOP_DURATION - timeRemaining) / LOOP_DURATION) * 100;
 
     return (
@@ -240,39 +239,6 @@ const RevisionLoopPhase = ({
                     </div>
                 </motion.div>
             </div>
-
-            {/* Continue Button */}
-            <motion.button
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                onClick={onContinue}
-                disabled={!canContinue}
-                className={`mt-4 w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors ${
-                    canContinue
-                        ? 'bg-primary text-white hover:bg-primary-dark'
-                        : 'bg-surface text-text-muted cursor-not-allowed'
-                }`}
-            >
-                {canContinue ? (
-                    <>
-                        {t('revision.phases.loopContinue')}
-                        <ChevronRight size={18} />
-                    </>
-                ) : (
-                    <>
-                        <Clock size={16} />
-                        {formattedTime}
-                    </>
-                )}
-            </motion.button>
-
-            {/* Hint about iterations */}
-            {iteration < 5 && (
-                <p className="text-center text-xs text-text-muted mt-3">
-                    {t('revision.phases.loopHint', { remaining: 5 - iteration })}
-                </p>
-            )}
         </div>
     );
 };
