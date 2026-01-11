@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate, Link, useBlocker } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, AlertCircle, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import * as revisionService from '../services/revisionService';
 import * as syntheseService from '../services/syntheseService';
+import { useRevision } from '../context/RevisionContext';
 
 // Phase components
 import RevisionStudyPhase from '../components/Revision/RevisionStudyPhase';
@@ -18,6 +19,7 @@ const StudyRevision = () => {
     const { t } = useTranslation();
     const { id } = useParams();
     const navigate = useNavigate();
+    const { setRevisionActive } = useRevision();
 
     // Session state
     const [session, setSession] = useState(null);
@@ -31,9 +33,6 @@ const StudyRevision = () => {
 
     // Stop confirmation modal
     const [showStopConfirm, setShowStopConfirm] = useState(false);
-
-    // Exit confirmation modal (for navigation away)
-    const [showExitConfirm, setShowExitConfirm] = useState(false);
 
     // Sync interval ref
     const syncIntervalRef = useRef(null);
@@ -56,33 +55,11 @@ const StudyRevision = () => {
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [isSessionActive, t]);
 
-    // Block React Router navigation
-    const blocker = useBlocker(
-        ({ currentLocation, nextLocation }) =>
-            isSessionActive && currentLocation.pathname !== nextLocation.pathname
-    );
-
-    // Show exit modal when blocker is triggered
+    // Set revision context active state for navigation blocking
     useEffect(() => {
-        if (blocker.state === 'blocked') {
-            setShowExitConfirm(true);
-        }
-    }, [blocker.state]);
-
-    // Handle exit confirmation
-    const handleExitConfirm = useCallback(() => {
-        setShowExitConfirm(false);
-        if (blocker.state === 'blocked') {
-            blocker.proceed();
-        }
-    }, [blocker]);
-
-    const handleExitCancel = useCallback(() => {
-        setShowExitConfirm(false);
-        if (blocker.state === 'blocked') {
-            blocker.reset();
-        }
-    }, [blocker]);
+        setRevisionActive(isSessionActive);
+        return () => setRevisionActive(false);
+    }, [isSessionActive, setRevisionActive]);
 
     // Load session and synthese on mount
     useEffect(() => {
@@ -392,48 +369,6 @@ const StudyRevision = () => {
                                     className="flex-1 py-3 bg-error text-white rounded-xl font-medium hover:bg-error/90 transition-colors"
                                 >
                                     {t('revision.stopButton')}
-                                </button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Exit Confirmation Modal (when navigating away) */}
-            <AnimatePresence>
-                {showExitConfirm && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-6"
-                        onClick={handleExitCancel}
-                    >
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.9, opacity: 0 }}
-                            className="bg-surface rounded-2xl p-6 max-w-sm w-full"
-                            onClick={e => e.stopPropagation()}
-                        >
-                            <h3 className="text-lg font-bold text-text-main mb-2">
-                                {t('revision.leaveConfirmTitle')}
-                            </h3>
-                            <p className="text-text-muted text-sm mb-6">
-                                {t('revision.leaveConfirmMessage')}
-                            </p>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={handleExitCancel}
-                                    className="flex-1 py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark transition-colors"
-                                >
-                                    {t('revision.stayButton')}
-                                </button>
-                                <button
-                                    onClick={handleExitConfirm}
-                                    className="flex-1 py-3 bg-white/5 text-text-main rounded-xl font-medium hover:bg-white/10 transition-colors"
-                                >
-                                    {t('revision.leaveButton')}
                                 </button>
                             </div>
                         </motion.div>

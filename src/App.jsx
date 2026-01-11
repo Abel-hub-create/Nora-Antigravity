@@ -27,6 +27,7 @@ import Process from './pages/Process';
 import FolderDetail from './pages/FolderDetail';
 
 import { UserProvider } from './context/UserContext';
+import { RevisionProvider } from './context/RevisionContext';
 
 function App() {
   return (
@@ -47,7 +48,8 @@ function App() {
             element={
               <ProtectedRoute>
                 <UserProvider>
-                  <MobileWrapper>
+                  <RevisionProvider>
+                    <MobileWrapper>
                     <Routes>
                       <Route path="/" element={<Home />} />
                       <Route path="/import" element={<Import />} />
@@ -62,7 +64,8 @@ function App() {
                       <Route path="/collection" element={<Collection />} />
                       <Route path="/process" element={<Process />} />
                     </Routes>
-                  </MobileWrapper>
+                    </MobileWrapper>
+                  </RevisionProvider>
                 </UserProvider>
               </ProtectedRoute>
             }

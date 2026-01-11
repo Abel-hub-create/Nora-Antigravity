@@ -1069,8 +1069,9 @@ The revision program follows 6 strict phases that cannot be skipped:
 
 **Exit Confirmation**:
 - `beforeunload` event warns when closing browser/tab during active session
-- React Router `useBlocker` shows modal when navigating away
-- Modal offers "Rester" (stay) or "Quitter" (leave) options
+- `RevisionContext` tracks active revision state globally
+- `MobileWrapper` intercepts navigation clicks and shows `window.confirm()` dialog
+- Message: "Une session de révision est en cours. Si tu quittes, ta progression sera perdue."
 - Only active during revision phases (not on complete or expired)
 
 **Semantic Comparison (AI)**:
@@ -1128,7 +1129,9 @@ syntheses.specific_instructions TEXT -- User-defined important elements
 - `RevisionLoopPhase.jsx` - Phase 5: Show missing concepts, retry
 - `RevisionCompletePhase.jsx` - Phase 6: Success with confetti
 
-**`/src/hooks/useRevisionTimer.js`** - Visibility-aware countdown timer
+**`/src/hooks/useRevisionTimer.js`** - Real-time countdown timer based on phase_started_at timestamp
+
+**`/src/context/RevisionContext.jsx`** - Global context for revision state (used by MobileWrapper to block navigation)
 
 **`/src/services/revisionService.js`** - API calls to revision endpoints
 

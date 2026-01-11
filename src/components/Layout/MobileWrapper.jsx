@@ -1,13 +1,16 @@
 import React from 'react';
 import { Home, GraduationCap, PlusCircle, User, Gift } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import NotificationStack from '../UI/NotificationStack';
+import { useRevision } from '../../context/RevisionContext';
 
 const MobileWrapper = ({ children }) => {
     const { t } = useTranslation();
     const location = useLocation();
+    const navigate = useNavigate();
+    const { isRevisionActive } = useRevision();
 
     const navItems = [
         { icon: Home, labelKey: 'nav.home', path: '/' },
@@ -32,11 +35,20 @@ const MobileWrapper = ({ children }) => {
                     {navItems.map((item) => {
                         const isActive = location.pathname === item.path;
                         return (
-                            <Link
+                            <a
                                 key={item.path}
-                                to={item.path}
+                                href={item.path}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    if (isRevisionActive) {
+                                        const confirmed = window.confirm(t('revision.leaveConfirmMessage'));
+                                        if (confirmed) navigate(item.path);
+                                    } else {
+                                        navigate(item.path);
+                                    }
+                                }}
                                 className={clsx(
-                                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+                                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer",
                                     isActive
                                         ? "bg-primary/20 text-primary"
                                         : "text-text-muted hover:text-text-main hover:bg-white/5"
@@ -44,7 +56,7 @@ const MobileWrapper = ({ children }) => {
                             >
                                 <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
                                 <span className="font-medium">{t(item.labelKey)}</span>
-                            </Link>
+                            </a>
                         );
                     })}
                 </div>
@@ -67,10 +79,19 @@ const MobileWrapper = ({ children }) => {
                     {navItems.map((item) => {
                         const isActive = location.pathname === item.path;
                         return (
-                            <Link
+                            <a
                                 key={item.path}
-                                to={item.path}
-                                className="flex flex-col items-center justify-center w-16 h-full gap-1 group"
+                                href={item.path}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    if (isRevisionActive) {
+                                        const confirmed = window.confirm(t('revision.leaveConfirmMessage'));
+                                        if (confirmed) navigate(item.path);
+                                    } else {
+                                        navigate(item.path);
+                                    }
+                                }}
+                                className="flex flex-col items-center justify-center w-16 h-full gap-1 group cursor-pointer"
                             >
                                 <div className={clsx(
                                     "p-1.5 rounded-xl transition-all duration-300",
@@ -84,7 +105,7 @@ const MobileWrapper = ({ children }) => {
                                 )}>
                                     {t(item.labelKey)}
                                 </span>
-                            </Link>
+                            </a>
                         );
                     })}
                 </nav>
