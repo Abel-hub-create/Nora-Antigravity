@@ -6,7 +6,7 @@ import confetti from 'canvas-confetti';
 import useRevisionTimer from '../../hooks/useRevisionTimer';
 import useActiveTimer from '../../hooks/useActiveTimer';
 
-const STUDY_DURATION = 600; // 10 minutes in seconds
+const STUDY_DURATION = 15; // 15 seconds (testing)
 
 const RevisionStudyPhase = ({ synthese, phaseStartedAt, onComplete, onStop }) => {
     const { t } = useTranslation();

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import useRevisionTimer from '../../hooks/useRevisionTimer';
 import useActiveTimer from '../../hooks/useActiveTimer';
 
-const LOOP_DURATION = 300; // 5 minutes in seconds
+const LOOP_DURATION = 15; // 15 seconds (testing)
 
 /**
  * RevisionLoopPhase - Phase 5
