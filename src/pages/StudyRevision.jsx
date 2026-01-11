@@ -282,7 +282,6 @@ const StudyRevision = () => {
                 return (
                     <RevisionRecallPhase
                         iteration={session.current_iteration}
-                        phaseStartedAt={session.phase_started_at}
                         onSubmit={handleRecallSubmit}
                         onStop={() => setShowStopConfirm(true)}
                     />

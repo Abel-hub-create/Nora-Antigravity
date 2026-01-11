@@ -1,25 +1,14 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PenLine, Mic, X, Send, Clock } from 'lucide-react';
+import { PenLine, Mic, X, Send } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import VoiceRecorder from '../Import/VoiceRecorder';
-import useRevisionTimer from '../../hooks/useRevisionTimer';
 
-const RECALL_DURATION = 15; // 15 seconds (testing)
-
-const RevisionRecallPhase = ({ iteration, phaseStartedAt, onSubmit, onStop }) => {
+const RevisionRecallPhase = ({ iteration, onSubmit, onStop }) => {
     const { t } = useTranslation();
     const [userText, setUserText] = useState('');
     const [showVoice, setShowVoice] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    // Timer hook
-    const { formattedTime } = useRevisionTimer(
-        RECALL_DURATION,
-        phaseStartedAt,
-        () => {}, // No auto-action when timer ends
-        true
-    );
 
     const handleSubmit = async () => {
         if (userText.trim().length < 10) return;
@@ -51,18 +40,12 @@ const RevisionRecallPhase = ({ iteration, phaseStartedAt, onSubmit, onStop }) =>
                         </p>
                     )}
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 bg-primary/20 px-3 py-1.5 rounded-full">
-                        <Clock size={16} className="text-primary" />
-                        <span className="text-primary font-mono font-bold">{formattedTime}</span>
-                    </div>
-                    <button
-                        onClick={onStop}
-                        className="p-2 text-text-muted hover:text-error transition-colors"
-                    >
-                        <X size={20} />
-                    </button>
-                </div>
+                <button
+                    onClick={onStop}
+                    className="p-2 text-text-muted hover:text-error transition-colors"
+                >
+                    <X size={20} />
+                </button>
             </header>
 
             {/* Instructions */}
