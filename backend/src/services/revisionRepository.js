@@ -25,14 +25,23 @@ export const startSession = async (userId, syntheseId) => {
 
 /**
  * Sync session state (timer, phase)
+ * Updates phase_started_at only when phase changes
  */
 export const syncSession = async (userId, syntheseId, data) => {
     const { phase, studyTimeRemaining, pauseTimeRemaining, loopTimeRemaining, currentIteration } = data;
-    const sql = `
-        UPDATE revision_sessions
-        SET phase = ?, study_time_remaining = ?, pause_time_remaining = ?, loop_time_remaining = ?, current_iteration = ?, last_activity_at = NOW()
-        WHERE user_id = ? AND synthese_id = ?
-    `;
+
+    // Get current session to check if phase changed
+    const currentSession = await getSession(userId, syntheseId);
+    const phaseChanged = currentSession && currentSession.phase !== phase;
+
+    const sql = phaseChanged
+        ? `UPDATE revision_sessions
+           SET phase = ?, phase_started_at = NOW(), study_time_remaining = ?, pause_time_remaining = ?, loop_time_remaining = ?, current_iteration = ?, last_activity_at = NOW()
+           WHERE user_id = ? AND synthese_id = ?`
+        : `UPDATE revision_sessions
+           SET phase = ?, study_time_remaining = ?, pause_time_remaining = ?, loop_time_remaining = ?, current_iteration = ?, last_activity_at = NOW()
+           WHERE user_id = ? AND synthese_id = ?`;
+
     await query(sql, [phase, studyTimeRemaining, pauseTimeRemaining, loopTimeRemaining ?? 300, currentIteration, userId, syntheseId]);
 };
 

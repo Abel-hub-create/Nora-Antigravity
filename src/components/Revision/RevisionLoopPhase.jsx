@@ -1,9 +1,11 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, ChevronRight, AlertCircle, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import useRevisionTimer from '../../hooks/useRevisionTimer';
 import useActiveTimer from '../../hooks/useActiveTimer';
+
+const LOOP_DURATION = 300; // 5 minutes in seconds
 
 /**
  * RevisionLoopPhase - Phase 5
@@ -14,8 +16,7 @@ const RevisionLoopPhase = ({
     missingConcepts,
     iteration,
     originalSummary,
-    loopTimeRemaining,
-    onTimeUpdate,
+    phaseStartedAt,
     onContinue
 }) => {
     const { t } = useTranslation();
@@ -23,25 +24,17 @@ const RevisionLoopPhase = ({
     // Track study time for daily goals (summary activity)
     useActiveTimer('summary');
 
-    // 5-minute timer for loop study (300 seconds)
-    const initialTime = loopTimeRemaining ?? 300;
-
     const handleTimerComplete = useCallback(() => {
         // Timer completed - user can now continue
     }, []);
 
+    // Timer hook - calculates remaining time from phase start timestamp
     const { formattedTime, timeRemaining } = useRevisionTimer(
-        initialTime,
+        LOOP_DURATION,
+        phaseStartedAt,
         handleTimerComplete,
         true
     );
-
-    // Update parent with current time
-    useEffect(() => {
-        if (onTimeUpdate) {
-            onTimeUpdate(timeRemaining);
-        }
-    }, [timeRemaining, onTimeUpdate]);
 
     // Highlight missing concepts in the summary
     const getHighlightedSummary = () => {
@@ -153,7 +146,7 @@ const RevisionLoopPhase = ({
     };
 
     const canContinue = timeRemaining === 0;
-    const progress = ((300 - timeRemaining) / 300) * 100;
+    const progress = ((LOOP_DURATION - timeRemaining) / LOOP_DURATION) * 100;
 
     return (
         <div className="min-h-full flex flex-col p-4 pb-24">

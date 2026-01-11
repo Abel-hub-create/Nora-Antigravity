@@ -1,56 +1,42 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 /**
- * Hook for countdown timer with visibility-aware behavior
- * Timer continues counting down in background based on timestamps
+ * Hook for countdown timer based on real time
+ * Timer calculates remaining time from phase start timestamp
+ * Works even when phone is locked or app is in background
  *
- * @param {number} initialTime - Initial time in seconds
+ * @param {number} totalDuration - Total duration of the phase in seconds
+ * @param {string|Date} phaseStartedAt - Timestamp when the phase started
  * @param {function} onComplete - Callback when timer reaches 0
  * @param {boolean} isActive - Whether the timer should be active
- * @returns {Object} { timeRemaining, setTimeRemaining, formattedTime }
+ * @returns {Object} { timeRemaining, formattedTime }
  */
-const useRevisionTimer = (initialTime, onComplete, isActive = true) => {
-    const [timeRemaining, setTimeRemaining] = useState(initialTime);
-    const intervalRef = useRef(null);
-    const lastTickRef = useRef(Date.now());
+const useRevisionTimer = (totalDuration, phaseStartedAt, onComplete, isActive = true) => {
     const onCompleteRef = useRef(onComplete);
+    const hasCompletedRef = useRef(false);
+    const intervalRef = useRef(null);
+
+    // Calculate time remaining based on real time
+    const calculateTimeRemaining = useCallback(() => {
+        if (!phaseStartedAt) return totalDuration;
+        const startTime = new Date(phaseStartedAt).getTime();
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        return Math.max(0, totalDuration - elapsed);
+    }, [totalDuration, phaseStartedAt]);
+
+    const [timeRemaining, setTimeRemaining] = useState(calculateTimeRemaining);
 
     // Keep onComplete ref updated
     useEffect(() => {
         onCompleteRef.current = onComplete;
     }, [onComplete]);
 
-    // Tick function - decrements timer by 1 second
-    const tick = useCallback(() => {
-        if (document.visibilityState === 'visible') {
-            setTimeRemaining(prev => {
-                const newTime = Math.max(0, prev - 1);
-                if (newTime === 0 && onCompleteRef.current) {
-                    // Use setTimeout to avoid state update during render
-                    setTimeout(() => onCompleteRef.current(), 0);
-                }
-                return newTime;
-            });
-            lastTickRef.current = Date.now();
-        }
-    }, []);
+    // Reset hasCompleted when phase changes
+    useEffect(() => {
+        hasCompletedRef.current = false;
+    }, [phaseStartedAt]);
 
-    // Handle visibility change (recalculate elapsed time when returning)
-    const handleVisibilityChange = useCallback(() => {
-        if (document.visibilityState === 'visible') {
-            const elapsed = Math.floor((Date.now() - lastTickRef.current) / 1000);
-            setTimeRemaining(prev => {
-                const newTime = Math.max(0, prev - elapsed);
-                if (newTime === 0 && prev > 0 && onCompleteRef.current) {
-                    setTimeout(() => onCompleteRef.current(), 0);
-                }
-                return newTime;
-            });
-            lastTickRef.current = Date.now();
-        }
-    }, []);
-
-    // Start/stop timer based on isActive
+    // Update timer every second and on visibility change
     useEffect(() => {
         if (!isActive) {
             if (intervalRef.current) {
@@ -60,9 +46,28 @@ const useRevisionTimer = (initialTime, onComplete, isActive = true) => {
             return;
         }
 
-        // Start interval
-        lastTickRef.current = Date.now();
-        intervalRef.current = setInterval(tick, 1000);
+        const updateTimer = () => {
+            const remaining = calculateTimeRemaining();
+            setTimeRemaining(remaining);
+
+            if (remaining === 0 && !hasCompletedRef.current && onCompleteRef.current) {
+                hasCompletedRef.current = true;
+                setTimeout(() => onCompleteRef.current(), 0);
+            }
+        };
+
+        // Update immediately
+        updateTimer();
+
+        // Update every second
+        intervalRef.current = setInterval(updateTimer, 1000);
+
+        // Update on visibility change (when user returns to app)
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                updateTimer();
+            }
+        };
         document.addEventListener('visibilitychange', handleVisibilityChange);
 
         return () => {
@@ -72,7 +77,7 @@ const useRevisionTimer = (initialTime, onComplete, isActive = true) => {
             }
             document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
-    }, [tick, handleVisibilityChange, isActive]);
+    }, [calculateTimeRemaining, isActive]);
 
     // Format time as MM:SS
     const formatTime = useCallback((seconds) => {
@@ -83,7 +88,6 @@ const useRevisionTimer = (initialTime, onComplete, isActive = true) => {
 
     return {
         timeRemaining,
-        setTimeRemaining,
         formattedTime: formatTime(timeRemaining)
     };
 };

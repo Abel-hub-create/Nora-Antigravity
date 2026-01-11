@@ -205,6 +205,7 @@
     "leaveConfirmMessage": "A revision session is in progress. If you leave, your progress will be lost.",
     "stayButton": "Stay",
     "leaveButton": "Leave",
+    "exitWarning": "A revision session is in progress. Your progress will be lost if you leave.",
     "phases": {
       "study": "Phase 1: Study",
       "studyMessage": "Review the summary, practice flashcards and take the quiz.",

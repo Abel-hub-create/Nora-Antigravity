@@ -205,6 +205,7 @@
     "leaveConfirmMessage": "Une session de révision est en cours. Si tu quittes, ta progression sera perdue.",
     "stayButton": "Rester",
     "leaveButton": "Quitter",
+    "exitWarning": "Une session de révision est en cours. Ta progression sera perdue si tu quittes.",
     "phases": {
       "study": "Phase 1 : Révision",
       "studyMessage": "Relis la synthèse, révise les flashcards et refais le quiz.",

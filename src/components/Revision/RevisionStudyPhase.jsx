@@ -6,7 +6,9 @@ import confetti from 'canvas-confetti';
 import useRevisionTimer from '../../hooks/useRevisionTimer';
 import useActiveTimer from '../../hooks/useActiveTimer';
 
-const RevisionStudyPhase = ({ synthese, timeRemaining, onTimeUpdate, onComplete, onStop }) => {
+const STUDY_DURATION = 600; // 10 minutes in seconds
+
+const RevisionStudyPhase = ({ synthese, phaseStartedAt, onComplete, onStop }) => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState('summary');
     const [showGuide, setShowGuide] = useState(true);
@@ -17,20 +19,16 @@ const RevisionStudyPhase = ({ synthese, timeRemaining, onTimeUpdate, onComplete,
     const [quizScore, setQuizScore] = useState(0);
     const [showQuizResult, setShowQuizResult] = useState(false);
 
-    // Timer hook
-    const { formattedTime, timeRemaining: currentTime } = useRevisionTimer(
-        timeRemaining,
+    // Timer hook - calculates remaining time from phase start timestamp
+    const { formattedTime, timeRemaining } = useRevisionTimer(
+        STUDY_DURATION,
+        phaseStartedAt,
         onComplete,
         true
     );
 
     // Track study time for daily goals based on active tab
     useActiveTimer(activeTab);
-
-    // Update parent with current time
-    useEffect(() => {
-        onTimeUpdate(currentTime);
-    }, [currentTime, onTimeUpdate]);
 
     // Hide guide after 3 seconds
     useEffect(() => {

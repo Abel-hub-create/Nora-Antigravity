@@ -1,26 +1,24 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Coffee, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import useRevisionTimer from '../../hooks/useRevisionTimer';
 
-const RevisionPausePhase = ({ timeRemaining, onTimeUpdate, onComplete }) => {
+const PAUSE_DURATION = 300; // 5 minutes in seconds
+
+const RevisionPausePhase = ({ phaseStartedAt, onComplete }) => {
     const { t } = useTranslation();
 
-    // Timer hook
-    const { formattedTime, timeRemaining: currentTime } = useRevisionTimer(
-        timeRemaining,
+    // Timer hook - calculates remaining time from phase start timestamp
+    const { formattedTime, timeRemaining } = useRevisionTimer(
+        PAUSE_DURATION,
+        phaseStartedAt,
         onComplete,
         true
     );
 
-    // Update parent with current time
-    useEffect(() => {
-        onTimeUpdate(currentTime);
-    }, [currentTime, onTimeUpdate]);
-
     // Calculate progress percentage
-    const progress = ((300 - currentTime) / 300) * 100;
+    const progress = ((PAUSE_DURATION - timeRemaining) / PAUSE_DURATION) * 100;
 
     return (
         <div className="min-h-full flex flex-col items-center justify-center p-6 text-center">
