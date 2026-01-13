@@ -178,7 +178,7 @@ const StudyRevision = () => {
                     phase_started_at: new Date().toISOString(),
                     current_iteration: result.iteration,
                     user_recall: null,
-                    loop_time_remaining: 300 // Reset loop timer for next iteration
+                    loop_time_remaining: 120 // Reset loop timer for next iteration (2 minutes)
                 });
                 setComparisonResult(null);
             }
@@ -320,6 +320,9 @@ const StudyRevision = () => {
                 return (
                     <RevisionCompletePhase
                         iterationsCount={session.current_iteration}
+                        overallScore={comparisonResult?.overallScore ?? 0}
+                        understoodConcepts={comparisonResult?.understoodConcepts || []}
+                        missingConcepts={session.missing_concepts || comparisonResult?.missingConcepts || []}
                         onFinish={handleComplete}
                     />
                 );

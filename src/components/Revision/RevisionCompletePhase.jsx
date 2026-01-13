@@ -1,140 +1,118 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, CheckCircle } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import confetti from 'canvas-confetti';
 
-const RevisionCompletePhase = ({ iterationsCount, onFinish }) => {
+/**
+ * RevisionCompletePhase - Final phase (attempt 8)
+ * Shows success percentage and appropriate message
+ * No congratulations animation - just clean feedback
+ */
+const RevisionCompletePhase = ({
+    iterationsCount,
+    overallScore = 0,
+    understoodConcepts = [],
+    missingConcepts = [],
+    onFinish
+}) => {
     const { t } = useTranslation();
 
-    // Launch confetti on mount
-    useEffect(() => {
-        // First burst
-        confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 },
-            colors: ['#38bdf8', '#818cf8', '#34d399', '#fbbf24']
-        });
+    // Calculate percentage based on concepts
+    const totalConcepts = understoodConcepts.length + missingConcepts.length;
+    const percentage = totalConcepts > 0
+        ? Math.round((understoodConcepts.length / totalConcepts) * 100)
+        : overallScore;
 
-        // Second burst after delay
-        const timer = setTimeout(() => {
-            confetti({
-                particleCount: 50,
-                angle: 60,
-                spread: 55,
-                origin: { x: 0, y: 0.7 },
-                colors: ['#38bdf8', '#818cf8']
-            });
-            confetti({
-                particleCount: 50,
-                angle: 120,
-                spread: 55,
-                origin: { x: 1, y: 0.7 },
-                colors: ['#34d399', '#fbbf24']
-            });
-        }, 500);
-
-        return () => clearTimeout(timer);
-    }, []);
-
-    // Get emoji based on iterations
-    const getEmoji = () => {
-        if (iterationsCount === 1) return '🏆';
-        if (iterationsCount === 2) return '🎯';
-        if (iterationsCount <= 3) return '💪';
-        return '👏';
+    // Get message based on percentage
+    const getMessage = () => {
+        if (percentage <= 10) {
+            return t('revision.complete.message0to10');
+        }
+        if (percentage <= 50) {
+            return t('revision.complete.message10to50');
+        }
+        if (percentage <= 70) {
+            return t('revision.complete.message50to70');
+        }
+        if (percentage < 100) {
+            return t('revision.complete.message70to99');
+        }
+        return t('revision.complete.message100');
     };
 
-    // Get message based on iterations
-    const getMessage = () => {
-        if (iterationsCount === 1) {
-            return t('revision.complete.perfectMessage');
-        }
-        if (iterationsCount <= 3) {
-            return t('revision.complete.goodMessage');
-        }
-        return t('revision.complete.doneMessage');
+    // Get progress bar color based on percentage
+    const getProgressColor = () => {
+        if (percentage <= 10) return 'bg-error';
+        if (percentage <= 50) return 'bg-warning';
+        if (percentage <= 70) return 'bg-primary';
+        return 'bg-success';
     };
 
     return (
         <div className="min-h-full flex flex-col items-center justify-center p-6 text-center">
-            {/* Animated Trophy */}
+            {/* Score Display */}
             <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: "spring", duration: 0.8 }}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", duration: 0.6 }}
                 className="relative mb-8"
             >
-                {/* Glow effect */}
-                <motion.div
-                    animate={{
-                        scale: [1, 1.2, 1],
-                        opacity: [0.5, 0.8, 0.5]
-                    }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="absolute inset-0 bg-gradient-to-br from-primary to-secondary rounded-full blur-xl"
-                />
-
-                {/* Trophy container */}
-                <div className="relative w-32 h-32 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center shadow-2xl shadow-primary/30">
-                    <span className="text-5xl">{getEmoji()}</span>
+                {/* Circle with percentage */}
+                <div className="w-36 h-36 bg-surface rounded-full flex flex-col items-center justify-center border-4 border-white/10">
+                    <span className="text-4xl font-bold text-text-main">{percentage}%</span>
+                    <span className="text-xs text-text-muted mt-1">{t('revision.complete.score')}</span>
                 </div>
-
-                {/* Checkmark badge */}
-                <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.5, type: "spring" }}
-                    className="absolute -bottom-2 -right-2 w-10 h-10 bg-success rounded-full flex items-center justify-center border-4 border-background"
-                >
-                    <CheckCircle size={20} className="text-white" />
-                </motion.div>
             </motion.div>
 
-            {/* Title */}
-            <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+            {/* Progress Bar */}
+            <motion.div
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: '100%' }}
                 transition={{ delay: 0.3 }}
-                className="text-3xl font-bold text-text-main mb-3"
+                className="w-full max-w-xs mb-6"
             >
-                {t('revision.phases.complete')}
-            </motion.h1>
+                <div className="h-3 bg-surface rounded-full overflow-hidden">
+                    <motion.div
+                        className={`h-full ${getProgressColor()} rounded-full`}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${percentage}%` }}
+                        transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" }}
+                    />
+                </div>
+                <div className="flex justify-between mt-2 text-xs text-text-muted">
+                    <span>0%</span>
+                    <span>100%</span>
+                </div>
+            </motion.div>
 
-            {/* Message */}
+            {/* Message based on percentage */}
             <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="text-lg text-text-muted mb-2"
-            >
-                {t('revision.phases.completeMessage')}
-            </motion.p>
-
-            {/* Sub message */}
-            <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="text-text-muted text-sm mb-8"
+                className="text-lg text-text-main font-medium mb-2 max-w-xs"
             >
                 {getMessage()}
             </motion.p>
 
-            {/* Iterations count */}
+            {/* Stats */}
             <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.6 }}
-                className="bg-surface rounded-2xl px-6 py-4 mb-8"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="flex gap-6 mb-8"
             >
-                <div className="flex items-center gap-3">
-                    <Trophy size={24} className="text-primary" />
-                    <div>
-                        <div className="text-sm text-text-muted">{t('revision.complete.iterations')}</div>
-                        <div className="text-xl font-bold text-text-main">{iterationsCount}</div>
-                    </div>
+                <div className="text-center">
+                    <div className="text-2xl font-bold text-success">{understoodConcepts.length}</div>
+                    <div className="text-xs text-text-muted">{t('revision.complete.retained')}</div>
+                </div>
+                <div className="text-center">
+                    <div className="text-2xl font-bold text-error">{missingConcepts.length}</div>
+                    <div className="text-xs text-text-muted">{t('revision.complete.notRetained')}</div>
+                </div>
+                <div className="text-center">
+                    <div className="text-2xl font-bold text-text-main">{iterationsCount}</div>
+                    <div className="text-xs text-text-muted">{t('revision.complete.iterations')}</div>
                 </div>
             </motion.div>
 
@@ -142,7 +120,7 @@ const RevisionCompletePhase = ({ iterationsCount, onFinish }) => {
             <motion.button
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7 }}
+                transition={{ delay: 0.6 }}
                 onClick={onFinish}
                 className="w-full max-w-xs py-4 bg-primary text-white rounded-xl font-medium text-lg hover:bg-primary-dark transition-colors"
             >

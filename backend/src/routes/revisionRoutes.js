@@ -141,8 +141,8 @@ router.post('/:syntheseId/next-iteration', async (req, res, next) => {
 
         const newIteration = session.current_iteration + 1;
 
-        // Force complete after 5 iterations
-        if (newIteration > 5) {
+        // Force complete after 8 iterations
+        if (newIteration > 8) {
             const result = await revisionRepo.completeSession(req.user.id, syntheseId);
             return res.json({ completed: true, ...result });
         }

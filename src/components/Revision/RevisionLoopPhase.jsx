@@ -126,11 +126,11 @@ const RevisionLoopPhase = ({
                     <span key={`text-${idx}`}>{summary.slice(lastIndex, occ.start)}</span>
                 );
             }
-            // Add highlighted text
+            // Add highlighted text (all in red - no intermediate state)
             parts.push(
                 <mark
                     key={`highlight-${idx}`}
-                    className={`${occ.importance === 'high' ? 'bg-error/30 text-error' : 'bg-warning/30 text-warning'} px-1 rounded`}
+                    className="bg-error/30 text-error px-1 rounded"
                     title={occ.concept}
                 >
                     {occ.text}
@@ -169,7 +169,7 @@ const RevisionLoopPhase = ({
                     </div>
                 </div>
                 <p className="text-xs text-primary">
-                    {t('revision.phases.loopIteration', { current: iteration, max: 5 })}
+                    {t('revision.phases.loopIteration', { current: iteration, max: 8 })}
                 </p>
 
                 {/* Progress bar */}
@@ -195,17 +195,13 @@ const RevisionLoopPhase = ({
                 </div>
             </motion.div>
 
-            {/* Missing Concepts Legend */}
+            {/* Missing Concepts Legend (all in red - only 2 states: retained or not) */}
             <div className="flex flex-wrap gap-2 mb-4">
                 <span className="text-xs text-text-muted">{t('revision.compare.missing')}:</span>
                 {missingConcepts.slice(0, 3).map((concept, idx) => (
                     <span
                         key={idx}
-                        className={`text-xs px-2 py-0.5 rounded ${
-                            concept.importance === 'high'
-                                ? 'bg-error/20 text-error'
-                                : 'bg-warning/20 text-warning'
-                        }`}
+                        className="text-xs px-2 py-0.5 rounded bg-error/20 text-error"
                     >
                         {concept.concept}
                     </span>

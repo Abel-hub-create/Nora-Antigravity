@@ -25,6 +25,12 @@ export const compareRecall = async (originalSummary, userRecall, specificInstruc
 
 Compare le rappel de l'utilisateur avec la synthese originale de maniere SEMANTIQUE (pas mot a mot).
 
+PRINCIPE FONDAMENTAL - EVALUATION PAR TENTATIVE:
+- Cette evaluation porte UNIQUEMENT sur le texte ecrit dans CETTE tentative
+- Ne tiens JAMAIS compte des tentatives precedentes
+- Si une notion etait correcte avant mais n'est plus ecrite maintenant, elle est NON RETENUE
+- Chaque tentative est INDEPENDANTE et complete
+
 SYNTHESE ORIGINALE:
 """
 ${originalSummary}
@@ -40,29 +46,41 @@ ${specificInstructions ? `ELEMENTS IMPORTANTS MARQUES PAR L'UTILISATEUR (DOIVENT
 ${specificInstructions}
 """` : ''}
 
-REGLES D'EVALUATION STRICTES:
+REGLE DE VALIDATION - UNE IDEE COMPLETE:
+Une reponse est consideree comme correcte UNIQUEMENT si elle exprime une idee complete:
+- Un concept
+- Relie a au moins une information importante
+- Par une relation explicite (verbe, lien de cause, role, fonction, variation, etc.)
 
-1. REFORMULATION ACCEPTEE vs JUXTAPOSITION REFUSEE:
-   - ACCEPTE: "La chlorophylle donne la couleur verte aux plantes" (reformulation avec sens)
-   - REFUSE: "chlorophylle vert plante" (simple juxtaposition de mots-cles)
-   - Une reponse est valide seulement si:
-     * Les concepts cles sont presents
-     * La relation logique entre concepts est exprimee
-     * La phrase montre une comprehension reelle (pas juste des mots isoles)
+EXEMPLES:
+Notion de reference: "La photosynthese permet aux plantes de produire de la matiere organique grace a la lumiere."
+- REFUSE: "photosynthese lumiere" (mots-cles sans relation)
+- REFUSE: "photosynthese plantes matiere" (mots-cles sans verbe ni lien)
+- ACCEPTE: "La photosynthese permet aux plantes de produire de la matiere grace a la lumiere"
+- ACCEPTE: "Grace a la photosynthese, les plantes produisent de la matiere avec la lumiere"
 
-2. DEFINITIONS:
-   - Sois plus strict sur les definitions exactes
-   - Le sens doit etre preserve, meme avec des mots differents
+Cette regle s'applique de maniere IDENTIQUE pour TOUTES les notions, sans exception.
 
-3. ELEMENTS IMPORTANTS:
+REGLES SUPPLEMENTAIRES:
+
+1. DEUX ETATS UNIQUEMENT:
+   - RETENU (understoodConcepts) = notion correctement exprimee avec une idee complete
+   - NON RETENU (missingConcepts) = notion absente ou mal exprimee
+   - Pas d'etat intermediaire
+
+2. COUVERTURE OBLIGATOIRE:
+   - Chaque notion importante de la synthese doit etre evaluee
+   - Une notion non mentionnee = NON RETENUE
+   - Une notion avec juste des mots-cles = NON RETENUE
+
+3. ELEMENTS IMPORTANTS MARQUES:
    - Les elements marques par l'utilisateur sont OBLIGATOIRES
-   - S'ils manquent, ils sont automatiquement "high" importance
+   - S'ils manquent, ils sont automatiquement non retenus
 
 4. FEEDBACK NEUTRE SI INCOMPLET:
-   - Si missingConcepts n'est pas vide, le feedback doit etre NEUTRE et ENCOURAGEANT
-   - NE JAMAIS dire "bien joue", "bravo", "super" s'il reste des elements manquants
-   - Exemples de feedback neutre: "Continue, tu progresses", "Concentre-toi sur les points manquants", "Tu avances, revois les elements en rouge"
-   - Le message de succes/felicitations est RESERVE au cas ou missingConcepts est VIDE
+   - Si missingConcepts n'est pas vide, feedback NEUTRE uniquement
+   - Exemples: "Continue, tu progresses", "Revois les elements en rouge"
+   - Felicitations SEULEMENT si missingConcepts est VIDE
 
 Retourne UNIQUEMENT ce JSON (sans markdown, sans backticks):
 {
@@ -77,10 +95,10 @@ Retourne UNIQUEMENT ce JSON (sans markdown, sans backticks):
 }
 
 Notes:
-- "importance": "high" pour definitions et elements importants, "medium" pour details secondaires
+- "importance": toujours "high" (pas d'etat intermediaire)
 - "overallScore": 0-100 base sur le ratio compris/total
 - "originalText" dans missingConcepts doit etre le texte EXACT de la synthese pour permettre le surlignage
-- Si le rappel est vide ou juste des mots sans sens, TOUS les concepts sont manquants`;
+- Si le rappel est vide ou juste des mots sans relation, TOUS les concepts sont manquants`;
 
     try {
         const response = await openai.chat.completions.create({

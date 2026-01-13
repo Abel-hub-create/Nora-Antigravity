@@ -210,9 +210,9 @@
       "study": "Phase 1: Study",
       "studyMessage": "Review the summary, practice flashcards and take the quiz.",
       "studyLoop": "Review missing concepts",
-      "studyLoopMessage": "Carefully read the missing elements for 5 minutes.",
-      "pause": "5-minute break",
-      "pauseMessage": "Relax, turn off your phone if you want. Come back in 5 minutes.",
+      "studyLoopMessage": "Carefully read the missing elements for 2 minutes.",
+      "pause": "2-minute break",
+      "pauseMessage": "Relax, turn off your phone if you want. Come back in 2 minutes.",
       "pauseHint": "Don't close this page",
       "pauseWarning": "Important: don't close the page, session is in progress",
       "recall": "Active Recall",
@@ -254,9 +254,14 @@
     },
     "complete": {
       "iterations": "Attempts",
-      "perfectMessage": "Perfect on first try!",
-      "goodMessage": "You did it!",
-      "doneMessage": "You persevered to the end!"
+      "retained": "Retained",
+      "notRetained": "Not retained",
+      "score": "Success",
+      "message0to10": "Try again, you can improve.",
+      "message10to50": "Try again, don't give up.",
+      "message50to70": "You already know a fair amount. Keep going.",
+      "message70to99": "Great job, you've mastered most of the material.",
+      "message100": "Great job, you've mastered this summary."
     }
   },
   "import": {

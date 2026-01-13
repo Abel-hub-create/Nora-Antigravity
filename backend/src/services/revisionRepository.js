@@ -42,7 +42,7 @@ export const syncSession = async (userId, syntheseId, data) => {
            SET phase = ?, study_time_remaining = ?, pause_time_remaining = ?, loop_time_remaining = ?, current_iteration = ?, last_activity_at = NOW()
            WHERE user_id = ? AND synthese_id = ?`;
 
-    await query(sql, [phase, studyTimeRemaining, pauseTimeRemaining, loopTimeRemaining ?? 300, currentIteration, userId, syntheseId]);
+    await query(sql, [phase, studyTimeRemaining, pauseTimeRemaining, loopTimeRemaining ?? 120, currentIteration, userId, syntheseId]);
 };
 
 /**
