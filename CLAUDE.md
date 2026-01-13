@@ -1042,17 +1042,56 @@ A structured revision system based on the active recall / blank sheet technique,
 
 ### Overview
 
-The revision program follows 5 phases:
+The revision program follows 5 phases with **8 total attempts**:
 
 | Phase | Duration | Description |
 |-------|----------|-------------|
-| 1. Study | 15s (testing) | Review synthese, flashcards, quiz (3 tabs) |
-| 2. Pause | 15s (testing) | Forced break with countdown timer |
+| 1. Study | 10 min | Review synthese, flashcards, quiz (3 tabs) |
+| 2. Pause | 2 min | Forced break with countdown timer |
 | 3. Recall | No limit | Write or dictate from memory |
-| 4. Loop | 15s (testing), Max 5x | Re-read missing concepts (highlighted in red), auto-continues when timer ends |
-| 5. Complete | - | Success message, session recorded |
+| 4. Loop | 2 min, Max 8x | Re-read missing concepts (highlighted in red), auto-continues when timer ends |
+| 5. Complete | - | Shows percentage, progress bar, and message based on score |
 
-**Note**: Timers are currently set to 15 seconds for testing. Production values: Study=10min, Pause=5min, Loop=5min.
+### Evaluation Rules
+
+**Independent Per-Attempt Evaluation**:
+- Each attempt is evaluated INDEPENDENTLY
+- Previous attempts are NOT considered
+- If a notion was correct before but not written now → NOT RETAINED
+- Each attempt must contain ALL notions to get 100%
+
+**Two States Only**:
+- ✅ RETAINED (green) - Notion correctly expressed with complete idea
+- ❌ NOT RETAINED (red) - Notion missing or poorly expressed
+- No intermediate state (no yellow/orange)
+
+**Validation Rule - Complete Idea Required**:
+A response is valid ONLY if it expresses a complete idea:
+- A concept
+- Linked to at least one important information
+- By an explicit relation (verb, cause, role, function, etc.)
+
+Example:
+- Reference: "La photosynthèse permet aux plantes de produire de la matière organique grâce à la lumière."
+- ❌ REJECTED: "photosynthèse lumière" (keywords without relation)
+- ✅ ACCEPTED: "La photosynthèse permet aux plantes de produire de la matière grâce à la lumière"
+
+**Mandatory Coverage**:
+- Every important notion from the synthese must be evaluated
+- Notion not mentioned = NOT RETAINED
+- Notion with just keywords = NOT RETAINED
+
+### Final Attempt (Attempt 8) - Specific Behavior
+
+Instead of congratulations and summary re-read, shows:
+- **Percentage**: Based on retained/total notions
+- **Progress bar**: Filled proportionally to percentage
+- **Message based on percentage**:
+  - 0-10%: "Réessaye, tu peux t'améliorer."
+  - 10-50%: "Réessaye, n'abandonne pas."
+  - 50-70%: "Tu connais déjà pas mal de matière. Continue."
+  - 70-99%: "Bravo, tu as acquis une très grosse partie de la matière."
+  - 100%: "Bravo, tu maîtrises cette synthèse."
 
 ### Key Features
 
@@ -1088,8 +1127,8 @@ The revision program follows 5 phases:
 
 **Semantic Comparison (AI)**:
 - Runs in background after Recall phase (shows loading screen)
-- Accepts reformulations and synonyms
-- Stricter on definitions
+- Accepts reformulations (complete ideas with explicit relations)
+- REJECTS keyword-only answers without relations
 - User's "important elements" (from import specificInstructions) MUST be present
 - Results used to highlight missing concepts in red in Loop phase
 
@@ -1138,10 +1177,10 @@ syntheses.specific_instructions TEXT -- User-defined important elements
 
 **`/src/components/Revision/`**:
 - `RevisionStudyPhase.jsx` - Phase 1: Timer with tabs (Synthèse, Flashcards, Quiz), X button
-- `RevisionPausePhase.jsx` - Phase 2: Forced break with timer, X button
+- `RevisionPausePhase.jsx` - Phase 2: Forced 2-minute break with timer, X button
 - `RevisionRecallPhase.jsx` - Phase 3: Textarea + voice recorder, no timer, X button
-- `RevisionLoopPhase.jsx` - Phase 4: Show missing concepts in red, auto-continues on timer end, X button
-- `RevisionCompletePhase.jsx` - Phase 5: Success with confetti
+- `RevisionLoopPhase.jsx` - Phase 4: Show missing concepts in red only (no orange), auto-continues on timer end, X button
+- `RevisionCompletePhase.jsx` - Phase 5: Shows percentage, progress bar, message based on score (no confetti)
 - `RevisionComparePhase.jsx` - **REMOVED** (comparison now runs in background)
 
 **`/src/hooks/useRevisionTimer.js`** - Real-time countdown timer based on phase_started_at timestamp
