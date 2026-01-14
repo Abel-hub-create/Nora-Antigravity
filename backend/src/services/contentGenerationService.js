@@ -124,52 +124,33 @@ Tu dois generer un JSON avec exactement cette structure :
 ===== REGLES DETAILLEES POUR LA SYNTHESE =====
 
 PRINCIPE FONDAMENTAL :
-La synthese doit etre COMPLETE. Meme si elle est plus courte que le cours original, elle doit contenir TOUTES les informations importantes pour que l'utilisateur puisse reviser uniquement avec la synthese, sans retourner au cours original. Si le cours est long, la synthese peut faire plusieurs pages - c'est normal et souhaite.
+La synthese doit etre COMPLETE. Elle doit contenir TOUTES les informations importantes pour que l'utilisateur puisse reviser uniquement avec la synthese, sans retourner au cours original.
 
-REGLES GENERALES (OBLIGATOIRES) :
-- La synthese est plus courte que le cours mais reste COMPLETE sur le fond
-- Chaque notion importante du cours doit etre presente et bien expliquee
-- Le langage doit etre : simple, familier, clair, sans jargon inutile
-- La synthese doit rester : precise, rigoureuse, comprehensible par un collegien ou lyceen
-- Aucun ajout d'information exterieure au cours
+LANGAGE (TRES IMPORTANT) :
+- Utilise des MOTS SIMPLES, comme si tu expliquais a un ami
+- Evite le jargon technique quand un mot simple existe
+- Phrases courtes et claires
+- Ton accessible, pas academique
 
 STRUCTURE DE LA SYNTHESE :
 
-1. TITRE
-   - Clair et representatif du contenu
+1. DEFINITIONS (seulement si le cours en contient)
+   - Section "## Definitions" avec toutes les definitions du cours
+   - Si le cours n'a PAS de definitions, ne cree PAS cette section
+   - Format : **Terme** : explication simple
 
-2. DEFINITIONS (SEULEMENT si le cours contient des definitions)
-   - Section "## Definitions" avec TOUTES les definitions du cours
-   - Chaque definition doit etre claire et complete
-   - Si le cours ne contient AUCUNE definition, ne PAS creer cette section
-   - Format : **Terme** : definition complete
+2. CONTENU PRINCIPAL
+   - Organise le contenu avec des sections ## adaptees au sujet
+   - Explique chaque notion importante de maniere complete
+   - Quand c'est utile, fais des liens entre les notions (sans creer de section dediee)
+   - Pour les concepts difficiles, ajoute une analogie ou comparaison simple pour aider a comprendre (integree dans le texte, pas dans une section separee)
 
-3. POINTS CLES DU COURS
-   - Section "## Points cles" ou titre adapte au contenu
-   - Extraire et expliquer TOUTES les idees importantes
-   - Respecter l'ordre logique du cours
-   - Chaque point doit etre suffisamment developpe pour etre compris seul
-   - Ne pas sacrifier la clarte pour la brievete
-
-4. LIENS ENTRE LES NOTIONS
-   - Faire des liens explicites entre les differentes notions quand c'est pertinent
-   - Expliquer les relations de cause a effet
-   - Montrer comment les concepts s'articulent entre eux
-   - Utiliser des phrases comme "Cela s'explique par...", "Ce qui entraine...", "A l'inverse de..."
-
-5. ANALOGIES ET METAPHORES (pour les notions complexes)
-   - Pour chaque notion difficile, proposer une analogie simple du quotidien
-   - L'analogie doit aider a visualiser ou comprendre intuitivement le concept
-   - Format suggere : "Pour comprendre simplement : [analogie]" ou "C'est comme si..."
-   - L'analogie complete l'explication, elle ne la remplace pas
-
-FORMAT DE LA SYNTHESE (TRES IMPORTANT) :
-- Utilise des titres clairs avec ## pour les sections principales
-- REDIGE DE VRAIES PHRASES EN PARAGRAPHES, pas uniquement des tirets
-- Les bullet points (- item) sont autorises pour les listes, mais accompagnes d'explications
-- La synthese PEUT et DOIT faire plusieurs pages si le cours est long
-- Objectif : l'utilisateur doit pouvoir reexpliquer TOUT le cours avec la synthese seule
-- Ne jamais tronquer ou simplifier a l'exces : une synthese incomplete est inutile
+STYLE D'ECRITURE :
+- Redige de vraies phrases en paragraphes
+- Les bullet points sont autorises pour les listes
+- Integre naturellement des liens entre concepts quand ca aide ("ce qui explique...", "contrairement a...", "c'est lie a...")
+- Pour les notions complexes, utilise des comparaisons simples ("c'est comme...", "imagine que...")
+- La synthese peut etre longue si necessaire - ne tronque jamais le contenu important
 
 ===== REGLES POUR FLASHCARDS ET QUIZ =====
 

@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Layers, Brain, Calendar, Trash2, Loader2, AlertCircle, BookOpen, Award } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ArrowLeft, Layers, Brain, Calendar, Trash2, Loader2, AlertCircle, BookOpen, Award, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import * as syntheseService from '../services/syntheseService';
 import useActiveTimer from '../hooks/useActiveTimer';
+
+// Nombre de caractères par page pour la pagination
+const CHARS_PER_PAGE = 2500;
 
 const StudyDetail = () => {
     const { t, i18n } = useTranslation();
@@ -16,6 +19,36 @@ const StudyDetail = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [currentPage, setCurrentPage] = useState(0);
+
+    // Diviser la synthèse en pages
+    const summaryPages = useMemo(() => {
+        if (!synthese?.summary_content) return [];
+        const content = synthese.summary_content;
+        if (content.length <= CHARS_PER_PAGE) return [content];
+
+        const pages = [];
+        let start = 0;
+        while (start < content.length) {
+            let end = start + CHARS_PER_PAGE;
+            // Chercher la fin de paragraphe ou de phrase la plus proche
+            if (end < content.length) {
+                const paragraphEnd = content.lastIndexOf('\n\n', end);
+                const sentenceEnd = content.lastIndexOf('. ', end);
+                if (paragraphEnd > start + CHARS_PER_PAGE * 0.7) {
+                    end = paragraphEnd + 2;
+                } else if (sentenceEnd > start + CHARS_PER_PAGE * 0.7) {
+                    end = sentenceEnd + 2;
+                }
+            }
+            pages.push(content.slice(start, end).trim());
+            start = end;
+        }
+        return pages;
+    }, [synthese?.summary_content]);
+
+    const totalPages = summaryPages.length;
+    const hasMultiplePages = totalPages > 1;
 
     useEffect(() => {
         const loadSynthese = async () => {
@@ -160,10 +193,57 @@ const StudyDetail = () => {
                 transition={{ delay: 0.1 }}
                 className="bg-surface rounded-2xl border border-white/5 p-5 mb-6 relative"
             >
-                <h2 className="font-semibold text-text-main mb-3">{t('studyDetail.summary')}</h2>
-                <div className="text-text-muted text-sm leading-relaxed whitespace-pre-wrap">
-                    {synthese.summary_content}
+                <div className="flex items-center justify-between mb-3">
+                    <h2 className="font-semibold text-text-main">{t('studyDetail.summary')}</h2>
+                    {hasMultiplePages && (
+                        <span className="text-xs text-text-muted">
+                            {currentPage + 1} / {totalPages}
+                        </span>
+                    )}
                 </div>
+
+                <div className="relative">
+                    {/* Bouton gauche */}
+                    {hasMultiplePages && currentPage > 0 && (
+                        <button
+                            onClick={() => setCurrentPage(p => p - 1)}
+                            className="absolute -left-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-primary/20 hover:bg-primary/30 rounded-full flex items-center justify-center text-primary transition-colors z-10"
+                        >
+                            <ChevronLeft size={20} />
+                        </button>
+                    )}
+
+                    {/* Contenu de la synthèse */}
+                    <div className="text-text-muted text-sm leading-relaxed whitespace-pre-wrap px-2">
+                        {summaryPages[currentPage] || synthese.summary_content}
+                    </div>
+
+                    {/* Bouton droite */}
+                    {hasMultiplePages && currentPage < totalPages - 1 && (
+                        <button
+                            onClick={() => setCurrentPage(p => p + 1)}
+                            className="absolute -right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-primary/20 hover:bg-primary/30 rounded-full flex items-center justify-center text-primary transition-colors z-10"
+                        >
+                            <ChevronRight size={20} />
+                        </button>
+                    )}
+                </div>
+
+                {/* Indicateurs de page */}
+                {hasMultiplePages && (
+                    <div className="flex justify-center gap-1.5 mt-4">
+                        {summaryPages.map((_, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => setCurrentPage(idx)}
+                                className={`w-2 h-2 rounded-full transition-colors ${
+                                    idx === currentPage ? 'bg-primary' : 'bg-white/20 hover:bg-white/30'
+                                }`}
+                            />
+                        ))}
+                    </div>
+                )}
+
                 {/* Badge maîtrisée en bas à gauche */}
                 {synthese.mastery_score === 100 && (
                     <div className="absolute bottom-3 left-3">
