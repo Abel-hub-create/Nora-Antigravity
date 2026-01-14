@@ -151,7 +151,7 @@ const Import = () => {
                         </div>
 
                         {/* Content */}
-                        <div className="flex-1 p-6 flex flex-col">
+                        <div className="flex-1 p-6 pb-28 flex flex-col">
                             <p className="text-text-main text-center mb-8">
                                 {t('import.specificPrompt.question')}
                             </p>
