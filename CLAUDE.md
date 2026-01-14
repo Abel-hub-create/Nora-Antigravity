@@ -744,13 +744,22 @@ Centralized educational content generation with the Nora personality.
 - Coherent output: summary, flashcards, and quiz are linked
 
 **Summary Generation Rules**:
-- Vraie synthese structuree (pas ultra-court, pas reformulation longue)
-- Plus courte que l'original mais assez developpee pour reviser
-- Conserve: notions importantes, definitions cles, regles, mecanismes, liens logiques
-- Supprime: exemples secondaires, anecdotes, repetitions
-- Format obligatoire: titres clairs (## Titre), bullet points, paragraphes courts, une idee par ligne
-- Chaque idee importante expliquee en 1-2 phrases max
-- Objectif: relire et comprendre sans retourner au texte original
+- Synthese COMPLETE: doit contenir toutes les informations importantes
+- Mots simples, comme si on parle a un ami (pas de jargon academique)
+- Section Definitions uniquement si le cours en contient
+- Liens entre notions integres naturellement dans le texte (pas de section dediee)
+- Analogies pour les concepts difficiles, integrees dans le texte
+- Peut faire plusieurs pages si le cours est long
+- Format: titres clairs (## Titre), paragraphes, bullet points avec explications
+- Objectif: l'utilisateur peut reexpliquer tout le cours avec la synthese seule
+- MAX_TOKENS: 10000 (permet des syntheses longues)
+
+**Summary Pagination** (Frontend):
+- Si synthese > 2500 caracteres, divisee en pages
+- Boutons fleches gauche/droite pour naviguer
+- Points indicateurs cliquables en bas
+- Numero de page affiche en haut (ex: 1/3)
+- Coupe intelligente aux fins de paragraphes ou phrases
 
 **Output Structure**:
 ```javascript
@@ -1049,8 +1058,11 @@ The revision program follows 5 phases with **8 total attempts**:
 | 1. Study | 10 min | Review synthese, flashcards, quiz (3 tabs) |
 | 2. Pause | 2 min | Forced break with countdown timer |
 | 3. Recall | No limit | Write or dictate from memory |
-| 4. Loop | 2 min, Max 8x | Re-read missing concepts (highlighted in red), auto-continues when timer ends |
-| 5. Complete | - | Shows percentage, progress bar, and message based on score |
+| 4. Loop | 1 min, Max 8x | Re-read missing concepts (highlighted in red), auto-continues when timer ends |
+| 5. Loop Pause | 2 min | Break between loop and next recall attempt |
+| 6. Complete | - | Shows percentage, progress bar, and message based on score |
+
+**Flow**: Study → Pause → Recall → Loop → Loop Pause → Recall → Loop → ... → Complete
 
 ### Evaluation Rules
 
