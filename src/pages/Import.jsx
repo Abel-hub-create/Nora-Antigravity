@@ -202,7 +202,7 @@ const Import = () => {
                                         value={specificInstructions}
                                         onChange={(e) => setSpecificInstructions(e.target.value)}
                                         placeholder={t('import.specificPrompt.instructionsPlaceholder')}
-                                        className="h-48 bg-surface text-text-main rounded-xl p-4 resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder:text-text-muted/50"
+                                        className="h-70 bg-surface text-text-main rounded-xl p-4 resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder:text-text-muted/50"
                                         autoFocus
                                     />
 
