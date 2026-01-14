@@ -191,7 +191,7 @@ const StudyDetail = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-surface rounded-2xl border border-white/5 p-5 mb-6 relative"
+                className="bg-surface rounded-2xl border border-white/5 p-5 mb-6 relative overflow-visible"
             >
                 <div className="flex items-center justify-between mb-3">
                     <h2 className="font-semibold text-text-main">{t('studyDetail.summary')}</h2>
@@ -202,47 +202,56 @@ const StudyDetail = () => {
                     )}
                 </div>
 
-                <div className="relative">
-                    {/* Bouton gauche */}
-                    {hasMultiplePages && currentPage > 0 && (
-                        <button
-                            onClick={() => setCurrentPage(p => p - 1)}
-                            className="absolute -left-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-primary/20 hover:bg-primary/30 rounded-full flex items-center justify-center text-primary transition-colors z-10"
-                        >
-                            <ChevronLeft size={20} />
-                        </button>
-                    )}
-
+                <div className="relative overflow-visible">
                     {/* Contenu de la synthèse */}
-                    <div className="text-text-muted text-sm leading-relaxed whitespace-pre-wrap px-2">
+                    <div className="text-text-muted text-sm leading-relaxed whitespace-pre-wrap">
                         {summaryPages[currentPage] || synthese.summary_content}
                     </div>
 
-                    {/* Bouton droite */}
-                    {hasMultiplePages && currentPage < totalPages - 1 && (
-                        <button
-                            onClick={() => setCurrentPage(p => p + 1)}
-                            className="absolute -right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-primary/20 hover:bg-primary/30 rounded-full flex items-center justify-center text-primary transition-colors z-10"
-                        >
-                            <ChevronRight size={20} />
-                        </button>
+                    {/* Boutons de navigation */}
+                    {hasMultiplePages && (
+                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/10">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                                disabled={currentPage === 0}
+                                className={`flex items-center gap-1 px-3 py-2 rounded-lg transition-colors ${
+                                    currentPage === 0
+                                        ? 'text-text-muted/30 cursor-not-allowed'
+                                        : 'text-primary bg-primary/10 hover:bg-primary/20'
+                                }`}
+                            >
+                                <ChevronLeft size={18} />
+                                <span className="text-sm">{t('common.previous')}</span>
+                            </button>
+
+                            {/* Indicateurs de page */}
+                            <div className="flex gap-1.5">
+                                {summaryPages.map((_, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => setCurrentPage(idx)}
+                                        className={`w-2 h-2 rounded-full transition-colors ${
+                                            idx === currentPage ? 'bg-primary' : 'bg-white/20 hover:bg-white/40'
+                                        }`}
+                                    />
+                                ))}
+                            </div>
+
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                                disabled={currentPage === totalPages - 1}
+                                className={`flex items-center gap-1 px-3 py-2 rounded-lg transition-colors ${
+                                    currentPage === totalPages - 1
+                                        ? 'text-text-muted/30 cursor-not-allowed'
+                                        : 'text-primary bg-primary/10 hover:bg-primary/20'
+                                }`}
+                            >
+                                <span className="text-sm">{t('common.next')}</span>
+                                <ChevronRight size={18} />
+                            </button>
+                        </div>
                     )}
                 </div>
-
-                {/* Indicateurs de page */}
-                {hasMultiplePages && (
-                    <div className="flex justify-center gap-1.5 mt-4">
-                        {summaryPages.map((_, idx) => (
-                            <button
-                                key={idx}
-                                onClick={() => setCurrentPage(idx)}
-                                className={`w-2 h-2 rounded-full transition-colors ${
-                                    idx === currentPage ? 'bg-primary' : 'bg-white/20 hover:bg-white/30'
-                                }`}
-                            />
-                        ))}
-                    </div>
-                )}
 
                 {/* Badge maîtrisée en bas à gauche */}
                 {synthese.mastery_score === 100 && (

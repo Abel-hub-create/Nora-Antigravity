@@ -123,34 +123,38 @@ Tu dois generer un JSON avec exactement cette structure :
 
 ===== REGLES DETAILLEES POUR LA SYNTHESE =====
 
-PRINCIPE FONDAMENTAL :
-La synthese doit etre COMPLETE. Elle doit contenir TOUTES les informations importantes pour que l'utilisateur puisse reviser uniquement avec la synthese, sans retourner au cours original.
+OBJECTIF : Creer une synthese COMPLETE et STRUCTUREE. L'utilisateur doit pouvoir reviser UNIQUEMENT avec cette synthese, sans retourner au cours original. Si le cours est long, la synthese sera longue aussi.
 
-LANGAGE (TRES IMPORTANT) :
-- Utilise des MOTS SIMPLES, comme si tu expliquais a un ami
-- Evite le jargon technique quand un mot simple existe
-- Phrases courtes et claires
-- Ton accessible, pas academique
+LANGAGE :
+- Mots SIMPLES (comme si tu expliques a un ami)
+- Phrases claires et accessibles
+- Pas de jargon inutile
 
-STRUCTURE DE LA SYNTHESE :
+STRUCTURE OBLIGATOIRE :
 
-1. DEFINITIONS (seulement si le cours en contient)
-   - Section "## Definitions" avec toutes les definitions du cours
-   - Si le cours n'a PAS de definitions, ne cree PAS cette section
-   - Format : **Terme** : explication simple
+1. SECTION DEFINITIONS (## Definitions)
+   - UNIQUEMENT si le cours contient des definitions explicites
+   - Si le cours n'a AUCUNE definition, NE CREE PAS cette section
+   - Format: **Terme** : definition claire et simple
+   - Liste TOUTES les definitions du cours
 
-2. CONTENU PRINCIPAL
-   - Organise le contenu avec des sections ## adaptees au sujet
-   - Explique chaque notion importante de maniere complete
-   - Quand c'est utile, fais des liens entre les notions (sans creer de section dediee)
-   - Pour les concepts difficiles, ajoute une analogie ou comparaison simple pour aider a comprendre (integree dans le texte, pas dans une section separee)
+2. SECTIONS PAR GRANDES NOTIONS
+   - Cree une section ## pour CHAQUE grande notion/theme du cours
+   - Le titre de section doit etre clair et representatif
+   - Chaque section doit etre COMPLETE : explique la notion en detail
+   - Ne saute aucune information importante
 
-STYLE D'ECRITURE :
-- Redige de vraies phrases en paragraphes
-- Les bullet points sont autorises pour les listes
-- Integre naturellement des liens entre concepts quand ca aide ("ce qui explique...", "contrairement a...", "c'est lie a...")
-- Pour les notions complexes, utilise des comparaisons simples ("c'est comme...", "imagine que...")
-- La synthese peut etre longue si necessaire - ne tronque jamais le contenu important
+3. DANS CHAQUE SECTION :
+   - Explique la notion de maniere complete avec des paragraphes
+   - Quand c'est pertinent, fais des LIENS avec d'autres notions ("ce qui est lie a...", "contrairement a...", "cela s'explique par...")
+   - Pour les concepts DIFFICILES, ajoute une ANALOGIE simple ("c'est comme...", "imagine que...")
+   - Les analogies et liens sont integres naturellement dans le texte, pas dans des sections separees
+
+FORMAT :
+- Utilise ## pour les titres de sections
+- Redige de vrais paragraphes (pas juste des listes)
+- Les bullet points sont OK pour les enumerations, mais avec des explications
+- La synthese peut faire PLUSIEURS PAGES si necessaire - ne reduis JAMAIS le contenu
 
 ===== REGLES POUR FLASHCARDS ET QUIZ =====
 
