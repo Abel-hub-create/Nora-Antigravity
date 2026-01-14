@@ -146,6 +146,7 @@
     "moveToFolder": "Déplacer dans un dossier",
     "count": "{{count}} synthèse",
     "countPlural": "{{count}} synthèses",
+    "mastered": "Maîtrisée",
     "noResults": "Aucun résultat",
     "tryOtherKeywords": "Essayez avec d'autres mots-clés",
     "importContent": "Importez du contenu pour créer votre première synthèse"
@@ -240,6 +241,7 @@
       "original": "Synthèse originale",
       "understood": "Concepts compris",
       "missing": "À revoir",
+      "retained": "Retenu",
       "important": "Important",
       "score": "Score : {{score}}%",
       "error": "Erreur lors de l'analyse. Réessaie.",

@@ -9,11 +9,14 @@ const LOOP_DURATION = 15; // 15 seconds (testing)
 
 /**
  * RevisionLoopPhase - Phase 5
- * Shows missing concepts highlighted within the original synthese
- * with a 5-minute timer for review
+ * Shows concepts highlighted within the original synthese:
+ * - GREEN for understood/retained concepts
+ * - RED for missing/not retained concepts
+ * Timer for review (auto-continues when timer ends)
  */
 const RevisionLoopPhase = ({
     missingConcepts,
+    understoodConcepts = [],
     iteration,
     originalSummary,
     phaseStartedAt,
@@ -38,54 +41,52 @@ const RevisionLoopPhase = ({
         true
     );
 
-    // Highlight missing concepts in the summary
-    const getHighlightedSummary = () => {
-        if (!originalSummary || !missingConcepts || missingConcepts.length === 0) {
-            return originalSummary;
-        }
-
-        let highlighted = originalSummary;
-
-        // Sort by length (longest first) to avoid partial replacements
-        const sortedConcepts = [...missingConcepts].sort(
-            (a, b) => (b.originalText?.length || 0) - (a.originalText?.length || 0)
-        );
-
-        // Create a map to track highlighted sections
-        const highlights = [];
-
-        sortedConcepts.forEach((concept) => {
-            if (concept.originalText) {
-                // Find the text in the summary (case-insensitive)
-                const regex = new RegExp(`(${escapeRegExp(concept.originalText)})`, 'gi');
-                const matches = highlighted.match(regex);
-                if (matches) {
-                    highlights.push({
-                        text: concept.originalText,
-                        concept: concept.concept,
-                        importance: concept.importance
-                    });
-                }
-            }
-        });
-
-        return { summary: originalSummary, highlights };
-    };
-
     // Escape special regex characters
     const escapeRegExp = (string) => {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     };
 
-    const { summary, highlights = [] } = getHighlightedSummary() || { summary: originalSummary };
+    // Build highlights from both missing (red) and understood (green) concepts
+    const getHighlights = () => {
+        const highlights = [];
 
-    // Render summary with highlights
-    const renderHighlightedSummary = () => {
-        if (!highlights.length) {
-            return <span>{summary}</span>;
+        // Add missing concepts (red)
+        if (missingConcepts && missingConcepts.length > 0) {
+            missingConcepts.forEach((concept) => {
+                if (concept.originalText) {
+                    highlights.push({
+                        text: concept.originalText,
+                        concept: concept.concept,
+                        type: 'missing' // red
+                    });
+                }
+            });
         }
 
-        let result = summary;
+        // Add understood concepts (green)
+        if (understoodConcepts && understoodConcepts.length > 0) {
+            understoodConcepts.forEach((concept) => {
+                if (concept.originalText) {
+                    highlights.push({
+                        text: concept.originalText,
+                        concept: concept.concept,
+                        type: 'understood' // green
+                    });
+                }
+            });
+        }
+
+        return highlights;
+    };
+
+    const highlights = getHighlights();
+
+    // Render summary with highlights (green for understood, red for missing)
+    const renderHighlightedSummary = () => {
+        if (!highlights.length) {
+            return <span>{originalSummary}</span>;
+        }
+
         let parts = [];
         let lastIndex = 0;
 
@@ -94,13 +95,13 @@ const RevisionLoopPhase = ({
         highlights.forEach((h) => {
             const regex = new RegExp(escapeRegExp(h.text), 'gi');
             let match;
-            while ((match = regex.exec(summary)) !== null) {
+            while ((match = regex.exec(originalSummary)) !== null) {
                 occurrences.push({
                     start: match.index,
                     end: match.index + match[0].length,
                     text: match[0],
                     concept: h.concept,
-                    importance: h.importance
+                    type: h.type
                 });
             }
         });
@@ -108,7 +109,7 @@ const RevisionLoopPhase = ({
         // Sort by position
         occurrences.sort((a, b) => a.start - b.start);
 
-        // Remove overlapping occurrences
+        // Remove overlapping occurrences (keep first one found)
         const filtered = [];
         let lastEnd = 0;
         occurrences.forEach((occ) => {
@@ -123,14 +124,18 @@ const RevisionLoopPhase = ({
             // Add text before this highlight
             if (occ.start > lastIndex) {
                 parts.push(
-                    <span key={`text-${idx}`}>{summary.slice(lastIndex, occ.start)}</span>
+                    <span key={`text-${idx}`}>{originalSummary.slice(lastIndex, occ.start)}</span>
                 );
             }
-            // Add highlighted text (all in red - no intermediate state)
+            // Add highlighted text with appropriate color
+            const isUnderstood = occ.type === 'understood';
             parts.push(
                 <mark
                     key={`highlight-${idx}`}
-                    className="bg-error/30 text-error px-1 rounded"
+                    className={isUnderstood
+                        ? "bg-success/30 text-success px-1 rounded"
+                        : "bg-error/30 text-error px-1 rounded"
+                    }
                     title={occ.concept}
                 >
                     {occ.text}
@@ -140,8 +145,8 @@ const RevisionLoopPhase = ({
         });
 
         // Add remaining text
-        if (lastIndex < summary.length) {
-            parts.push(<span key="text-end">{summary.slice(lastIndex)}</span>);
+        if (lastIndex < originalSummary.length) {
+            parts.push(<span key="text-end">{originalSummary.slice(lastIndex)}</span>);
         }
 
         return parts;
@@ -195,21 +200,45 @@ const RevisionLoopPhase = ({
                 </div>
             </motion.div>
 
-            {/* Missing Concepts Legend (all in red - only 2 states: retained or not) */}
-            <div className="flex flex-wrap gap-2 mb-4">
-                <span className="text-xs text-text-muted">{t('revision.compare.missing')}:</span>
-                {missingConcepts.slice(0, 3).map((concept, idx) => (
-                    <span
-                        key={idx}
-                        className="text-xs px-2 py-0.5 rounded bg-error/20 text-error"
-                    >
-                        {concept.concept}
-                    </span>
-                ))}
-                {missingConcepts.length > 3 && (
-                    <span className="text-xs text-text-muted">
-                        +{missingConcepts.length - 3}
-                    </span>
+            {/* Concepts Legend - Green for retained, Red for missing */}
+            <div className="space-y-2 mb-4">
+                {/* Retained concepts (green) */}
+                {understoodConcepts.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                        <span className="text-xs text-text-muted">{t('revision.compare.retained')}:</span>
+                        {understoodConcepts.slice(0, 3).map((concept, idx) => (
+                            <span
+                                key={`understood-${idx}`}
+                                className="text-xs px-2 py-0.5 rounded bg-success/20 text-success"
+                            >
+                                {concept.concept}
+                            </span>
+                        ))}
+                        {understoodConcepts.length > 3 && (
+                            <span className="text-xs text-text-muted">
+                                +{understoodConcepts.length - 3}
+                            </span>
+                        )}
+                    </div>
+                )}
+                {/* Missing concepts (red) */}
+                {missingConcepts.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                        <span className="text-xs text-text-muted">{t('revision.compare.missing')}:</span>
+                        {missingConcepts.slice(0, 3).map((concept, idx) => (
+                            <span
+                                key={`missing-${idx}`}
+                                className="text-xs px-2 py-0.5 rounded bg-error/20 text-error"
+                            >
+                                {concept.concept}
+                            </span>
+                        ))}
+                        {missingConcepts.length > 3 && (
+                            <span className="text-xs text-text-muted">
+                                +{missingConcepts.length - 3}
+                            </span>
+                        )}
+                    </div>
                 )}
             </div>
 

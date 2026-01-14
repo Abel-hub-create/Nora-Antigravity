@@ -36,7 +36,7 @@ const RevisionRecallPhase = ({ iteration, onSubmit, onStop }) => {
                     <h1 className="text-lg font-bold text-text-main">{t('revision.phases.recall')}</h1>
                     {iteration > 1 && (
                         <p className="text-xs text-primary">
-                            {t('revision.phases.loopIteration', { current: iteration, max: 5 })}
+                            {t('revision.phases.loopIteration', { current: iteration, max: 8 })}
                         </p>
                     )}
                 </div>

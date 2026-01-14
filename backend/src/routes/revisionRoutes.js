@@ -4,6 +4,14 @@ import * as revisionRepo from '../services/revisionRepository.js';
 import * as revisionCompareService from '../services/revisionCompareService.js';
 import * as syntheseRepo from '../services/syntheseRepository.js';
 
+// Helper to calculate mastery score from session data
+const calculateMasteryScore = (session) => {
+    const understood = revisionRepo.safeJsonParse(session.understood_concepts) || [];
+    const missing = revisionRepo.safeJsonParse(session.missing_concepts) || [];
+    const total = understood.length + missing.length;
+    return total > 0 ? Math.round((understood.length / total) * 100) : 0;
+};
+
 const router = express.Router();
 
 // All routes require authentication
@@ -167,13 +175,21 @@ router.post('/:syntheseId/next-iteration', async (req, res, next) => {
 router.post('/:syntheseId/complete', async (req, res, next) => {
     try {
         const syntheseId = parseInt(req.params.syntheseId);
-        const result = await revisionRepo.completeSession(req.user.id, syntheseId);
 
-        if (!result) {
+        // Get session before completing to calculate mastery score
+        const session = await revisionRepo.getSession(req.user.id, syntheseId);
+        if (!session) {
             return res.status(404).json({ error: 'Aucune session active' });
         }
 
-        res.json(result);
+        // Calculate and save mastery score
+        const masteryScore = calculateMasteryScore(session);
+        await syntheseRepo.updateMasteryScore(syntheseId, req.user.id, masteryScore);
+
+        // Complete the session
+        const result = await revisionRepo.completeSession(req.user.id, syntheseId);
+
+        res.json({ ...result, masteryScore });
     } catch (error) {
         next(error);
     }

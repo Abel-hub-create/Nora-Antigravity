@@ -146,6 +146,7 @@
     "moveToFolder": "Move to folder",
     "count": "{{count}} summary",
     "countPlural": "{{count}} summaries",
+    "mastered": "Mastered",
     "noResults": "No results",
     "tryOtherKeywords": "Try other keywords",
     "importContent": "Import content to create your first summary"
@@ -240,6 +241,7 @@
       "original": "Original summary",
       "understood": "Understood",
       "missing": "To review",
+      "retained": "Retained",
       "important": "Important",
       "score": "Score: {{score}}%",
       "error": "Analysis error. Please try again.",

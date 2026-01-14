@@ -149,9 +149,17 @@ const StudyRevision = () => {
             const result = await revisionService.compare(id);
             setComparisonResult(result);
 
-            // Go directly to loop or complete based on results
-            if (!result.missingConcepts || result.missingConcepts.length === 0) {
-                updateSession({ phase: 'complete', phase_started_at: new Date().toISOString() });
+            // At iteration 8, go directly to complete (no more loop phase)
+            // Otherwise, go to loop if there are missing concepts
+            const isLastIteration = session.current_iteration >= 8;
+
+            if (isLastIteration || !result.missingConcepts || result.missingConcepts.length === 0) {
+                updateSession({
+                    phase: 'complete',
+                    phase_started_at: new Date().toISOString(),
+                    missing_concepts: result.missingConcepts,
+                    understood_concepts: result.understoodConcepts
+                });
             } else {
                 updateSession({
                     phase: 'loop',
@@ -164,7 +172,7 @@ const StudyRevision = () => {
             console.error('Error submitting recall:', err);
             setError(t('revision.compare.error'));
         }
-    }, [id, updateSession, t]);
+    }, [id, updateSession, t, session]);
 
     const handleLoopContinue = useCallback(async () => {
         try {
@@ -308,6 +316,7 @@ const StudyRevision = () => {
                 return (
                     <RevisionLoopPhase
                         missingConcepts={session.missing_concepts || comparisonResult?.missingConcepts || []}
+                        understoodConcepts={session.understood_concepts || comparisonResult?.understoodConcepts || []}
                         iteration={session.current_iteration}
                         originalSummary={synthese.summary_content}
                         phaseStartedAt={session.phase_started_at}

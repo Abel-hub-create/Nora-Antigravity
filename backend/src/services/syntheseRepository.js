@@ -15,7 +15,7 @@ export const findById = async (id, userId) => {
 };
 
 export const findAllByUser = async (userId, { search = '', limit = 50, offset = 0 } = {}) => {
-  let sql = `SELECT id, title, summary_content, source_type, created_at, updated_at
+  let sql = `SELECT id, title, summary_content, source_type, mastery_score, created_at, updated_at
              FROM syntheses WHERE user_id = ? AND is_archived = 0`;
   const params = [userId];
 
@@ -131,4 +131,10 @@ export const countByUser = async (userId) => {
   const sql = `SELECT COUNT(*) as count FROM syntheses WHERE user_id = ? AND is_archived = 0`;
   const result = await query(sql, [userId]);
   return result[0].count;
+};
+
+// Update mastery score after revision completion
+export const updateMasteryScore = async (syntheseId, userId, score) => {
+  const sql = `UPDATE syntheses SET mastery_score = ?, updated_at = NOW() WHERE id = ? AND user_id = ?`;
+  await query(sql, [score, syntheseId, userId]);
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, FileText, Calendar, ChevronRight, Pencil, Check, X, Loader2 } from 'lucide-react';
+import { Search, FileText, Calendar, ChevronRight, Pencil, Check, X, Loader2, Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -160,33 +160,45 @@ const Study = () => {
                             ) : (
                                 /* Normal View */
                                 <div
-                                    className="p-4 flex items-center gap-3 cursor-pointer active:bg-white/5 transition-colors"
+                                    className="p-4 cursor-pointer active:bg-white/5 transition-colors"
                                     onClick={() => navigate(`/study/${synthese.id}`)}
                                 >
-                                    {/* Content */}
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-semibold text-text-main truncate">
-                                            {synthese.title}
-                                        </h3>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <Calendar size={12} className="text-text-muted" />
-                                            <span className="text-xs text-text-muted">
-                                                {formatDate(synthese.created_at)}
-                                            </span>
+                                    <div className="flex items-center gap-3">
+                                        {/* Content */}
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-semibold text-text-main truncate">
+                                                {synthese.title}
+                                            </h3>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <Calendar size={12} className="text-text-muted" />
+                                                <span className="text-xs text-text-muted">
+                                                    {formatDate(synthese.created_at)}
+                                                </span>
+                                            </div>
                                         </div>
+
+                                        {/* Actions */}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                startEditing(synthese);
+                                            }}
+                                            className="p-2 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl transition-colors"
+                                        >
+                                            <Pencil size={18} />
+                                        </button>
+                                        <ChevronRight className="text-text-muted shrink-0" size={20} />
                                     </div>
 
-                                    {/* Actions */}
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            startEditing(synthese);
-                                        }}
-                                        className="p-2 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl transition-colors"
-                                    >
-                                        <Pencil size={18} />
-                                    </button>
-                                    <ChevronRight className="text-text-muted shrink-0" size={20} />
+                                    {/* Badge maîtrisée en bas à gauche */}
+                                    {synthese.mastery_score === 100 && (
+                                        <div className="mt-3 pt-3 border-t border-white/5">
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-success/20 text-success text-xs font-medium rounded-full">
+                                                <Award size={12} />
+                                                {t('study.mastered')}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
