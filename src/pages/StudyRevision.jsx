@@ -181,12 +181,13 @@ const StudyRevision = () => {
             if (result.completed) {
                 updateSession({ phase: 'complete', phase_started_at: new Date().toISOString() });
             } else {
+                // Go to loopPause (2 min break) before next recall
                 updateSession({
-                    phase: 'recall',
+                    phase: 'loopPause',
                     phase_started_at: new Date().toISOString(),
                     current_iteration: result.iteration,
                     user_recall: null,
-                    loop_time_remaining: 120 // Reset loop timer for next iteration (2 minutes)
+                    loop_time_remaining: 60 // Reset loop timer for next iteration (1 minute)
                 });
                 setComparisonResult(null);
             }
@@ -194,6 +195,10 @@ const StudyRevision = () => {
             console.error('Error moving to next iteration:', err);
         }
     }, [id, updateSession]);
+
+    const handleLoopPauseComplete = useCallback(() => {
+        updateSession({ phase: 'recall', phase_started_at: new Date().toISOString() });
+    }, [updateSession]);
 
     const handleComplete = useCallback(async () => {
         try {
@@ -321,6 +326,15 @@ const StudyRevision = () => {
                         originalSummary={synthese.summary_content}
                         phaseStartedAt={session.phase_started_at}
                         onContinue={handleLoopContinue}
+                        onStop={() => setShowStopConfirm(true)}
+                    />
+                );
+
+            case 'loopPause':
+                return (
+                    <RevisionPausePhase
+                        phaseStartedAt={session.phase_started_at}
+                        onComplete={handleLoopPauseComplete}
                         onStop={() => setShowStopConfirm(true)}
                     />
                 );
