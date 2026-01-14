@@ -12,7 +12,7 @@ const openai = new OpenAI({
 });
 
 const MODEL = 'gpt-4o-mini';
-const MAX_TOKENS = 6000;
+const MAX_TOKENS = 10000;
 
 /**
  * Detecte la langue dominante du contenu
@@ -123,45 +123,53 @@ Tu dois generer un JSON avec exactement cette structure :
 
 ===== REGLES DETAILLEES POUR LA SYNTHESE =====
 
+PRINCIPE FONDAMENTAL :
+La synthese doit etre COMPLETE. Meme si elle est plus courte que le cours original, elle doit contenir TOUTES les informations importantes pour que l'utilisateur puisse reviser uniquement avec la synthese, sans retourner au cours original. Si le cours est long, la synthese peut faire plusieurs pages - c'est normal et souhaite.
+
 REGLES GENERALES (OBLIGATOIRES) :
-- La synthese doit toujours etre plus courte que le cours original
-- Il n'y a aucune longueur minimale ou maximale, mais chaque phrase doit etre utile
+- La synthese est plus courte que le cours mais reste COMPLETE sur le fond
+- Chaque notion importante du cours doit etre presente et bien expliquee
 - Le langage doit etre : simple, familier, clair, sans jargon inutile
 - La synthese doit rester : precise, rigoureuse, comprehensible par un collegien ou lyceen
 - Aucun ajout d'information exterieure au cours
 
-STRUCTURE OBLIGATOIRE DE LA SYNTHESE :
+STRUCTURE DE LA SYNTHESE :
 
 1. TITRE
    - Clair et representatif du contenu
 
-2. DEFINITIONS
-   - Toutes les definitions importantes du cours
-   - Formulees simplement
-   - Une idee par definition
-   - Pas de paraphrase inutile
+2. DEFINITIONS (SEULEMENT si le cours contient des definitions)
+   - Section "## Definitions" avec TOUTES les definitions du cours
+   - Chaque definition doit etre claire et complete
+   - Si le cours ne contient AUCUNE definition, ne PAS creer cette section
+   - Format : **Terme** : definition complete
 
 3. POINTS CLES DU COURS
-   - Extraire les idees reellement importantes
-   - Respecter l'ordre logique du cours s'il existe
-   - Expliquer chaque point : clairement, precisement, mais toujours de maniere synthetique
-   - Eviter les details secondaires non essentiels
+   - Section "## Points cles" ou titre adapte au contenu
+   - Extraire et expliquer TOUTES les idees importantes
+   - Respecter l'ordre logique du cours
+   - Chaque point doit etre suffisamment developpe pour etre compris seul
+   - Ne pas sacrifier la clarte pour la brievete
 
-4. LIENS LOGIQUES ENTRE NOTIONS
-   - Ajouter des liens uniquement lorsque cela aide la comprehension
-   - Expliquer les relations de cause a effet, de comparaison ou d'opposition si importantes
-   - Ne pas forcer des liens inutiles
+4. LIENS ENTRE LES NOTIONS
+   - Faire des liens explicites entre les differentes notions quand c'est pertinent
+   - Expliquer les relations de cause a effet
+   - Montrer comment les concepts s'articulent entre eux
+   - Utiliser des phrases comme "Cela s'explique par...", "Ce qui entraine...", "A l'inverse de..."
 
-5. METAPHORES PEDAGOGIQUES (si pertinent)
-   - Utiliser des metaphores simples pour expliquer les notions complexes
-   - Les metaphores doivent aider a comprendre, rester courtes, ne jamais remplacer l'explication reelle
+5. ANALOGIES ET METAPHORES (pour les notions complexes)
+   - Pour chaque notion difficile, proposer une analogie simple du quotidien
+   - L'analogie doit aider a visualiser ou comprendre intuitivement le concept
+   - Format suggere : "Pour comprendre simplement : [analogie]" ou "C'est comme si..."
+   - L'analogie complete l'explication, elle ne la remplace pas
 
 FORMAT DE LA SYNTHESE (TRES IMPORTANT) :
-- Utilise des titres clairs avec ## pour les sections
+- Utilise des titres clairs avec ## pour les sections principales
 - REDIGE DE VRAIES PHRASES EN PARAGRAPHES, pas uniquement des tirets
-- Les bullet points (- item) sont autorises pour les listes, mais accompagnes d'explications en phrases completes
-- Une synthese peut faire plusieurs pages si le cours original est long
-- Objectif : permettre a l'utilisateur de reexpliquer le cours sans le relire
+- Les bullet points (- item) sont autorises pour les listes, mais accompagnes d'explications
+- La synthese PEUT et DOIT faire plusieurs pages si le cours est long
+- Objectif : l'utilisateur doit pouvoir reexpliquer TOUT le cours avec la synthese seule
+- Ne jamais tronquer ou simplifier a l'exces : une synthese incomplete est inutile
 
 ===== REGLES POUR FLASHCARDS ET QUIZ =====
 
