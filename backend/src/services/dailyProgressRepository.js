@@ -158,6 +158,12 @@ export const getFullDailyProgress = async (userId) => {
     }
   };
 
+  // Parse goals and reset completion status if not today
+  const parsedGoals = safeJsonParse(progress?.daily_goals, null);
+  const dailyGoals = parsedGoals
+    ? (isToday ? parsedGoals : parsedGoals.map(g => ({ ...g, completed: false })))
+    : null;
+
   return {
     dailyStats: isToday ? {
       date: new Date(progress.progress_date).toDateString(),
@@ -171,7 +177,7 @@ export const getFullDailyProgress = async (userId) => {
         allBonus: false
       })
     } : null,
-    dailyGoals: safeJsonParse(progress?.daily_goals, null),
+    dailyGoals: dailyGoals,
     dailyGoalsRewardClaimed: isToday ? progress.reward_claimed : false,
     studyHistory: history
   };

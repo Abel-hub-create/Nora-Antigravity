@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, Layers, Brain, Calendar, Trash2, Loader2, AlertCircle, BookOpen, Award, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Layers, Brain, Calendar, Trash2, Loader2, AlertCircle, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -252,16 +252,6 @@ const StudyDetail = () => {
                         </div>
                     )}
                 </div>
-
-                {/* Badge maîtrisée en bas à gauche */}
-                {synthese.mastery_score === 100 && (
-                    <div className="absolute bottom-3 left-3">
-                        <span className="flex items-center gap-1.5 px-3 py-1.5 bg-success/20 text-success text-xs font-medium rounded-full border border-success/30">
-                            <Award size={14} />
-                            {t('study.mastered')}
-                        </span>
-                    </div>
-                )}
             </motion.div>
 
             {/* Delete Button */}
