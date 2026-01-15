@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Layers, Brain, X, Clock, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
+import { BookOpen, Layers, Brain, X, Clock, CheckCircle, XCircle, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import confetti from 'canvas-confetti';
 import useRevisionTimer from '../../hooks/useRevisionTimer';
 import useActiveTimer from '../../hooks/useActiveTimer';
 
 const STUDY_DURATION = 600; // 10 minutes
+const CHARS_PER_PAGE = 2500; // Nombre de caractères par page pour la pagination
 
 const RevisionStudyPhase = ({ synthese, phaseStartedAt, onComplete, onStop }) => {
     const { t } = useTranslation();
@@ -18,6 +19,36 @@ const RevisionStudyPhase = ({ synthese, phaseStartedAt, onComplete, onStop }) =>
     const [selectedOption, setSelectedOption] = useState(null);
     const [quizScore, setQuizScore] = useState(0);
     const [showQuizResult, setShowQuizResult] = useState(false);
+    const [currentSummaryPage, setCurrentSummaryPage] = useState(0);
+
+    // Diviser la synthèse en pages
+    const summaryPages = useMemo(() => {
+        if (!synthese?.summary_content) return [];
+        const content = synthese.summary_content;
+        if (content.length <= CHARS_PER_PAGE) return [content];
+
+        const pages = [];
+        let start = 0;
+        while (start < content.length) {
+            let end = start + CHARS_PER_PAGE;
+            // Chercher la fin de paragraphe ou de phrase la plus proche
+            if (end < content.length) {
+                const paragraphEnd = content.lastIndexOf('\n\n', end);
+                const sentenceEnd = content.lastIndexOf('. ', end);
+                if (paragraphEnd > start + CHARS_PER_PAGE * 0.7) {
+                    end = paragraphEnd + 2;
+                } else if (sentenceEnd > start + CHARS_PER_PAGE * 0.7) {
+                    end = sentenceEnd + 2;
+                }
+            }
+            pages.push(content.slice(start, end).trim());
+            start = end;
+        }
+        return pages;
+    }, [synthese?.summary_content]);
+
+    const totalSummaryPages = summaryPages.length;
+    const hasMultipleSummaryPages = totalSummaryPages > 1;
 
     // Timer hook - calculates remaining time from phase start timestamp
     const { formattedTime, timeRemaining } = useRevisionTimer(
@@ -173,9 +204,61 @@ const RevisionStudyPhase = ({ synthese, phaseStartedAt, onComplete, onStop }) =>
                         animate={{ opacity: 1 }}
                         className="bg-surface rounded-2xl border border-white/5 p-4"
                     >
+                        {hasMultipleSummaryPages && (
+                            <div className="flex justify-end mb-2">
+                                <span className="text-xs text-text-muted">
+                                    {currentSummaryPage + 1} / {totalSummaryPages}
+                                </span>
+                            </div>
+                        )}
+
                         <div className="text-text-muted text-sm leading-relaxed whitespace-pre-wrap">
-                            {synthese.summary_content}
+                            {summaryPages[currentSummaryPage] || synthese.summary_content}
                         </div>
+
+                        {/* Boutons de navigation */}
+                        {hasMultipleSummaryPages && (
+                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/10">
+                                <button
+                                    onClick={() => setCurrentSummaryPage(p => Math.max(0, p - 1))}
+                                    disabled={currentSummaryPage === 0}
+                                    className={`flex items-center gap-1 px-3 py-2 rounded-lg transition-colors ${
+                                        currentSummaryPage === 0
+                                            ? 'text-text-muted/30 cursor-not-allowed'
+                                            : 'text-primary bg-primary/10 hover:bg-primary/20'
+                                    }`}
+                                >
+                                    <ChevronLeft size={18} />
+                                    <span className="text-sm">{t('common.previous')}</span>
+                                </button>
+
+                                {/* Indicateurs de page */}
+                                <div className="flex gap-1.5">
+                                    {summaryPages.map((_, idx) => (
+                                        <button
+                                            key={idx}
+                                            onClick={() => setCurrentSummaryPage(idx)}
+                                            className={`w-2 h-2 rounded-full transition-colors ${
+                                                idx === currentSummaryPage ? 'bg-primary' : 'bg-white/20 hover:bg-white/40'
+                                            }`}
+                                        />
+                                    ))}
+                                </div>
+
+                                <button
+                                    onClick={() => setCurrentSummaryPage(p => Math.min(totalSummaryPages - 1, p + 1))}
+                                    disabled={currentSummaryPage === totalSummaryPages - 1}
+                                    className={`flex items-center gap-1 px-3 py-2 rounded-lg transition-colors ${
+                                        currentSummaryPage === totalSummaryPages - 1
+                                            ? 'text-text-muted/30 cursor-not-allowed'
+                                            : 'text-primary bg-primary/10 hover:bg-primary/20'
+                                    }`}
+                                >
+                                    <span className="text-sm">{t('common.next')}</span>
+                                    <ChevronRight size={18} />
+                                </button>
+                            </div>
+                        )}
                     </motion.div>
                 )}
 
