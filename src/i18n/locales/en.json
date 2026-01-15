@@ -226,7 +226,7 @@
       "compareLoading": "Analyzing...",
       "loop": "Review Gaps",
       "loopMessage": "Here are the elements you haven't mastered yet. Review them in the summary below.",
-      "loopReviewRed": "Carefully review everything highlighted in red.",
+      "loopReviewRed": "Green = retained. Red = needs review. Focus on the red parts.",
       "loopContinue": "I've reviewed, start recall",
       "analyzing": "Analyzing...",
       "loopIteration": "Attempt {{current}}/{{max}}",

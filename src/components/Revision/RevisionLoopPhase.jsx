@@ -46,107 +46,87 @@ const RevisionLoopPhase = ({
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     };
 
-    // Build highlights from both missing (red) and understood (green) concepts
-    const getHighlights = () => {
-        const highlights = [];
-
-        // Add missing concepts (red)
-        if (missingConcepts && missingConcepts.length > 0) {
-            missingConcepts.forEach((concept) => {
-                if (concept.originalText) {
-                    highlights.push({
-                        text: concept.originalText,
-                        concept: concept.concept,
-                        type: 'missing' // red
-                    });
-                }
-            });
-        }
-
-        // Add understood concepts (green)
-        if (understoodConcepts && understoodConcepts.length > 0) {
-            understoodConcepts.forEach((concept) => {
-                if (concept.originalText) {
-                    highlights.push({
-                        text: concept.originalText,
-                        concept: concept.concept,
-                        type: 'understood' // green
-                    });
-                }
-            });
-        }
-
-        return highlights;
-    };
-
-    const highlights = getHighlights();
-
-    // Render summary with highlights (green for understood, red for missing)
+    // Render summary with ALL text colored: green for understood, RED for everything else
+    // Principle: anything not explicitly recognized as understood is considered not retained
     const renderHighlightedSummary = () => {
-        if (!highlights.length) {
-            return <span>{originalSummary}</span>;
+        // If no understood concepts, everything is red
+        if (!understoodConcepts || understoodConcepts.length === 0) {
+            return (
+                <mark className="bg-error/30 text-error">
+                    {originalSummary}
+                </mark>
+            );
         }
 
         let parts = [];
         let lastIndex = 0;
 
-        // Find all occurrences and their positions
-        const occurrences = [];
-        highlights.forEach((h) => {
-            const regex = new RegExp(escapeRegExp(h.text), 'gi');
-            let match;
-            while ((match = regex.exec(originalSummary)) !== null) {
-                occurrences.push({
-                    start: match.index,
-                    end: match.index + match[0].length,
-                    text: match[0],
-                    concept: h.concept,
-                    type: h.type
-                });
+        // Find all understood concept positions (only these will be green)
+        const greenZones = [];
+        understoodConcepts.forEach((concept) => {
+            if (concept.originalText) {
+                const regex = new RegExp(escapeRegExp(concept.originalText), 'gi');
+                let match;
+                while ((match = regex.exec(originalSummary)) !== null) {
+                    greenZones.push({
+                        start: match.index,
+                        end: match.index + match[0].length,
+                        text: match[0],
+                        concept: concept.concept
+                    });
+                }
             }
         });
 
         // Sort by position
-        occurrences.sort((a, b) => a.start - b.start);
+        greenZones.sort((a, b) => a.start - b.start);
 
-        // Remove overlapping occurrences (keep first one found)
+        // Remove overlapping zones (keep first one found)
         const filtered = [];
         let lastEnd = 0;
-        occurrences.forEach((occ) => {
-            if (occ.start >= lastEnd) {
-                filtered.push(occ);
-                lastEnd = occ.end;
+        greenZones.forEach((zone) => {
+            if (zone.start >= lastEnd) {
+                filtered.push(zone);
+                lastEnd = zone.end;
             }
         });
 
-        // Build parts
-        filtered.forEach((occ, idx) => {
-            // Add text before this highlight
-            if (occ.start > lastIndex) {
+        // Build parts: GREEN for understood zones, RED for everything else
+        filtered.forEach((zone, idx) => {
+            // Add text BEFORE this green zone as RED
+            if (zone.start > lastIndex) {
                 parts.push(
-                    <span key={`text-${idx}`}>{originalSummary.slice(lastIndex, occ.start)}</span>
+                    <mark
+                        key={`red-${idx}`}
+                        className="bg-error/30 text-error"
+                    >
+                        {originalSummary.slice(lastIndex, zone.start)}
+                    </mark>
                 );
             }
-            // Add highlighted text with appropriate color
-            const isUnderstood = occ.type === 'understood';
+            // Add the understood zone as GREEN
             parts.push(
                 <mark
-                    key={`highlight-${idx}`}
-                    className={isUnderstood
-                        ? "bg-success/30 text-success px-1 rounded"
-                        : "bg-error/30 text-error px-1 rounded"
-                    }
-                    title={occ.concept}
+                    key={`green-${idx}`}
+                    className="bg-success/30 text-success"
+                    title={zone.concept}
                 >
-                    {occ.text}
+                    {zone.text}
                 </mark>
             );
-            lastIndex = occ.end;
+            lastIndex = zone.end;
         });
 
-        // Add remaining text
+        // Add remaining text as RED
         if (lastIndex < originalSummary.length) {
-            parts.push(<span key="text-end">{originalSummary.slice(lastIndex)}</span>);
+            parts.push(
+                <mark
+                    key="red-end"
+                    className="bg-error/30 text-error"
+                >
+                    {originalSummary.slice(lastIndex)}
+                </mark>
+            );
         }
 
         return parts;

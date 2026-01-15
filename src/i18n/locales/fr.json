@@ -226,7 +226,7 @@
       "compareLoading": "Analyse en cours...",
       "loop": "Révision des lacunes",
       "loopMessage": "Voici les éléments que tu n'as pas encore maîtrisés. Relis-les dans la synthèse ci-dessous.",
-      "loopReviewRed": "Relis attentivement tout ce qui est surligné en rouge.",
+      "loopReviewRed": "Vert = acquis. Rouge = à revoir. Concentre-toi sur les parties en rouge.",
       "loopContinue": "J'ai relu, passer au rappel",
       "analyzing": "Analyse en cours...",
       "loopIteration": "Tentative {{current}}/{{max}}",
