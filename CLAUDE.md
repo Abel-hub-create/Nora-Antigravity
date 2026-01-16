@@ -251,9 +251,10 @@ Comprehensive daily study time tracking with XP rewards. Data persists in backen
 3. **Daily Reset**: At midnight (or when new day detected):
    - All time counters reset to 0
    - XP earning opportunities reset
-   - Goals completion status resets
+   - Goals completion status resets (both frontend AND backend)
    - Total XP/levels/eggs NEVER reset
    - Previous day's total study time saved to history (for average calculation)
+   - **Important**: Backend `getFullDailyProgress()` resets `completed: false` on goals when loading data for a new day
 
 ### State Structure (`UserContext.jsx`)
 
@@ -562,6 +563,13 @@ Syntheses display their full creation date (not relative time like "Il y a 3 jou
 - **English**: "January 9, 2026"
 
 Shown in both `/study` (list) and `/study/:id` (detail) pages.
+
+### Mastery Badge
+
+When a synthese reaches 100% mastery score (via revision), a green badge is displayed:
+- **Location**: Only in the study list (`/study`), NOT in study detail page
+- **Style**: Green badge with Award icon and "Maîtrisée" / "Mastered" text
+- **Condition**: `synthese.mastery_score === 100`
 
 ## Environment Variables
 
@@ -1064,34 +1072,59 @@ The revision program follows 5 phases with **8 total attempts**:
 
 **Flow**: Study → Pause → Recall → Loop → Loop Pause → Recall → Loop → ... → Complete
 
-### Evaluation Rules
+### Evaluation Rules - Conceptual Understanding
 
-**Independent Per-Attempt Evaluation**:
-- Each attempt is evaluated INDEPENDENTLY
-- Previous attempts are NOT considered
-- If a notion was correct before but not written now → NOT RETAINED
-- Each attempt must contain ALL notions to get 100%
+The AI evaluates **conceptual understanding**, not form. Vocabulary, style, syntax don't matter - only whether the user understood and expressed the MEANING of each notion.
 
-**Two States Only**:
-- ✅ RETAINED (green) - Notion correctly expressed with complete idea
-- ❌ NOT RETAINED (red) - Notion missing or poorly expressed
-- No intermediate state (no yellow/orange)
+**Fundamental Principles**:
 
-**Validation Rule - Complete Idea Required**:
-A response is valid ONLY if it expresses a complete idea:
-- A concept
-- Linked to at least one important information
-- By an explicit relation (verb, cause, role, function, etc.)
+| Principle | Description |
+|-----------|-------------|
+| **Per-Attempt** | Each attempt evaluated independently, no memory between attempts |
+| **Two States** | ✅ RETAINED (green) or ❌ NOT RETAINED (red) - no intermediate state |
+| **Deterministic** | Same response = same verdict, always. No variability. |
 
-Example:
-- Reference: "La photosynthèse permet aux plantes de produire de la matière organique grâce à la lumière."
-- ❌ REJECTED: "photosynthèse lumière" (keywords without relation)
-- ✅ ACCEPTED: "La photosynthèse permet aux plantes de produire de la matière grâce à la lumière"
+**Rule 1 - Error vs Imprecision**:
+- **BLOCKING ERROR** (= INVALID): Contradiction, false/absurd info, inverted relation
+- **IMPRECISION** (= NOT RETAINED): Vague without contradiction, missing details but correct direction
 
-**Mandatory Coverage**:
-- Every important notion from the synthese must be evaluated
+Examples:
+- Reference: "Cellular respiration releases energy"
+- ❌ INVALID: "releases poop" (false information)
+- ❌ NOT RETAINED: "releases something" (too vague)
+- ✅ RETAINED: "it produces energy" (meaning preserved)
+
+**Rule 2 - Essential Ideas**:
+- Each notion has 1-3 essential ideas
+- ALL essential ideas must be present and correct for RETAINED status
+- Missing 1+ essential idea = NOT RETAINED
+
+**Rule 3 - Meaning Priority**:
+ACCEPT if meaning preserved:
+- Synonyms and reformulations
+- Casual/simplified language
+- Different order of elements
+- Missing technical terms if idea is there
+
+REJECT if meaning altered:
+- Contradiction or logical inversion
+- Essential element missing
+- False information introduced
+
+Examples of equivalent expressions:
+- "en cas de pénurie d'oxygène" = "quand y'a pas assez d'O2" = "sans oxygène" → SAME MEANING
+- "24h/24" = "tout le temps" = "en permanence" → SAME MEANING
+
+**Rule 4 - Blocking Errors**:
+These errors invalidate the ENTIRE notion even if other parts are correct:
+- Key term replaced by FALSE or ABSURD term
+- INVERTED causal relationship
+- Attribution to wrong entity
+
+**Rule 5 - Mandatory Coverage**:
+- Every important notion must appear in exactly ONE of the two arrays
 - Notion not mentioned = NOT RETAINED
-- Notion with just keywords = NOT RETAINED
+- Notion with just keywords without relation = NOT RETAINED
 
 ### Final Attempt (Attempt 8) - Specific Behavior
 
@@ -1110,8 +1143,21 @@ Instead of congratulations and summary re-read, shows:
 **Simplified Flow**:
 - After Recall, AI analysis runs in background (loading screen shown)
 - No separate "Compare" phase - goes directly to Loop (if missing concepts) or Complete
-- Loop phase shows message: "Relis attentivement tout ce qui est surligné en rouge."
+- Loop phase shows message: "Vert = acquis. Rouge = à revoir. Concentre-toi sur les parties en rouge."
 - Loop auto-continues to next iteration when timer ends (no manual button)
+
+**Full Text Coloring (No Neutral Text)**:
+- In Loop phase, ALL text is colored - no neutral/uncolored text allowed
+- GREEN = notions explicitly mentioned or correctly reformulated by user
+- RED = EVERYTHING ELSE (not just identified missing concepts)
+- Principle: anything not explicitly recognized as understood is considered not retained
+- This provides instant visual feedback on what's acquired vs needs work
+
+**Summary Pagination**:
+- Study phase and Loop phase both support pagination for long summaries
+- Same pagination system as StudyDetail (2500 chars per page)
+- Navigation buttons (prev/next) and page indicators
+- In Loop phase, highlighting (green/red) is correctly applied per page
 
 **Exit Button (X)**:
 - All phases (Study, Pause, Recall, Loop) have a close button (X) in the header

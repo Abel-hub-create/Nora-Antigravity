@@ -1,11 +1,12 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, AlertCircle, Clock, X } from 'lucide-react';
+import { BookOpen, AlertCircle, Clock, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import useRevisionTimer from '../../hooks/useRevisionTimer';
 import useActiveTimer from '../../hooks/useActiveTimer';
 
-const LOOP_DURATION = 60; // 1 minute
+const LOOP_DURATION = 8; // 1 minute
+const CHARS_PER_PAGE = 2500; // Nombre de caractères par page pour la pagination
 
 /**
  * RevisionLoopPhase - Phase 5
@@ -24,6 +25,38 @@ const RevisionLoopPhase = ({
     onStop
 }) => {
     const { t } = useTranslation();
+    const [currentPage, setCurrentPage] = useState(0);
+
+    // Diviser la synthèse en pages
+    const summaryPages = useMemo(() => {
+        if (!originalSummary) return [];
+        if (originalSummary.length <= CHARS_PER_PAGE) return [originalSummary];
+
+        const pages = [];
+        let start = 0;
+        while (start < originalSummary.length) {
+            let end = start + CHARS_PER_PAGE;
+            if (end < originalSummary.length) {
+                const paragraphEnd = originalSummary.lastIndexOf('\n\n', end);
+                const sentenceEnd = originalSummary.lastIndexOf('. ', end);
+                if (paragraphEnd > start + CHARS_PER_PAGE * 0.7) {
+                    end = paragraphEnd + 2;
+                } else if (sentenceEnd > start + CHARS_PER_PAGE * 0.7) {
+                    end = sentenceEnd + 2;
+                }
+            }
+            pages.push({
+                content: originalSummary.slice(start, end).trim(),
+                startIndex: start,
+                endIndex: Math.min(end, originalSummary.length)
+            });
+            start = end;
+        }
+        return pages;
+    }, [originalSummary]);
+
+    const totalPages = summaryPages.length;
+    const hasMultiplePages = totalPages > 1;
 
     // Track study time for daily goals (summary activity)
     useActiveTimer('summary');
@@ -46,29 +79,26 @@ const RevisionLoopPhase = ({
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     };
 
-    // Render summary with ALL text colored: green for understood, RED for everything else
+    // Render summary page with ALL text colored: green for understood, RED for everything else
     // Principle: anything not explicitly recognized as understood is considered not retained
-    const renderHighlightedSummary = () => {
+    const renderHighlightedPage = (pageContent, pageStartIndex) => {
         // If no understood concepts, everything is red
         if (!understoodConcepts || understoodConcepts.length === 0) {
             return (
                 <mark className="bg-error/30 text-error">
-                    {originalSummary}
+                    {pageContent}
                 </mark>
             );
         }
 
-        let parts = [];
-        let lastIndex = 0;
-
-        // Find all understood concept positions (only these will be green)
-        const greenZones = [];
+        // Find all understood concept positions in the FULL summary
+        const allGreenZones = [];
         understoodConcepts.forEach((concept) => {
             if (concept.originalText) {
                 const regex = new RegExp(escapeRegExp(concept.originalText), 'gi');
                 let match;
                 while ((match = regex.exec(originalSummary)) !== null) {
-                    greenZones.push({
+                    allGreenZones.push({
                         start: match.index,
                         end: match.index + match[0].length,
                         text: match[0],
@@ -78,58 +108,60 @@ const RevisionLoopPhase = ({
             }
         });
 
-        // Sort by position
-        greenZones.sort((a, b) => a.start - b.start);
-
-        // Remove overlapping zones (keep first one found)
-        const filtered = [];
+        // Sort by position and remove overlaps
+        allGreenZones.sort((a, b) => a.start - b.start);
+        const filteredZones = [];
         let lastEnd = 0;
-        greenZones.forEach((zone) => {
+        allGreenZones.forEach((zone) => {
             if (zone.start >= lastEnd) {
-                filtered.push(zone);
+                filteredZones.push(zone);
                 lastEnd = zone.end;
             }
         });
 
-        // Build parts: GREEN for understood zones, RED for everything else
-        filtered.forEach((zone, idx) => {
+        // Filter zones that intersect with current page
+        const pageEndIndex = pageStartIndex + pageContent.length;
+        const pageZones = filteredZones
+            .filter(zone => zone.start < pageEndIndex && zone.end > pageStartIndex)
+            .map(zone => ({
+                ...zone,
+                // Adjust indices relative to page
+                localStart: Math.max(0, zone.start - pageStartIndex),
+                localEnd: Math.min(pageContent.length, zone.end - pageStartIndex)
+            }));
+
+        // Build parts for this page
+        let parts = [];
+        let localIndex = 0;
+
+        pageZones.forEach((zone, idx) => {
             // Add text BEFORE this green zone as RED
-            if (zone.start > lastIndex) {
+            if (zone.localStart > localIndex) {
                 parts.push(
-                    <mark
-                        key={`red-${idx}`}
-                        className="bg-error/30 text-error"
-                    >
-                        {originalSummary.slice(lastIndex, zone.start)}
+                    <mark key={`red-${idx}`} className="bg-error/30 text-error">
+                        {pageContent.slice(localIndex, zone.localStart)}
                     </mark>
                 );
             }
             // Add the understood zone as GREEN
             parts.push(
-                <mark
-                    key={`green-${idx}`}
-                    className="bg-success/30 text-success"
-                    title={zone.concept}
-                >
-                    {zone.text}
+                <mark key={`green-${idx}`} className="bg-success/30 text-success" title={zone.concept}>
+                    {pageContent.slice(zone.localStart, zone.localEnd)}
                 </mark>
             );
-            lastIndex = zone.end;
+            localIndex = zone.localEnd;
         });
 
         // Add remaining text as RED
-        if (lastIndex < originalSummary.length) {
+        if (localIndex < pageContent.length) {
             parts.push(
-                <mark
-                    key="red-end"
-                    className="bg-error/30 text-error"
-                >
-                    {originalSummary.slice(lastIndex)}
+                <mark key="red-end" className="bg-error/30 text-error">
+                    {pageContent.slice(localIndex)}
                 </mark>
             );
         }
 
-        return parts;
+        return parts.length > 0 ? parts : <mark className="bg-error/30 text-error">{pageContent}</mark>;
     };
 
     const progress = ((LOOP_DURATION - timeRemaining) / LOOP_DURATION) * 100;
@@ -230,13 +262,68 @@ const RevisionLoopPhase = ({
                     transition={{ delay: 0.2 }}
                     className="bg-surface rounded-2xl border border-white/5 p-4"
                 >
-                    <h3 className="text-sm font-bold text-text-main mb-3 flex items-center gap-2">
-                        <BookOpen size={16} />
-                        {t('revision.tabs.summary')}
-                    </h3>
-                    <div className="text-sm text-text-muted leading-relaxed whitespace-pre-wrap">
-                        {renderHighlightedSummary()}
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-bold text-text-main flex items-center gap-2">
+                            <BookOpen size={16} />
+                            {t('revision.tabs.summary')}
+                        </h3>
+                        {hasMultiplePages && (
+                            <span className="text-xs text-text-muted">
+                                {currentPage + 1} / {totalPages}
+                            </span>
+                        )}
                     </div>
+
+                    <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                        {summaryPages[currentPage]
+                            ? renderHighlightedPage(summaryPages[currentPage].content, summaryPages[currentPage].startIndex)
+                            : renderHighlightedPage(originalSummary, 0)
+                        }
+                    </div>
+
+                    {/* Boutons de navigation */}
+                    {hasMultiplePages && (
+                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/10">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                                disabled={currentPage === 0}
+                                className={`flex items-center gap-1 px-3 py-2 rounded-lg transition-colors ${
+                                    currentPage === 0
+                                        ? 'text-text-muted/30 cursor-not-allowed'
+                                        : 'text-primary bg-primary/10 hover:bg-primary/20'
+                                }`}
+                            >
+                                <ChevronLeft size={18} />
+                                <span className="text-sm">{t('common.previous')}</span>
+                            </button>
+
+                            {/* Indicateurs de page */}
+                            <div className="flex gap-1.5">
+                                {summaryPages.map((_, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => setCurrentPage(idx)}
+                                        className={`w-2 h-2 rounded-full transition-colors ${
+                                            idx === currentPage ? 'bg-primary' : 'bg-white/20 hover:bg-white/40'
+                                        }`}
+                                    />
+                                ))}
+                            </div>
+
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                                disabled={currentPage === totalPages - 1}
+                                className={`flex items-center gap-1 px-3 py-2 rounded-lg transition-colors ${
+                                    currentPage === totalPages - 1
+                                        ? 'text-text-muted/30 cursor-not-allowed'
+                                        : 'text-primary bg-primary/10 hover:bg-primary/20'
+                                }`}
+                            >
+                                <span className="text-sm">{t('common.next')}</span>
+                                <ChevronRight size={18} />
+                            </button>
+                        </div>
+                    )}
                 </motion.div>
             </div>
         </div>

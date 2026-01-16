@@ -4,7 +4,7 @@ import { Coffee, Clock, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import useRevisionTimer from '../../hooks/useRevisionTimer';
 
-const PAUSE_DURATION = 120; // 2 minutes
+const PAUSE_DURATION = 8; // 2 minutes
 
 const RevisionPausePhase = ({ phaseStartedAt, onComplete, onStop }) => {
     const { t } = useTranslation();

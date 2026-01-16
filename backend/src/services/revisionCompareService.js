@@ -21,27 +21,7 @@ const MODEL = 'gpt-4o-mini';
  * @returns {Object} Comparison results with understood/missing concepts
  */
 export const compareRecall = async (originalSummary, userRecall, specificInstructions = null) => {
-    const prompt = `Tu es Nora, une application d'etude calme et pedagogique.
-
-Compare le rappel de l'utilisateur avec la synthese originale de maniere SEMANTIQUE (pas mot a mot).
-
-## PRINCIPE FONDAMENTAL - COMPARAISON STRICTE PAR PRESENCE
-
-REGLE ABSOLUE: Une notion est consideree comme RETENUE uniquement si:
-- Elle est EXPLICITEMENT ecrite dans le rappel de CETTE tentative
-- OU elle est correctement reformulee avec une idee complete
-
-CONSEQUENCE DIRECTE:
-- Toute notion ABSENTE du rappel = automatiquement NON RETENUE
-- Il ne doit JAMAIS etre suppose qu'une notion est acquise si elle n'a pas ete ecrite
-- Pas d'exception a cette regle
-
-## PAS DE MEMOIRE ENTRE TENTATIVES
-
-- Cette evaluation porte UNIQUEMENT sur le texte ecrit dans CETTE tentative
-- Ne tiens JAMAIS compte des tentatives precedentes
-- Si une notion etait correcte avant mais n'est plus ecrite maintenant = NON RETENUE
-- Chaque tentative est INDEPENDANTE et complete
+    const prompt = `Tu es un evaluateur DETERMINISTE de comprehension conceptuelle.
 
 SYNTHESE ORIGINALE:
 """
@@ -53,90 +33,116 @@ RAPPEL DE L'UTILISATEUR:
 ${userRecall}
 """
 
-${specificInstructions ? `ELEMENTS IMPORTANTS MARQUES PAR L'UTILISATEUR (DOIVENT etre presents):
+${specificInstructions ? `ELEMENTS OBLIGATOIRES:
 """
 ${specificInstructions}
 """` : ''}
 
-## GRANULARITE DE LA COMPARAISON - PAR NOTION
+## PRINCIPE FONDAMENTAL
 
-IMPORTANT: La comparaison doit se faire PAR NOTION INDIVIDUELLE, pas par section globale.
+Tu evalues la COMPREHENSION CONCEPTUELLE, pas la forme.
+- Le vocabulaire exact, le style, la syntaxe ne comptent PAS
+- Seul compte: l'utilisateur a-t-il compris et restitue le SENS de chaque notion?
 
-Exemple de ce qu'il faut faire:
-- Definitions = peut etre VERT (retenu)
-- Points cles = peut etre ROUGE (non retenu)
-- Metaphores = peut etre ROUGE (non retenu)
+## REGLE 1 - DISTINCTION ERREUR vs IMPRECISION
 
-Il ne doit PAS y avoir de validation implicite d'un bloc entier si une seule partie a ete ecrite.
-Chaque notion/concept de la synthese doit etre evaluee SEPAREMENT.
+ERREUR BLOQUANTE (= notion INVALIDE):
+- Contresens: le rappel dit le CONTRAIRE du cours
+- Information fausse: un element remplace par quelque chose de FAUX ou ABSURDE
+- Relation inversee: cause/consequence, avant/apres, condition/resultat inverses
 
-## REGLE DE VALIDATION - UNE IDEE COMPLETE
+IMPRECISION (= notion NON ACQUISE, pas d'erreur):
+- Formulation vague ou incomplete SANS contresens
+- Manque de details mais direction correcte
+- Approximation qui ne CHANGE PAS le sens fondamental
 
-Une reponse est consideree comme correcte UNIQUEMENT si elle exprime une idee complete:
-- Un concept
-- Relie a au moins une information importante
-- Par une relation explicite (verbe, lien de cause, role, fonction, variation, etc.)
+Exemple:
+- Reference: "La respiration cellulaire libere de l'energie"
+- ERREUR: "libere du caca" → INVALIDE (information fausse)
+- IMPRECISION: "libere quelque chose" → NON ACQUIS (trop vague, mais pas faux)
+- VALIDE: "ca produit de l'energie" → ACQUIS (sens preserve)
 
-EXEMPLES:
-Notion de reference: "La photosynthese permet aux plantes de produire de la matiere organique grace a la lumiere."
-- REFUSE: "photosynthese lumiere" (mots-cles sans relation)
-- REFUSE: "photosynthese plantes matiere" (mots-cles sans verbe ni lien)
-- ACCEPTE: "La photosynthese permet aux plantes de produire de la matiere grace a la lumiere"
-- ACCEPTE: "Grace a la photosynthese, les plantes produisent de la matiere avec la lumiere"
+## REGLE 2 - EVALUATION PAR IDEES ESSENTIELLES
 
-Cette regle s'applique de maniere IDENTIQUE pour TOUTES les notions, sans exception.
+Pour chaque notion, identifie ses IDEES ESSENTIELLES (1 a 3 max).
+Une notion est ACQUISE seulement si TOUTES ses idees essentielles sont presentes et correctes.
 
-## DEUX ETATS UNIQUEMENT - SURLIGNAGE EXPLICITE
+Exemple - Notion: "La photosynthese permet aux plantes de produire de la matiere organique grace a la lumiere"
+Idees essentielles:
+1. Photosynthese = processus des plantes
+2. Produit de la matiere organique
+3. Necessite la lumiere
 
-Chaque notion doit avoir UN etat clair et explicite:
-- VERT (understoodConcepts) = notion correctement exprimee avec une idee complete
-- ROUGE (missingConcepts) = notion absente, incomplete ou mal exprimee
+- Si les 3 sont presentes et correctes → ACQUIS
+- Si 1 ou 2 manquent → NON ACQUIS
+- Si 1 est FAUSSE (ex: "les animaux") → INVALIDE (erreur)
 
-INTERDIT:
-- Pas d'etat intermediaire (pas de orange/jaune)
-- Pas de notion sans etat attribue
-- Le simple fait de "ne pas etre rouge" ne signifie PAS qu'une notion est acquise
+## REGLE 3 - PRIORITE AU SENS
 
-## COUVERTURE OBLIGATOIRE
+ACCEPTER si le sens est preserve:
+- Synonymes et reformulations
+- Langage familier ou simplifie
+- Ordre different des elements
+- Absence de termes techniques si l'idee est la
 
-- CHAQUE notion importante de la synthese DOIT apparaitre dans understoodConcepts OU missingConcepts
-- Aucune notion ne doit etre ignoree ou laissee sans evaluation
-- Une notion non mentionnee dans le rappel = automatiquement dans missingConcepts
+REFUSER si le sens est altere:
+- Contresens ou inversion logique
+- Element essentiel manquant
+- Information fausse introduite
 
-## ELEMENTS IMPORTANTS MARQUES
+Exemples:
+- "en cas de penurie d'oxygene" = "quand y'a pas assez d'O2" = "sans oxygene" → MEME SENS
+- "24h/24" = "tout le temps" = "en permanence" → MEME SENS
+- "libere de l'energie" ≠ "libere du caca" → SENS DIFFERENT (erreur)
 
-- Les elements marques par l'utilisateur sont OBLIGATOIRES
-- S'ils manquent, ils sont automatiquement dans missingConcepts
+## REGLE 4 - ERREURS BLOQUANTES
 
-## FEEDBACK
+Certaines erreurs invalident TOUTE la notion, meme si d'autres parties sont correctes:
+- Terme cle remplace par un terme FAUX ou ABSURDE
+- Relation causale INVERSEE
+- Attribution a la mauvaise entite
 
-- Si missingConcepts n'est pas vide: feedback NEUTRE ("Continue, tu progresses", "Revois les elements en rouge")
-- Felicitations SEULEMENT si missingConcepts est VIDE (100%)
+Ces erreurs ont PRIORITE sur tout le reste.
 
-Retourne UNIQUEMENT ce JSON (sans markdown, sans backticks):
+## REGLE 5 - DETERMINISME ABSOLU
+
+Une meme reponse = un meme verdict. TOUJOURS.
+Pas de variabilite, pas de seuil flottant, pas d'appreciation subjective.
+
+## PROCESSUS D'EVALUATION (pour chaque notion)
+
+1. Identifier les IDEES ESSENTIELLES de la notion
+2. Chercher si le rappel contient une ERREUR BLOQUANTE → Si oui: INVALIDE
+3. Verifier si TOUTES les idees essentielles sont presentes
+4. Verifier si le SENS est preserve (meme avec reformulation)
+5. Decision finale: ACQUIS ou NON ACQUIS
+
+## FORMAT DE SORTIE
+
+JSON uniquement:
 {
     "understoodConcepts": [
-        {"concept": "Nom du concept", "userText": "Ce que l'utilisateur a ecrit", "originalText": "Texte EXACT de la synthese pour surlignage vert"}
+        {"concept": "Nom", "userText": "Ce que l'utilisateur a ecrit", "originalText": "Texte EXACT de la synthese"}
     ],
     "missingConcepts": [
-        {"concept": "Nom du concept manquant", "originalText": "Texte EXACT de la synthese pour surlignage rouge", "importance": "high"}
+        {"concept": "Nom", "originalText": "Texte EXACT de la synthese", "importance": "high", "reason": "absent|incomplet|erreur factuelle|contresens"}
     ],
-    "overallScore": 75,
-    "feedback": "Message neutre si manquants, felicitations seulement si 100%"
+    "overallScore": 0-100,
+    "feedback": "Message neutre et encourageant"
 }
 
-Notes importantes:
-- "importance": toujours "high" (pas d'etat intermediaire)
-- "overallScore": 0-100 base sur (understoodConcepts.length / total notions) * 100
-- "originalText" doit etre le texte EXACT de la synthese pour permettre le surlignage visuel
-- Si le rappel est vide ou juste des mots sans relation, TOUTES les notions vont dans missingConcepts`;
+Notes:
+- originalText = copie EXACTE du texte de la synthese (pour surlignage visuel)
+- reason = classification du probleme
+- overallScore = (understoodConcepts.length / total notions) * 100
+- Chaque notion DOIT apparaitre dans exactement UN des deux tableaux`;
 
     try {
         const response = await openai.chat.completions.create({
             model: MODEL,
             messages: [{ role: 'user', content: prompt }],
             max_tokens: 2000,
-            temperature: 0.3,
+            temperature: 0, // Deterministic - same input = same output
             response_format: { type: 'json_object' }
         });
 

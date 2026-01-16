@@ -6,7 +6,7 @@ import confetti from 'canvas-confetti';
 import useRevisionTimer from '../../hooks/useRevisionTimer';
 import useActiveTimer from '../../hooks/useActiveTimer';
 
-const STUDY_DURATION = 600; // 10 minutes
+const STUDY_DURATION = 8; // 10 minutes
 const CHARS_PER_PAGE = 2500; // Nombre de caractères par page pour la pagination
 
 const RevisionStudyPhase = ({ synthese, phaseStartedAt, onComplete, onStop }) => {
