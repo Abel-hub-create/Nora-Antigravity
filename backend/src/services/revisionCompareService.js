@@ -21,7 +21,7 @@ const MODEL = 'gpt-4o-mini';
  * @returns {Object} Comparison results with understood/missing concepts
  */
 export const compareRecall = async (originalSummary, userRecall, specificInstructions = null) => {
-    const prompt = `Tu es un enseignant evaluateur. Tu dois analyser un rappel redige librement par un utilisateur et le comparer a une synthese de cours structuree.
+    const prompt = `Tu es un enseignant qui evalue un rappel de cours.
 
 SYNTHESE ORIGINALE:
 """
@@ -33,96 +33,70 @@ RAPPEL DE L'UTILISATEUR:
 ${userRecall}
 """
 
-${specificInstructions ? `ELEMENTS OBLIGATOIRES (doivent etre presents):
+${specificInstructions ? `ELEMENTS OBLIGATOIRES:
 """
 ${specificInstructions}
 """` : ''}
 
 ---
 
-## CONTEXTE GENERAL
+## ETAPE 1 - DECOUPER LA SYNTHESE EN NOTIONS
 
-L'objectif n'est PAS de comparer des phrases, mais d'evaluer la COMPREHENSION REELLE des notions presentes dans la synthese.
-La validation doit etre logique, coherente, deterministe et pedagogique, comme le ferait un enseignant humain.
+D'abord, identifie TOUTES les notions distinctes de la synthese:
+- Chaque definition
+- Chaque processus/mecanisme
+- Chaque equation/formule
+- Chaque lieu/localisation
+- Chaque condition
+- Chaque comparaison
+- Chaque consequence/resultat
 
-## PRINCIPE CENTRAL (NON NEGOCIABLE)
+Une synthese contient generalement entre 10 et 30 notions distinctes.
 
-La validation repose sur le SENS et la COHERENCE CONCEPTUELLE, jamais sur la similarite textuelle ou le copier-coller.
+## ETAPE 2 - EVALUER CHAQUE NOTION
 
-## DECOUPAGE LOGIQUE OBLIGATOIRE
+Pour CHAQUE notion identifiee, verifie si l'utilisateur l'a mentionnee dans son rappel.
 
-AVANT toute validation:
-1. Considere la synthese comme un ensemble de NOTIONS DISTINCTES (definitions, conditions, relations, mecanismes, comparaisons)
-2. Evalue chaque rappel utilisateur UNIQUEMENT par rapport aux notions qu'il concerne explicitement
-3. Il est INTERDIT d'evaluer un rappel de maniere globale ou floue
+ACQUIS (vert) si:
+- L'utilisateur a exprime cette idee (meme reformulee, meme avec ses propres mots)
+- Le sens est correct
 
-## REGLES DE RAISONNEMENT POUR CHAQUE NOTION
+NON ACQUIS (rouge) si:
+- La notion n'est PAS mentionnee du tout dans le rappel
+- Ou le sens est faux/inverse
 
-### 1. Comprehension avant tout
-Tu dois determiner si l'utilisateur a compris l'IDEE ESSENTIELLE de la notion, independamment de la forme, du vocabulaire exact ou de la syntaxe.
+## REGLE CRITIQUE
 
-### 2. Reformulation libre autorisee
-Une notion peut etre validee meme si elle est reformulee, TANT QUE:
-- Le sens est respecte
-- Les relations logiques sont correctes
-- Aucune erreur bloquante n'est introduite
+TOUTE notion de la synthese qui n'apparait PAS dans le rappel de l'utilisateur est automatiquement NON ACQUISE.
 
-### 3. Erreurs bloquantes (priorite absolue)
-Si le rappel contient:
-- Une CONTRADICTION avec le cours
-- Une information scientifiquement ou factuellement FAUSSE
-- Une alteration qui CHANGE le sens fondamental
-→ La notion est NON ACQUISE, meme si certains mots-cles sont presents
+Si l'utilisateur ecrit une seule phrase, il ne peut avoir qu'une ou deux notions ACQUISES - toutes les autres sont NON ACQUISES.
 
-### 4. Imprecision ≠ erreur
-Une formulation vague, incomplete ou imprecise SANS contresens ne doit PAS etre consideree comme fausse.
-→ La notion est simplement NON ACQUISE, pas invalide pour erreur
+Le score doit refleter: (notions acquises / total notions) * 100
 
-### 5. Idees essentielles obligatoires
-Chaque notion possede des idees essentielles (1 a 3 max).
-Si une ou plusieurs de ces idees sont ABSENTES, la notion ne peut PAS etre validee, meme si d'autres elements sont corrects.
+## TOLERANCE SUR LA FORME
 
-## DETERMINISME STRICT
+Quand une notion EST mentionnee, accepte les reformulations:
+- Vocabulaire different ou familier
+- Simplifications
+- Abreviations (O2, CO2)
+- Langage informel
 
-Une meme reponse utilisateur, analysee dans le meme contexte, doit produire EXACTEMENT le meme verdict a chaque tentative.
-Aucune variabilite, tolerance fluctuante ou appreciation aleatoire n'est acceptable.
+## FORMAT JSON
 
-## ALIGNEMENT AVEC LA SYNTHESE (CRITIQUE)
-
-- Une notion ne peut etre consideree comme ACQUISE que si cela se reflete DIRECTEMENT sur la synthese correspondante
-- Il est INTERDIT de valider une notion "en dehors" de la synthese
-- Chaque decision logique doit avoir un impact clair et coherent sur l'etat de la synthese
-
-## REGLE VISUELLE (STRICTE)
-
-Il n'existe que DEUX etats finaux pour chaque notion:
-- VERT: notion acquise (comprise)
-- ROUGE: notion non acquise (manquante, incomplete, ou erronee)
-
-TOUT ce qui n'est pas clairement compris est ROUGE.
-AUCUN texte neutre ne doit subsister apres l'analyse.
-
-## FORMAT DE SORTIE
-
-JSON uniquement (sans markdown, sans backticks):
 {
     "understoodConcepts": [
-        {"concept": "Nom de la notion", "userText": "Ce que l'utilisateur a ecrit (reformulation)", "originalText": "Texte EXACT copie de la synthese pour surlignage vert"}
+        {"concept": "Nom court de la notion", "userText": "Ce que l'utilisateur a ecrit", "originalText": "Texte EXACT de la synthese a surligner en vert"}
     ],
     "missingConcepts": [
-        {"concept": "Nom de la notion", "originalText": "Texte EXACT copie de la synthese pour surlignage rouge", "importance": "high", "reason": "absent|incomplet|erreur factuelle|contresens"}
+        {"concept": "Nom court de la notion", "originalText": "Texte EXACT de la synthese a surligner en rouge", "importance": "high", "reason": "absent"}
     ],
     "overallScore": 0-100,
-    "feedback": "Message neutre et encourageant"
+    "feedback": "Message encourageant"
 }
 
-REGLES IMPORTANTES:
-- originalText = copie EXACTE du texte de la synthese (pour permettre le surlignage visuel)
-- overallScore = (understoodConcepts.length / total notions) * 100
-- Chaque notion DOIT apparaitre dans EXACTEMENT UN des deux tableaux
-- Si le rappel est vide ou hors-sujet, TOUTES les notions vont dans missingConcepts
-
-OBJECTIF FINAL: Te comporter comme un enseignant exigeant mais juste - tolerant a la reformulation, strict face aux contresens, coherent d'une tentative a l'autre, focalise sur la comprehension reelle et non sur la forme.`;
+IMPORTANT:
+- Chaque notion de la synthese DOIT apparaitre dans understoodConcepts OU missingConcepts
+- originalText = copie EXACTE du texte de la synthese (pour surlignage)`;
 
     try {
         const response = await openai.chat.completions.create({
@@ -140,6 +114,15 @@ OBJECTIF FINAL: Te comporter comme un enseignant exigeant mais juste - tolerant 
         result.missingConcepts = result.missingConcepts || [];
         result.overallScore = result.overallScore ?? 0;
         result.feedback = result.feedback || 'Continue comme ca !';
+
+        // Log for debugging
+        console.log('[RevisionCompare] User recall:', userRecall.substring(0, 100));
+        console.log('[RevisionCompare] Understood:', result.understoodConcepts.length, 'concepts');
+        console.log('[RevisionCompare] Missing:', result.missingConcepts.length, 'concepts');
+        console.log('[RevisionCompare] Score:', result.overallScore);
+        if (result.understoodConcepts.length > 0) {
+            console.log('[RevisionCompare] Understood details:', JSON.stringify(result.understoodConcepts, null, 2));
+        }
 
         return result;
     } catch (error) {
