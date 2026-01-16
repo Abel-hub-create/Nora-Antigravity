@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS revision_sessions (
     synthese_id INT UNSIGNED NOT NULL,
 
     -- Session state
-    phase ENUM('study', 'pause', 'recall', 'compare', 'loop', 'complete') DEFAULT 'study',
+    phase ENUM('study', 'pause', 'recall', 'compare', 'analyzing', 'loop', 'loopPause', 'complete') DEFAULT 'study',
     study_time_remaining INT DEFAULT 600,      -- 10 min in seconds
     pause_time_remaining INT DEFAULT 300,      -- 5 min in seconds
     current_iteration INT DEFAULT 1,           -- Loop iteration (max 5)
