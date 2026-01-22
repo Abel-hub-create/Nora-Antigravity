@@ -19,7 +19,7 @@ L'utilisateur peut prendre en photo ou expliquer à l'oral ce qu'il veut compren
 - Contenus organisés en dossiers
 
 ### Philosophie
-- Interface sombre, calme, pensée pour le mobile
+- Interface calme, pensée pour le mobile (thème sombre par défaut, thème clair disponible)
 - Pas de compétition, pas de notes scolaires
 - Sensation de progression continue
 - Motiver sans créer de dépendance
@@ -50,7 +50,7 @@ npm start          # Start Express server (production)
 ### Tech Stack
 - React 19 + Vite 7
 - React Router DOM for routing
-- Tailwind CSS with custom dark theme (slate-based)
+- Tailwind CSS with theme system (dark/light, CSS variables)
 - Framer Motion for animations
 - Lucide React for icons
 - i18next + react-i18next for internationalization
@@ -408,11 +408,40 @@ dailyProgressPercentage = (completedGoals.length / totalGoals.length) * 100
 
 ### Tailwind Theme
 
-Custom colors defined in `tailwind.config.js`:
-- `background` / `surface` - Dark slate backgrounds
+Custom colors defined in `tailwind.config.js` using CSS variables for theme support:
+- `background` / `surface` - Theme-aware backgrounds
 - `primary` / `primary-dark` - Sky blue accents
 - `secondary` - Indigo accents
-- `text-main` / `text-muted` - Light text variants
+- `text-main` / `text-muted` - Theme-aware text colors
+
+### Theme System (Dark/Light)
+
+The app supports two themes: **dark** (default) and **light**. Users can switch themes in Settings.
+
+**How It Works**:
+1. Theme preference stored in `localStorage` (key: `nora_theme`)
+2. Applied via `data-theme` attribute on `<html>` element
+3. CSS variables in `index.css` define colors for each theme
+4. Theme initialized in `main.jsx` before render to avoid flash
+
+**Components**:
+- `ThemeSelector` (`/src/components/Settings/ThemeSelector.jsx`) - Two buttons with Moon/Sun icons
+
+**CSS Variables** (defined in `/src/index.css`):
+
+| Variable | Dark Theme | Light Theme |
+|----------|------------|-------------|
+| `--color-background` | `#0f172a` (Slate 900) | `#f8fafc` (Slate 50) |
+| `--color-surface` | `#1e293b` (Slate 800) | `#e2e8f0` (Slate 200) |
+| `--color-primary` | `#38bdf8` (Sky 400) | `#0284c7` (Sky 600) |
+| `--color-primary-dark` | `#0ea5e9` (Sky 500) | `#0369a1` (Sky 700) |
+| `--color-secondary` | `#818cf8` (Indigo 400) | `#6366f1` (Indigo 500) |
+| `--color-text-main` | `#f8fafc` (Slate 50) | `#0f172a` (Slate 900) |
+| `--color-text-muted` | `#94a3b8` (Slate 400) | `#64748b` (Slate 500) |
+
+**Light Theme Overrides**: Classes like `bg-white/5`, `bg-black/30`, `border-white/5` are overridden in light theme to use appropriate dark colors instead.
+
+**i18n Keys**: `settings.theme`, `settings.darkTheme`, `settings.lightTheme`
 
 ### Global CSS (`/src/index.css`)
 
@@ -761,6 +790,17 @@ Centralized educational content generation with the Nora personality.
 - Format: titres clairs (## Titre), paragraphes, bullet points avec explications
 - Objectif: l'utilisateur peut reexpliquer tout le cours avec la synthese seule
 - MAX_TOKENS: 10000 (permet des syntheses longues)
+
+**Etape de raisonnement prealable (interne a l'IA)**:
+Avant de rediger la synthese, l'IA analyse les organisateurs textuels du cours :
+- Definitions, mecanismes/processus, conditions, causes/consequences
+- Comparaisons/oppositions, liens logiques, exceptions/cas particuliers
+Cette analyse permet de :
+- Regrouper les idees similaires (meme si dispersees dans le cours)
+- Respecter un ordre logique de comprehension (peut differer du texte original)
+- Hierarchiser les notions (fondamentales vs explicatives vs secondaires)
+- Eliminer repetitions et details non essentiels
+Ces organisateurs ne sont PAS affiches dans la synthese finale.
 
 **Summary Pagination** (Frontend):
 - Si synthese > 2500 caracteres, divisee en pages

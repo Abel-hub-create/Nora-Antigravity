@@ -7,6 +7,7 @@ import { useUser, ACTIVITY_TYPES } from '../context/UserContext';
 import { useAuth } from '../features/auth/hooks/useAuth';
 import * as notificationService from '../services/notificationService';
 import LanguageSelector from '../components/Settings/LanguageSelector';
+import ThemeSelector from '../components/Settings/ThemeSelector';
 
 const Settings = () => {
     const { t } = useTranslation();
@@ -278,6 +279,14 @@ const Settings = () => {
                 </div>
             </div>
 
+            {/* Theme Section */}
+            <div className="mb-8">
+                <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">{t('settings.theme')}</h3>
+                <div className="bg-surface rounded-2xl overflow-hidden border border-white/5">
+                    <ThemeSelector />
+                </div>
+            </div>
+
             {/* Daily Goals Section */}
             <div className="mb-8">
                 <div className="flex justify-between items-center mb-4">
@@ -515,7 +524,7 @@ const Settings = () => {
                                             {newAvatar ? (
                                                 <img src={newAvatar} alt="Avatar" className="w-full h-full object-cover" />
                                             ) : (
-                                                <span className="text-3xl font-bold text-white">
+                                                <span className="text-3xl font-bold text-text-main">
                                                     {newName?.charAt(0)?.toUpperCase() || 'U'}
                                                 </span>
                                             )}

@@ -3,6 +3,31 @@
 @tailwind utilities;
 
 @layer base {
+  /* Dark theme (default) */
+  :root,
+  [data-theme="dark"] {
+    --color-background: #0f172a; /* Slate 900 */
+    --color-surface: #1e293b; /* Slate 800 */
+    --color-primary: #38bdf8; /* Sky 400 */
+    --color-primary-dark: #0ea5e9; /* Sky 500 */
+    --color-secondary: #818cf8; /* Indigo 400 */
+    --color-accent: #f472b6; /* Pink 400 */
+    --color-text-main: #f8fafc; /* Slate 50 */
+    --color-text-muted: #94a3b8; /* Slate 400 */
+  }
+
+  /* Light theme */
+  [data-theme="light"] {
+    --color-background: #f8fafc; /* Slate 50 */
+    --color-surface: #e2e8f0; /* Slate 200 */
+    --color-primary: #0284c7; /* Sky 600 */
+    --color-primary-dark: #0369a1; /* Sky 700 */
+    --color-secondary: #6366f1; /* Indigo 500 */
+    --color-accent: #ec4899; /* Pink 500 */
+    --color-text-main: #0f172a; /* Slate 900 */
+    --color-text-muted: #64748b; /* Slate 500 */
+  }
+
   body {
     @apply bg-background text-text-main font-sans antialiased;
   }
@@ -17,4 +42,30 @@
 }
 ::-webkit-scrollbar-thumb {
   @apply bg-surface rounded-full;
+}
+
+/* Theme-aware utility overrides */
+[data-theme="light"] .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+[data-theme="light"] .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+[data-theme="light"] .bg-black\/30 {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+[data-theme="light"] .bg-black\/70 {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+[data-theme="light"] .border-white\/5 {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+[data-theme="light"] .border-white\/10 {
+  border-color: rgba(0, 0, 0, 0.15);
+}
+[data-theme="light"] .hover\:bg-white\/5:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+[data-theme="light"] .hover\:bg-white\/10:hover {
+  background-color: rgba(0, 0, 0, 0.08);
 }

@@ -123,6 +123,34 @@ Tu dois generer un JSON avec exactement cette structure :
 
 ===== REGLES DETAILLEES POUR LA SYNTHESE =====
 
+ETAPE PREALABLE DE RAISONNEMENT (a effectuer mentalement, NE PAS afficher dans la synthese) :
+
+Avant de rediger la synthese, tu dois analyser le cours original et identifier implicitement le role des differentes parties du texte :
+
+1. ORGANISATEURS TEXTUELS A IDENTIFIER :
+   - Definitions : termes definis explicitement
+   - Mecanismes / processus : etapes, fonctionnements, deroulements
+   - Conditions : quand, dans quels cas, circonstances
+   - Causes et consequences : relations de causalite
+   - Comparaisons et oppositions : similitudes, differences, contrastes
+   - Liens logiques entre notions : relations conceptuelles
+   - Exceptions ou cas particuliers : situations atypiques
+
+2. UTILISER CETTE ANALYSE POUR :
+   - Regrouper les idees similaires (meme si dispersees dans le cours original)
+   - Respecter un ordre logique de comprehension (meme si different du texte original)
+   - Hierarchiser clairement les notions : fondamentales vs explicatives vs secondaires
+   - Eliminer les repetitions, exemples inutiles et details non essentiels
+   - Conserver la precision scientifique tout en restant synthetique
+
+3. RESULTAT ATTENDU :
+   - Une synthese plus claire, mieux organisee et plus facile a memoriser
+   - Sans ajout de contenu artificiel ni reformulation complexe inutile
+   - Qui reflete fidelement la structure logique du cours original
+   - Concise, fluide et adaptee a un eleve
+
+Ces organisateurs textuels ne doivent PAS etre affiches tels quels dans la synthese finale. Ils servent UNIQUEMENT a structurer ta comprehension du cours avant redaction.
+
 OBJECTIF : Creer une synthese COMPLETE et STRUCTUREE. L'utilisateur doit pouvoir reviser UNIQUEMENT avec cette synthese, sans retourner au cours original. Si le cours est long, la synthese sera longue aussi.
 
 LANGAGE :

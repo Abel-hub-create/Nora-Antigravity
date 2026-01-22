@@ -7,22 +7,22 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Dark, calm background
-        background: '#0f172a', // Slate 900
-        surface: '#1e293b', // Slate 800
-        
+        // Theme-aware colors using CSS variables
+        background: 'var(--color-background)',
+        surface: 'var(--color-surface)',
+
         // Primary motivating color (Soft Blue/Cyan)
-        primary: '#38bdf8', // Sky 400
-        'primary-dark': '#0ea5e9', // Sky 500
-        
+        primary: 'var(--color-primary)',
+        'primary-dark': 'var(--color-primary-dark)',
+
         // Secondary accents
-        secondary: '#818cf8', // Indigo 400
-        accent: '#f472b6', // Pink 400 (for subtle highlights)
-        
+        secondary: 'var(--color-secondary)',
+        accent: 'var(--color-accent)',
+
         // Text colors
-        'text-main': '#f8fafc', // Slate 50
-        'text-muted': '#94a3b8', // Slate 400
-        
+        'text-main': 'var(--color-text-main)',
+        'text-muted': 'var(--color-text-muted)',
+
         // Status
         success: '#4ade80', // Green 400
         error: '#f87171', // Red 400

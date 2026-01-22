@@ -13,16 +13,16 @@ const QuickActionCard = ({ title, subtitle, icon: Icon, to, color = "bg-surface"
                 <div className="relative z-10 flex justify-between items-center">
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
-                            <Icon size={24} className="text-white" />
+                            <Icon size={24} className="text-text-main" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-semibold text-white">{title}</h3>
-                            <p className="text-sm text-white/60">{subtitle}</p>
+                            <h3 className="text-lg font-semibold text-text-main">{title}</h3>
+                            <p className="text-sm text-text-muted">{subtitle}</p>
                         </div>
                     </div>
 
                     <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <ArrowRight size={16} className="text-white" />
+                        <ArrowRight size={16} className="text-text-main" />
                     </div>
                 </div>
 

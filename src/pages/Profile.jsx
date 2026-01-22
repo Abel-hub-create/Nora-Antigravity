@@ -88,7 +88,7 @@ const Profile = () => {
                             {user.avatar ? (
                                 <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
                             ) : (
-                                <span className="text-2xl font-bold text-white">
+                                <span className="text-2xl font-bold text-text-main">
                                     {user.name?.charAt(0)?.toUpperCase() || 'U'}
                                 </span>
                             )}
@@ -103,7 +103,7 @@ const Profile = () => {
                     </div>
                     <div className="ml-auto bg-black/30 px-3 py-1 rounded-full border border-white/10 flex items-center gap-2">
                         <span className="text-lg">🥚</span>
-                        <span className="text-sm font-bold text-white">{user.eggs}</span>
+                        <span className="text-sm font-bold text-text-main">{user.eggs}</span>
                     </div>
                 </div>
                 {/* EXP Bar */}

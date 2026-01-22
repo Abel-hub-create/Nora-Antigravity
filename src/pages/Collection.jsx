@@ -56,7 +56,7 @@ const Collection = () => {
                         </div>
                         <div className="flex items-center gap-2 bg-black/30 px-4 py-2 rounded-full border border-white/10">
                             <Gift size={18} className="text-primary" />
-                            <span className="font-bold text-white">{user.eggs}</span>
+                            <span className="font-bold text-text-main">{user.eggs}</span>
                         </div>
                     </div>
 

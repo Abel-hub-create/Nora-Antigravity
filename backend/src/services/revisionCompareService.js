@@ -2,7 +2,10 @@
  * Revision Compare Service
  *
  * AI-powered semantic comparison between user recall and original synthese.
- * Uses GPT-4o-mini to evaluate understanding, not word-for-word matching.
+ *
+ * APPROACH: We split the synthese into segments OURSELVES (server-side),
+ * then ask GPT to evaluate each numbered segment. This ensures perfect
+ * highlighting since WE control the exact text, not GPT.
  */
 
 import OpenAI from 'openai';
@@ -14,6 +17,61 @@ const openai = new OpenAI({
 const MODEL = 'gpt-4o-mini';
 
 /**
+ * Split synthese into logical segments (sentences/phrases)
+ * Each segment will be evaluated independently by GPT
+ * Returns array of { id, text, startIndex, endIndex }
+ */
+const splitIntoSegments = (text) => {
+    const segments = [];
+
+    // Normalize line breaks - handle both \n and literal \\n
+    let normalizedText = text.replace(/\\n/g, '\n').replace(/  \n/g, '\n');
+
+    // Split by lines
+    const lines = normalizedText.split('\n');
+
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        // Skip section headers (## Title)
+        if (trimmed.startsWith('## ')) continue;
+
+        // For definition lines like "**Term** : definition"
+        if (trimmed.startsWith('**') && trimmed.includes(':')) {
+            segments.push({
+                id: segments.length + 1,
+                text: trimmed
+            });
+            continue;
+        }
+
+        // For regular lines, split by sentences if long enough
+        if (trimmed.length > 100) {
+            // Split on sentence boundaries
+            const sentences = trimmed.split(/(?<=[.!?])\s+/);
+            for (const sentence of sentences) {
+                const s = sentence.trim();
+                if (s.length > 15) {
+                    segments.push({
+                        id: segments.length + 1,
+                        text: s
+                    });
+                }
+            }
+        } else if (trimmed.length > 15) {
+            // Short lines - keep as single segment
+            segments.push({
+                id: segments.length + 1,
+                text: trimmed
+            });
+        }
+    }
+
+    return segments;
+};
+
+/**
  * Compare user recall with original synthese semantically
  * @param {string} originalSummary - The original synthese content
  * @param {string} userRecall - What the user wrote/dictated from memory
@@ -21,110 +79,121 @@ const MODEL = 'gpt-4o-mini';
  * @returns {Object} Comparison results with understood/missing concepts
  */
 export const compareRecall = async (originalSummary, userRecall, specificInstructions = null) => {
-    const prompt = `Tu es un enseignant qui evalue un rappel de cours.
+    // STEP 1: Split synthese into segments ourselves
+    const segments = splitIntoSegments(originalSummary);
 
-SYNTHESE ORIGINALE:
+    console.log('[RevisionCompare] === STARTING COMPARISON ===');
+    console.log('[RevisionCompare] Split into', segments.length, 'segments');
+    console.log('[RevisionCompare] User recall length:', userRecall.length, 'chars');
+
+    // Create numbered list for GPT
+    const numberedSegments = segments.map(seg => `[${seg.id}] ${seg.text}`).join('\n\n');
+
+    const prompt = `Tu es un enseignant qui evalue si un eleve a compris son cours.
+
+SEGMENTS DE LA SYNTHESE (numerotes de 1 a ${segments.length}):
 """
-${originalSummary}
+${numberedSegments}
 """
 
 RAPPEL DE L'UTILISATEUR:
 """
 ${userRecall}
 """
-
-${specificInstructions ? `ELEMENTS OBLIGATOIRES:
+${specificInstructions ? `
+ELEMENTS OBLIGATOIRES (doivent etre presents):
 """
 ${specificInstructions}
 """` : ''}
 
 ---
 
-## ETAPE 1 - DECOUPER LA SYNTHESE EN NOTIONS
+## TA MISSION
 
-D'abord, identifie TOUTES les notions distinctes de la synthese:
-- Chaque definition
-- Chaque processus/mecanisme
-- Chaque equation/formule
-- Chaque lieu/localisation
-- Chaque condition
-- Chaque comparaison
-- Chaque consequence/resultat
+Pour CHAQUE segment numerote, determine si l'utilisateur a exprime cette idee dans son rappel.
 
-Une synthese contient generalement entre 10 et 30 notions distinctes.
+Un segment est COMPRIS si:
+- L'utilisateur a exprime la MEME IDEE (meme avec des mots differents)
+- Reformulations acceptees: vocabulaire familier, simplifications, abreviations (O2 = oxygene, etc.)
+- Le SENS est correct, meme si la forme est differente
 
-## ETAPE 2 - EVALUER CHAQUE NOTION
+Un segment est PAS COMPRIS si:
+- L'idee du segment n'apparait PAS du tout dans le rappel
+- Ou l'idee est exprimee avec un CONTRESENS (sens inverse)
 
-Pour CHAQUE notion identifiee, verifie si l'utilisateur l'a mentionnee dans son rappel.
+## REGLE IMPORTANTE
 
-ACQUIS (vert) si:
-- L'utilisateur a exprime cette idee (meme reformulee, meme avec ses propres mots)
-- Le sens est correct
+Chaque segment absent du rappel = PAS COMPRIS.
+Sois strict sur la presence des idees, tolerant sur la formulation.
 
-NON ACQUIS (rouge) si:
-- La notion n'est PAS mentionnee du tout dans le rappel
-- Ou le sens est faux/inverse
-
-## REGLE CRITIQUE
-
-TOUTE notion de la synthese qui n'apparait PAS dans le rappel de l'utilisateur est automatiquement NON ACQUISE.
-
-Si l'utilisateur ecrit une seule phrase, il ne peut avoir qu'une ou deux notions ACQUISES - toutes les autres sont NON ACQUISES.
-
-Le score doit refleter: (notions acquises / total notions) * 100
-
-## TOLERANCE SUR LA FORME
-
-Quand une notion EST mentionnee, accepte les reformulations:
-- Vocabulaire different ou familier
-- Simplifications
-- Abreviations (O2, CO2)
-- Langage informel
-
-## FORMAT JSON
+## FORMAT DE REPONSE (JSON)
 
 {
-    "understoodConcepts": [
-        {"concept": "Nom court de la notion", "userText": "Ce que l'utilisateur a ecrit", "originalText": "Texte EXACT de la synthese a surligner en vert"}
-    ],
-    "missingConcepts": [
-        {"concept": "Nom court de la notion", "originalText": "Texte EXACT de la synthese a surligner en rouge", "importance": "high", "reason": "absent"}
-    ],
-    "overallScore": 0-100,
+    "understood": [1, 3, 5],
+    "notUnderstood": [2, 4, 6],
     "feedback": "Message encourageant"
 }
 
 IMPORTANT:
-- Chaque notion de la synthese DOIT apparaitre dans understoodConcepts OU missingConcepts
-- originalText = copie EXACTE du texte de la synthese (pour surlignage)`;
+- Chaque numero de 1 a ${segments.length} doit apparaitre dans "understood" OU "notUnderstood"
+- Pas de numero en double
+- Pas de numero manquant`;
 
     try {
         const response = await openai.chat.completions.create({
             model: MODEL,
             messages: [{ role: 'user', content: prompt }],
-            max_tokens: 2000,
-            temperature: 0, // Deterministic - same input = same output
+            max_tokens: 1000,
+            temperature: 0,
             response_format: { type: 'json_object' }
         });
 
-        const result = JSON.parse(response.choices[0].message.content);
+        const rawResponse = response.choices[0].message.content;
+        console.log('[RevisionCompare] GPT response:', rawResponse);
 
-        // Ensure arrays exist
-        result.understoodConcepts = result.understoodConcepts || [];
-        result.missingConcepts = result.missingConcepts || [];
-        result.overallScore = result.overallScore ?? 0;
-        result.feedback = result.feedback || 'Continue comme ca !';
+        const gptResult = JSON.parse(rawResponse);
 
-        // Log for debugging
-        console.log('[RevisionCompare] User recall:', userRecall.substring(0, 100));
-        console.log('[RevisionCompare] Understood:', result.understoodConcepts.length, 'concepts');
-        console.log('[RevisionCompare] Missing:', result.missingConcepts.length, 'concepts');
-        console.log('[RevisionCompare] Score:', result.overallScore);
-        if (result.understoodConcepts.length > 0) {
-            console.log('[RevisionCompare] Understood details:', JSON.stringify(result.understoodConcepts, null, 2));
+        // Convert GPT result (segment IDs) to our format (with original text)
+        const understoodIds = new Set(gptResult.understood || []);
+        const notUnderstoodIds = new Set(gptResult.notUnderstood || []);
+
+        const understoodConcepts = [];
+        const missingConcepts = [];
+
+        for (const segment of segments) {
+            if (understoodIds.has(segment.id)) {
+                understoodConcepts.push({
+                    concept: `Segment ${segment.id}`,
+                    userText: '', // We don't need this anymore
+                    originalText: segment.text
+                });
+            } else {
+                // If not in understood, it's missing (even if GPT forgot to list it)
+                missingConcepts.push({
+                    concept: `Segment ${segment.id}`,
+                    originalText: segment.text,
+                    importance: 'high',
+                    reason: 'absent'
+                });
+            }
         }
 
-        return result;
+        const totalSegments = segments.length;
+        const overallScore = totalSegments > 0
+            ? Math.round((understoodConcepts.length / totalSegments) * 100)
+            : 0;
+
+        console.log('[RevisionCompare] === RESULTS ===');
+        console.log('[RevisionCompare] Understood:', understoodConcepts.length, '/', totalSegments);
+        console.log('[RevisionCompare] Score:', overallScore, '%');
+
+        return {
+            understoodConcepts,
+            missingConcepts,
+            overallScore,
+            feedback: gptResult.feedback || 'Continue comme ca !'
+        };
+
     } catch (error) {
         console.error('[RevisionCompare] Error:', error);
         throw new Error('Erreur lors de la comparaison. Veuillez reessayer.');
