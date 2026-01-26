@@ -19,7 +19,7 @@ L'utilisateur peut prendre en photo ou expliquer à l'oral ce qu'il veut compren
 - Contenus organisés en dossiers
 
 ### Philosophie
-- Interface calme, pensée pour le mobile (thème sombre par défaut, thème clair disponible)
+- Interface calme, pensée pour le mobile (thème clair par défaut, thème sombre disponible)
 - Pas de compétition, pas de notes scolaires
 - Sensation de progression continue
 - Motiver sans créer de dépendance
@@ -416,13 +416,15 @@ Custom colors defined in `tailwind.config.js` using CSS variables for theme supp
 
 ### Theme System (Dark/Light)
 
-The app supports two themes: **dark** (default) and **light**. Users can switch themes in Settings.
+The app supports two themes: **light** (default) and **dark**. Users can switch themes in Settings.
 
 **How It Works**:
-1. Theme preference stored in `localStorage` (key: `nora_theme`)
+1. Theme preference stored in database (`users.theme` column)
 2. Applied via `data-theme` attribute on `<html>` element
-3. CSS variables in `index.css` define colors for each theme
+3. CSS variables in `index.css` define colors for each theme (`:root` = light theme)
 4. Theme initialized in `main.jsx` before render to avoid flash
+5. `AuthContext.applyUserPreferences()` applies user's theme from DB after login
+6. `MobileWrapper` also applies theme via `useEffect` when user changes
 
 **Components**:
 - `ThemeSelector` (`/src/components/Settings/ThemeSelector.jsx`) - Two buttons with Moon/Sun icons
@@ -511,6 +513,7 @@ Full-stack authentication with JWT tokens and secure cookie-based refresh tokens
 | POST | `/forgot-password` | Send password reset email | Yes |
 | POST | `/reset-password` | Reset password with token | No |
 | PATCH | `/profile` | Update user name and avatar (requires auth) | No |
+| PATCH | `/onboarding` | Complete first-time onboarding (requires auth) | No |
 | POST | `/sync` | Sync user progress data (requires auth) | No |
 
 **Security**:
@@ -539,6 +542,48 @@ backend/
 │   └── validators/syntheseValidators.js # Synthese validation schemas
 ├── uploads/                    # Temporary audio files (auto-cleaned)
 ```
+
+## Onboarding System
+
+First-time user onboarding flow displayed only on first login after account creation.
+
+### Flow
+
+The onboarding is a 3-step modal that appears after first login:
+
+| Step | Content | Required |
+|------|---------|----------|
+| 1 | "Comment tu t'appelles ?" - Name input | Yes (min 2 chars) |
+| 2 | "Ajoute une photo de profil" - Avatar upload | No (skip available) |
+| 3 | "Tu es prêt !" - Redirect to Import | Button click |
+
+### Technical Implementation
+
+**Database**:
+- `users.onboarding_completed` column (BOOLEAN DEFAULT FALSE)
+- Migration: `020_add_onboarding_completed.sql`
+- Existing users set to `TRUE` (already onboarded)
+
+**Backend**:
+- `PATCH /api/auth/onboarding` - Complete onboarding (updates name, avatar, sets onboarding_completed = true)
+- `userRepository.completeOnboarding(userId, { name, avatar })`
+
+**Frontend**:
+- Component: `/src/components/Onboarding/OnboardingModal.jsx`
+- Rendered in `MobileWrapper` when `user && !user.onboarding_completed`
+- Uses Framer Motion for smooth step transitions
+- `authService.completeOnboarding({ name, avatar })` API call
+- `useAuth().completeOnboarding()` context method
+
+**i18n Keys**: `onboarding.step1.*`, `onboarding.step2.*`, `onboarding.step3.*`
+
+### Behavior
+
+- Only shown ONCE per account (never reappears after completion)
+- Modal has `z-index: 100` to overlay everything
+- Step indicators (dots) show progress
+- After completion, redirects to `/import`
+- Name is stored in `users.name`, avatar in `users.avatar`
 
 ## Syntheses System
 
@@ -659,6 +704,8 @@ mysql -u $DB_USER -p$DB_PASSWORD $DB_NAME < backend/src/database/migrations/005_
 mysql -u $DB_USER -p$DB_PASSWORD $DB_NAME < backend/src/database/migrations/006_create_quiz_questions.sql
 mysql -u $DB_USER -p$DB_PASSWORD $DB_NAME < backend/src/database/migrations/007_create_folders.sql
 mysql -u $DB_USER -p$DB_PASSWORD $DB_NAME < backend/src/database/migrations/008_create_folder_syntheses.sql
+# ... (009-019 for notifications, daily progress, avatar, email verification, study stats, revision, preferences)
+mysql -u $DB_USER -p$DB_PASSWORD $DB_NAME < backend/src/database/migrations/020_add_onboarding_completed.sql
 ```
 
 ## Import System

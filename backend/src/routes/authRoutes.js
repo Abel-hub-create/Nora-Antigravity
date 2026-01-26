@@ -131,10 +131,64 @@ router.patch('/profile', authenticate, async (req, res, next) => {
   }
 });
 
+// Complete onboarding (first-time setup)
+router.patch('/onboarding', authenticate, async (req, res, next) => {
+  try {
+    const { name, avatar } = req.body;
+
+    // Name is required for onboarding
+    if (!name || name.trim().length < 2) {
+      return res.status(400).json({ error: 'Le prenom est requis (minimum 2 caracteres)' });
+    }
+
+    // Validate name length
+    if (name.length > 50) {
+      return res.status(400).json({ error: 'Le prenom ne peut pas depasser 50 caracteres' });
+    }
+
+    // Complete onboarding (updates name, avatar if provided, and sets onboarding_completed = true)
+    await userRepository.completeOnboarding(req.user.id, { name: name.trim(), avatar });
+
+    // Get updated user
+    const updatedUser = await userRepository.findById(req.user.id);
+
+    res.json({ user: updatedUser });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Sync user data (save progress from frontend)
 router.post('/sync', authenticate, validate(validators.syncUserDataSchema), async (req, res, next) => {
   try {
     const updatedUser = await authService.syncUserData(req.user.id, req.body);
+    res.json({ user: updatedUser });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update user preferences (theme and language)
+router.patch('/preferences', authenticate, async (req, res, next) => {
+  try {
+    const { theme, language } = req.body;
+
+    // Validate theme
+    if (theme && !['dark', 'light'].includes(theme)) {
+      return res.status(400).json({ error: 'Theme invalide' });
+    }
+
+    // Validate language
+    if (language && !['fr', 'en'].includes(language)) {
+      return res.status(400).json({ error: 'Langue invalide' });
+    }
+
+    // Update preferences
+    await userRepository.updatePreferences(req.user.id, { theme, language });
+
+    // Get updated user
+    const updatedUser = await userRepository.findById(req.user.id);
+
     res.json({ user: updatedUser });
   } catch (error) {
     next(error);

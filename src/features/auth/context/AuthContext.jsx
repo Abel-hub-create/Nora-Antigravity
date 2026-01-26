@@ -1,6 +1,15 @@
-import React, { createContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import * as authService from '../services/authService';
 import i18n from '../../../i18n';
+
+// Apply user preferences (theme and language)
+const applyUserPreferences = (user) => {
+  // Always apply theme - default to 'light' if not set
+  document.documentElement.setAttribute('data-theme', user?.theme || 'light');
+  if (user?.language) {
+    i18n.changeLanguage(user.language);
+  }
+};
 
 export const AuthContext = createContext();
 
@@ -16,6 +25,8 @@ export const AuthProvider = ({ children }) => {
         // Fetch user data directly from backend (DB)
         const currentUser = await authService.getCurrentUser();
         setUser(currentUser);
+        // Apply user's saved preferences
+        applyUserPreferences(currentUser);
       } catch {
         // Not authenticated
         setUser(null);
@@ -33,6 +44,8 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       const userData = await authService.login(credentials);
       setUser(userData);
+      // Apply user's saved preferences after login
+      applyUserPreferences(userData);
       return userData;
     } catch (err) {
       const message = err.response?.data?.error || i18n.t('errors.loginFailed');
@@ -123,6 +136,39 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const updatePreferences = useCallback(async ({ theme, language }) => {
+    try {
+      setError(null);
+      const updatedUser = await authService.updatePreferences({ theme, language });
+      setUser(updatedUser);
+      // Apply preferences immediately
+      if (theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+      }
+      if (language) {
+        i18n.changeLanguage(language);
+      }
+      return updatedUser;
+    } catch (err) {
+      const message = err.response?.data?.error || i18n.t('errors.preferencesUpdateFailed');
+      setError(message);
+      throw new Error(message);
+    }
+  }, []);
+
+  const completeOnboarding = useCallback(async ({ name, avatar }) => {
+    try {
+      setError(null);
+      const updatedUser = await authService.completeOnboarding({ name, avatar });
+      setUser(updatedUser);
+      return updatedUser;
+    } catch (err) {
+      const message = err.response?.data?.error || i18n.t('errors.generic');
+      setError(message);
+      throw new Error(message);
+    }
+  }, []);
+
   const value = {
     user,
     isAuthenticated: !!user,
@@ -136,7 +182,9 @@ export const AuthProvider = ({ children }) => {
     clearError,
     syncUserData,
     updateProfile,
-    deleteAccount
+    updatePreferences,
+    deleteAccount,
+    completeOnboarding
   };
 
   return (

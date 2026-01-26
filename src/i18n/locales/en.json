@@ -199,6 +199,7 @@
     "title": "Guided Revision",
     "subtitle": "The most effective method to retain",
     "description": "More effective than simple rereading. This active recall technique anchors information in long-term memory.",
+    "inDevelopment": "🚧 Feature under development",
     "loadError": "Error loading revision",
     "expired": "Session Expired",
     "expiredMessage": "You were away too long. The session expired after 15 minutes of inactivity.",
@@ -530,6 +531,26 @@
     "xpGained": "+{{amount}} XP - {{label}} ({{time}}min)",
     "dailyBonusComplete": "+{{amount}} XP - Daily bonus complete!"
   },
+  "onboarding": {
+    "step1": {
+      "title": "What's your name?",
+      "placeholder": "Your first name",
+      "button": "Continue"
+    },
+    "step2": {
+      "title": "Add a profile photo",
+      "subtitle": "Optional but recommended",
+      "uploadButton": "Choose a photo",
+      "changeButton": "Change photo",
+      "skipButton": "Skip",
+      "continueButton": "Continue"
+    },
+    "step3": {
+      "title": "You're all set!",
+      "message": "Go to the Import tab to add your first course.",
+      "button": "Go to Import"
+    }
+  },
   "errors": {
     "generic": "An error occurred",
     "network": "Connection error",
@@ -542,6 +563,7 @@
     "requestFailed": "Request failed",
     "resetFailed": "Reset failed",
     "profileUpdateFailed": "Failed to update profile",
+    "preferencesUpdateFailed": "Failed to update preferences",
     "deleteAccountFailed": "Failed to delete account",
     "noTextDetectedPhoto": "No text detected. Take a photo of your course so I can summarize it.",
     "noTextDetectedVoice": "No text detected. Dictate your course so I can summarize it."

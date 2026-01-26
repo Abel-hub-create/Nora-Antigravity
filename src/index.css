@@ -2,21 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  /* Dark theme (default) */
-  :root,
-  [data-theme="dark"] {
-    --color-background: #0f172a; /* Slate 900 */
-    --color-surface: #1e293b; /* Slate 800 */
-    --color-primary: #38bdf8; /* Sky 400 */
-    --color-primary-dark: #0ea5e9; /* Sky 500 */
-    --color-secondary: #818cf8; /* Indigo 400 */
-    --color-accent: #f472b6; /* Pink 400 */
-    --color-text-main: #f8fafc; /* Slate 50 */
-    --color-text-muted: #94a3b8; /* Slate 400 */
-  }
+/**
+ * DESIGN SYSTEM - Nora App
+ *
+ * Palette Rules:
+ * - background: Main background (Intensity: Low)
+ * - surface: Cards, blocks (Intensity: Medium)
+ * - primary: Interactive elements, accents (Intensity: Accent)
+ * - secondary: Secondary accents
+ * - text-main: Primary text (WCAG AA contrast required)
+ * - text-muted: Secondary text
+ *
+ * Visual Hierarchy: Content > Interaction > Structure > Decorative
+ * Spacing Unit: 4px (all spacing must be multiples)
+ * Typography: Inter (single font family)
+ *
+ * Animation Classes:
+ * - Decorative: 8-14s, ease-in-out
+ * - UI Transitions: 150-300ms, ease-out
+ * - Appearances: 200-500ms, ease-out
+ *
+ * Restrictions:
+ * - No aggressive gradients
+ * - No neon effects
+ * - No hard shadows
+ * - No noisy textures
+ */
 
-  /* Light theme */
+@layer base {
+  /* Light theme (default for new users) */
+  :root,
   [data-theme="light"] {
     --color-background: #f8fafc; /* Slate 50 */
     --color-surface: #e2e8f0; /* Slate 200 */
@@ -24,8 +39,29 @@
     --color-primary-dark: #0369a1; /* Sky 700 */
     --color-secondary: #6366f1; /* Indigo 500 */
     --color-accent: #ec4899; /* Pink 500 */
-    --color-text-main: #0f172a; /* Slate 900 */
-    --color-text-muted: #64748b; /* Slate 500 */
+    --color-text-main: #0f172a; /* Slate 900 - contrast 15.4:1 */
+    --color-text-muted: #64748b; /* Slate 500 - contrast 4.5:1 */
+  }
+
+  /* Dark theme */
+  [data-theme="dark"] {
+    /* Background - Intensity: Low */
+    --color-background: #0f172a; /* Slate 900 - Main page background */
+
+    /* Surface - Intensity: Medium */
+    --color-surface: #1e293b; /* Slate 800 - Cards, modals, elevated elements */
+
+    /* Primary - Intensity: Accent (interactive only) */
+    --color-primary: #38bdf8; /* Sky 400 - Buttons, links, active states */
+    --color-primary-dark: #0ea5e9; /* Sky 500 - Hover states */
+
+    /* Secondary */
+    --color-secondary: #818cf8; /* Indigo 400 - Secondary accents */
+    --color-accent: #f472b6; /* Pink 400 - Highlights, badges */
+
+    /* Text - WCAG AA compliant */
+    --color-text-main: #f8fafc; /* Slate 50 - Primary text, contrast 15.4:1 */
+    --color-text-muted: #94a3b8; /* Slate 400 - Secondary text, contrast 4.6:1 */
   }
 
   body {
@@ -45,27 +81,117 @@
 }
 
 /* Theme-aware utility overrides */
+/* Light theme (default): white/X becomes black/X for visibility */
+:root .bg-white\/5,
 [data-theme="light"] .bg-white\/5 {
   background-color: rgba(0, 0, 0, 0.05);
 }
+:root .bg-white\/10,
 [data-theme="light"] .bg-white\/10 {
   background-color: rgba(0, 0, 0, 0.08);
 }
+:root .bg-black\/30,
 [data-theme="light"] .bg-black\/30 {
   background-color: rgba(0, 0, 0, 0.06);
 }
+:root .bg-black\/70,
 [data-theme="light"] .bg-black\/70 {
   background-color: rgba(0, 0, 0, 0.5);
 }
+:root .border-white\/5,
 [data-theme="light"] .border-white\/5 {
   border-color: rgba(0, 0, 0, 0.1);
 }
+:root .border-white\/10,
 [data-theme="light"] .border-white\/10 {
   border-color: rgba(0, 0, 0, 0.15);
 }
+:root .hover\:bg-white\/5:hover,
 [data-theme="light"] .hover\:bg-white\/5:hover {
   background-color: rgba(0, 0, 0, 0.05);
 }
+:root .hover\:bg-white\/10:hover,
 [data-theme="light"] .hover\:bg-white\/10:hover {
   background-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Dark theme: restore original white/X values */
+[data-theme="dark"] .bg-white\/5 {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+[data-theme="dark"] .bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+[data-theme="dark"] .bg-black\/30 {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+[data-theme="dark"] .bg-black\/70 {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+[data-theme="dark"] .border-white\/5 {
+  border-color: rgba(255, 255, 255, 0.05);
+}
+[data-theme="dark"] .border-white\/10 {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+[data-theme="dark"] .hover\:bg-white\/5:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+[data-theme="dark"] .hover\:bg-white\/10:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/**
+ * ANIMATION SYSTEM
+ *
+ * Categories:
+ * 1. Decorative micro-movements: 8-14s, very subtle
+ * 2. UI Transitions: 150-300ms, smooth
+ * 3. Appearances: 200-500ms, fade/scale
+ *
+ * Rules:
+ * - Decorative animations must be slower than UI transitions
+ * - All use ease-in-out or ease-out
+ * - No sudden movements
+ */
+
+/* Decorative: Slow plant sway (8-12s) */
+@keyframes plant-sway {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(2px) rotate(0.5deg);
+  }
+}
+
+/* Decorative: Subtle breathing (10-14s) */
+@keyframes plant-breathe {
+  0%, 100% {
+    opacity: 0.06;
+  }
+  50% {
+    opacity: 0.08;
+  }
+}
+
+/* Appearance: Fade in (300-500ms) */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Respect reduced motion preference - WCAG compliance */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

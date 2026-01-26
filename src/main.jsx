@@ -4,9 +4,9 @@ import './index.css'
 import './i18n' // Initialize i18n
 import App from './App.jsx'
 
-// Initialize theme from localStorage before render to avoid flash
-const savedTheme = localStorage.getItem('nora_theme') || 'dark';
-document.documentElement.setAttribute('data-theme', savedTheme);
+// Set default theme before render to avoid flash
+// Light theme by default (auth pages always light, new users default to light)
+document.documentElement.setAttribute('data-theme', 'light');
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

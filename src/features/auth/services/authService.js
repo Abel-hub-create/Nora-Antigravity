@@ -54,6 +54,16 @@ export const updateProfile = async ({ name, avatar }) => {
   return data.user;
 };
 
+export const updatePreferences = async ({ theme, language }) => {
+  const data = await api.patch('/auth/preferences', { theme, language });
+  return data.user;
+};
+
+export const completeOnboarding = async ({ name, avatar }) => {
+  const data = await api.patch('/auth/onboarding', { name, avatar });
+  return data.user;
+};
+
 export const deleteAccount = async () => {
   await api.delete('/auth/account');
   // Clear token

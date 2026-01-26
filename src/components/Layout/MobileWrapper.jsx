@@ -1,16 +1,29 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Home, GraduationCap, PlusCircle, User, Gift } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import NotificationStack from '../UI/NotificationStack';
+import OnboardingModal from '../Onboarding/OnboardingModal';
 import { useRevision } from '../../context/RevisionContext';
+import { useAuth } from '../../features/auth/hooks/useAuth';
 
 const MobileWrapper = ({ children }) => {
     const { t } = useTranslation();
     const location = useLocation();
     const navigate = useNavigate();
     const { isRevisionActive } = useRevision();
+    const { user } = useAuth();
+
+    // Apply user's theme when MobileWrapper mounts or user changes
+    useEffect(() => {
+        if (user?.theme) {
+            document.documentElement.setAttribute('data-theme', user.theme);
+        }
+    }, [user?.theme]);
+
+    // Show onboarding modal for new users
+    const showOnboarding = user && !user.onboarding_completed;
 
     const navItems = [
         { icon: Home, labelKey: 'nav.home', path: '/' },
@@ -22,6 +35,9 @@ const MobileWrapper = ({ children }) => {
 
     return (
         <div className="min-h-screen bg-background font-sans text-text-main">
+            {/* Onboarding Modal for new users */}
+            {showOnboarding && <OnboardingModal />}
+
             {/* Sidebar Navigation - Desktop only */}
             <nav className="hidden md:flex flex-col w-64 bg-surface/50 border-r border-white/5 p-4 fixed h-full z-40">
                 {/* Logo */}

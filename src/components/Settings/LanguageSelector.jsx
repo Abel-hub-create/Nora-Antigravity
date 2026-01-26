@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Globe } from 'lucide-react';
+import { useAuth } from '../../features/auth/hooks/useAuth';
 
 const languages = [
     { code: 'fr', label: 'Français', flag: '🇫🇷' },
@@ -8,11 +9,16 @@ const languages = [
 ];
 
 const LanguageSelector = () => {
-    const { t, i18n } = useTranslation();
-    const currentLang = i18n.language;
+    const { t } = useTranslation();
+    const { user, updatePreferences } = useAuth();
+    const currentLang = user?.language || 'fr';
 
-    const handleLanguageChange = (langCode) => {
-        i18n.changeLanguage(langCode);
+    const handleLanguageChange = async (langCode) => {
+        try {
+            await updatePreferences({ language: langCode });
+        } catch (error) {
+            console.error('Failed to update language:', error);
+        }
     };
 
     return (

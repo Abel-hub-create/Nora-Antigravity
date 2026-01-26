@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Moon, Sun } from 'lucide-react';
-
-const THEME_STORAGE_KEY = 'nora_theme';
+import { useAuth } from '../../features/auth/hooks/useAuth';
 
 const themes = [
     { code: 'dark', labelKey: 'settings.darkTheme', icon: Moon },
@@ -11,17 +10,15 @@ const themes = [
 
 const ThemeSelector = () => {
     const { t } = useTranslation();
-    const [currentTheme, setCurrentTheme] = useState(() => {
-        return localStorage.getItem(THEME_STORAGE_KEY) || 'dark';
-    });
+    const { user, updatePreferences } = useAuth();
+    const currentTheme = user?.theme || 'dark';
 
-    useEffect(() => {
-        document.documentElement.setAttribute('data-theme', currentTheme);
-        localStorage.setItem(THEME_STORAGE_KEY, currentTheme);
-    }, [currentTheme]);
-
-    const handleThemeChange = (themeCode) => {
-        setCurrentTheme(themeCode);
+    const handleThemeChange = async (themeCode) => {
+        try {
+            await updatePreferences({ theme: themeCode });
+        } catch (error) {
+            console.error('Failed to update theme:', error);
+        }
     };
 
     return (

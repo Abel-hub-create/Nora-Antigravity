@@ -199,6 +199,7 @@
     "title": "Révision guidée",
     "subtitle": "La méthode la plus efficace pour retenir",
     "description": "Plus efficace qu'une simple relecture. Cette technique de rappel actif ancre les informations en mémoire long terme.",
+    "inDevelopment": "🚧 Fonctionnalité en cours de développement",
     "loadError": "Erreur lors du chargement",
     "expired": "Session expirée",
     "expiredMessage": "Tu es revenu trop tard. La session a expiré après 15 minutes d'inactivité.",
@@ -530,6 +531,26 @@
     "xpGained": "+{{amount}} XP - {{label}} ({{time}}min)",
     "dailyBonusComplete": "+{{amount}} XP - Bonus journalier complet !"
   },
+  "onboarding": {
+    "step1": {
+      "title": "Comment tu t'appelles ?",
+      "placeholder": "Ton prénom",
+      "button": "Continuer"
+    },
+    "step2": {
+      "title": "Ajoute une photo de profil",
+      "subtitle": "Optionnel mais recommandé",
+      "uploadButton": "Choisir une photo",
+      "changeButton": "Changer la photo",
+      "skipButton": "Passer",
+      "continueButton": "Continuer"
+    },
+    "step3": {
+      "title": "Tu es prêt !",
+      "message": "Va dans l'onglet Importer pour ajouter ton premier cours.",
+      "button": "Aller à Importer"
+    }
+  },
   "errors": {
     "generic": "Une erreur s'est produite",
     "network": "Erreur de connexion au serveur",
@@ -542,6 +563,7 @@
     "requestFailed": "Échec de la demande",
     "resetFailed": "Échec de la réinitialisation",
     "profileUpdateFailed": "Échec de la mise à jour du profil",
+    "preferencesUpdateFailed": "Échec de la mise à jour des préférences",
     "deleteAccountFailed": "Échec de la suppression du compte",
     "noTextDetectedPhoto": "Aucun texte détecté. Prends en photo ton cours pour que je puisse le synthétiser.",
     "noTextDetectedVoice": "Aucun texte détecté. Dicte ton cours pour que je puisse le synthétiser."

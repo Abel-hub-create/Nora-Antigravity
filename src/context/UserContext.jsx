@@ -45,11 +45,8 @@ const getDefaultDailyStats = () => ({
     }
 });
 
-// Default daily goals
-const getDefaultDailyGoals = () => [
-    { id: 1, type: 'summary', targetMinutes: 30, completed: false },
-    { id: 2, type: 'quiz', targetMinutes: 20, completed: false }
-];
+// Default daily goals - empty by default for new users
+const getDefaultDailyGoals = () => [];
 
 // Calculate total study time from daily stats (in seconds)
 const getTotalStudyTime = (stats) => {

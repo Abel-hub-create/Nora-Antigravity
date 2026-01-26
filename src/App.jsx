@@ -5,6 +5,7 @@ import MobileWrapper from './components/Layout/MobileWrapper';
 // Auth
 import { AuthProvider } from './features/auth/context/AuthContext';
 import ProtectedRoute from './features/auth/components/ProtectedRoute';
+import AuthLayout from './features/auth/components/AuthLayout';
 import Login from './features/auth/pages/Login';
 import Register from './features/auth/pages/Register';
 import ForgotPassword from './features/auth/pages/ForgotPassword';
@@ -34,13 +35,13 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Public Auth Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
-          <Route path="/verify-email-sent" element={<VerifyEmailSent />} />
-          <Route path="/verify-email/:token" element={<VerifyEmail />} />
+          {/* Public Auth Routes - Always light theme */}
+          <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
+          <Route path="/register" element={<AuthLayout><Register /></AuthLayout>} />
+          <Route path="/forgot-password" element={<AuthLayout><ForgotPassword /></AuthLayout>} />
+          <Route path="/reset-password/:token" element={<AuthLayout><ResetPassword /></AuthLayout>} />
+          <Route path="/verify-email-sent" element={<AuthLayout><VerifyEmailSent /></AuthLayout>} />
+          <Route path="/verify-email/:token" element={<AuthLayout><VerifyEmail /></AuthLayout>} />
 
           {/* Protected Routes */}
           <Route

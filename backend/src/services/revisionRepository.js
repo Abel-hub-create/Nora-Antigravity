@@ -49,7 +49,7 @@ export const syncSession = async (userId, syntheseId, data) => {
  * Save user recall text
  */
 export const saveRecall = async (userId, syntheseId, userRecall) => {
-    const sql = `UPDATE revision_sessions SET user_recall = ?, phase = 'compare', last_activity_at = NOW() WHERE user_id = ? AND synthese_id = ?`;
+    const sql = `UPDATE revision_sessions SET user_recall = ?, phase = 'analyzing', phase_started_at = NOW(), last_activity_at = NOW() WHERE user_id = ? AND synthese_id = ?`;
     await query(sql, [userRecall, userId, syntheseId]);
 };
 

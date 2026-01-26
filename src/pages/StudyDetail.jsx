@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, Layers, Brain, Calendar, Trash2, Loader2, AlertCircle, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Layers, Brain, Calendar, Trash2, Loader2, AlertCircle, BookOpen, ChevronLeft, ChevronRight, Lock } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import * as syntheseService from '../services/syntheseService';
 import useActiveTimer from '../hooks/useActiveTimer';
+import { useAuth } from '../features/auth/hooks/useAuth';
 
 // Nombre de caractères par page pour la pagination
 const CHARS_PER_PAGE = 2500;
 
 const StudyDetail = () => {
     const { t, i18n } = useTranslation();
+    const { user } = useAuth();
     // Track time spent reading the summary
     useActiveTimer('summary');
     const { id } = useParams();
@@ -20,6 +22,9 @@ const StudyDetail = () => {
     const [error, setError] = useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
+
+    // Check if user has access to guided revision (only specific account)
+    const isRevisionEnabled = user?.email === 'imakuniiiiiiiiiii@gmail.com';
 
     // Diviser la synthèse en pages
     const summaryPages = useMemo(() => {
@@ -171,19 +176,35 @@ const StudyDetail = () => {
                 transition={{ delay: 0.05 }}
                 className="mb-6"
             >
-                <Link
-                    to={`/study/${id}/revision`}
-                    className="w-full bg-gradient-to-br from-emerald-500/30 to-emerald-600/10 border-2 border-emerald-500/40 rounded-2xl p-5 flex items-center gap-4 active:scale-[0.98] transition-transform shadow-lg shadow-emerald-500/10"
-                >
-                    <div className="w-14 h-14 bg-emerald-500/30 rounded-xl flex items-center justify-center">
-                        <BookOpen className="text-emerald-400" size={28} />
+                {isRevisionEnabled ? (
+                    <Link
+                        to={`/study/${id}/revision`}
+                        className="w-full bg-gradient-to-br from-emerald-500/30 to-emerald-600/10 border-2 border-emerald-500/40 rounded-2xl p-5 flex items-center gap-4 active:scale-[0.98] transition-transform shadow-lg shadow-emerald-500/10"
+                    >
+                        <div className="w-14 h-14 bg-emerald-500/30 rounded-xl flex items-center justify-center">
+                            <BookOpen className="text-emerald-400" size={28} />
+                        </div>
+                        <div className="flex-1">
+                            <span className="font-bold text-emerald-400 block text-lg">{t('revision.title')}</span>
+                            <span className="text-xs text-text-main font-medium">{t('revision.subtitle')}</span>
+                            <p className="text-xs text-text-muted mt-1 leading-relaxed">{t('revision.description')}</p>
+                        </div>
+                    </Link>
+                ) : (
+                    <div className="w-full bg-gradient-to-br from-gray-500/20 to-gray-600/10 border-2 border-gray-500/30 rounded-2xl p-5 flex items-center gap-4 opacity-60 cursor-not-allowed">
+                        <div className="w-14 h-14 bg-gray-500/30 rounded-xl flex items-center justify-center relative">
+                            <BookOpen className="text-gray-400" size={28} />
+                            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-gray-600 rounded-full flex items-center justify-center">
+                                <Lock className="text-gray-300" size={12} />
+                            </div>
+                        </div>
+                        <div className="flex-1">
+                            <span className="font-bold text-gray-400 block text-lg">{t('revision.title')}</span>
+                            <span className="text-xs text-amber-400 font-medium">{t('revision.inDevelopment')}</span>
+                            <p className="text-xs text-text-muted mt-1 leading-relaxed">{t('revision.description')}</p>
+                        </div>
                     </div>
-                    <div className="flex-1">
-                        <span className="font-bold text-emerald-400 block text-lg">{t('revision.title')}</span>
-                        <span className="text-xs text-text-main font-medium">{t('revision.subtitle')}</span>
-                        <p className="text-xs text-text-muted mt-1 leading-relaxed">{t('revision.description')}</p>
-                    </div>
-                </Link>
+                )}
             </motion.div>
 
             {/* Summary Content */}

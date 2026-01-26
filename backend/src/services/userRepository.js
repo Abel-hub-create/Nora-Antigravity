@@ -13,16 +13,35 @@ export const findByEmail = async (email) => {
 };
 
 export const findById = async (id) => {
-  const sql = `SELECT id, email, name, avatar, level, exp, next_level_exp, streak, eggs, collection, created_at
+  const sql = `SELECT id, email, name, avatar, theme, language, onboarding_completed, level, exp, next_level_exp, streak, eggs, collection, created_at
                FROM users WHERE id = ? AND is_active = 1`;
   const users = await query(sql, [id]);
   return users[0] || null;
+};
+
+export const updatePreferences = async (userId, { theme, language }) => {
+  const sql = `UPDATE users SET
+    theme = COALESCE(?, theme),
+    language = COALESCE(?, language),
+    updated_at = NOW()
+    WHERE id = ?`;
+  await query(sql, [theme, language, userId]);
 };
 
 export const updateProfile = async (userId, { name, avatar }) => {
   const sql = `UPDATE users SET
     name = COALESCE(?, name),
     avatar = COALESCE(?, avatar),
+    updated_at = NOW()
+    WHERE id = ?`;
+  await query(sql, [name, avatar, userId]);
+};
+
+export const completeOnboarding = async (userId, { name, avatar }) => {
+  const sql = `UPDATE users SET
+    name = COALESCE(?, name),
+    avatar = COALESCE(?, avatar),
+    onboarding_completed = TRUE,
     updated_at = NOW()
     WHERE id = ?`;
   await query(sql, [name, avatar, userId]);
@@ -92,10 +111,11 @@ export const markPasswordResetUsed = async (token) => {
 
 // Email verification management
 export const createWithVerificationToken = async ({ email, password, name, verificationToken, verificationExpires }) => {
-  const sql = `INSERT INTO users (email, password, name, is_verified, verification_token, verification_token_expires)
-               VALUES (?, ?, ?, FALSE, ?, ?)`;
+  // Default preferences for new accounts: light theme, French language
+  const sql = `INSERT INTO users (email, password, name, theme, language, is_verified, verification_token, verification_token_expires)
+               VALUES (?, ?, ?, 'light', 'fr', FALSE, ?, ?)`;
   const result = await query(sql, [email, password, name, verificationToken, verificationExpires]);
-  return { id: result.insertId, email, name };
+  return { id: result.insertId, email, name, theme: 'light', language: 'fr' };
 };
 
 export const findByVerificationToken = async (token) => {
