@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Home, GraduationCap, PlusCircle, User, Gift } from 'lucide-react';
+import { Home, GraduationCap, PlusCircle, User, Gift, Settings } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
@@ -31,6 +31,7 @@ const MobileWrapper = ({ children }) => {
         { icon: Gift, labelKey: 'nav.collection', path: '/collection' },
         { icon: PlusCircle, labelKey: 'nav.import', path: '/import' },
         { icon: User, labelKey: 'nav.profile', path: '/profile' },
+        { icon: Settings, labelKey: 'nav.settings', path: '/settings' },
     ];
 
     return (
