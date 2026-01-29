@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, RotateCw, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, RotateCw, ChevronRight, ChevronLeft, Loader2, PenLine, X } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import useActiveTimer from '../hooks/useActiveTimer';
@@ -16,6 +16,10 @@ const StudyFlashcards = () => {
     const [isFlipped, setIsFlipped] = useState(false);
     const [direction, setDirection] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
+    const [showWriteInput, setShowWriteInput] = useState(false);
+    const [userAnswers, setUserAnswers] = useState({});
+    const [currentAnswer, setCurrentAnswer] = useState('');
+    const textareaRef = useRef(null);
 
     useEffect(() => {
         const loadFlashcards = async () => {
@@ -37,6 +41,8 @@ const StudyFlashcards = () => {
         if (currentCardIndex < cards.length - 1) {
             setDirection(1);
             setIsFlipped(false);
+            setShowWriteInput(false);
+            setCurrentAnswer('');
             setCurrentCardIndex(prev => prev + 1);
         }
     };
@@ -45,12 +51,43 @@ const StudyFlashcards = () => {
         if (currentCardIndex > 0) {
             setDirection(-1);
             setIsFlipped(false);
+            setShowWriteInput(false);
+            setCurrentAnswer('');
             setCurrentCardIndex(prev => prev - 1);
         }
     };
 
     const handleFlip = () => {
+        // Si l'utilisateur a écrit une réponse, on la sauvegarde avant de retourner
+        if (showWriteInput && currentAnswer.trim()) {
+            setUserAnswers(prev => ({
+                ...prev,
+                [currentCardIndex]: currentAnswer.trim()
+            }));
+        }
         setIsFlipped(!isFlipped);
+    };
+
+    const handleWriteClick = (e) => {
+        e.stopPropagation();
+        setShowWriteInput(true);
+        // Restaurer la réponse précédente si elle existe
+        if (userAnswers[currentCardIndex]) {
+            setCurrentAnswer(userAnswers[currentCardIndex]);
+        }
+        setTimeout(() => {
+            textareaRef.current?.focus();
+        }, 100);
+    };
+
+    const handleCloseWriteInput = (e) => {
+        e.stopPropagation();
+        setShowWriteInput(false);
+        setCurrentAnswer('');
+    };
+
+    const handleTextareaClick = (e) => {
+        e.stopPropagation();
     };
 
     const variants = {
@@ -159,14 +196,46 @@ const StudyFlashcards = () => {
                             >
                                 {/* Front */}
                                 <div
-                                    className="absolute inset-0 bg-surface border border-white/10 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-xl"
+                                    className="absolute inset-0 bg-surface border border-white/10 rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-xl"
                                     style={{ backfaceVisibility: "hidden" }}
                                 >
-                                    <span className="text-sm text-primary font-bold uppercase tracking-wider mb-4">{t('flashcards.question')}</span>
-                                    <p className="text-xl font-medium text-text-main leading-relaxed">
+                                    <span className="text-sm text-primary font-bold uppercase tracking-wider mb-3">{t('flashcards.question')}</span>
+                                    <p className="text-lg font-medium text-text-main leading-relaxed mb-4">
                                         {cards[currentCardIndex].front}
                                     </p>
-                                    <div className="absolute bottom-6 text-text-muted text-xs flex items-center gap-2">
+
+                                    {/* Zone de réponse écrite */}
+                                    {showWriteInput ? (
+                                        <div className="w-full mt-2" onClick={handleTextareaClick}>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="text-xs text-text-muted">{t('flashcards.yourAnswer')}</span>
+                                                <button
+                                                    onClick={handleCloseWriteInput}
+                                                    className="p-1 text-text-muted hover:text-text-main transition-colors"
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                            <textarea
+                                                ref={textareaRef}
+                                                value={currentAnswer}
+                                                onChange={(e) => setCurrentAnswer(e.target.value)}
+                                                onClick={handleTextareaClick}
+                                                placeholder={t('flashcards.writeAnswerPlaceholder')}
+                                                className="w-full h-20 bg-white border border-white/10 rounded-xl p-3 text-sm text-black placeholder:text-gray-400 resize-none focus:outline-none focus:border-primary/50"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={handleWriteClick}
+                                            className="flex items-center gap-2 text-xs text-text-muted hover:text-primary transition-colors mt-2 px-3 py-2 rounded-lg hover:bg-white/5"
+                                        >
+                                            <PenLine size={14} />
+                                            {t('flashcards.writeAnswer')}
+                                        </button>
+                                    )}
+
+                                    <div className="absolute bottom-4 text-text-muted text-xs flex items-center gap-2">
                                         <RotateCw size={14} />
                                         {t('flashcards.tapToReveal')}
                                     </div>
@@ -174,13 +243,26 @@ const StudyFlashcards = () => {
 
                                 {/* Back */}
                                 <div
-                                    className="absolute inset-0 bg-surface border border-primary/20 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-xl shadow-primary/5"
+                                    className="absolute inset-0 bg-surface border border-primary/20 rounded-3xl p-6 flex flex-col shadow-xl shadow-primary/5 overflow-y-auto"
                                     style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                                 >
-                                    <span className="text-sm text-primary font-bold uppercase tracking-wider mb-4">{t('flashcards.answer')}</span>
-                                    <p className="text-lg text-text-main leading-relaxed">
-                                        {cards[currentCardIndex].back}
-                                    </p>
+                                    {/* Afficher la réponse de l'utilisateur si elle existe */}
+                                    {userAnswers[currentCardIndex] && (
+                                        <div className="mb-4 pb-4 border-b border-white/10">
+                                            <span className="text-xs text-text-muted uppercase tracking-wider block mb-2">{t('flashcards.yourAnswer')}</span>
+                                            <p className="text-sm text-text-main/80 italic leading-relaxed">
+                                                "{userAnswers[currentCardIndex]}"
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* La bonne réponse */}
+                                    <div className={userAnswers[currentCardIndex] ? '' : 'flex-1 flex flex-col items-center justify-center text-center'}>
+                                        <span className="text-sm text-primary font-bold uppercase tracking-wider mb-2 block">{t('flashcards.correctAnswer')}</span>
+                                        <p className={`text-text-main leading-relaxed ${userAnswers[currentCardIndex] ? 'text-base' : 'text-lg text-center'}`}>
+                                            {cards[currentCardIndex].back}
+                                        </p>
+                                    </div>
                                 </div>
                             </motion.div>
                         </motion.div>

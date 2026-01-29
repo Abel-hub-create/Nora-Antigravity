@@ -6,6 +6,7 @@
  */
 
 import OpenAI from 'openai';
+import { getSubjectPrompt } from './subjectPrompts.js';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -13,6 +14,39 @@ const openai = new OpenAI({
 
 const MODEL = 'gpt-4o-mini';
 const MAX_TOKENS = 10000;
+
+/**
+ * Construit les consignes spécifiques à une matière
+ * @param {string} subject - Identifiant de la matière
+ * @returns {string} - Consignes formatées pour le prompt
+ */
+function buildSubjectGuidelines(subject) {
+  const subjectPrompt = getSubjectPrompt(subject);
+  if (!subjectPrompt) {
+    return '(Matiere non reconnue - utilise les regles generales)';
+  }
+
+  console.log(`[ContentGen] Utilisation des prompts specialises pour: ${subject}`);
+
+  return `
+MATIERE SELECTIONNEE : ${subject.toUpperCase()}
+
+${subjectPrompt.guidelines}
+
+SECTIONS RECOMMANDEES POUR CETTE MATIERE :
+${subjectPrompt.sections.map((section, idx) => `${idx + 1}. ${section}`).join('\n')}
+
+ACCENT PARTICULIER : ${subjectPrompt.emphasis}
+
+REGLES IMPORTANTES :
+- Ces sections sont des RECOMMANDATIONS - n'inclus une section QUE si le contenu existe dans le cours
+- La premiere section doit toujours etre "Definitions et Concepts Importants" SI des definitions sont presentes
+- La derniere section doit etre "Tableaux et Donnees Structurees" SI des tableaux existent dans le cours
+- N'invente PAS de sections si le contenu n'existe pas
+- Adapte les titres de sections au contenu reel du cours
+- Si le cours ne correspond pas a ces sections, cree des sections logiques basees sur la structure du cours
+`;
+}
 
 /**
  * Detecte la langue dominante du contenu
@@ -60,8 +94,9 @@ REGLE IMPORTANTE SUR LA LANGUE :
  * Prompt utilisateur pour la generation complete
  * @param {string} content - Le contenu du cours
  * @param {string|null} specificInstructions - Instructions specifiques de l'utilisateur
+ * @param {string|null} subject - Matière sélectionnée par l'utilisateur (ex: 'mathematics')
  */
-const buildUserPrompt = (content, specificInstructions = null) => {
+const buildUserPrompt = (content, specificInstructions = null, subject = null) => {
   // Detecter la langue du contenu
   const detectedLang = detectLanguage(content);
   const langInstruction = detectedLang === 'english'
@@ -121,68 +156,92 @@ Tu dois generer un JSON avec exactement cette structure :
   ]
 }
 
-===== REGLES DETAILLEES POUR LA SYNTHESE =====
+===== REGLES STRICTES POUR LA SYNTHESE (A RESPECTER ABSOLUMENT) =====
 
-ETAPE PREALABLE DE RAISONNEMENT (a effectuer mentalement, NE PAS afficher dans la synthese) :
+1. LONGUEUR
+   - Ta synthese doit etre PLUS COURTE que le cours original tout en restant COMPLETE
+   - Une synthese courte mais vide est inutile : elle doit etre condensee MAIS complete
 
-Avant de rediger la synthese, tu dois analyser le cours original et identifier implicitement le role des differentes parties du texte :
+2. LANGAGE
+   - Utilise un langage SIMPLE et ACCESSIBLE dans toute la synthese
+   - EXCEPTION : Les definitions doivent rester RIGOUREUSES et PRECISES (vocabulaire technique exact)
+   - Explique les concepts complexes avec des mots simples, mais garde les termes scientifiques dans les definitions
+   - Exemples de reformulations :
+     * "subsequemment" → "ensuite" ou "apres"
+     * "inherent" → "qui fait partie de"
+     * "paradigme" → "facon de voir" ou "modele"
+     * "intrinseque" → "naturel"
+   - Phrases courtes et claires
 
-1. ORGANISATEURS TEXTUELS A IDENTIFIER :
-   - Definitions : termes definis explicitement
-   - Mecanismes / processus : etapes, fonctionnements, deroulements
-   - Conditions : quand, dans quels cas, circonstances
-   - Causes et consequences : relations de causalite
-   - Comparaisons et oppositions : similitudes, differences, contrastes
-   - Liens logiques entre notions : relations conceptuelles
-   - Exceptions ou cas particuliers : situations atypiques
+3. SECTIONS PAR CONCEPT (ABSOLUMENT OBLIGATOIRE)
+   - Tu DOIS identifier chaque CONCEPT principal du cours importe
+   - Un CONCEPT = un sujet/theme principal du cours (exemple : "L'electrisation" dans un cours de physique)
+   - Cree UNE SECTION dediee pour CHAQUE concept identifie
+   - Dans chaque section de concept, inclus :
+     * Les sous-concepts UNIQUEMENT s'ils existent (exemple : "Les trois types d'electrisation")
+     * Si un concept n'a pas de sous-concepts, traite-le directement sans forcer une subdivision
+     * Les explications specifiques au concept
+     * Les formules/proprietes associees si pertinent
+   - CRITIQUE : NE METS AUCUNE DEFINITION dans les sections de concepts
+   - Structure hierarchique flexible : CONCEPT principal → sous-concepts (si existants) → explications
+   - Exemple de structure :
 
-2. UTILISER CETTE ANALYSE POUR :
-   - Regrouper les idees similaires (meme si dispersees dans le cours original)
-   - Respecter un ordre logique de comprehension (meme si different du texte original)
-   - Hierarchiser clairement les notions : fondamentales vs explicatives vs secondaires
-   - Eliminer les repetitions, exemples inutiles et details non essentiels
-   - Conserver la precision scientifique tout en restant synthetique
+     ## L'ELECTRISATION
+     [Explication generale de l'electrisation]
 
-3. RESULTAT ATTENDU :
-   - Une synthese plus claire, mieux organisee et plus facile a memoriser
-   - Sans ajout de contenu artificiel ni reformulation complexe inutile
-   - Qui reflete fidelement la structure logique du cours original
-   - Concise, fluide et adaptee a un eleve
+     ### Les trois types d'electrisation
+     1. Par frottement : [explication]
+     2. Par contact : [explication]
+     3. Par influence : [explication]
 
-Ces organisateurs textuels ne doivent PAS etre affiches tels quels dans la synthese finale. Ils servent UNIQUEMENT a structurer ta comprehension du cours avant redaction.
+     ## LA CHARGE ELECTRIQUE
+     [Explication directe sans sous-concepts car pas necessaire]
 
-OBJECTIF : Creer une synthese COMPLETE et STRUCTUREE. L'utilisateur doit pouvoir reviser UNIQUEMENT avec cette synthese, sans retourner au cours original. Si le cours est long, la synthese sera longue aussi.
+4. SECTIONS DYNAMIQUES
+   - N'inclus une section QUE si elle contient du contenu pertinent trouve dans le cours
+   - Si le cours ne contient pas de definitions → NE METS PAS la section "Definitions"
+   - Si le cours ne contient pas de theoremes → NE METS PAS la section "Theoremes"
+   - Si le cours ne contient pas de tableaux → NE METS PAS la section "Tableaux"
+   - Si le cours ne contient pas d'exemples → NE METS PAS la section "Exemples"
+   - Ne cree JAMAIS de sections vides ou avec juste un titre
 
-LANGAGE :
-- Mots SIMPLES (comme si tu expliques a un ami)
-- Phrases claires et accessibles
-- Pas de jargon inutile
+5. TABLEAUX (CRITIQUE)
+   - Si le cours contient des tableaux avec des colonnes et des lignes, tu DOIS creer une section "TABLEAUX ET DONNEES STRUCTUREES"
+   - Reproduis FIDELEMENT les tableaux du cours
+   - Conserve EXACTEMENT la structure en colonnes et lignes
+   - Utilise le format markdown obligatoirement :
 
-STRUCTURE OBLIGATOIRE :
+   | Colonne 1 | Colonne 2 | Colonne 3 |
+   |-----------|-----------|-----------|
+   | Valeur A  | Valeur B  | Valeur C  |
+   | Valeur D  | Valeur E  | Valeur F  |
 
-1. SECTION DEFINITIONS (## Definitions)
-   - UNIQUEMENT si le cours contient des definitions explicites
-   - Si le cours n'a AUCUNE definition, NE CREE PAS cette section
-   - Format: **Terme** : definition claire et simple
-   - Liste TOUTES les definitions du cours
+6. STRUCTURE GENERALE DE LA SYNTHESE
+   - Section 1 : DEFINITIONS ET CONCEPTS IMPORTANTS (si le cours contient des definitions)
+   - Sections 2 a N : UNE SECTION PAR CONCEPT du cours (obligatoire)
+   - Dernieres sections : Sections complementaires selon la matiere (Methodes, Exemples, Tableaux, etc.) si pertinentes
+   - Chaque section doit avoir un titre clair
+   - Utilise des puces ou numeros pour structurer le contenu
+   - Aere le texte pour une meilleure lisibilite
 
-2. SECTIONS PAR GRANDES NOTIONS
-   - Cree une section ## pour CHAQUE grande notion/theme du cours
-   - Le titre de section doit etre clair et representatif
-   - Chaque section doit etre COMPLETE : explique la notion en detail
-   - Ne saute aucune information importante
+7. REGLE ABSOLUE SUR LES DEFINITIONS
+   - TOUTES LES DEFINITIONS vont UNIQUEMENT et EXCLUSIVEMENT dans la section "DEFINITIONS ET CONCEPTS IMPORTANTS"
+   - AUCUNE DEFINITION ne doit apparaitre ailleurs dans la synthese
+   - Meme si tu parles d'un concept dans sa section dediee, NE REPETE PAS sa definition
+   - Si tu as besoin de mentionner un terme defini, fais simplement reference a la section definitions ou utilise le terme sans le redefinir
+   - Les CONCEPTS dans leurs sections dediees contiennent : explications, proprietes, mecanismes, applications
+   - Les DEFINITIONS restent dans leur section separee
+   - Ne duplique JAMAIS le contenu entre sections
 
-3. DANS CHAQUE SECTION :
-   - Explique la notion de maniere complete avec des paragraphes
-   - Quand c'est pertinent, fais des LIENS avec d'autres notions ("ce qui est lie a...", "contrairement a...", "cela s'explique par...")
-   - Pour les concepts DIFFICILES, ajoute une ANALOGIE simple ("c'est comme...", "imagine que...")
-   - Les analogies et liens sont integres naturellement dans le texte, pas dans des sections separees
+RESUME :
+- TOUTES les definitions → Section DEFINITIONS uniquement (nulle part ailleurs)
+- UNE SECTION par CONCEPT du cours (obligatoire, avec ou sans sous-concepts selon le cours)
+- Langage simple SAUF definitions (rigoureuses)
+- Sections complementaires uniquement si contenu pertinent
+- Tableaux obligatoires si presents dans le cours
 
-FORMAT :
-- Utilise ## pour les titres de sections
-- Redige de vrais paragraphes (pas juste des listes)
-- Les bullet points sont OK pour les enumerations, mais avec des explications
-- La synthese peut faire PLUSIEURS PAGES si necessaire - ne reduis JAMAIS le contenu
+===== CONSIGNES SPECIFIQUES PAR MATIERE =====
+${subject ? buildSubjectGuidelines(subject) : '(Aucune matiere specifiee - utilise les regles generales)'}
 
 ===== REGLES POUR FLASHCARDS ET QUIZ =====
 
@@ -305,9 +364,10 @@ function parseAndValidateResponse(text) {
  *
  * @param {string} content - Le contenu du cours a analyser
  * @param {string|null} specificInstructions - Instructions specifiques de l'utilisateur (optionnel)
+ * @param {string|null} subject - Matiere selectionnee par l'utilisateur (optionnel, ex: 'mathematics')
  * @returns {Promise<Object>} - { title, summary, flashcards, quizQuestions }
  */
-export async function generateEducationalContent(content, specificInstructions = null) {
+export async function generateEducationalContent(content, specificInstructions = null, subject = null) {
   if (!content || typeof content !== 'string') {
     throw new Error('Contenu invalide');
   }
@@ -322,7 +382,7 @@ export async function generateEducationalContent(content, specificInstructions =
   }
 
   try {
-    console.log('[ContentGen] Generation en cours...');
+    console.log('[ContentGen] Generation en cours...', subject ? `(matiere: ${subject})` : '');
     const startTime = Date.now();
 
     const response = await openai.chat.completions.create({
@@ -334,7 +394,7 @@ export async function generateEducationalContent(content, specificInstructions =
         },
         {
           role: 'user',
-          content: buildUserPrompt(trimmedContent, specificInstructions)
+          content: buildUserPrompt(trimmedContent, specificInstructions, subject)
         }
       ],
       max_tokens: MAX_TOKENS,

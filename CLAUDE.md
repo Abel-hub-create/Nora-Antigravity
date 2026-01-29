@@ -139,7 +139,9 @@ src/i18n/
 ├── index.js              # i18next configuration
 └── locales/
     ├── fr.json           # French translations (~400 keys)
-    └── en.json           # English translations (~400 keys)
+    ├── en.json           # English translations (~400 keys)
+    ├── es.json           # Spanish translations (~400 keys)
+    └── zh.json           # Chinese Mandarin translations (~400 keys)
 ```
 
 ### Usage
@@ -162,9 +164,20 @@ const MyComponent = () => {
 ### Language Selection
 
 - Located in Settings page (`/settings`) as the first section
+- Also available during onboarding (step 3)
 - Component: `/src/components/Settings/LanguageSelector.jsx`
-- Stored in localStorage under `nora_language`
+- Stored in database (`users.language`)
 - Detects browser language on first visit, defaults to French
+
+**Optimistic Update**: Language change is applied instantly via `i18n.changeLanguage()` (no lag), then synced to backend in background. If API fails, reverts to previous language.
+
+**Available Languages**:
+| Code | Label | Flag |
+|------|-------|------|
+| fr | Français | 🇫🇷 |
+| en | English | 🇬🇧 |
+| es | Español | 🇪🇸 |
+| zh | 中文 | 🇨🇳 |
 
 ### Translation Keys Structure
 
@@ -426,8 +439,12 @@ The app supports two themes: **light** (default) and **dark**. Users can switch 
 5. `AuthContext.applyUserPreferences()` applies user's theme from DB after login
 6. `MobileWrapper` also applies theme via `useEffect` when user changes
 
+**Optimistic Update**: Theme change is applied instantly (no lag), then synced to backend in background. If API fails, reverts to previous theme.
+
+**Fade Animation**: Smooth 0.3s CSS transition on background-color, color, and border-color when switching themes.
+
 **Components**:
-- `ThemeSelector` (`/src/components/Settings/ThemeSelector.jsx`) - Two buttons with Moon/Sun icons
+- `ThemeSelector` (`/src/components/Settings/ThemeSelector.jsx`) - Two buttons with Moon/Sun icons, uses local state for instant feedback
 
 **CSS Variables** (defined in `/src/index.css`):
 
@@ -451,7 +468,14 @@ The app supports two themes: **light** (default) and **dark**. Users can switch 
 body {
   @apply bg-background text-text-main font-sans antialiased;
 }
+
+/* Theme transition - 0.3s fade on all color properties */
+*, *::before, *::after {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
 ```
+
+**Theme Transition**: All elements have a 0.3s transition on color properties for smooth theme switching. Inputs and animated elements are excluded to avoid interference.
 
 **Important**: Do NOT add `overflow-hidden` to body - it breaks page scrolling.
 
@@ -549,13 +573,15 @@ First-time user onboarding flow displayed only on first login after account crea
 
 ### Flow
 
-The onboarding is a 3-step modal that appears after first login:
+The onboarding is a 5-step modal that appears after first login:
 
 | Step | Content | Required |
 |------|---------|----------|
 | 1 | "Comment tu t'appelles ?" - Name input | Yes (min 2 chars) |
 | 2 | "Ajoute une photo de profil" - Avatar upload | No (skip available) |
-| 3 | "Tu es prêt !" - Redirect to Import | Button click |
+| 3 | "Personnalise ton expérience" - Language & Theme selection | No (defaults applied) |
+| 4 | "Choisis ta matière" - Info about subject selection | Info only |
+| 5 | "Comment veux-tu importer ?" - Info about voice/photo modes | Button click → Import |
 
 ### Technical Implementation
 
@@ -575,7 +601,7 @@ The onboarding is a 3-step modal that appears after first login:
 - `authService.completeOnboarding({ name, avatar })` API call
 - `useAuth().completeOnboarding()` context method
 
-**i18n Keys**: `onboarding.step1.*`, `onboarding.step2.*`, `onboarding.step3.*`
+**i18n Keys**: `onboarding.step1.*`, `onboarding.step2.*`, `onboarding.step3.*`, `onboarding.step4.*`, `onboarding.step5.*`
 
 ### Behavior
 
@@ -712,6 +738,29 @@ mysql -u $DB_USER -p$DB_PASSWORD $DB_NAME < backend/src/database/migrations/020_
 
 Multi-modal content import system supporting text, voice, and photo input. All AI features are powered by OpenAI APIs with the API key secured server-side.
 
+### Subject Selection (Required)
+
+Before importing content, users MUST select a subject (matière). This enables:
+- Discipline-specific AI prompts for better quality
+- Subject-based filtering and organization
+- Improved synthesis and revision quality
+
+**Available Subjects** (9 matières):
+| ID | French | English | Icon |
+|----|--------|---------|------|
+| mathematics | Mathématiques | Mathematics | 📐 |
+| french | Français | French | 📚 |
+| physics | Physique | Physics | ⚡ |
+| chemistry | Chimie | Chemistry | 🧪 |
+| biology | Biologie | Biology | 🧬 |
+| history | Histoire | History | 🏛️ |
+| geography | Géographie | Geography | 🌍 |
+| english | Anglais | English | 🇬🇧 |
+| dutch | Néerlandais | Dutch | 🇳🇱 |
+
+**Database**: `syntheses.subject` column (VARCHAR 50, nullable for legacy data)
+**Migration**: `022_add_subject.sql`
+
 ### Input Methods
 
 | Method | Component | Technology |
@@ -723,15 +772,19 @@ Multi-modal content import system supporting text, voice, and photo input. All A
 ### Flow
 
 ```
-Import Page (text/voice/photo)
+Import Page (Subject Selection)
+       ↓
+   Choose Voice/Photo mode
+       ↓
+   Capture content
        ↓
    Specific Instructions Prompt (optional)
        ↓
-   /process (AI generation)
+   /process (AI generation with subject)
        ↓
-   POST /api/syntheses
+   POST /api/syntheses (includes subject)
        ↓
-   /study/:id
+   /study/:id (displays subject badge)
 ```
 
 ### Specific Instructions Feature
@@ -827,27 +880,47 @@ Centralized educational content generation with the Nora personality.
 - Faithful to original course content
 - Coherent output: summary, flashcards, and quiz are linked
 
-**Summary Generation Rules**:
-- Synthese COMPLETE: doit contenir toutes les informations importantes
-- Mots simples, comme si on parle a un ami (pas de jargon academique)
-- Section Definitions uniquement si le cours en contient
-- Liens entre notions integres naturellement dans le texte (pas de section dediee)
-- Analogies pour les concepts difficiles, integrees dans le texte
-- Peut faire plusieurs pages si le cours est long
-- Format: titres clairs (## Titre), paragraphes, bullet points avec explications
-- Objectif: l'utilisateur peut reexpliquer tout le cours avec la synthese seule
-- MAX_TOKENS: 10000 (permet des syntheses longues)
+**Summary Generation Rules** (REGLES STRICTES):
 
-**Etape de raisonnement prealable (interne a l'IA)**:
-Avant de rediger la synthese, l'IA analyse les organisateurs textuels du cours :
-- Definitions, mecanismes/processus, conditions, causes/consequences
-- Comparaisons/oppositions, liens logiques, exceptions/cas particuliers
-Cette analyse permet de :
-- Regrouper les idees similaires (meme si dispersees dans le cours)
-- Respecter un ordre logique de comprehension (peut differer du texte original)
-- Hierarchiser les notions (fondamentales vs explicatives vs secondaires)
-- Eliminer repetitions et details non essentiels
-Ces organisateurs ne sont PAS affiches dans la synthese finale.
+1. **LONGUEUR**:
+   - Synthese PLUS COURTE que le cours original mais COMPLETE
+   - Condensee MAIS complete (pas vide)
+
+2. **LANGAGE**:
+   - Langage SIMPLE et ACCESSIBLE dans toute la synthese
+   - EXCEPTION: Definitions RIGOUREUSES et PRECISES (vocabulaire technique exact)
+   - Exemples: "subsequemment" → "ensuite", "paradigme" → "facon de voir", "intrinseque" → "naturel"
+
+3. **SECTIONS PAR CONCEPT** (OBLIGATOIRE):
+   - Identifier chaque CONCEPT principal du cours
+   - Un CONCEPT = un sujet/theme principal (ex: "L'electrisation")
+   - UNE SECTION dediee pour CHAQUE concept
+   - Inclure sous-concepts uniquement s'ils existent
+   - AUCUNE DEFINITION dans les sections de concepts
+   - Structure: CONCEPT → sous-concepts (si existants) → explications
+
+4. **SECTIONS DYNAMIQUES**:
+   - N'inclure une section QUE si contenu pertinent existe
+   - Pas de section "Definitions" si pas de definitions
+   - Pas de section "Tableaux" si pas de tableaux
+   - JAMAIS de sections vides
+
+5. **TABLEAUX** (CRITIQUE):
+   - Si tableaux dans le cours → section "TABLEAUX ET DONNEES STRUCTUREES"
+   - Reproduire FIDELEMENT en format markdown
+
+6. **STRUCTURE GENERALE**:
+   - Section 1: DEFINITIONS ET CONCEPTS IMPORTANTS (si definitions presentes)
+   - Sections 2 a N: UNE SECTION PAR CONCEPT (obligatoire)
+   - Sections complementaires si pertinentes (Methodes, Exemples, Tableaux)
+
+7. **REGLE ABSOLUE SUR LES DEFINITIONS**:
+   - TOUTES les definitions → Section DEFINITIONS uniquement
+   - AUCUNE definition ailleurs dans la synthese
+   - Ne JAMAIS repeter une definition dans une section concept
+   - Ne JAMAIS dupliquer le contenu entre sections
+
+- MAX_TOKENS: 10000
 
 **Summary Pagination** (Frontend):
 - Si synthese > 2500 caracteres, divisee en pages

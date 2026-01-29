@@ -169,7 +169,11 @@
     "backToSynthesis": "Back to summary",
     "noFlashcards": "No flashcards for this summary",
     "question": "Question",
-    "answer": "Answer"
+    "answer": "Answer",
+    "writeAnswer": "Write my answer",
+    "yourAnswer": "Your answer",
+    "correctAnswer": "Correct answer",
+    "writeAnswerPlaceholder": "Write your answer here..."
   },
   "quiz": {
     "title": "Quiz",
@@ -201,6 +205,35 @@
     "subtitle": "The most effective method to retain",
     "description": "More effective than simple rereading. This active recall technique anchors information in long-term memory.",
     "inDevelopment": "🚧 Feature under development",
+    "requirementLevel": {
+      "title": "Requirement Level",
+      "subtitle": "Choose the precision level expected for your revision",
+      "startButton": "Start revision",
+      "customSettings": "Adjust criteria",
+      "levels": {
+        "beginner": {
+          "name": "Beginner",
+          "description": "First revision, general understanding. 70% accuracy for definitions, general idea accepted, margin of error for data."
+        },
+        "intermediate": {
+          "name": "Intermediate",
+          "description": "Standard revision (recommended). 85% accuracy for definitions, rephrasing accepted if correct, 95% for data."
+        },
+        "expert": {
+          "name": "Expert",
+          "description": "Exam/test preparation. Near-perfect definitions (95%), full explanation required, zero errors on data."
+        },
+        "custom": {
+          "name": "Custom",
+          "description": "Adjust each criterion individually using the sliders below."
+        }
+      },
+      "criteria": {
+        "definitions": "Definitions",
+        "concepts": "Concepts",
+        "data": "Numerical data"
+      }
+    },
     "loadError": "Error loading revision",
     "expired": "Session Expired",
     "expiredMessage": "You were away too long. The session expired after 15 minutes of inactivity.",
@@ -271,9 +304,22 @@
       "message100": "Great job, you've mastered this summary."
     }
   },
+  "subjects": {
+    "mathematics": "Mathematics",
+    "french": "French",
+    "physics": "Physics",
+    "chemistry": "Chemistry",
+    "biology": "Biology",
+    "history": "History",
+    "geography": "Geography",
+    "english": "English",
+    "dutch": "Dutch"
+  },
   "import": {
     "title": "New Import",
     "subtitle": "What do you want to learn today?",
+    "selectSubject": "Choose a subject",
+    "changeSubject": "Change subject",
     "text": "Text",
     "voice": "Voice",
     "photo": "Photo",
@@ -282,10 +328,10 @@
     "minChars": "Minimum 50 characters",
     "specificPrompt": {
       "title": "Customization",
-      "question": "Do you want to mention specific elements to include in the summary, quiz and flashcards?",
-      "yes": "Yes",
-      "no": "No",
-      "instructionsLabel": "Write the elements to definitely include:",
+      "question": "Write your test objectives if you have any to get a better summary.",
+      "yes": "Yes, I have objectives",
+      "no": "No, continue",
+      "instructionsLabel": "Write your test objectives:",
       "instructionsPlaceholder": "E.g.: Focus on important dates, mention physics formulas, include key definitions...",
       "continue": "Continue"
     }
@@ -347,6 +393,22 @@
     "summaryCreatedSuccess": "Summary created successfully!",
     "autoRedirect": "Automatic redirect...",
     "demoModeActive": "Demo mode active. Connect the OpenAI API for real generation.",
+    "verifying": "Verifying...",
+    "verifyingSubject": "Verifying subject...",
+    "subjectMismatch": {
+      "title": "Different subject detected",
+      "message": "The content seems to match \"{{detected}}\" ({{confidence}} confidence).",
+      "unknown": "unknown subject",
+      "detectedSubject": "Detected subject",
+      "useDetected": "Use {{subject}}",
+      "continueAnyway": "Continue anyway",
+      "changeSubject": "Go back and change subject",
+      "confidence": {
+        "forte": "high",
+        "moyenne": "medium",
+        "faible": "low"
+      }
+    },
     "steps": {
       "title": "Title",
       "titleDesc": "Generating title",
@@ -547,9 +609,18 @@
       "continueButton": "Continue"
     },
     "step3": {
-      "title": "You're all set!",
-      "message": "Go to the Import tab to add your first course.",
-      "button": "Go to Import"
+      "title": "Customize your experience",
+      "subtitle": "Choose your language and theme"
+    },
+    "step4": {
+      "title": "Choose your subject",
+      "message": "Select the subject you want to study. This will help AI create better summaries.",
+      "button": "Got it"
+    },
+    "step5": {
+      "title": "How do you want to import?",
+      "message": "You can dictate your course with voice or take photos of your notes.",
+      "button": "Let's go!"
     }
   },
   "errors": {

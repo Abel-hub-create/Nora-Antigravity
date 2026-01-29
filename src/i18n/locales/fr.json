@@ -169,7 +169,11 @@
     "backToSynthesis": "Retour à la synthèse",
     "noFlashcards": "Aucune flashcard pour cette synthèse",
     "question": "Question",
-    "answer": "Réponse"
+    "answer": "Réponse",
+    "writeAnswer": "Écrire ma réponse",
+    "yourAnswer": "Ta réponse",
+    "correctAnswer": "Bonne réponse",
+    "writeAnswerPlaceholder": "Écris ta réponse ici..."
   },
   "quiz": {
     "title": "Quiz",
@@ -201,6 +205,35 @@
     "subtitle": "La méthode la plus efficace pour retenir",
     "description": "Plus efficace qu'une simple relecture. Cette technique de rappel actif ancre les informations en mémoire long terme.",
     "inDevelopment": "🚧 Fonctionnalité en cours de développement",
+    "requirementLevel": {
+      "title": "Niveau d'exigence",
+      "subtitle": "Choisis le niveau de précision attendu pour ta révision",
+      "startButton": "Démarrer la révision",
+      "customSettings": "Ajuster les critères",
+      "levels": {
+        "beginner": {
+          "name": "Débutant",
+          "description": "Première révision, compréhension générale. Définitions à 70%, idée générale acceptée, marge d'erreur sur les données."
+        },
+        "intermediate": {
+          "name": "Intermédiaire",
+          "description": "Révision standard (recommandé). Définitions à 85%, reformulations acceptées si justes, données à 95%."
+        },
+        "expert": {
+          "name": "Expert",
+          "description": "Préparation examen/concours. Définitions quasi-parfaites (95%), explication complète requise, aucune erreur sur les données."
+        },
+        "custom": {
+          "name": "Personnalisé",
+          "description": "Ajuste chaque critère individuellement avec les curseurs ci-dessous."
+        }
+      },
+      "criteria": {
+        "definitions": "Définitions",
+        "concepts": "Concepts",
+        "data": "Données chiffrées"
+      }
+    },
     "loadError": "Erreur lors du chargement",
     "expired": "Session expirée",
     "expiredMessage": "Tu es revenu trop tard. La session a expiré après 15 minutes d'inactivité.",
@@ -271,9 +304,22 @@
       "message100": "Bravo, tu maîtrises cette synthèse."
     }
   },
+  "subjects": {
+    "mathematics": "Mathématiques",
+    "french": "Français",
+    "physics": "Physique",
+    "chemistry": "Chimie",
+    "biology": "Biologie",
+    "history": "Histoire",
+    "geography": "Géographie",
+    "english": "Anglais",
+    "dutch": "Néerlandais"
+  },
   "import": {
     "title": "Nouvel Import",
     "subtitle": "Que veux-tu apprendre aujourd'hui ?",
+    "selectSubject": "Choisis une matière",
+    "changeSubject": "Changer de matière",
     "text": "Texte",
     "voice": "Vocal",
     "photo": "Photo",
@@ -282,10 +328,10 @@
     "minChars": "Minimum 50 caractères",
     "specificPrompt": {
       "title": "Personnalisation",
-      "question": "Veux-tu mentionner des éléments spécifiques à inclure dans la synthèse, le quiz et les flashcards ?",
-      "yes": "Oui",
-      "no": "Non",
-      "instructionsLabel": "Écris les éléments à absolument mentionner :",
+      "question": "Ecris les objectifs de ton interrogation si tu en as pour avoir une meilleure synthèse.",
+      "yes": "Oui, j'ai des objectifs",
+      "no": "Non, continuer",
+      "instructionsLabel": "Écris les objectifs de ton interrogation :",
       "instructionsPlaceholder": "Ex: Insister sur les dates importantes, mentionner les formules de physique, inclure les définitions clés...",
       "continue": "Continuer"
     }
@@ -347,6 +393,22 @@
     "summaryCreatedSuccess": "Synthèse créée avec succès !",
     "autoRedirect": "Redirection automatique...",
     "demoModeActive": "Mode démonstration actif. Connectez l'API OpenAI pour la génération réelle.",
+    "verifying": "Vérification...",
+    "verifyingSubject": "Vérification de la matière en cours...",
+    "subjectMismatch": {
+      "title": "Matière différente détectée",
+      "message": "Le contenu semble correspondre à \"{{detected}}\" (confiance {{confidence}}).",
+      "unknown": "matière inconnue",
+      "detectedSubject": "Matière détectée",
+      "useDetected": "Utiliser {{subject}}",
+      "continueAnyway": "Continuer quand même",
+      "changeSubject": "Retourner et changer de matière",
+      "confidence": {
+        "forte": "élevée",
+        "moyenne": "moyenne",
+        "faible": "faible"
+      }
+    },
     "steps": {
       "title": "Titre",
       "titleDesc": "Génération du titre",
@@ -547,9 +609,18 @@
       "continueButton": "Continuer"
     },
     "step3": {
-      "title": "Tu es prêt !",
-      "message": "Va dans l'onglet Importer pour ajouter ton premier cours.",
-      "button": "Aller à Importer"
+      "title": "Personnalise ton expérience",
+      "subtitle": "Choisis ta langue et ton thème"
+    },
+    "step4": {
+      "title": "Choisis ta matière",
+      "message": "Sélectionne la matière que tu veux étudier. Cela aidera l'IA à créer de meilleures synthèses.",
+      "button": "Compris"
+    },
+    "step5": {
+      "title": "Comment veux-tu importer ?",
+      "message": "Tu peux dicter ton cours à voix haute ou prendre des photos de tes notes.",
+      "button": "C'est parti !"
     }
   },
   "errors": {
