@@ -8,7 +8,8 @@ export const registerSchema = z.object({
     email: z.string()
       .email('Adresse email invalide'),
     password: z.string()
-      .min(8, 'Le mot de passe doit contenir au moins 8 caractères')
+      .min(8, 'Le mot de passe doit contenir au moins 8 caractères'),
+    language: z.enum(['fr', 'en', 'es', 'zh']).optional()
   })
 });
 
@@ -25,7 +26,8 @@ export const loginSchema = z.object({
 export const forgotPasswordSchema = z.object({
   body: z.object({
     email: z.string()
-      .email('Adresse email invalide')
+      .email('Adresse email invalide'),
+    language: z.enum(['fr', 'en', 'es', 'zh']).optional()
   })
 });
 

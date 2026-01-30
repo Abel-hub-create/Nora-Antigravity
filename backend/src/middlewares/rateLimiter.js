@@ -37,3 +37,13 @@ export const forgotPasswordLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: getClientIp
 });
+
+// Rate limiter for AI verification endpoint
+export const aiVerificationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30, // 30 verifications per 15 minutes
+  message: { error: 'Trop de requêtes de vérification, réessayez dans quelques minutes' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: getClientIp
+});

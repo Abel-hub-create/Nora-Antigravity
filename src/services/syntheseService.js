@@ -35,6 +35,11 @@ export const deleteSynthese = async (id) => {
   return response;
 };
 
+export const deleteMultipleSyntheses = async (ids) => {
+  const results = await Promise.all(ids.map(id => deleteSynthese(id)));
+  return results;
+};
+
 export const getFlashcards = async (syntheseId) => {
   const response = await api.get(`/syntheses/${syntheseId}/flashcards`);
   return response;

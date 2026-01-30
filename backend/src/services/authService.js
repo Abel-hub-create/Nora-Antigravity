@@ -4,7 +4,7 @@ import * as tokenService from './tokenService.js';
 import * as emailService from './emailService.js';
 import crypto from 'crypto';
 
-export const register = async ({ email, password, name }) => {
+export const register = async ({ email, password, name, language = 'fr' }) => {
   // Check if user exists
   const existingUser = await userRepository.findByEmail(email);
   if (existingUser) {
@@ -25,13 +25,14 @@ export const register = async ({ email, password, name }) => {
     email,
     password: hashedPassword,
     name,
+    language,
     verificationToken,
     verificationExpires
   });
 
-  // Send verification email
+  // Send verification email in the selected language
   try {
-    await emailService.sendVerificationEmail(email, verificationToken, name);
+    await emailService.sendVerificationEmail(email, verificationToken, name, language);
   } catch (error) {
     console.error('[Auth] Erreur envoi email verification:', error);
     // Continue even if email fails - user can request resend
@@ -113,12 +114,15 @@ export const verifyAndRefreshToken = async (refreshToken) => {
   return { userId: payload.userId, accessToken: newAccessToken };
 };
 
-export const forgotPassword = async (email) => {
+export const forgotPassword = async (email, language = 'fr') => {
   const user = await userRepository.findByEmail(email);
   if (!user) {
     // Don't reveal if email exists (security)
     return null;
   }
+
+  // Use provided language from UI (user's explicit choice), fallback to DB language
+  const emailLanguage = language || user.language || 'fr';
 
   // Generate reset token
   const resetToken = crypto.randomBytes(32).toString('hex');
@@ -126,9 +130,9 @@ export const forgotPassword = async (email) => {
 
   await userRepository.createPasswordReset(user.id, resetToken, expiresAt);
 
-  // Send password reset email
+  // Send password reset email in user's language
   try {
-    await emailService.sendPasswordResetEmail(email, resetToken);
+    await emailService.sendPasswordResetEmail(email, resetToken, emailLanguage);
   } catch (error) {
     console.error('[Auth] Erreur envoi email reset:', error);
     // Continue even if email fails - token is saved
@@ -199,7 +203,7 @@ export const deleteAccount = async (userId) => {
   await userRepository.deleteAccount(userId);
 };
 
-export const resendVerificationEmail = async (email) => {
+export const resendVerificationEmail = async (email, language = 'fr') => {
   const user = await userRepository.findByEmail(email);
   if (!user) {
     // Don't reveal if email exists
@@ -212,15 +216,18 @@ export const resendVerificationEmail = async (email) => {
     throw error;
   }
 
+  // Use provided language from UI (user's explicit choice), fallback to DB language
+  const emailLanguage = language || user.language || 'fr';
+
   // Generate new verification token
   const verificationToken = crypto.randomBytes(32).toString('hex');
   const verificationExpires = new Date(Date.now() + 3600000); // 1 hour
 
   await userRepository.updateVerificationToken(user.id, verificationToken, verificationExpires);
 
-  // Send verification email
+  // Send verification email in user's language
   try {
-    await emailService.sendVerificationEmail(email, verificationToken, user.name);
+    await emailService.sendVerificationEmail(email, verificationToken, user.name, emailLanguage);
   } catch (error) {
     console.error('[Auth] Erreur envoi email verification:', error);
     throw new Error('Erreur lors de l\'envoi de l\'email');

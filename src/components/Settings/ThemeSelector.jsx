@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Moon, Sun } from 'lucide-react';
 import { useAuth } from '../../features/auth/hooks/useAuth';
@@ -11,20 +11,29 @@ const themes = [
 const ThemeSelector = () => {
     const { t } = useTranslation();
     const { user, updatePreferences } = useAuth();
-    const currentTheme = user?.theme || 'dark';
+    const [selectedTheme, setSelectedTheme] = useState(user?.theme || 'dark');
 
     const handleThemeChange = async (themeCode) => {
+        // Optimistic update - apply immediately for instant feedback
+        setSelectedTheme(themeCode);
+        document.documentElement.setAttribute('data-theme', themeCode);
+
+        // Then sync to backend in background
         try {
             await updatePreferences({ theme: themeCode });
         } catch (error) {
             console.error('Failed to update theme:', error);
+            // Revert on error
+            const previousTheme = user?.theme || 'dark';
+            setSelectedTheme(previousTheme);
+            document.documentElement.setAttribute('data-theme', previousTheme);
         }
     };
 
     return (
         <div className="p-4">
             <div className="flex items-center gap-3 mb-4">
-                {currentTheme === 'dark' ? (
+                {selectedTheme === 'dark' ? (
                     <Moon size={20} className="text-text-muted" />
                 ) : (
                     <Sun size={20} className="text-text-muted" />
@@ -39,7 +48,7 @@ const ThemeSelector = () => {
                             key={theme.code}
                             onClick={() => handleThemeChange(theme.code)}
                             className={`flex-1 p-3 rounded-xl flex items-center justify-center gap-2 transition-colors ${
-                                currentTheme === theme.code
+                                selectedTheme === theme.code
                                     ? 'bg-primary text-white'
                                     : 'bg-white/5 text-text-muted hover:bg-white/10'
                             }`}

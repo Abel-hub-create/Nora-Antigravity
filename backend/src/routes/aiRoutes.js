@@ -9,7 +9,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { transcribeAudio, extractTextFromImage, extractTextFromImages } from '../services/openaiService.js';
 import { generateEducationalContent } from '../services/contentGenerationService.js';
+import { verifyContentSubject } from '../services/contentVerificationService.js';
 import { authenticate } from '../middlewares/auth.js';
+import { aiVerificationLimiter } from '../middlewares/rateLimiter.js';
 
 const router = express.Router();
 
@@ -146,12 +148,12 @@ router.post('/ocr', authenticate, express.json({ limit: '50mb' }), async (req, r
 /**
  * POST /api/ai/generate-content
  * Generation complete de contenu pedagogique (titre + synthese + flashcards + quiz)
- * Body: { content: "texte du cours...", specificInstructions?: "instructions specifiques..." }
+ * Body: { content: "texte du cours...", specificInstructions?: "instructions specifiques...", subject?: "mathematics" }
  */
 router.post('/generate-content', authenticate, express.json({ limit: '10mb' }), async (req, res) => {
   try {
-    const { content, specificInstructions } = req.body;
-    const result = await generateEducationalContent(content, specificInstructions);
+    const { content, specificInstructions, subject } = req.body;
+    const result = await generateEducationalContent(content, specificInstructions, subject);
     res.json(result);
   } catch (error) {
     console.error('Erreur generation contenu:', error);
@@ -160,6 +162,34 @@ router.post('/generate-content', authenticate, express.json({ limit: '10mb' }), 
                        error.message.includes('trop long') ||
                        error.message.includes('invalide') ? 400 : 500;
     res.status(statusCode).json({ error: error.message || 'Erreur lors de la generation du contenu' });
+  }
+});
+
+/**
+ * POST /api/ai/verify-subject
+ * Verification que le contenu correspond a la matiere selectionnee
+ * Body: { content: "texte du cours...", subject: "mathematics" }
+ * Returns: { correspondance: boolean, matiere_detectee: string, confiance: string, message: string }
+ */
+router.post('/verify-subject', authenticate, aiVerificationLimiter, express.json({ limit: '10mb' }), async (req, res) => {
+  try {
+    const { content, subject } = req.body;
+
+    if (!content || content.length < 30) {
+      return res.status(400).json({ error: 'Contenu trop court pour être analysé (minimum 30 caractères)' });
+    }
+
+    if (!subject) {
+      return res.status(400).json({ error: 'Matière non spécifiée' });
+    }
+
+    const result = await verifyContentSubject(content, subject);
+    res.json(result);
+  } catch (error) {
+    console.error('Erreur verification matiere:', error);
+    const statusCode = error.message.includes('invalide') ||
+                       error.message.includes('trop court') ? 400 : 500;
+    res.status(statusCode).json({ error: error.message || 'Erreur lors de la vérification' });
   }
 });
 

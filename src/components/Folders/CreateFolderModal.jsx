@@ -54,22 +54,20 @@ const CreateFolderModal = ({ isOpen, onClose, onSubmit, isLoading = false }) => 
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={handleClose}
-            className="fixed inset-0 bg-black/60 z-50"
-          />
-
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={handleClose}
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+        >
           {/* Modal */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 bg-surface rounded-2xl border border-white/10 p-6 max-w-sm mx-auto"
+            onClick={(e) => e.stopPropagation()}
+            className="bg-surface rounded-2xl border border-white/10 p-6 w-full max-w-sm"
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
@@ -146,7 +144,7 @@ const CreateFolderModal = ({ isOpen, onClose, onSubmit, isLoading = false }) => 
               </button>
             </form>
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );

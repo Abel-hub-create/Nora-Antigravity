@@ -5,9 +5,10 @@ import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import AuthInput from '../components/AuthInput';
+import AuthLanguageSelector from '../components/AuthLanguageSelector';
 
 const ForgotPassword = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,7 +33,7 @@ const ForgotPassword = () => {
     setIsSubmitting(true);
 
     try {
-      await forgotPassword(email);
+      await forgotPassword(email, i18n.language);
       setIsSuccess(true);
     } catch (err) {
       setError(err.message);
@@ -78,7 +79,8 @@ const ForgotPassword = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 relative">
+      <AuthLanguageSelector />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

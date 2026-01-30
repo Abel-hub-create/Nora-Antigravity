@@ -531,6 +531,7 @@ Full-stack authentication with JWT tokens and secure cookie-based refresh tokens
 |--------|-------|-------------|--------------|
 | POST | `/register` | Create new user account | Yes |
 | POST | `/login` | Authenticate user, return tokens | Yes |
+| POST | `/google` | Google OAuth login/register | Yes |
 | POST | `/logout` | Invalidate refresh token | No |
 | POST | `/refresh` | Get new access token | No |
 | GET | `/me` | Get current user (requires auth) | No |
@@ -539,6 +540,34 @@ Full-stack authentication with JWT tokens and secure cookie-based refresh tokens
 | PATCH | `/profile` | Update user name and avatar (requires auth) | No |
 | PATCH | `/onboarding` | Complete first-time onboarding (requires auth) | No |
 | POST | `/sync` | Sync user progress data (requires auth) | No |
+
+### Google OAuth
+
+Login/register with Google account using OAuth 2.0.
+
+**Frontend**:
+- Uses `@react-oauth/google` library
+- `GoogleOAuthProvider` wraps app in `main.jsx`
+- `GoogleLogin` button on Login and Register pages
+- `VITE_GOOGLE_CLIENT_ID` env variable required
+
+**Backend**:
+- `googleAuthService.js` - Verifies Google ID token
+- `POST /api/auth/google` - Receives credential, creates/links user
+- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` env variables required
+
+**Database**:
+- `users.google_id` column (VARCHAR 255, nullable)
+- `users.password` made nullable for Google-only accounts
+- Migration: `023_add_google_auth.sql`
+
+**Flow**:
+1. User clicks "Continue with Google"
+2. Google returns ID token
+3. Backend verifies token with Google
+4. If `google_id` exists → login
+5. If email exists → link Google account
+6. Otherwise → create new user
 
 **Security**:
 - JWT access tokens (short-lived, sent in Authorization header)
@@ -651,10 +680,35 @@ createSynthese(data)
 updateTitle(id, title)
 archiveSynthese(id)
 deleteSynthese(id)
+deleteMultipleSyntheses(ids)  // Delete multiple at once
 getFlashcards(syntheseId)
 getQuizQuestions(syntheseId)
 updateQuizProgress(syntheseId, questionId, isCorrect)
 ```
+
+### Bulk Delete Feature
+
+The Study page (`/study`) supports selecting and deleting multiple syntheses at once.
+
+**UI Components**:
+- **Selection circles**: Each synthese has a circle icon on the left for selection
+- **Selection counter**: Shows "X sélectionnée(s)" with "Désélectionner" button
+- **Delete selected button**: Red button "Supprimer (X)" appears when items selected
+- **Delete all button**: Trash icon in header to delete all syntheses
+
+**Confirmation Modal**:
+- Shows before any deletion (selected or all)
+- Message: "Cette action est irréversible"
+- Buttons: "Annuler" and "Supprimer" with loading state
+
+**State Management**:
+```javascript
+const [selectedIds, setSelectedIds] = useState(new Set());
+const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+const [deleteMode, setDeleteMode] = useState(null); // 'all' or 'selected'
+```
+
+**i18n Keys**: `study.deleteAll`, `study.deleteSelected`, `study.selectedCount`, `study.clearSelection`, `study.confirmDeleteTitle`, `study.confirmDeleteAll`, `study.confirmDeleteSelected`
 
 ### Date Display
 
@@ -789,19 +843,33 @@ Import Page (Subject Selection)
 
 ### Specific Instructions Feature
 
-After capturing content via voice or photo, users can optionally specify elements to include in the summary, flashcards, and quiz.
+After capturing content via voice or photo, users can optionally customize their synthesis.
 
 **Flow**:
 1. User captures content (voice/photo)
-2. Intermediate screen appears: "Do you want to mention specific elements?"
-3. If "No" → Continue directly to generation
-4. If "Yes" → Text field appears to write instructions
+2. Intermediate screen appears: "Veux-tu personnaliser ta synthèse ?"
+3. If "No" → Warning modal about definitions (can be dismissed permanently via checkbox)
+4. If "Yes" → Two separate input fields appear:
+   - **Definitions to include**: Terms the user wants defined in the synthesis
+   - **Test objectives**: Important points to cover (NOT definitions)
 5. Instructions are passed to AI generation
 
-**Rules**:
-- Only elements that **exist in the original content** will be included
-- AI will NOT invent or add information not present in the course
-- Instructions are prioritized but must be faithful to source material
+**Two-Field System**:
+| Field | Purpose | Effect on Synthesis |
+|-------|---------|---------------------|
+| Définitions à inclure | List terms needing definitions | Creates "DEFINITIONS ET CONCEPTS IMPORTANTS" section with ONLY these terms |
+| Objectifs de l'interrogation | Important topics to cover | These topics are explained in detail but do NOT create definitions |
+
+**Critical Rules**:
+- **Definitions section appears ONLY if** user lists terms in the definitions field
+- If definitions field is empty → NO definitions section, regardless of what's in objectives
+- Terms in objectives field are NEVER treated as definitions
+- AI will NOT invent content - only uses what's in the original course
+
+**Warning Modal** (when clicking "No"):
+- Shows warning that definitions won't appear unless specified
+- Checkbox "Ne plus afficher ce message" saves preference to localStorage
+- Key: `nora_hide_definitions_warning`
 
 **i18n Keys**: `import.specificPrompt.*`
 
@@ -915,10 +983,17 @@ Centralized educational content generation with the Nora personality.
    - Sections complementaires si pertinentes (Methodes, Exemples, Tableaux)
 
 7. **REGLE ABSOLUE SUR LES DEFINITIONS**:
-   - TOUTES les definitions → Section DEFINITIONS uniquement
-   - AUCUNE definition ailleurs dans la synthese
-   - Ne JAMAIS repeter une definition dans une section concept
-   - Ne JAMAIS dupliquer le contenu entre sections
+   - Section definitions créée UNIQUEMENT si l'utilisateur a listé des termes dans le champ "Définitions à inclure"
+   - Seuls les termes listés par l'utilisateur sont définis
+   - Si champ définitions vide → AUCUNE section définitions
+   - Les termes dans "Objectifs de l'interrogation" ne génèrent PAS de définitions
+
+8. **FIDELITE ABSOLUE AU CONTENU** (CRITIQUE):
+   - JAMAIS inventer de notion, exemple ou information
+   - UNIQUEMENT reformuler ce qui est dans le cours
+   - Ignorer les connaissances personnelles de l'IA
+   - Avant d'inclure quoi que ce soit : vérifier que c'est EXPLICITEMENT dans le cours
+   - Si pas sûr → ne pas inclure
 
 - MAX_TOKENS: 10000
 

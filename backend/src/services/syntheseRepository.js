@@ -1,11 +1,11 @@
 import { query } from '../config/database.js';
 
 // Syntheses CRUD
-export const create = async ({ userId, title, originalContent, summaryContent, sourceType = 'text', specificInstructions = null }) => {
-  const sql = `INSERT INTO syntheses (user_id, title, original_content, summary_content, source_type, specific_instructions)
-               VALUES (?, ?, ?, ?, ?, ?)`;
-  const result = await query(sql, [userId, title, originalContent, summaryContent, sourceType, specificInstructions]);
-  return { id: result.insertId, userId, title, summaryContent, sourceType, specificInstructions };
+export const create = async ({ userId, title, originalContent, summaryContent, sourceType = 'text', subject = null, specificInstructions = null }) => {
+  const sql = `INSERT INTO syntheses (user_id, title, original_content, summary_content, source_type, subject, specific_instructions)
+               VALUES (?, ?, ?, ?, ?, ?, ?)`;
+  const result = await query(sql, [userId, title, originalContent, summaryContent, sourceType, subject, specificInstructions]);
+  return { id: result.insertId, userId, title, summaryContent, sourceType, subject, specificInstructions };
 };
 
 export const findById = async (id, userId) => {
@@ -15,7 +15,7 @@ export const findById = async (id, userId) => {
 };
 
 export const findAllByUser = async (userId, { search = '', limit = 50, offset = 0 } = {}) => {
-  let sql = `SELECT id, title, summary_content, source_type, mastery_score, created_at, updated_at
+  let sql = `SELECT id, title, summary_content, source_type, subject, mastery_score, created_at, updated_at
              FROM syntheses WHERE user_id = ? AND is_archived = 0`;
   const params = [userId];
 

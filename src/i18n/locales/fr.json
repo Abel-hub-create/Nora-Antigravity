@@ -153,7 +153,14 @@
     "mastered": "Maîtrisée",
     "noResults": "Aucun résultat",
     "tryOtherKeywords": "Essayez avec d'autres mots-clés",
-    "importContent": "Importez du contenu pour créer votre première synthèse"
+    "importContent": "Importez du contenu pour créer votre première synthèse",
+    "deleteAll": "Tout supprimer",
+    "deleteSelected": "Supprimer ({{count}})",
+    "selectedCount": "{{count}} sélectionnée(s)",
+    "clearSelection": "Désélectionner",
+    "confirmDeleteTitle": "Confirmer la suppression",
+    "confirmDeleteAll": "Tu vas supprimer {{count}} synthèse(s). Cette action est irréversible.",
+    "confirmDeleteSelected": "Tu vas supprimer {{count}} synthèse(s) sélectionnée(s). Cette action est irréversible."
   },
   "flashcards": {
     "title": "Flashcards",
@@ -328,12 +335,19 @@
     "minChars": "Minimum 50 caractères",
     "specificPrompt": {
       "title": "Personnalisation",
-      "question": "Ecris les objectifs de ton interrogation si tu en as pour avoir une meilleure synthèse.",
-      "yes": "Oui, j'ai des objectifs",
+      "question": "Veux-tu personnaliser ta synthèse ?",
+      "yes": "Oui, personnaliser",
       "no": "Non, continuer",
-      "instructionsLabel": "Écris les objectifs de ton interrogation :",
-      "instructionsPlaceholder": "Ex: Insister sur les dates importantes, mentionner les formules de physique, inclure les définitions clés...",
-      "continue": "Continuer"
+      "continue": "Continuer",
+      "definitionsLabel": "Définitions à inclure",
+      "definitionsHint": "Liste les définitions du cours que tu veux absolument retrouver dans ta synthèse",
+      "definitionsPlaceholder": "Ex: Photosynthèse, Mitose, Osmose...",
+      "objectivesLabel": "Objectifs de l'interrogation",
+      "objectivesHint": "Indique les points importants sur lesquels tu seras interrogé",
+      "objectivesPlaceholder": "Ex: Connaître les dates clés, savoir expliquer le processus de...",
+      "definitionsWarning": "Si ton cours contient des définitions, elles n'apparaîtront pas dans la synthèse si tu ne les précises pas ici.",
+      "dontShowAgain": "Ne plus afficher ce message",
+      "understood": "J'ai compris"
     }
   },
   "voice": {
@@ -539,6 +553,7 @@
     "forgotPassword": "Mot de passe oublié ?",
     "noAccount": "Pas de compte ?",
     "hasAccount": "Déjà un compte ?",
+    "orContinueWith": "ou continuer avec",
     "createAccount": "Créer mon compte",
     "loginButton": "Connexion",
     "emailRequired": "L'email est requis",
@@ -638,6 +653,7 @@
     "preferencesUpdateFailed": "Échec de la mise à jour des préférences",
     "deleteAccountFailed": "Échec de la suppression du compte",
     "noTextDetectedPhoto": "Aucun texte détecté. Prends en photo ton cours pour que je puisse le synthétiser.",
-    "noTextDetectedVoice": "Aucun texte détecté. Dicte ton cours pour que je puisse le synthétiser."
+    "noTextDetectedVoice": "Aucun texte détecté. Dicte ton cours pour que je puisse le synthétiser.",
+    "googleLoginFailed": "La connexion Google a échoué"
   }
 }

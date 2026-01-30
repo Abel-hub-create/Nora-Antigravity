@@ -11,14 +11,21 @@ export const getSession = async (userId, syntheseId) => {
 
 /**
  * Start new session (delete any existing first)
+ * @param {number} userId
+ * @param {number} syntheseId
+ * @param {object} options - Optional settings
+ * @param {string} options.requirementLevel - 'beginner', 'intermediate', 'expert', or 'custom'
+ * @param {object} options.customSettings - Custom precision settings (only for 'custom' level)
  */
-export const startSession = async (userId, syntheseId) => {
+export const startSession = async (userId, syntheseId, options = {}) => {
+    const { requirementLevel = 'intermediate', customSettings = null } = options;
+
     // Delete any existing session for this user/synthese
     await query(`DELETE FROM revision_sessions WHERE user_id = ? AND synthese_id = ?`, [userId, syntheseId]);
 
-    // Create new session
-    const sql = `INSERT INTO revision_sessions (user_id, synthese_id) VALUES (?, ?)`;
-    await query(sql, [userId, syntheseId]);
+    // Create new session with requirement level
+    const sql = `INSERT INTO revision_sessions (user_id, synthese_id, requirement_level, custom_settings) VALUES (?, ?, ?, ?)`;
+    await query(sql, [userId, syntheseId, requirementLevel, customSettings ? JSON.stringify(customSettings) : null]);
 
     return getSession(userId, syntheseId);
 };

@@ -126,12 +126,12 @@ const DailyProgress = () => {
                                         <span className={`text-xs ${
                                             goal.completed ? 'text-green-400' : 'text-text-muted'
                                         }`}>
-                                            {currentMinutes}/{goal.targetMinutes} min
+                                            {currentMinutes}/{goal.targetMinutes} {t('common.min')}
                                         </span>
                                     </div>
 
                                     {/* Mini progress bar for each goal */}
-                                    <div className="h-1.5 w-full bg-black/30 rounded-full overflow-hidden">
+                                    <div className="h-2 w-full bg-background/50 rounded-full overflow-hidden">
                                         <motion.div
                                             initial={{ width: 0 }}
                                             animate={{ width: `${goalProgress}%` }}
@@ -139,7 +139,7 @@ const DailyProgress = () => {
                                             className={`h-full rounded-full ${
                                                 goal.completed
                                                     ? 'bg-green-400'
-                                                    : 'bg-primary/70'
+                                                    : 'bg-primary'
                                             }`}
                                         />
                                     </div>

@@ -153,7 +153,14 @@
     "mastered": "Dominada",
     "noResults": "Sin resultados",
     "tryOtherKeywords": "Intenta con otras palabras",
-    "importContent": "Importa contenido para crear tu primera síntesis"
+    "importContent": "Importa contenido para crear tu primera síntesis",
+    "deleteAll": "Eliminar todo",
+    "deleteSelected": "Eliminar ({{count}})",
+    "selectedCount": "{{count}} seleccionada(s)",
+    "clearSelection": "Deseleccionar",
+    "confirmDeleteTitle": "Confirmar eliminación",
+    "confirmDeleteAll": "Vas a eliminar {{count}} síntesis. Esta acción es irreversible.",
+    "confirmDeleteSelected": "Vas a eliminar {{count}} síntesis seleccionada(s). Esta acción es irreversible."
   },
   "flashcards": {
     "title": "Flashcards",
@@ -287,12 +294,19 @@
     "minChars": "Mínimo 50 caracteres",
     "specificPrompt": {
       "title": "Personalización",
-      "question": "Escribe los objetivos de tu examen si los tienes para obtener una mejor síntesis.",
-      "yes": "Sí, tengo objetivos",
+      "question": "¿Quieres personalizar tu resumen?",
+      "yes": "Sí, personalizar",
       "no": "No, continuar",
-      "instructionsLabel": "Escribe los objetivos de tu examen:",
-      "instructionsPlaceholder": "Ej: Enfatizar fechas importantes, mencionar fórmulas de física...",
-      "continue": "Continuar"
+      "continue": "Continuar",
+      "definitionsLabel": "Definiciones a incluir",
+      "definitionsHint": "Lista las definiciones del curso que quieres en tu resumen",
+      "definitionsPlaceholder": "Ej: Fotosíntesis, Mitosis, Ósmosis...",
+      "objectivesLabel": "Objetivos del examen",
+      "objectivesHint": "Indica los puntos importantes sobre los que serás evaluado",
+      "objectivesPlaceholder": "Ej: Conocer fechas clave, explicar el proceso de...",
+      "definitionsWarning": "Si tu curso contiene definiciones, no aparecerán en el resumen si no las especificas aquí.",
+      "dontShowAgain": "No mostrar este mensaje de nuevo",
+      "understood": "Entendido"
     }
   },
   "voice": {
@@ -472,6 +486,7 @@
     "forgotPassword": "¿Olvidaste tu contraseña?",
     "noAccount": "¿Sin cuenta?",
     "hasAccount": "¿Ya tienes cuenta?",
+    "orContinueWith": "o continuar con",
     "createAccount": "Crear mi cuenta",
     "loginButton": "Iniciar sesión",
     "emailRequired": "El email es requerido",
@@ -571,6 +586,7 @@
     "preferencesUpdateFailed": "Error al actualizar preferencias",
     "deleteAccountFailed": "Error al eliminar cuenta",
     "noTextDetectedPhoto": "No se detectó texto. Toma una foto de tu curso.",
-    "noTextDetectedVoice": "No se detectó texto. Dicta tu curso."
+    "noTextDetectedVoice": "No se detectó texto. Dicta tu curso.",
+    "googleLoginFailed": "Error al iniciar sesión con Google"
   }
 }

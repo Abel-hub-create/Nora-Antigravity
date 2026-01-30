@@ -10,9 +10,13 @@ export const getSession = async (syntheseId) => {
 
 /**
  * Start a new revision session
+ * @param {number} syntheseId
+ * @param {object} options - Optional settings
+ * @param {string} options.requirementLevel - 'beginner', 'intermediate', 'expert', or 'custom'
+ * @param {object} options.customSettings - Custom precision settings (only for 'custom' level)
  */
-export const startSession = async (syntheseId) => {
-    const response = await api.post(`/revision/${syntheseId}/start`);
+export const startSession = async (syntheseId, options = {}) => {
+    const response = await api.post(`/revision/${syntheseId}/start`, options);
     return response;
 };
 

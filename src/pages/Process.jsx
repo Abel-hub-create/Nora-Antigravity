@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Check, Loader2, AlertCircle, Sparkles, BookOpen, Brain, HelpCircle, Save, ArrowLeft } from 'lucide-react';
+import { Check, Loader2, AlertCircle, Sparkles, BookOpen, Brain, HelpCircle, Save, ArrowLeft, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 import { createSynthese } from '../services/syntheseService';
-import { generateComplete, isMockMode } from '../services/openaiService';
+import { generateComplete, verifySubject, isMockMode } from '../services/openaiService';
 
 const Process = () => {
   const { t } = useTranslation();
@@ -22,10 +22,10 @@ const Process = () => {
   ];
 
   // Récupérer les données passées depuis Import
-  const { content, sourceType, specificInstructions } = location.state || {};
+  const { content, sourceType, subject, specificInstructions } = location.state || {};
 
   const [currentStep, setCurrentStep] = useState(0);
-  const [status, setStatus] = useState('processing'); // processing, success, error
+  const [status, setStatus] = useState('verifying'); // verifying, processing, success, error
   const [error, setError] = useState(null);
   const [generatedData, setGeneratedData] = useState({
     title: '',
@@ -34,6 +34,12 @@ const Process = () => {
     quizQuestions: []
   });
 
+  // État pour la vérification de matière
+  const [verificationResult, setVerificationResult] = useState(null);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [forceGenerate, setForceGenerate] = useState(false);
+  const [currentSubject, setCurrentSubject] = useState(subject);
+
   // Rediriger si pas de contenu
   useEffect(() => {
     if (!content) {
@@ -41,25 +47,56 @@ const Process = () => {
     }
   }, [content, navigate]);
 
-  // Processus de generation - un seul appel backend
+  // Compteur pour relancer le processus (evite window.reload)
+  const [retryCount, setRetryCount] = useState(0);
+
+  // Processus complet: verification puis generation
   useEffect(() => {
     if (!content) return;
 
-    const processContent = async () => {
-      // Animation des etapes pendant la generation
-      // Le backend genere tout en un seul appel
+    let isCancelled = false;
+    let stepInterval = null;
+
+    const runProcess = async () => {
+      // Etape 1: Verification (si matiere selectionnee et pas de force)
+      if (currentSubject && !forceGenerate) {
+        try {
+          setStatus('verifying');
+          const result = await verifySubject(content, currentSubject);
+
+          if (isCancelled) return;
+          setVerificationResult(result);
+
+          // Si mismatch detecte, afficher le modal et arreter
+          if (!result.correspondance && !result.error) {
+            setShowVerificationModal(true);
+            return;
+          }
+        } catch (err) {
+          console.error('Verification error:', err);
+          // En cas d'erreur, continuer quand meme (fail-safe)
+        }
+      }
+
+      if (isCancelled) return;
+
+      // Etape 2: Generation
+      setStatus('processing');
       setCurrentStep(0);
 
-      // Simuler la progression des etapes pour le feedback visuel
-      const stepInterval = setInterval(() => {
+      // Animation des etapes
+      stepInterval = setInterval(() => {
         setCurrentStep(prev => prev < 3 ? prev + 1 : prev);
       }, 1500);
 
       try {
         // Appel unique au backend qui genere tout
-        const { title, summary, flashcards, quizQuestions } = await generateComplete(content, specificInstructions);
+        const { title, summary, flashcards, quizQuestions } = await generateComplete(content, specificInstructions, currentSubject);
+
+        if (isCancelled) return;
 
         clearInterval(stepInterval);
+        stepInterval = null;
         setGeneratedData({ title, summary, flashcards, quizQuestions });
 
         // Etape 5: Sauvegarder dans la base de donnees
@@ -69,10 +106,13 @@ const Process = () => {
           originalContent: content,
           summaryContent: summary,
           sourceType: sourceType || 'text',
+          subject: currentSubject || null,
           flashcards,
           quizQuestions,
           specificInstructions: specificInstructions || null
         });
+
+        if (isCancelled) return;
 
         // Succes !
         setStatus('success');
@@ -86,11 +126,18 @@ const Process = () => {
 
         // Rediriger vers la synthese creee apres un court delai
         setTimeout(() => {
-          navigate(`/study/${synthese.id}`);
+          if (!isCancelled) {
+            navigate(`/study/${synthese.id}`);
+          }
         }, 1500);
 
       } catch (err) {
-        clearInterval(stepInterval);
+        if (stepInterval) {
+          clearInterval(stepInterval);
+          stepInterval = null;
+        }
+        if (isCancelled) return;
+
         console.error('Error processing:', err);
         setStatus('error');
         const errorMessage = err?.message || err?.error || t('errors.generic');
@@ -98,21 +145,53 @@ const Process = () => {
       }
     };
 
-    processContent();
-  }, [content, sourceType, specificInstructions, navigate, addNotification, t]);
+    runProcess();
+
+    // Cleanup function
+    return () => {
+      isCancelled = true;
+      if (stepInterval) {
+        clearInterval(stepInterval);
+      }
+    };
+  }, [content, sourceType, currentSubject, specificInstructions, forceGenerate, retryCount, navigate, addNotification, t]);
 
   // Réessayer en cas d'erreur
   const handleRetry = () => {
-    setStatus('processing');
     setError(null);
     setCurrentStep(0);
-    // Relancer le processus en forçant un re-render
-    window.location.reload();
+    setForceGenerate(false);
+    setShowVerificationModal(false);
+    setVerificationResult(null);
+    setRetryCount(prev => prev + 1);
   };
 
   // Retourner à l'import
   const handleBack = () => {
     navigate('/import');
+  };
+
+  // Handlers pour le modal de verification
+  const handleChangeSubject = () => {
+    // Retourner a l'import pour changer de matiere
+    navigate('/import', { state: { content, sourceType, specificInstructions } });
+  };
+
+  const handleForceGenerate = () => {
+    // Forcer la generation malgre le mismatch
+    setShowVerificationModal(false);
+    setForceGenerate(true);
+    setStatus('processing');
+  };
+
+  const handleUseDetectedSubject = () => {
+    // Utiliser la matiere detectee par l'IA
+    if (verificationResult?.matiere_detectee_id) {
+      setCurrentSubject(verificationResult.matiere_detectee_id);
+    }
+    setShowVerificationModal(false);
+    setForceGenerate(true);
+    setStatus('processing');
   };
 
   // Calculer la progression
@@ -136,14 +215,16 @@ const Process = () => {
           {t('common.back')}
         </button>
         <h1 className="text-2xl font-bold text-text-main">
-          {status === 'success' ? t('process.done') : t('process.processing')}
+          {status === 'success' ? t('process.done') : status === 'verifying' ? t('process.verifying') : t('process.processing')}
         </h1>
         <p className="text-text-muted">
           {status === 'success'
             ? t('process.summaryReady')
-            : isMockMode()
-              ? t('process.demoMode')
-              : t('process.aiGenerating')}
+            : status === 'verifying'
+              ? t('process.verifyingSubject')
+              : isMockMode()
+                ? t('process.demoMode')
+                : t('process.aiGenerating')}
         </p>
       </header>
 
@@ -183,6 +264,17 @@ const Process = () => {
           {/* Center Content */}
           <div className="absolute inset-0 flex items-center justify-center">
             <AnimatePresence mode="wait">
+              {status === 'verifying' && (
+                <motion.div
+                  key="verifying"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                  className="text-center"
+                >
+                  <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto" />
+                </motion.div>
+              )}
               {status === 'processing' && (
                 <motion.div
                   key="processing"
@@ -321,6 +413,82 @@ const Process = () => {
           </p>
         </div>
       )}
+
+      {/* Modal de verification de matiere */}
+      <AnimatePresence>
+        {showVerificationModal && verificationResult && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-surface rounded-2xl p-6 max-w-sm w-full"
+            >
+              {/* Icon */}
+              <div className="flex justify-center mb-4">
+                <div className="w-16 h-16 rounded-full bg-amber-500/20 flex items-center justify-center">
+                  <AlertTriangle className="w-8 h-8 text-amber-500" />
+                </div>
+              </div>
+
+              {/* Title */}
+              <h3 className="text-lg font-bold text-text-main text-center mb-2">
+                {t('process.subjectMismatch.title')}
+              </h3>
+
+              {/* Message */}
+              <p className="text-text-muted text-sm text-center mb-4">
+                {t('process.subjectMismatch.message', {
+                  detected: verificationResult.matiere_detectee || t('process.subjectMismatch.unknown'),
+                  confidence: t(`process.subjectMismatch.confidence.${verificationResult.confiance}`)
+                })}
+              </p>
+
+              {/* Detected subject info */}
+              {verificationResult.matiere_detectee && (
+                <div className="bg-background/50 rounded-xl p-3 mb-4">
+                  <p className="text-xs text-text-muted mb-1">{t('process.subjectMismatch.detectedSubject')}</p>
+                  <p className="text-text-main font-medium">{verificationResult.matiere_detectee}</p>
+                </div>
+              )}
+
+              {/* Buttons */}
+              <div className="space-y-2">
+                {/* Use detected subject (if available) */}
+                {verificationResult.matiere_detectee_id && (
+                  <button
+                    onClick={handleUseDetectedSubject}
+                    className="w-full py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark transition-colors"
+                  >
+                    {t('process.subjectMismatch.useDetected', { subject: verificationResult.matiere_detectee })}
+                  </button>
+                )}
+
+                {/* Force continue */}
+                <button
+                  onClick={handleForceGenerate}
+                  className="w-full py-3 bg-surface border border-white/10 text-text-main rounded-xl font-medium hover:bg-white/5 transition-colors"
+                >
+                  {t('process.subjectMismatch.continueAnyway')}
+                </button>
+
+                {/* Go back to import */}
+                <button
+                  onClick={handleChangeSubject}
+                  className="w-full py-3 text-text-muted hover:text-text-main transition-colors text-sm"
+                >
+                  {t('process.subjectMismatch.changeSubject')}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

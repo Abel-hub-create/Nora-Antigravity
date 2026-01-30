@@ -329,7 +329,7 @@ const Settings = () => {
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                            <span className="text-primary font-bold">{goal.targetMinutes} min</span>
+                                            <span className="text-primary font-bold">{goal.targetMinutes} {t('common.min')}</span>
                                             <button
                                                 onClick={() => handleRemoveGoal(goal.id)}
                                                 className="p-1.5 rounded-lg bg-error/10 text-error hover:bg-error/20 transition-colors"

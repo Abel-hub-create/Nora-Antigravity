@@ -3,12 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../hooks/useAuth';
 import AuthInput from '../components/AuthInput';
+import AuthLanguageSelector from '../components/AuthLanguageSelector';
 import api from '../../../lib/api';
 
 const Login = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -20,7 +22,8 @@ const Login = () => {
   const [resendMessage, setResendMessage] = useState('');
   const [resendSuccess, setResendSuccess] = useState(false);
 
-  const { login, error: authError, clearError } = useAuth();
+  const { login, loginWithGoogle, error: authError, clearError } = useAuth();
+  const [googleError, setGoogleError] = useState(null);
   const navigate = useNavigate();
 
   // Check if error is about email not verified
@@ -33,7 +36,7 @@ const Login = () => {
     setResendMessage('');
 
     try {
-      await api.post('/auth/resend-verification', { email: formData.email });
+      await api.post('/auth/resend-verification', { email: formData.email, language: i18n.language });
       setResendMessage(t('auth.emailResent'));
       setResendSuccess(true);
     } catch (error) {
@@ -93,7 +96,8 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 relative">
+      <AuthLanguageSelector />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -198,6 +202,42 @@ const Login = () => {
               {isSubmitting ? t('auth.connecting') : t('auth.login')}
             </motion.button>
           </form>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-3 bg-surface text-text-muted">{t('auth.orContinueWith')}</span>
+            </div>
+          </div>
+
+          {/* Google Login */}
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={async (credentialResponse) => {
+                setGoogleError(null);
+                try {
+                  await loginWithGoogle(credentialResponse.credential);
+                  navigate('/');
+                } catch (err) {
+                  setGoogleError(t('errors.googleLoginFailed'));
+                }
+              }}
+              onError={() => {
+                setGoogleError(t('errors.googleLoginFailed'));
+              }}
+              theme="outline"
+              size="large"
+              text="continue_with"
+              shape="pill"
+              locale={i18n.language}
+            />
+          </div>
+          {googleError && (
+            <p className="text-error text-sm text-center mt-3">{googleError}</p>
+          )}
 
           <p className="text-center text-text-muted text-sm mt-6">
             {t('auth.noAccount')}{' '}

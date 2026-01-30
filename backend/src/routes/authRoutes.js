@@ -1,6 +1,7 @@
 import express from 'express';
 import * as authService from '../services/authService.js';
 import * as userRepository from '../services/userRepository.js';
+import * as googleAuthService from '../services/googleAuthService.js';
 import { validate } from '../middlewares/validation.js';
 import { authenticate } from '../middlewares/auth.js';
 import { loginLimiter, registerLimiter, forgotPasswordLimiter } from '../middlewares/rateLimiter.js';
@@ -51,6 +52,63 @@ router.post('/login', loginLimiter, validate(validators.loginSchema), async (req
   }
 });
 
+// Google OAuth login/register
+router.post('/google', loginLimiter, async (req, res, next) => {
+  try {
+    const { credential } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({ error: 'Google credential required' });
+    }
+
+    // 1. Verify the Google token
+    const googleUser = await googleAuthService.verifyGoogleToken(credential);
+
+    // 2. Find user by google_id OR email
+    let user = await userRepository.findByGoogleId(googleUser.googleId);
+
+    if (!user) {
+      // Check if account with same email exists
+      const existingUser = await userRepository.findByEmail(googleUser.email);
+
+      if (existingUser) {
+        // Link Google account to existing account
+        await userRepository.linkGoogleAccount(existingUser.id, googleUser.googleId);
+        user = existingUser;
+      } else {
+        // Create new Google user
+        user = await userRepository.createGoogleUser(googleUser);
+      }
+    }
+
+    // 3. Generate JWT tokens
+    const { accessToken, refreshToken } = await authService.generateTokens(
+      user.id,
+      req.headers['user-agent'],
+      req.ip
+    );
+
+    // 4. Set refresh token cookie (30 days)
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 60 * 60 * 1000
+    });
+
+    // 5. Update last login
+    await userRepository.updateLastLogin(user.id);
+
+    // 6. Get full user data
+    const fullUser = await userRepository.findById(user.id);
+
+    res.json({ user: fullUser, accessToken });
+  } catch (error) {
+    console.error('[Auth Google] Error:', error);
+    next(error);
+  }
+});
+
 // Logout
 router.post('/logout', async (req, res, next) => {
   try {
@@ -87,7 +145,8 @@ router.get('/me', authenticate, async (req, res) => {
 // Forgot password
 router.post('/forgot-password', forgotPasswordLimiter, validate(validators.forgotPasswordSchema), async (req, res, next) => {
   try {
-    await authService.forgotPassword(req.body.email);
+    const { email, language } = req.body;
+    await authService.forgotPassword(email, language || 'fr');
     // Always return success (security - don't reveal if email exists)
     res.json({ message: 'Si cet email existe, un lien de réinitialisation a été envoyé' });
   } catch (error) {
@@ -178,8 +237,8 @@ router.patch('/preferences', authenticate, async (req, res, next) => {
       return res.status(400).json({ error: 'Theme invalide' });
     }
 
-    // Validate language
-    if (language && !['fr', 'en'].includes(language)) {
+    // Validate language (fr, en, es, zh)
+    if (language && !['fr', 'en', 'es', 'zh'].includes(language)) {
       return res.status(400).json({ error: 'Langue invalide' });
     }
 
@@ -223,12 +282,12 @@ router.delete('/account', authenticate, async (req, res, next) => {
 // Resend verification email
 router.post('/resend-verification', forgotPasswordLimiter, async (req, res, next) => {
   try {
-    const { email } = req.body;
+    const { email, language } = req.body;
     if (!email || !/\S+@\S+\.\S+/.test(email)) {
       return res.status(400).json({ error: 'Email invalide' });
     }
 
-    await authService.resendVerificationEmail(email);
+    await authService.resendVerificationEmail(email, language || 'fr');
     // Always return same message to prevent email enumeration
     res.json({ message: 'Si cet email existe et n\'est pas verifie, un nouveau lien a ete envoye' });
   } catch (error) {

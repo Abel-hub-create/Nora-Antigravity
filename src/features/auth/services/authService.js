@@ -1,7 +1,7 @@
 import api from '../../../lib/api';
 
-export const register = async ({ email, password, name }) => {
-  const data = await api.post('/auth/register', { email, password, name });
+export const register = async ({ email, password, name, language }) => {
+  const data = await api.post('/auth/register', { email, password, name, language });
 
   // Save only the token (user data comes from DB on each load)
   if (data.accessToken) {
@@ -15,6 +15,15 @@ export const login = async ({ email, password, rememberMe = false }) => {
   const data = await api.post('/auth/login', { email, password, rememberMe });
 
   // Save only the token (user data comes from DB on each load)
+  localStorage.setItem('accessToken', data.accessToken);
+
+  return data.user;
+};
+
+export const loginWithGoogle = async (credential) => {
+  const data = await api.post('/auth/google', { credential });
+
+  // Save the access token
   localStorage.setItem('accessToken', data.accessToken);
 
   return data.user;
@@ -34,8 +43,13 @@ export const getCurrentUser = async () => {
   return data.user;
 };
 
-export const forgotPassword = async (email) => {
-  const data = await api.post('/auth/forgot-password', { email });
+export const forgotPassword = async (email, language) => {
+  const data = await api.post('/auth/forgot-password', { email, language });
+  return data.message;
+};
+
+export const resendVerification = async (email, language) => {
+  const data = await api.post('/auth/resend-verification', { email, language });
   return data.message;
 };
 

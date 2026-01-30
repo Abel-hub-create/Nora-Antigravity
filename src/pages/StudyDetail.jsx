@@ -7,6 +7,19 @@ import * as syntheseService from '../services/syntheseService';
 import useActiveTimer from '../hooks/useActiveTimer';
 import { useAuth } from '../features/auth/hooks/useAuth';
 
+// Mapping des matières avec leurs icônes
+const SUBJECT_ICONS = {
+    mathematics: '📐',
+    french: '📚',
+    physics: '⚡',
+    chemistry: '🧪',
+    biology: '🧬',
+    history: '🏛️',
+    geography: '🌍',
+    english: '🇬🇧',
+    dutch: '🇳🇱'
+};
+
 // Nombre de caractères par page pour la pagination
 const CHARS_PER_PAGE = 2500;
 
@@ -83,7 +96,13 @@ const StudyDetail = () => {
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
-        const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
+        const localeMap = {
+            fr: 'fr-FR',
+            en: 'en-US',
+            es: 'es-ES',
+            zh: 'zh-CN'
+        };
+        const locale = localeMap[i18n.language] || 'en-US';
         return date.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
     };
 
@@ -127,11 +146,19 @@ const StudyDetail = () => {
                     <h1 className="text-xl font-bold text-text-main truncate">
                         {synthese.title}
                     </h1>
-                    <div className="flex items-center gap-2 mt-1">
-                        <Calendar size={12} className="text-text-muted" />
-                        <span className="text-xs text-text-muted">
-                            {formatDate(synthese.created_at)}
-                        </span>
+                    <div className="flex items-center gap-3 mt-1">
+                        {synthese.subject && (
+                            <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-2 py-0.5 rounded-lg">
+                                <span className="text-sm">{SUBJECT_ICONS[synthese.subject] || '📝'}</span>
+                                <span className="text-xs font-medium">{t(`subjects.${synthese.subject}`)}</span>
+                            </div>
+                        )}
+                        <div className="flex items-center gap-1.5">
+                            <Calendar size={12} className="text-text-muted" />
+                            <span className="text-xs text-text-muted">
+                                {formatDate(synthese.created_at)}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </header>

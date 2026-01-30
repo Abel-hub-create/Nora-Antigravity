@@ -153,7 +153,14 @@
     "mastered": "已掌握",
     "noResults": "无结果",
     "tryOtherKeywords": "尝试其他关键词",
-    "importContent": "导入内容以创建您的第一个摘要"
+    "importContent": "导入内容以创建您的第一个摘要",
+    "deleteAll": "全部删除",
+    "deleteSelected": "删除 ({{count}})",
+    "selectedCount": "已选择{{count}}个",
+    "clearSelection": "取消选择",
+    "confirmDeleteTitle": "确认删除",
+    "confirmDeleteAll": "您将删除{{count}}个摘要。此操作不可撤销。",
+    "confirmDeleteSelected": "您将删除{{count}}个已选摘要。此操作不可撤销。"
   },
   "flashcards": {
     "title": "闪卡",
@@ -287,12 +294,19 @@
     "minChars": "最少50个字符",
     "specificPrompt": {
       "title": "自定义",
-      "question": "写下你考试的目标（如果有的话），以获得更好的摘要。",
-      "yes": "是的，我有目标",
+      "question": "你想自定义你的摘要吗？",
+      "yes": "是的，自定义",
       "no": "没有，继续",
-      "instructionsLabel": "写下你考试的目标：",
-      "instructionsPlaceholder": "例如：强调重要日期，提及物理公式...",
-      "continue": "继续"
+      "continue": "继续",
+      "definitionsLabel": "要包含的定义",
+      "definitionsHint": "列出你想在摘要中看到的课程定义",
+      "definitionsPlaceholder": "例如：光合作用，有丝分裂，渗透...",
+      "objectivesLabel": "考试目标",
+      "objectivesHint": "指出你将被考核的重点",
+      "objectivesPlaceholder": "例如：了解关键日期，解释...的过程",
+      "definitionsWarning": "如果您的课程包含定义，除非在此指定，否则它们不会出现在摘要中。",
+      "dontShowAgain": "不再显示此消息",
+      "understood": "我明白了"
     }
   },
   "voice": {
@@ -472,6 +486,7 @@
     "forgotPassword": "忘记密码？",
     "noAccount": "没有账号？",
     "hasAccount": "已有账号？",
+    "orContinueWith": "或继续使用",
     "createAccount": "创建账号",
     "loginButton": "登录",
     "emailRequired": "邮箱为必填项",
@@ -571,6 +586,7 @@
     "preferencesUpdateFailed": "更新偏好设置失败",
     "deleteAccountFailed": "删除账号失败",
     "noTextDetectedPhoto": "未检测到文字。请拍摄您的课程笔记。",
-    "noTextDetectedVoice": "未检测到文字。请口述您的课程。"
+    "noTextDetectedVoice": "未检测到文字。请口述您的课程。",
+    "googleLoginFailed": "Google登录失败"
   }
 }

@@ -153,7 +153,14 @@
     "mastered": "Mastered",
     "noResults": "No results",
     "tryOtherKeywords": "Try other keywords",
-    "importContent": "Import content to create your first summary"
+    "importContent": "Import content to create your first summary",
+    "deleteAll": "Delete all",
+    "deleteSelected": "Delete ({{count}})",
+    "selectedCount": "{{count}} selected",
+    "clearSelection": "Clear selection",
+    "confirmDeleteTitle": "Confirm deletion",
+    "confirmDeleteAll": "You are about to delete {{count}} summary(ies). This action cannot be undone.",
+    "confirmDeleteSelected": "You are about to delete {{count}} selected summary(ies). This action cannot be undone."
   },
   "flashcards": {
     "title": "Flashcards",
@@ -328,12 +335,19 @@
     "minChars": "Minimum 50 characters",
     "specificPrompt": {
       "title": "Customization",
-      "question": "Write your test objectives if you have any to get a better summary.",
-      "yes": "Yes, I have objectives",
+      "question": "Do you want to customize your summary?",
+      "yes": "Yes, customize",
       "no": "No, continue",
-      "instructionsLabel": "Write your test objectives:",
-      "instructionsPlaceholder": "E.g.: Focus on important dates, mention physics formulas, include key definitions...",
-      "continue": "Continue"
+      "continue": "Continue",
+      "definitionsLabel": "Definitions to include",
+      "definitionsHint": "List the definitions from your course that you want in your summary",
+      "definitionsPlaceholder": "E.g.: Photosynthesis, Mitosis, Osmosis...",
+      "objectivesLabel": "Test objectives",
+      "objectivesHint": "Indicate the important points you will be tested on",
+      "objectivesPlaceholder": "E.g.: Know key dates, explain the process of...",
+      "definitionsWarning": "If your course contains definitions, they will not appear in the summary unless you specify them here.",
+      "dontShowAgain": "Don't show this message again",
+      "understood": "I understand"
     }
   },
   "voice": {
@@ -539,6 +553,7 @@
     "forgotPassword": "Forgot password?",
     "noAccount": "No account?",
     "hasAccount": "Already have an account?",
+    "orContinueWith": "or continue with",
     "createAccount": "Create my account",
     "loginButton": "Login",
     "emailRequired": "Email is required",
@@ -638,6 +653,7 @@
     "preferencesUpdateFailed": "Failed to update preferences",
     "deleteAccountFailed": "Failed to delete account",
     "noTextDetectedPhoto": "No text detected. Take a photo of your course so I can summarize it.",
-    "noTextDetectedVoice": "No text detected. Dictate your course so I can summarize it."
+    "noTextDetectedVoice": "No text detected. Dictate your course so I can summarize it.",
+    "googleLoginFailed": "Google login failed"
   }
 }

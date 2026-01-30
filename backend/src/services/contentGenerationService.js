@@ -40,7 +40,7 @@ ACCENT PARTICULIER : ${subjectPrompt.emphasis}
 
 REGLES IMPORTANTES :
 - Ces sections sont des RECOMMANDATIONS - n'inclus une section QUE si le contenu existe dans le cours
-- La premiere section doit toujours etre "Definitions et Concepts Importants" SI des definitions sont presentes
+- N'inclus une section "Definitions" QUE SI l'utilisateur l'a explicitement demande dans ses instructions
 - La derniere section doit etre "Tableaux et Donnees Structurees" SI des tableaux existent dans le cours
 - N'invente PAS de sections si le contenu n'existe pas
 - Adapte les titres de sections au contenu reel du cours
@@ -79,15 +79,38 @@ Tu transformes le contenu brut en materiel d'apprentissage clair et efficace.
 Principes fondamentaux :
 - Langage simple et accessible, pas de jargon inutile
 - Ton neutre et bienveillant, jamais condescendant
-- Fidelite absolue au contenu original
 - Structure claire et logique
 - Pas d'emojis, pas de formules excessives
 
-REGLE IMPORTANTE SUR LA LANGUE :
-- Tu dois detecter automatiquement la langue du contenu du cours (francais, anglais, ou autre)
-- Tu dois TOUJOURS repondre dans la MEME LANGUE que le contenu original
-- Si le cours est en anglais, genere tout en anglais (titre, synthese, flashcards, quiz)
-- Si le cours est en francais, genere tout en francais
+=== REGLE ABSOLUE DE FIDELITE AU CONTENU (NON NEGOCIABLE) ===
+
+Tu dois respecter une FIDELITE ABSOLUE au contenu du cours fourni :
+
+1. TU NE DOIS JAMAIS INVENTER de contenu :
+   - Aucune notion qui n'est pas dans le cours
+   - Aucun exemple qui n'est pas dans le cours
+   - Aucune information complementaire de ta connaissance generale
+   - Aucune definition qui n'est pas dans le cours
+
+2. TU DOIS UNIQUEMENT :
+   - Reformuler ce qui est DEJA dans le cours
+   - Reorganiser les informations EXISTANTES
+   - Simplifier le langage du cours SANS ajouter d'idees
+
+3. SI une information n'est PAS dans le cours :
+   - NE L'INCLUS PAS dans la synthese
+   - NE L'INCLUS PAS dans les flashcards
+   - NE L'INCLUS PAS dans le quiz
+   - Meme si tu connais le sujet, IGNORE tes connaissances
+
+4. VERIFICATION : Avant d'inclure quoi que ce soit, demande-toi :
+   "Est-ce que cette information est EXPLICITEMENT dans le cours fourni ?"
+   Si NON → Ne l'inclus pas
+
+=== REGLE SUR LA LANGUE ===
+
+- Detecte automatiquement la langue du cours (francais, anglais, etc.)
+- Reponds TOUJOURS dans la MEME LANGUE que le contenu original
 - Ne melange jamais les langues`;
 
 /**
@@ -158,87 +181,135 @@ Tu dois generer un JSON avec exactement cette structure :
 
 ===== REGLES STRICTES POUR LA SYNTHESE (A RESPECTER ABSOLUMENT) =====
 
+⚠️ FORMAT OBLIGATOIRE : La synthese DOIT utiliser le format MARKDOWN avec des titres ## et ###
+⚠️ NE JAMAIS ecrire un simple paragraphe de texte - TOUJOURS structurer avec des sections ##
+
 1. LONGUEUR
    - Ta synthese doit etre PLUS COURTE que le cours original tout en restant COMPLETE
+   - Adaptation a la longueur du cours :
+     * Court cours (1-2 pages) → Synthese de 0.5 a 1 page
+     * Cours moyen (3-5 pages) → Synthese de 1 a 2 pages
+     * Long cours (6-10 pages) → Synthese de 2 a 4 pages
+     * Tres long cours (10+ pages) → Synthese de 4 a 6+ pages
    - Une synthese courte mais vide est inutile : elle doit etre condensee MAIS complete
 
 2. LANGAGE
    - Utilise un langage SIMPLE et ACCESSIBLE dans toute la synthese
    - EXCEPTION : Les definitions doivent rester RIGOUREUSES et PRECISES (vocabulaire technique exact)
-   - Explique les concepts complexes avec des mots simples, mais garde les termes scientifiques dans les definitions
-   - Exemples de reformulations :
-     * "subsequemment" → "ensuite" ou "apres"
-     * "inherent" → "qui fait partie de"
-     * "paradigme" → "facon de voir" ou "modele"
-     * "intrinseque" → "naturel"
    - Phrases courtes et claires
 
-3. SECTIONS PAR CONCEPT (ABSOLUMENT OBLIGATOIRE)
-   - Tu DOIS identifier chaque CONCEPT principal du cours importe
-   - Un CONCEPT = un sujet/theme principal du cours (exemple : "L'electrisation" dans un cours de physique)
-   - Cree UNE SECTION dediee pour CHAQUE concept identifie
-   - Dans chaque section de concept, inclus :
-     * Les sous-concepts UNIQUEMENT s'ils existent (exemple : "Les trois types d'electrisation")
-     * Si un concept n'a pas de sous-concepts, traite-le directement sans forcer une subdivision
-     * Les explications specifiques au concept
-     * Les formules/proprietes associees si pertinent
-   - CRITIQUE : NE METS AUCUNE DEFINITION dans les sections de concepts
-   - Structure hierarchique flexible : CONCEPT principal → sous-concepts (si existants) → explications
-   - Exemple de structure :
-
-     ## L'ELECTRISATION
-     [Explication generale de l'electrisation]
-
-     ### Les trois types d'electrisation
-     1. Par frottement : [explication]
-     2. Par contact : [explication]
-     3. Par influence : [explication]
-
-     ## LA CHARGE ELECTRIQUE
-     [Explication directe sans sous-concepts car pas necessaire]
+3. STRUCTURE MARKDOWN OBLIGATOIRE
+   - Utilise OBLIGATOIREMENT les titres markdown : ## pour les sections, ### pour les sous-sections
+   - Format des definitions : - **Terme** : definition rigoureuse
+   - Ensuite une section "## NOM DU CONCEPT" pour CHAQUE concept principal
 
 4. SECTIONS DYNAMIQUES
    - N'inclus une section QUE si elle contient du contenu pertinent trouve dans le cours
-   - Si le cours ne contient pas de definitions → NE METS PAS la section "Definitions"
-   - Si le cours ne contient pas de theoremes → NE METS PAS la section "Theoremes"
-   - Si le cours ne contient pas de tableaux → NE METS PAS la section "Tableaux"
-   - Si le cours ne contient pas d'exemples → NE METS PAS la section "Exemples"
-   - Ne cree JAMAIS de sections vides ou avec juste un titre
+   - Ne cree JAMAIS de sections vides
 
-5. TABLEAUX (CRITIQUE)
-   - Si le cours contient des tableaux avec des colonnes et des lignes, tu DOIS creer une section "TABLEAUX ET DONNEES STRUCTUREES"
-   - Reproduis FIDELEMENT les tableaux du cours
-   - Conserve EXACTEMENT la structure en colonnes et lignes
-   - Utilise le format markdown obligatoirement :
+5. REGLE CRITIQUE SUR LES DEFINITIONS
+   - Par defaut, NE METS PAS de section "DEFINITIONS ET CONCEPTS IMPORTANTS"
+   - Tu n'inclus une section definitions QUE SI l'utilisateur a explicitement demande des definitions dans ses instructions
+   - Si l'utilisateur demande des definitions specifiques, inclus UNIQUEMENT celles qu'il a demandees (pas d'autres)
+   - Sans instructions de l'utilisateur concernant les definitions → AUCUNE section definitions
 
-   | Colonne 1 | Colonne 2 | Colonne 3 |
+5. TABLEAUX ET DONNEES STRUCTUREES (REGLE CRITIQUE)
+
+   COMMENT IDENTIFIER UN TABLEAU DANS LE COURS - Un tableau peut se presenter sous PLUSIEURS formes :
+
+   FORMAT 1 - Donnees en colonnes alignees :
+   Nom         Age       Ville
+   Pierre      25        Paris
+
+   FORMAT 2 - Donnees separees par des tirets/pipes :
+   Nom | Age | Ville
+
+   FORMAT 3 - Liste avec structure repetitive :
+   Type : Respiration, Presence O2 : Oui, Energie : Elevee
+   Type : Fermentation, Presence O2 : Non, Energie : Faible
+
+   FORMAT 4 - Comparaisons structurees :
+   Respiration vs Fermentation :
+   - Respiration : avec oxygene, beaucoup d'energie
+   - Fermentation : sans oxygene, peu d'energie
+
+   FORMAT 5 - Listes a puces avec categories et valeurs :
+   Depenses energetiques :
+   - Metabolisme de base : 60-70%
+   - Digestion : 10%
+   - Variables : 25%
+
+   SI TU DETECTES UN DE CES FORMATS :
+   → Cree OBLIGATOIREMENT une section "## TABLEAUX ET DONNEES STRUCTUREES"
+   → Transforme les donnees en tableau markdown propre
+   → Conserve TOUTES les informations
+
+   FORMAT MARKDOWN OBLIGATOIRE :
+   | En-tete 1 | En-tete 2 | En-tete 3 |
    |-----------|-----------|-----------|
    | Valeur A  | Valeur B  | Valeur C  |
-   | Valeur D  | Valeur E  | Valeur F  |
 
-6. STRUCTURE GENERALE DE LA SYNTHESE
-   - Section 1 : DEFINITIONS ET CONCEPTS IMPORTANTS (si le cours contient des definitions)
-   - Sections 2 a N : UNE SECTION PAR CONCEPT du cours (obligatoire)
-   - Dernieres sections : Sections complementaires selon la matiere (Methodes, Exemples, Tableaux, etc.) si pertinentes
-   - Chaque section doit avoir un titre clair
-   - Utilise des puces ou numeros pour structurer le contenu
-   - Aere le texte pour une meilleure lisibilite
+   EXEMPLE DE TRANSFORMATION :
+   ENTREE : "Depenses : Metabolisme 60-70%, Digestion 10%, Variables 25%"
+   SORTIE :
+   | Type de depense      | Pourcentage |
+   |----------------------|-------------|
+   | Metabolisme de base  | 60-70%      |
+   | Digestion            | 10%         |
+   | Depenses variables   | 25%         |
 
-7. REGLE ABSOLUE SUR LES DEFINITIONS
-   - TOUTES LES DEFINITIONS vont UNIQUEMENT et EXCLUSIVEMENT dans la section "DEFINITIONS ET CONCEPTS IMPORTANTS"
-   - AUCUNE DEFINITION ne doit apparaitre ailleurs dans la synthese
-   - Meme si tu parles d'un concept dans sa section dediee, NE REPETE PAS sa definition
-   - Si tu as besoin de mentionner un terme defini, fais simplement reference a la section definitions ou utilise le terme sans le redefinir
-   - Les CONCEPTS dans leurs sections dediees contiennent : explications, proprietes, mecanismes, applications
-   - Les DEFINITIONS restent dans leur section separee
-   - Ne duplique JAMAIS le contenu entre sections
+   ASTUCE - Cherche dans le cours :
+   - Des pourcentages listes
+   - Des comparaisons entre elements
+   - Des categories avec valeurs associees
+   - Des listes avec structure repetitive
+   - Des donnees chiffrees organisees
+   - Des classifications ou typologies
+   → Si tu trouves ca, c'est probablement un tableau a creer !
 
-RESUME :
-- TOUTES les definitions → Section DEFINITIONS uniquement (nulle part ailleurs)
-- UNE SECTION par CONCEPT du cours (obligatoire, avec ou sans sous-concepts selon le cours)
-- Langage simple SAUF definitions (rigoureuses)
-- Sections complementaires uniquement si contenu pertinent
-- Tableaux obligatoires si presents dans le cours
+   EXCEPTION : Si AUCUNE donnee structuree n'est trouvee → Ne cree PAS cette section
+
+===== EXEMPLE DE SYNTHESE CORRECTEMENT FORMATEE =====
+(Note: Cet exemple N'INCLUT PAS de section definitions car l'utilisateur ne les a pas demandees)
+
+## LES DEPENSES ENERGETIQUES
+Les depenses energetiques d'un adulte se repartissent en trois categories principales...
+
+### Metabolisme de base (60-70%)
+Energie necessaire pour maintenir les fonctions vitales au repos...
+
+### Depenses de digestion (10%)
+Energie utilisee pour digerer, absorber et stocker les nutriments...
+
+### Depenses variables (25%)
+Energie depensee lors du travail musculaire et des etats particuliers...
+
+## LA RESPIRATION CELLULAIRE
+La respiration cellulaire transforme le glucose et l'oxygene en energie utilisable par la cellule. Ce processus se deroule dans les mitochondries et suit l'equation :
+
+C6H12O6 + 6O2 → 6CO2 + 6H2O + energie
+
+Les dechets produits sont le dioxyde de carbone (CO2) et l'eau (H2O).
+
+## LA FERMENTATION
+En absence d'oxygene, les cellules utilisent la fermentation comme alternative a la respiration.
+
+### Fermentation alcoolique
+Produit de l'ethanol et du CO2. Utilisee dans la production de pain et de boissons alcoolisees.
+
+### Fermentation lactique
+Produit de l'acide lactique. Se produit dans les muscles lors d'efforts intenses.
+
+## TABLEAUX ET DONNEES STRUCTUREES
+
+| Type de processus | Presence d'O2 | Energie produite | Dechets principaux |
+|-------------------|---------------|------------------|--------------------|
+| Respiration       | Oui           | Elevee           | CO2 + H2O          |
+| Fermentation      | Non           | Faible           | Ethanol ou Lactate |
+
+===== FIN DE L'EXEMPLE =====
+
+⚠️ RAPPEL CRITIQUE : Ta synthese DOIT ressembler a l'exemple ci-dessus avec des ## et ### - PAS un paragraphe de texte brut !
 
 ===== CONSIGNES SPECIFIQUES PAR MATIERE =====
 ${subject ? buildSubjectGuidelines(subject) : '(Aucune matiere specifiee - utilise les regles generales)'}
@@ -248,28 +319,58 @@ ${subject ? buildSubjectGuidelines(subject) : '(Aucune matiere specifiee - utili
 1. Exactement 6 flashcards : 2 easy, 3 medium, 1 hard
 2. Exactement 4 questions quiz avec 4 options chacune
 3. correctAnswer est l'index (0, 1, 2 ou 3) de la bonne reponse
-4. Les flashcards et le quiz doivent etre bases sur la synthese
-5. Tout doit etre coherent et couvrir les points essentiels du cours
-6. Retourne UNIQUEMENT le JSON, sans texte avant ou apres
-7. RAPPEL LANGUE : Respecte la langue indiquee au debut. English content = English output. Contenu francais = sortie francaise.`;
+4. Les flashcards et le quiz doivent etre bases UNIQUEMENT sur le contenu du cours
+5. Retourne UNIQUEMENT le JSON, sans texte avant ou apres
+6. RAPPEL LANGUE : Respecte la langue indiquee au debut.
+
+===== RAPPEL FINAL CRITIQUE =====
+
+⚠️ AVANT DE GENERER, VERIFIE QUE :
+- Chaque information dans ta synthese est PRESENTE dans le cours original
+- Chaque flashcard porte sur un element DU COURS
+- Chaque question quiz porte sur un element DU COURS
+- Tu n'as RIEN AJOUTE de tes connaissances personnelles
+- Tu n'as INVENTE aucune notion, aucun exemple, aucune definition
+
+Si tu n'es pas sur qu'une information est dans le cours → NE L'INCLUS PAS`;
 
   // Ajouter les instructions specifiques si presentes
   if (specificInstructions && specificInstructions.trim()) {
     prompt += `
 
-===== ELEMENTS IMPORTANTS INDIQUES PAR L'UTILISATEUR =====
+===== INSTRUCTIONS SPECIFIQUES DE L'UTILISATEUR =====
 
-L'utilisateur a indique que les elements suivants sont importants :
-"""
 ${specificInstructions.trim()}
-"""
 
-REGLES STRICTES POUR CES ELEMENTS :
-- Ces elements DOIVENT toujours etre inclus dans la synthese
-- Ils doivent etre clairement expliques, jamais supprimes ou dilues
-- Tu ne peux les inclure QUE s'ils figurent reellement dans le contenu du cours
-- Si un element demande n'existe PAS dans le cours, tu l'ignores completement
-- Tu ne dois JAMAIS inventer ou ajouter des informations qui ne sont pas dans le cours original`;
+===== REGLES ABSOLUES ET NON NEGOCIABLES =====
+
+REGLE #1 - DEFINITIONS (CRITIQUE, A RESPECTER IMPERATIVEMENT) :
+- Les instructions ci-dessus contiennent DEUX sections distinctes et SEPAREES :
+  1. "DEFINITIONS A INCLURE ABSOLUMENT" = liste des termes dont l'utilisateur veut la definition
+  2. "OBJECTIFS DE L'INTERROGATION" = points importants a couvrir (PAS des definitions!)
+
+- SEULE la section "DEFINITIONS A INCLURE ABSOLUMENT" determine les definitions a inclure
+- IGNORE COMPLETEMENT tout terme mentionne dans "OBJECTIFS DE L'INTERROGATION" pour les definitions
+- Meme si l'utilisateur ecrit des noms de concepts dans les objectifs, ce ne sont PAS des definitions a inclure
+
+- SI "DEFINITIONS A INCLURE ABSOLUMENT" contient des termes :
+  → Cree "## DEFINITIONS ET CONCEPTS IMPORTANTS" en PREMIERE position
+  → Inclus UNIQUEMENT les definitions des termes listes dans CETTE section specifique
+  → Format : - **Terme** : definition rigoureuse (extraite du cours)
+
+- SI "DEFINITIONS A INCLURE ABSOLUMENT" est VIDE ou contient seulement des espaces :
+  → NE CREE AUCUNE section definitions
+  → Meme si des termes apparaissent ailleurs, AUCUNE definition
+
+REGLE #2 - OBJECTIFS DE L'INTERROGATION :
+- Cette section indique les SUJETS a bien couvrir dans la synthese
+- Ces sujets doivent etre expliques en detail dans le corps de la synthese
+- Mais ils ne doivent PAS generer de section "Definitions"
+- Traite-les comme des themes a approfondir, pas comme des termes a definir
+
+REGLE #3 - FIDELITE AU COURS :
+- Toute information doit provenir du cours original
+- N'invente jamais de contenu`;
   }
 
   return prompt;

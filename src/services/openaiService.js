@@ -302,15 +302,21 @@ export async function generateQuizQuestions(content, count = 4) {
  *
  * @param {string} content - Le contenu du cours
  * @param {string|null} specificInstructions - Instructions spécifiques de l'utilisateur (optionnel)
+ * @param {string|null} subject - Matière sélectionnée (optionnel, ex: 'mathematics')
  * @returns {Promise<Object>} - { title, summary, flashcards, quizQuestions }
  */
-export async function generateComplete(content, specificInstructions = null) {
+export async function generateComplete(content, specificInstructions = null, subject = null) {
   try {
     const payload = { content };
 
     // Ajouter les instructions spécifiques si présentes
     if (specificInstructions && specificInstructions.trim()) {
       payload.specificInstructions = specificInstructions.trim();
+    }
+
+    // Ajouter la matière si présente
+    if (subject) {
+      payload.subject = subject;
     }
 
     const data = await api.post('/ai/generate-content', payload);
@@ -328,6 +334,31 @@ export async function generateComplete(content, specificInstructions = null) {
     // Extraire le message d'erreur
     const errorMessage = error?.response?.data?.error || error?.message || 'Erreur lors de la génération';
     throw new Error(errorMessage);
+  }
+}
+
+/**
+ * Vérifie si le contenu correspond à la matière sélectionnée
+ *
+ * @param {string} content - Le contenu du cours
+ * @param {string} subject - Matière sélectionnée (ex: 'mathematics')
+ * @returns {Promise<Object>} - { correspondance, matiere_detectee, matiere_detectee_id, confiance, message }
+ */
+export async function verifySubject(content, subject) {
+  try {
+    const data = await api.post('/ai/verify-subject', { content, subject });
+    return data;
+  } catch (error) {
+    console.error('[OpenAI] Erreur verification matiere:', error);
+    // En cas d'erreur, on permet de continuer (fail-safe)
+    return {
+      correspondance: true,
+      matiere_detectee: null,
+      matiere_detectee_id: null,
+      confiance: 'faible',
+      message: 'Vérification non disponible',
+      error: true
+    };
   }
 }
 
@@ -381,6 +412,7 @@ export default {
   generateFlashcards,
   generateQuizQuestions,
   generateComplete,
+  verifySubject,
   checkApiStatus,
   isMockMode
 };

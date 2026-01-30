@@ -13,6 +13,7 @@ import RevisionPausePhase from '../components/Revision/RevisionPausePhase';
 import RevisionRecallPhase from '../components/Revision/RevisionRecallPhase';
 import RevisionLoopPhase from '../components/Revision/RevisionLoopPhase';
 import RevisionCompletePhase from '../components/Revision/RevisionCompletePhase';
+import RequirementLevelModal from '../components/Revision/RequirementLevelModal';
 
 const StudyRevision = () => {
     const { t } = useTranslation();
@@ -32,6 +33,9 @@ const StudyRevision = () => {
 
     // Stop confirmation modal
     const [showStopConfirm, setShowStopConfirm] = useState(false);
+
+    // Requirement level modal (shown before starting new session)
+    const [showLevelModal, setShowLevelModal] = useState(false);
 
     // Sync interval ref
     const syncIntervalRef = useRef(null);
@@ -81,11 +85,11 @@ const StudyRevision = () => {
                 }
 
                 if (existingSession) {
+                    // Continue with existing session
                     setSession(existingSession);
                 } else {
-                    // Start new session
-                    const { session: newSession } = await revisionService.startSession(id);
-                    setSession(newSession);
+                    // Show requirement level modal before starting new session
+                    setShowLevelModal(true);
                 }
             } catch (err) {
                 console.error('Error loading revision:', err);
@@ -96,6 +100,26 @@ const StudyRevision = () => {
         };
 
         loadData();
+    }, [id, t]);
+
+    // Handle starting session with selected requirement level
+    const handleStartWithLevel = useCallback(async ({ level, settings }) => {
+        try {
+            setShowLevelModal(false);
+            setIsLoading(true);
+
+            const { session: newSession } = await revisionService.startSession(id, {
+                requirementLevel: level,
+                customSettings: level === 'custom' ? settings : null
+            });
+
+            setSession(newSession);
+        } catch (err) {
+            console.error('Error starting revision:', err);
+            setError(t('revision.loadError'));
+        } finally {
+            setIsLoading(false);
+        }
     }, [id, t]);
 
     // Sync session to backend every 5 seconds
@@ -255,8 +279,21 @@ const StudyRevision = () => {
         );
     }
 
+    // Show requirement level modal before starting (when no existing session)
+    if (showLevelModal && synthese) {
+        return (
+            <div className="min-h-full bg-background">
+                <RequirementLevelModal
+                    isOpen={true}
+                    onClose={() => navigate(`/study/${id}`)}
+                    onStart={handleStartWithLevel}
+                />
+            </div>
+        );
+    }
+
     // Error state
-    if (error || !session || !synthese) {
+    if (error || !synthese) {
         return (
             <div className="min-h-full bg-background p-6">
                 <Link to={`/study/${id}`} className="inline-flex items-center gap-2 text-text-muted hover:text-text-main mb-6">
@@ -266,6 +303,18 @@ const StudyRevision = () => {
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                     <AlertCircle className="text-error mb-3" size={40} />
                     <p className="text-text-muted">{error || t('revision.loadError')}</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Wait for session to be created
+    if (!session) {
+        return (
+            <div className="min-h-full bg-background flex items-center justify-center">
+                <div className="text-center">
+                    <Loader2 className="animate-spin text-primary mx-auto mb-3" size={32} />
+                    <p className="text-text-muted">{t('common.loading')}</p>
                 </div>
             </div>
         );

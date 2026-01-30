@@ -35,6 +35,7 @@ router.get('/:syntheseId/session', async (req, res, next) => {
         if (session) {
             session.missing_concepts = revisionRepo.safeJsonParse(session.missing_concepts);
             session.understood_concepts = revisionRepo.safeJsonParse(session.understood_concepts);
+            session.custom_settings = revisionRepo.safeJsonParse(session.custom_settings);
         }
 
         res.json({ session });
@@ -45,10 +46,12 @@ router.get('/:syntheseId/session', async (req, res, next) => {
 
 /**
  * POST /:syntheseId/start - Start new session
+ * Body: { requirementLevel?: 'beginner'|'intermediate'|'expert'|'custom', customSettings?: object }
  */
 router.post('/:syntheseId/start', async (req, res, next) => {
     try {
         const syntheseId = parseInt(req.params.syntheseId);
+        const { requirementLevel, customSettings } = req.body;
 
         // Verify synthese belongs to user
         const synthese = await syntheseRepo.findById(syntheseId, req.user.id);
@@ -56,7 +59,10 @@ router.post('/:syntheseId/start', async (req, res, next) => {
             return res.status(404).json({ error: 'Synthese non trouvee' });
         }
 
-        const session = await revisionRepo.startSession(req.user.id, syntheseId);
+        const session = await revisionRepo.startSession(req.user.id, syntheseId, {
+            requirementLevel: requirementLevel || 'intermediate',
+            customSettings: customSettings || null
+        });
         res.json({ session });
     } catch (error) {
         next(error);
@@ -108,17 +114,22 @@ router.post('/:syntheseId/compare', async (req, res, next) => {
             return res.status(404).json({ error: 'Synthese non trouvee' });
         }
 
-        // Get session for user recall
+        // Get session for user recall and requirement level
         const session = await revisionRepo.getSession(req.user.id, syntheseId);
         if (!session || !session.user_recall) {
             return res.status(400).json({ error: 'Aucun rappel a comparer' });
         }
 
-        // Run AI comparison
+        // Parse custom settings if present
+        const customSettings = revisionRepo.safeJsonParse(session.custom_settings);
+
+        // Run AI comparison with requirement level
         const result = await revisionCompareService.compareRecall(
             synthese.summary_content,
             session.user_recall,
-            synthese.specific_instructions || null
+            synthese.specific_instructions || null,
+            session.requirement_level || 'intermediate',
+            customSettings
         );
 
         // Save results to session

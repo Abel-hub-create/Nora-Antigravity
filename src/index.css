@@ -67,6 +67,34 @@
   body {
     @apply bg-background text-text-main font-sans antialiased;
   }
+
+  /* Theme transition - smooth fade between light and dark */
+  :root,
+  [data-theme="light"],
+  [data-theme="dark"] {
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Apply transition to all elements that use theme colors */
+  *,
+  *::before,
+  *::after {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Exclude elements that shouldn't transition (animations, inputs) */
+  input,
+  textarea,
+  button,
+  [class*="animate-"],
+  .no-theme-transition {
+    transition: none;
+  }
+
+  /* Re-enable specific transitions for buttons */
+  button {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, transform 0.15s ease;
+  }
 }
 
 /* Custom Scrollbar for webkit */
@@ -194,4 +222,43 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Custom Range Slider */
+.slider-primary {
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.slider-primary::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
+.slider-primary::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 10px var(--color-primary);
+}
+
+.slider-primary::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+/* Light theme slider track */
+:root .slider-primary,
+[data-theme="light"] .slider-primary {
+  background: rgba(0, 0, 0, 0.1);
 }

@@ -3,12 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { User, Mail, Lock, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../hooks/useAuth';
 import AuthInput from '../components/AuthInput';
-import api from '../../../lib/api';
+import AuthLanguageSelector from '../components/AuthLanguageSelector';
+import { resendVerification } from '../services/authService';
 
 const Register = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -21,8 +23,9 @@ const Register = () => {
   const [resendMessage, setResendMessage] = useState('');
   const [resendSuccess, setResendSuccess] = useState(false);
 
-  const { register, error: authError, clearError } = useAuth();
+  const { register, loginWithGoogle, error: authError, clearError } = useAuth();
   const navigate = useNavigate();
+  const [googleError, setGoogleError] = useState(null);
 
   // Check if error is about email already used
   const isEmailAlreadyUsed = authError?.toLowerCase().includes('email est déjà utilisé') ||
@@ -36,7 +39,7 @@ const Register = () => {
     setResendMessage('');
 
     try {
-      await api.post('/auth/resend-verification', { email: formData.email });
+      await resendVerification(formData.email, i18n.language);
       setResendMessage(t('auth.emailResent'));
       setResendSuccess(true);
     } catch (error) {
@@ -96,7 +99,8 @@ const Register = () => {
       await register({
         name: formData.name,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        language: i18n.language
       });
       // Redirect to verification pending page
       navigate('/verify-email-sent', { state: { email: formData.email } });
@@ -108,7 +112,8 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8 relative">
+      <AuthLanguageSelector />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -218,6 +223,42 @@ const Register = () => {
               {isSubmitting ? t('auth.creating') : t('auth.createAccount')}
             </motion.button>
           </form>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-3 bg-surface text-text-muted">{t('auth.orContinueWith')}</span>
+            </div>
+          </div>
+
+          {/* Google Login */}
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={async (credentialResponse) => {
+                setGoogleError(null);
+                try {
+                  await loginWithGoogle(credentialResponse.credential);
+                  navigate('/');
+                } catch (err) {
+                  setGoogleError(t('errors.googleLoginFailed'));
+                }
+              }}
+              onError={() => {
+                setGoogleError(t('errors.googleLoginFailed'));
+              }}
+              theme="outline"
+              size="large"
+              text="continue_with"
+              shape="pill"
+              locale={i18n.language}
+            />
+          </div>
+          {googleError && (
+            <p className="text-error text-sm text-center mt-3">{googleError}</p>
+          )}
 
           <p className="text-center text-text-muted text-sm mt-6">
             {t('auth.hasAccount')}{' '}

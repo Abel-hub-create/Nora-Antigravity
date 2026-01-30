@@ -43,7 +43,7 @@ router.get('/:id', async (req, res, next) => {
 // Create new synthese with flashcards and quiz
 router.post('/', validate(validators.createSyntheseSchema), async (req, res, next) => {
   try {
-    const { title, originalContent, summaryContent, sourceType, flashcards, quizQuestions, specificInstructions } = req.body;
+    const { title, originalContent, summaryContent, sourceType, subject, flashcards, quizQuestions, specificInstructions } = req.body;
 
     // Create synthese
     const synthese = await syntheseRepo.create({
@@ -52,6 +52,7 @@ router.post('/', validate(validators.createSyntheseSchema), async (req, res, nex
       originalContent,
       summaryContent,
       sourceType,
+      subject: subject || null,
       specificInstructions: specificInstructions || null
     });
 

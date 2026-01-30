@@ -2,19 +2,46 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Camera, ArrowRight, Upload, Loader2 } from 'lucide-react';
+import { Camera, ArrowRight, Upload, Loader2, Moon, Sun, Globe, Mic, CameraIcon, BookOpen } from 'lucide-react';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 
+// Liste des langues disponibles
+const languages = [
+    { code: 'fr', label: 'Français', flag: '🇫🇷' },
+    { code: 'en', label: 'English', flag: '🇬🇧' },
+    { code: 'es', label: 'Español', flag: '🇪🇸' },
+    { code: 'zh', label: '中文', flag: '🇨🇳' }
+];
+
+// Liste des matières
+const SUBJECTS = [
+    { id: 'mathematics', icon: '📐' },
+    { id: 'french', icon: '📚' },
+    { id: 'physics', icon: '⚡' },
+    { id: 'chemistry', icon: '🧪' },
+    { id: 'biology', icon: '🧬' },
+    { id: 'history', icon: '🏛️' },
+    { id: 'geography', icon: '🌍' },
+    { id: 'english', icon: '🇬🇧' },
+    { id: 'dutch', icon: '🇳🇱' }
+];
+
+const TOTAL_STEPS = 5;
+
 const OnboardingModal = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
-    const { user, completeOnboarding } = useAuth();
+    const { user, completeOnboarding, updatePreferences } = useAuth();
     const [step, setStep] = useState(1);
     const [name, setName] = useState('');
     const [avatar, setAvatar] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const fileInputRef = useRef(null);
+
+    // États pour les préférences
+    const [selectedTheme, setSelectedTheme] = useState(user?.theme || 'dark');
+    const [selectedLang, setSelectedLang] = useState(user?.language || i18n.language || 'fr');
 
     // Don't show if onboarding is already completed
     if (user?.onboarding_completed) {
@@ -60,6 +87,33 @@ const OnboardingModal = () => {
         setStep(3);
     };
 
+    // Changement de thème
+    const handleThemeChange = async (theme) => {
+        setSelectedTheme(theme);
+        // Appliquer le thème immédiatement
+        document.documentElement.setAttribute('data-theme', theme);
+    };
+
+    // Changement de langue
+    const handleLangChange = (langCode) => {
+        setSelectedLang(langCode);
+        i18n.changeLanguage(langCode);
+    };
+
+    const handleStep3Continue = async () => {
+        // Sauvegarder les préférences
+        try {
+            await updatePreferences({ theme: selectedTheme, language: selectedLang });
+        } catch (err) {
+            console.error('Error saving preferences:', err);
+        }
+        setStep(4);
+    };
+
+    const handleStep4Continue = () => {
+        setStep(5);
+    };
+
     const handleComplete = async () => {
         setIsLoading(true);
         try {
@@ -98,7 +152,7 @@ const OnboardingModal = () => {
             exit="hidden"
         >
             <motion.div
-                className="bg-surface rounded-2xl p-6 max-w-md w-full border border-white/10 shadow-2xl"
+                className="bg-surface rounded-2xl p-6 max-w-md w-full border border-white/10 shadow-2xl max-h-[90vh] overflow-y-auto"
                 variants={modalVariants}
                 initial="hidden"
                 animate="visible"
@@ -107,7 +161,7 @@ const OnboardingModal = () => {
             >
                 {/* Step indicators */}
                 <div className="flex justify-center gap-2 mb-6">
-                    {[1, 2, 3].map((s) => (
+                    {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((s) => (
                         <div
                             key={s}
                             className={`w-2 h-2 rounded-full transition-colors duration-300 ${
@@ -228,10 +282,140 @@ const OnboardingModal = () => {
                         </motion.div>
                     )}
 
-                    {/* Step 3: Complete */}
+                    {/* Step 3: Theme & Language */}
                     {step === 3 && (
                         <motion.div
                             key="step3"
+                            variants={stepVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            transition={{ duration: 0.2 }}
+                        >
+                            <h2 className="text-2xl font-bold text-text-main text-center mb-2">
+                                {t('onboarding.step3.title')}
+                            </h2>
+                            <p className="text-text-muted text-center mb-6">
+                                {t('onboarding.step3.subtitle')}
+                            </p>
+
+                            {/* Langue */}
+                            <div className="mb-6">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Globe size={18} className="text-text-muted" />
+                                    <span className="text-text-main text-sm font-medium">{t('settings.language')}</span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {languages.map((lang) => (
+                                        <button
+                                            key={lang.code}
+                                            onClick={() => handleLangChange(lang.code)}
+                                            className={`p-3 rounded-xl flex items-center justify-center gap-2 transition-colors ${
+                                                selectedLang === lang.code
+                                                    ? 'bg-primary text-white'
+                                                    : 'bg-white/5 text-text-muted hover:bg-white/10'
+                                            }`}
+                                        >
+                                            <span className="text-lg">{lang.flag}</span>
+                                            <span className="font-medium text-sm">{lang.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Thème */}
+                            <div className="mb-6">
+                                <div className="flex items-center gap-2 mb-3">
+                                    {selectedTheme === 'dark' ? <Moon size={18} className="text-text-muted" /> : <Sun size={18} className="text-text-muted" />}
+                                    <span className="text-text-main text-sm font-medium">{t('settings.theme')}</span>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleThemeChange('dark')}
+                                        className={`flex-1 p-3 rounded-xl flex items-center justify-center gap-2 transition-colors ${
+                                            selectedTheme === 'dark'
+                                                ? 'bg-primary text-white'
+                                                : 'bg-white/5 text-text-muted hover:bg-white/10'
+                                        }`}
+                                    >
+                                        <Moon size={18} />
+                                        <span className="font-medium">{t('settings.darkTheme')}</span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleThemeChange('light')}
+                                        className={`flex-1 p-3 rounded-xl flex items-center justify-center gap-2 transition-colors ${
+                                            selectedTheme === 'light'
+                                                ? 'bg-primary text-white'
+                                                : 'bg-white/5 text-text-muted hover:bg-white/10'
+                                        }`}
+                                    >
+                                        <Sun size={18} />
+                                        <span className="font-medium">{t('settings.lightTheme')}</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={handleStep3Continue}
+                                className="w-full p-4 rounded-xl bg-primary text-white font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
+                            >
+                                {t('common.continue')}
+                                <ArrowRight size={18} />
+                            </button>
+                        </motion.div>
+                    )}
+
+                    {/* Step 4: Choose Subject Info */}
+                    {step === 4 && (
+                        <motion.div
+                            key="step4"
+                            variants={stepVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            transition={{ duration: 0.2 }}
+                        >
+                            <div className="flex justify-center mb-6">
+                                <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center">
+                                    <BookOpen size={40} className="text-primary" />
+                                </div>
+                            </div>
+                            <h2 className="text-2xl font-bold text-text-main text-center mb-4">
+                                {t('onboarding.step4.title')}
+                            </h2>
+                            <p className="text-text-muted text-center mb-6">
+                                {t('onboarding.step4.message')}
+                            </p>
+
+                            {/* Aperçu des matières */}
+                            <div className="grid grid-cols-3 gap-2 mb-6">
+                                {SUBJECTS.slice(0, 6).map((subject) => (
+                                    <div
+                                        key={subject.id}
+                                        className="bg-white/5 rounded-xl p-3 flex flex-col items-center gap-1"
+                                    >
+                                        <span className="text-2xl">{subject.icon}</span>
+                                        <span className="text-xs text-text-muted text-center truncate w-full">
+                                            {t(`subjects.${subject.id}`)}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <button
+                                onClick={handleStep4Continue}
+                                className="w-full p-4 rounded-xl bg-primary text-white font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
+                            >
+                                {t('onboarding.step4.button')}
+                                <ArrowRight size={18} />
+                            </button>
+                        </motion.div>
+                    )}
+
+                    {/* Step 5: Import Method Info */}
+                    {step === 5 && (
+                        <motion.div
+                            key="step5"
                             variants={stepVariants}
                             initial="hidden"
                             animate="visible"
@@ -244,11 +428,27 @@ const OnboardingModal = () => {
                                 </div>
                             </div>
                             <h2 className="text-2xl font-bold text-text-main text-center mb-4">
-                                {t('onboarding.step3.title')}
+                                {t('onboarding.step5.title')}
                             </h2>
-                            <p className="text-text-muted text-center mb-8">
-                                {t('onboarding.step3.message')}
+                            <p className="text-text-muted text-center mb-6">
+                                {t('onboarding.step5.message')}
                             </p>
+
+                            {/* Icônes des modes d'import */}
+                            <div className="flex justify-center gap-6 mb-8">
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
+                                        <Mic size={28} className="text-primary" />
+                                    </div>
+                                    <span className="text-xs text-text-muted">{t('import.voice')}</span>
+                                </div>
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
+                                        <CameraIcon size={28} className="text-primary" />
+                                    </div>
+                                    <span className="text-xs text-text-muted">{t('import.photo')}</span>
+                                </div>
+                            </div>
 
                             {error && (
                                 <p className="text-error text-sm text-center mb-4">{error}</p>
@@ -263,7 +463,7 @@ const OnboardingModal = () => {
                                     <Loader2 size={20} className="animate-spin" />
                                 ) : (
                                     <>
-                                        {t('onboarding.step3.button')}
+                                        {t('onboarding.step5.button')}
                                         <ArrowRight size={18} />
                                     </>
                                 )}

@@ -54,6 +54,21 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const loginWithGoogle = useCallback(async (credential) => {
+    try {
+      setError(null);
+      const userData = await authService.loginWithGoogle(credential);
+      setUser(userData);
+      // Apply user's saved preferences after login
+      applyUserPreferences(userData);
+      return userData;
+    } catch (err) {
+      const message = err.response?.data?.error || i18n.t('errors.googleLoginFailed');
+      setError(message);
+      throw new Error(message);
+    }
+  }, []);
+
   const register = useCallback(async (data) => {
     try {
       setError(null);
@@ -75,10 +90,10 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const forgotPassword = useCallback(async (email) => {
+  const forgotPassword = useCallback(async (email, language) => {
     try {
       setError(null);
-      return await authService.forgotPassword(email);
+      return await authService.forgotPassword(email, language);
     } catch (err) {
       const message = err.response?.data?.error || i18n.t('errors.requestFailed');
       setError(message);
@@ -175,6 +190,7 @@ export const AuthProvider = ({ children }) => {
     isLoading,
     error,
     login,
+    loginWithGoogle,
     register,
     logout,
     forgotPassword,
