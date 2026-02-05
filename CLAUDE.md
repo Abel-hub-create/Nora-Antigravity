@@ -1520,3 +1520,123 @@ All revision UI text is translated under `revision.*` namespace in both `fr.json
 - `014_create_revision_sessions.sql` - Creates revision_sessions and revision_completions tables
 - `015_add_specific_instructions.sql` - Adds specific_instructions column to syntheses
 - `017_add_phase_started_at.sql` - Adds phase_started_at timestamp for real-time timer calculation
+
+## DEV/PROD Environment Separation
+
+The project runs two completely isolated environments to safely develop and test without affecting production users.
+
+### Environment Overview
+
+| Aspect | PRODUCTION | DEVELOPMENT |
+|--------|------------|-------------|
+| **URL** | https://mirora.cloud | https://dev.mirora.cloud |
+| **Backend Port** | 5000 | 5001 |
+| **PM2 Process** | `nora-api-prod` | `nora-api-dev` |
+| **Frontend Build** | `/dist` | `/dist-dev` |
+| **DB Tables** | `users`, `syntheses`, ... | `dev_users`, `dev_syntheses`, ... |
+| **Access** | Public | HTTP Basic Auth (abel / nora-dev-2024) |
+| **Watch Mode** | Disabled | Enabled (auto-reload) |
+
+### Architecture
+
+**Database Isolation via Table Prefix**:
+- Both environments share the same MySQL database (`s184197_mirora`)
+- DEV tables are prefixed with `dev_` (e.g., `dev_users`, `dev_syntheses`)
+- The prefix is applied automatically at the query layer (`/backend/src/config/database.js`)
+- No code changes needed in repositories - prefix injection is transparent
+
+**Environment Files**:
+```
+/var/www/mirora.cloud/
+├── .env.production          # Frontend PROD config
+├── .env.development         # Frontend DEV config
+├── backend/
+│   ├── .env.production      # Backend PROD config (PORT=5000, DB_TABLE_PREFIX=)
+│   ├── .env.development     # Backend DEV config (PORT=5001, DB_TABLE_PREFIX=dev_)
+│   ├── start-prod.js        # PROD startup (loads .env.production)
+│   └── start-dev.js         # DEV startup (loads .env.development)
+```
+
+### Key Configuration Files
+
+| File | Purpose |
+|------|---------|
+| `/backend/src/config/database.js` | Table prefix injection via `DB_TABLE_PREFIX` env var |
+| `/backend/ecosystem.config.cjs` | PM2 config with `nora-api-prod` and `nora-api-dev` processes |
+| `/backend/.env.production` | PROD backend config (port 5000, no prefix) |
+| `/backend/.env.development` | DEV backend config (port 5001, `dev_` prefix) |
+| `/.env.production` | Frontend PROD config (`VITE_API_URL=https://mirora.cloud/api`) |
+| `/.env.development` | Frontend DEV config (`VITE_API_URL=https://dev.mirora.cloud/api`) |
+| `/nginx/dev.mirora.cloud.conf` | Nginx config for DEV site |
+
+### Commands
+
+**Deployment**:
+```bash
+# Deploy to PRODUCTION
+./deploy-prod.sh
+
+# Deploy to DEVELOPMENT
+./deploy-dev.sh
+```
+
+**PM2 Process Management**:
+```bash
+# View status
+pm2 list
+
+# View logs
+pm2 logs nora-api-prod --lines 50
+pm2 logs nora-api-dev --lines 50
+
+# Restart
+pm2 reload nora-api-prod
+pm2 reload nora-api-dev
+
+# Start specific process
+pm2 start ecosystem.config.cjs --only nora-api-prod
+pm2 start ecosystem.config.cjs --only nora-api-dev
+```
+
+**Build Frontend**:
+```bash
+# Build for PRODUCTION (→ /dist)
+npm run build:prod
+
+# Build for DEVELOPMENT (→ /dist-dev)
+npm run build:dev
+```
+
+**Database Setup** (run once):
+```bash
+# Create DEV tables with dev_ prefix
+cd backend && node scripts/create-dev-tables.js
+```
+
+### Nginx Setup (requires sudo)
+
+```bash
+# Run the setup script as root
+sudo ./setup-dev-nginx.sh
+
+# Then add DNS record in Cloudflare:
+# Type: A (or CNAME to mirora.cloud)
+# Name: dev
+# Content: [server IP]
+# Proxy status: Proxied
+```
+
+### Workflow
+
+1. **Develop**: Make changes in the codebase
+2. **Deploy to DEV**: `./deploy-dev.sh` - builds frontend to `/dist-dev`, restarts DEV backend
+3. **Test on DEV**: Visit https://dev.mirora.cloud (auth: abel / nora-dev-2024)
+4. **When ready**: `./deploy-prod.sh` - builds frontend to `/dist`, restarts PROD backend
+5. **Verify PROD**: Visit https://mirora.cloud
+
+### Data Isolation
+
+- DEV and PROD data are completely separate (different tables)
+- DEV users, syntheses, etc. are stored in `dev_*` tables
+- PROD users, syntheses, etc. are stored in regular tables (no prefix)
+- No risk of DEV bugs affecting PROD data
