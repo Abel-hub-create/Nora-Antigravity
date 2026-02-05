@@ -131,7 +131,7 @@ const DailyProgress = () => {
                                     </div>
 
                                     {/* Mini progress bar for each goal */}
-                                    <div className="h-2 w-full bg-background/50 rounded-full overflow-hidden">
+                                    <div className="h-2 w-full bg-background/50 rounded-full overflow-hidden border border-white/10">
                                         <motion.div
                                             initial={{ width: 0 }}
                                             animate={{ width: `${goalProgress}%` }}

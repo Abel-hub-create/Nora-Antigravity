@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, Camera, ArrowRight, X, ChevronRight, BookOpen, AlertTriangle } from 'lucide-react';
+import { ArrowRight, X, ChevronRight, AlertTriangle, Camera, Image } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import VoiceRecorder from '../components/Import/VoiceRecorder';
 import PhotoCapture from '../components/Import/PhotoCapture';
+import VoiceDictation from '../components/Import/VoiceDictation';
 
 const DEFINITIONS_WARNING_KEY = 'nora_hide_definitions_warning';
 
@@ -23,13 +23,11 @@ const SUBJECTS = [
 
 const Import = () => {
     const { t } = useTranslation();
-    const [mode, setMode] = useState('voice'); // 'voice' or 'photo'
     const [showPhotoCapture, setShowPhotoCapture] = useState(false);
     const navigate = useNavigate();
 
     // État pour la sélection de matière
     const [selectedSubject, setSelectedSubject] = useState(null);
-    const [showSubjectSelection, setShowSubjectSelection] = useState(true);
 
     // État pour l'écran intermédiaire (instructions spécifiques)
     const [capturedContent, setCapturedContent] = useState(null);
@@ -50,33 +48,22 @@ const Import = () => {
         setHideWarningPermanently(hidden);
     }, []);
 
-    // Sélectionner une matière et passer à l'import
+    // Sélectionner une matière → ouvrir directement la caméra
     const handleSelectSubject = (subjectId) => {
         setSelectedSubject(subjectId);
-        setShowSubjectSelection(false);
+        setShowPhotoCapture(true);
     };
 
-    // Retour à la sélection de matière
-    const handleBackToSubjects = () => {
-        setShowSubjectSelection(true);
+    // Fermeture de la caméra → retour à la sélection de matière
+    const handlePhotoCaptureClose = () => {
+        setShowPhotoCapture(false);
         setSelectedSubject(null);
-    };
-
-    // Gestion de la complétion vocale
-    const handleVoiceComplete = (transcript) => {
-        if (transcript.trim()) {
-            // Stocker le contenu et afficher l'écran intermédiaire
-            setCapturedContent(transcript);
-            setCapturedSourceType('voice');
-            setShowSpecificPrompt(true);
-        }
     };
 
     // Gestion de la complétion photo (OCR)
     const handlePhotoComplete = (extractedText) => {
         setShowPhotoCapture(false);
         if (extractedText.trim()) {
-            // Stocker le contenu et afficher l'écran intermédiaire
             setCapturedContent(extractedText);
             setCapturedSourceType('photo');
             setShowSpecificPrompt(true);
@@ -85,7 +72,6 @@ const Import = () => {
 
     // Continuer vers la génération
     const handleContinueToProcess = () => {
-        // Construire les instructions structurées
         let instructions = null;
         if (wantsSpecific) {
             const parts = [];
@@ -110,7 +96,7 @@ const Import = () => {
         });
     };
 
-    // Annuler et revenir
+    // Annuler les instructions spécifiques → retour à la sélection de matière
     const handleCancelSpecific = () => {
         setShowSpecificPrompt(false);
         setCapturedContent(null);
@@ -118,16 +104,12 @@ const Import = () => {
         setWantsSpecific(null);
         setDefinitionsToInclude('');
         setExamObjectives('');
+        setSelectedSubject(null);
     };
 
-    // Ouvrir le mode photo
-    const handlePhotoMode = () => {
-        setShowPhotoCapture(true);
-    };
-
-    // Écran de sélection de matière
-    if (showSubjectSelection) {
-        return (
+    return (
+        <>
+            {/* Écran de sélection de matière */}
             <div className="h-full flex flex-col p-6 pt-8">
                 <header className="mb-6">
                     <h1 className="text-2xl font-bold text-text-main">{t('import.title')}</h1>
@@ -143,95 +125,31 @@ const Import = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.05 }}
                                 onClick={() => handleSelectSubject(subject.id)}
-                                className="bg-surface border border-white/5 rounded-2xl p-4 flex items-center gap-3 hover:bg-surface/80 active:scale-95 transition-all text-left"
+                                className="bg-surface border border-white/5 rounded-2xl p-4 flex items-center gap-3 hover:bg-surface/80 active:scale-95 transition-all text-left overflow-hidden"
                             >
-                                <span className="text-2xl">{subject.icon}</span>
-                                <span className="font-medium text-text-main flex-1">
+                                <span className="text-2xl shrink-0">{subject.icon}</span>
+                                <span className="font-medium text-text-main flex-1 truncate text-sm">
                                     {t(`subjects.${subject.id}`)}
                                 </span>
-                                <ChevronRight size={18} className="text-text-muted" />
+                                <Camera size={16} className="text-text-muted shrink-0" />
                             </motion.button>
                         ))}
                     </div>
-                </div>
-            </div>
-        );
-    }
 
-    return (
-        <>
-            <div className="h-full flex flex-col p-6 pt-8">
-                <header className="mb-6">
-                    {/* Bouton retour + Matière sélectionnée */}
-                    <button
-                        onClick={handleBackToSubjects}
-                        className="flex items-center gap-2 text-text-muted hover:text-text-main transition-colors mb-3"
-                    >
-                        <X size={18} />
-                        <span className="text-sm">{t('import.changeSubject')}</span>
-                    </button>
-
-                    <h1 className="text-2xl font-bold text-text-main">{t('import.title')}</h1>
-                    <div className="flex items-center gap-2 mt-1">
-                        <span className="text-lg">
-                            {SUBJECTS.find(s => s.id === selectedSubject)?.icon}
-                        </span>
-                        <span className="text-primary font-medium">
-                            {t(`subjects.${selectedSubject}`)}
-                        </span>
-                    </div>
-                </header>
-
-                {/* Mode Switcher - 2 options */}
-                <div className="flex p-1 bg-surface rounded-xl mb-6">
-                    <button
-                        onClick={() => setMode('voice')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium transition-all ${
-                            mode === 'voice'
-                                ? 'bg-background text-primary shadow-sm'
-                                : 'text-text-muted hover:text-text-main'
-                        }`}
-                    >
-                        <Mic size={18} />
-                        {t('import.voice')}
-                    </button>
-                    <button
-                        onClick={handlePhotoMode}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium transition-all ${
-                            mode === 'photo'
-                                ? 'bg-background text-primary shadow-sm'
-                                : 'text-text-muted hover:text-text-main'
-                        }`}
-                    >
-                        <Camera size={18} />
-                        {t('import.photo')}
-                    </button>
-                </div>
-
-                {/* Content Area */}
-                <div className="flex-1 relative">
-                    <AnimatePresence mode="wait">
-                        {mode === 'voice' && (
-                            <motion.div
-                                key="voice"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="h-full"
-                            >
-                                <VoiceRecorder onComplete={handleVoiceComplete} />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                    {/* Indication subtile */}
+                    <p className="text-text-muted/60 text-xs text-center mt-4">
+                        {t('import.subjectHint')}
+                    </p>
                 </div>
             </div>
 
-            {/* Photo Capture Modal */}
+            {/* Photo Capture Modal - s'ouvre directement après sélection matière */}
             <AnimatePresence>
                 {showPhotoCapture && (
                     <PhotoCapture
                         onComplete={handlePhotoComplete}
-                        onClose={() => setShowPhotoCapture(false)}
+                        onClose={handlePhotoCaptureClose}
+                        subjectLabel={selectedSubject ? `${SUBJECTS.find(s => s.id === selectedSubject)?.icon} ${t(`subjects.${selectedSubject}`)}` : null}
                     />
                 )}
             </AnimatePresence>
@@ -243,7 +161,7 @@ const Import = () => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-background z-50 flex flex-col"
+                        className="fixed inset-0 bg-background z-[60] flex flex-col"
                     >
                         {/* Header */}
                         <div className="p-4 flex items-center justify-between border-b border-white/10">
@@ -260,97 +178,114 @@ const Import = () => {
                         </div>
 
                         {/* Content */}
-                        <div className="flex-1 p-4 pb-6 flex flex-col overflow-auto">
-                            <p className="text-text-main text-center mb-6 shrink-0">
-                                {t('import.specificPrompt.question')}
-                            </p>
+                        <div className="flex-1 flex flex-col overflow-hidden">
+                            <div className="flex-1 p-4 overflow-auto">
+                                <p className="text-text-main text-center mb-6">
+                                    {t('import.specificPrompt.question')}
+                                </p>
 
-                            {/* Boutons Oui/Non */}
-                            {wantsSpecific === null && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="flex gap-4 justify-center"
-                                >
-                                    <button
-                                        onClick={() => {
-                                            setWantsSpecific(false);
-                                            // Si l'avertissement est masqué, continuer directement
-                                            if (hideWarningPermanently) {
-                                                navigate('/process', {
-                                                    state: {
-                                                        content: capturedContent,
-                                                        sourceType: capturedSourceType,
-                                                        subject: selectedSubject,
-                                                        specificInstructions: null
-                                                    }
-                                                });
-                                            } else {
-                                                // Sinon, afficher l'avertissement
-                                                setShowDefinitionsWarning(true);
-                                            }
-                                        }}
-                                        className="px-8 py-3 bg-surface text-text-main rounded-xl font-medium hover:bg-surface/80 transition-colors"
+                                {/* Boutons Oui/Non */}
+                                {wantsSpecific === null && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="flex gap-4 justify-center"
                                     >
-                                        {t('import.specificPrompt.no')}
-                                    </button>
-                                    <button
-                                        onClick={() => setWantsSpecific(true)}
-                                        className="px-8 py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark transition-colors"
-                                    >
-                                        {t('import.specificPrompt.yes')}
-                                    </button>
-                                </motion.div>
-                            )}
+                                        <button
+                                            onClick={() => {
+                                                setWantsSpecific(false);
+                                                // Si l'avertissement est masqué, continuer directement
+                                                if (hideWarningPermanently) {
+                                                    navigate('/process', {
+                                                        state: {
+                                                            content: capturedContent,
+                                                            sourceType: capturedSourceType,
+                                                            subject: selectedSubject,
+                                                            specificInstructions: null
+                                                        }
+                                                    });
+                                                } else {
+                                                    // Sinon, afficher l'avertissement
+                                                    setShowDefinitionsWarning(true);
+                                                }
+                                            }}
+                                            className="px-8 py-3 bg-surface text-text-main rounded-xl font-medium hover:bg-surface/80 transition-colors"
+                                        >
+                                            {t('import.specificPrompt.no')}
+                                        </button>
+                                        <button
+                                            onClick={() => setWantsSpecific(true)}
+                                            className="px-8 py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark transition-colors"
+                                        >
+                                            {t('import.specificPrompt.yes')}
+                                        </button>
+                                    </motion.div>
+                                )}
 
-                            {/* Deux sections si Oui */}
+                                {/* Deux sections si Oui */}
+                                {wantsSpecific === true && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="flex flex-col gap-4"
+                                    >
+                                        {/* Section Définitions */}
+                                        <div>
+                                            <div className="flex items-center justify-between mb-1">
+                                                <label className="text-text-main font-medium text-sm">
+                                                    {t('import.specificPrompt.definitionsLabel')}
+                                                </label>
+                                                <VoiceDictation
+                                                    onTranscript={(text) => setDefinitionsToInclude(prev => prev + (prev ? ' ' : '') + text)}
+                                                />
+                                            </div>
+                                            <p className="text-text-muted text-xs mb-2">
+                                                {t('import.specificPrompt.definitionsHint')}
+                                            </p>
+                                            <textarea
+                                                value={definitionsToInclude}
+                                                onChange={(e) => setDefinitionsToInclude(e.target.value)}
+                                                placeholder={t('import.specificPrompt.definitionsPlaceholder')}
+                                                className="w-full h-20 md:h-40 bg-surface text-text-main rounded-xl p-3 resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder:text-text-muted/50 text-sm"
+                                                autoFocus
+                                            />
+                                        </div>
+
+                                        {/* Section Objectifs */}
+                                        <div>
+                                            <div className="flex items-center justify-between mb-1">
+                                                <label className="text-text-main font-medium text-sm">
+                                                    {t('import.specificPrompt.objectivesLabel')}
+                                                </label>
+                                                <VoiceDictation
+                                                    onTranscript={(text) => setExamObjectives(prev => prev + (prev ? ' ' : '') + text)}
+                                                />
+                                            </div>
+                                            <p className="text-text-muted text-xs mb-2">
+                                                {t('import.specificPrompt.objectivesHint')}
+                                            </p>
+                                            <textarea
+                                                value={examObjectives}
+                                                onChange={(e) => setExamObjectives(e.target.value)}
+                                                placeholder={t('import.specificPrompt.objectivesPlaceholder')}
+                                                className="w-full h-20 md:h-40 bg-surface text-text-main rounded-xl p-3 resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder:text-text-muted/50 text-sm"
+                                            />
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </div>
+
+                            {/* Bouton Continuer - toujours visible en bas */}
                             {wantsSpecific === true && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="flex flex-col gap-4 flex-1"
-                                >
-                                    {/* Section Définitions */}
-                                    <div className="shrink-0">
-                                        <label className="text-text-main font-medium text-sm mb-1 block">
-                                            {t('import.specificPrompt.definitionsLabel')}
-                                        </label>
-                                        <p className="text-text-muted text-xs mb-2">
-                                            {t('import.specificPrompt.definitionsHint')}
-                                        </p>
-                                        <textarea
-                                            value={definitionsToInclude}
-                                            onChange={(e) => setDefinitionsToInclude(e.target.value)}
-                                            placeholder={t('import.specificPrompt.definitionsPlaceholder')}
-                                            className="w-full h-24 bg-surface text-text-main rounded-xl p-3 resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder:text-text-muted/50 text-sm"
-                                            autoFocus
-                                        />
-                                    </div>
-
-                                    {/* Section Objectifs */}
-                                    <div className="shrink-0">
-                                        <label className="text-text-main font-medium text-sm mb-1 block">
-                                            {t('import.specificPrompt.objectivesLabel')}
-                                        </label>
-                                        <p className="text-text-muted text-xs mb-2">
-                                            {t('import.specificPrompt.objectivesHint')}
-                                        </p>
-                                        <textarea
-                                            value={examObjectives}
-                                            onChange={(e) => setExamObjectives(e.target.value)}
-                                            placeholder={t('import.specificPrompt.objectivesPlaceholder')}
-                                            className="w-full h-24 bg-surface text-text-main rounded-xl p-3 resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder:text-text-muted/50 text-sm"
-                                        />
-                                    </div>
-
+                                <div className="p-4 border-t border-white/10 bg-background">
                                     <button
                                         onClick={handleContinueToProcess}
-                                        className="w-full py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shrink-0 mt-auto"
+                                        className="w-full py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
                                     >
                                         {t('import.specificPrompt.continue')}
                                         <ArrowRight size={20} />
                                     </button>
-                                </motion.div>
+                                </div>
                             )}
                         </div>
                     </motion.div>

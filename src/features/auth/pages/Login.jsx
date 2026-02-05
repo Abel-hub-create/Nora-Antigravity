@@ -22,12 +22,12 @@ const Login = () => {
   const [resendMessage, setResendMessage] = useState('');
   const [resendSuccess, setResendSuccess] = useState(false);
 
-  const { login, loginWithGoogle, error: authError, clearError } = useAuth();
+  const { login, loginWithGoogle, error: authError, errorCode, clearError } = useAuth();
   const [googleError, setGoogleError] = useState(null);
   const navigate = useNavigate();
 
   // Check if error is about email not verified
-  const isEmailNotVerified = authError?.toLowerCase().includes('verifie ton email') || authError?.toLowerCase().includes('verify your email');
+  const isEmailNotVerified = errorCode === 'EMAIL_NOT_VERIFIED';
 
   const handleResendVerification = async () => {
     if (!formData.email || isResending) return;

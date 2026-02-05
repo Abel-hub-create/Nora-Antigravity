@@ -1,15 +1,44 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Gift, Lock } from 'lucide-react';
+import { ArrowLeft, Gift, Lock, Construction } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import EggAnimation from '../components/Collection/EggAnimation';
 import { useUser } from '../context/UserContext';
+import { useAuth } from '../features/auth/hooks/useAuth';
 import { CREATURES, getRandomCreature, RARITIES } from '../data/creatures';
 
 const Collection = () => {
     const { t } = useTranslation();
     const { user, useEgg, unlockCreature } = useUser();
+    const { user: authUser } = useAuth();
+
+    // Vérifier si l'utilisateur a accès à la collection
+    const hasAccess = authUser?.email === 'imakuniiiiiiiiiii@gmail.com';
+
+    // Si pas accès, afficher message "en développement"
+    if (!hasAccess) {
+        return (
+            <div className="min-h-full bg-background p-6 pb-24">
+                <header className="flex items-center gap-4 mb-8">
+                    <Link to="/profile" className="p-2 -ml-2 text-text-muted hover:text-text-main transition-colors">
+                        <ArrowLeft size={24} />
+                    </Link>
+                    <h1 className="text-2xl font-bold text-text-main">{t('collection.title')}</h1>
+                </header>
+
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="w-20 h-20 bg-surface rounded-full flex items-center justify-center mb-6">
+                        <Construction size={40} className="text-primary" />
+                    </div>
+                    <h2 className="text-xl font-bold text-text-main mb-2">{t('collection.inDevelopment')}</h2>
+                    <p className="text-text-muted text-sm max-w-xs">
+                        {t('collection.inDevelopmentHint')}
+                    </p>
+                </div>
+            </div>
+        );
+    }
     const [showEgg, setShowEgg] = useState(false);
     const [reward, setReward] = useState(null);
 

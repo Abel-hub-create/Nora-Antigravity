@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import DailyProgress from '../components/Home/DailyProgress';
 import QuickActionCard from '../components/Home/QuickActionCard';
-import { Plus, BookOpen, Sparkles } from 'lucide-react';
+import { Plus, BookOpen, Sparkles, MessageSquare } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 
 const Home = () => {
@@ -43,7 +43,13 @@ const Home = () => {
                     subtitle={t('home.textOrVoice')}
                     icon={Plus}
                     to="/import"
-                    color="bg-gradient-to-br from-primary/20 to-primary/5 hover:from-primary/30 hover:to-primary/10"
+                />
+
+                <QuickActionCard
+                    title={t('home.feedback')}
+                    subtitle={t('home.feedbackSubtitle')}
+                    icon={MessageSquare}
+                    to="/feedback"
                 />
             </div>
         </div>

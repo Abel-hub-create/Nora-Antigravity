@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PenLine, Mic, X, Send } from 'lucide-react';
+import { PenLine, Mic, X, Send, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import VoiceRecorder from '../Import/VoiceRecorder';
 
-const RevisionRecallPhase = ({ iteration, onSubmit, onStop }) => {
+const RevisionRecallPhase = ({ iteration, onSubmit, onStop, error, onClearError }) => {
     const { t } = useTranslation();
     const [userText, setUserText] = useState('');
     const [showVoice, setShowVoice] = useState(false);
@@ -48,6 +48,23 @@ const RevisionRecallPhase = ({ iteration, onSubmit, onStop }) => {
                 </button>
             </header>
 
+            {/* Error Message */}
+            {error && (
+                <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-error/10 border border-error/30 rounded-xl p-3 mb-4"
+                >
+                    <div className="flex items-start gap-3">
+                        <AlertCircle size={20} className="text-error shrink-0 mt-0.5" />
+                        <div>
+                            <p className="text-sm text-error font-medium">{error}</p>
+                            <p className="text-xs text-text-muted mt-1">{t('revision.compare.retryHint')}</p>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+
             {/* Instructions */}
             <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -64,7 +81,11 @@ const RevisionRecallPhase = ({ iteration, onSubmit, onStop }) => {
             <div className="flex-1 flex flex-col">
                 <textarea
                     value={userText}
-                    onChange={(e) => setUserText(e.target.value)}
+                    onChange={(e) => {
+                        setUserText(e.target.value);
+                        // Effacer l'erreur quand l'utilisateur modifie le texte
+                        if (error && onClearError) onClearError();
+                    }}
                     placeholder={t('revision.phases.recallPlaceholder')}
                     className="flex-1 w-full bg-surface border border-white/10 rounded-2xl p-4 text-text-main placeholder:text-text-muted resize-none focus:outline-none focus:border-primary/50 transition-colors"
                     style={{ minHeight: '200px' }}

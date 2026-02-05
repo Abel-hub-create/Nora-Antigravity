@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Camera, ArrowRight, Upload, Loader2, Moon, Sun, Globe, Mic, CameraIcon, BookOpen } from 'lucide-react';
+import { Camera, ArrowRight, Upload, Loader2, Moon, Sun, Globe, CameraIcon, BookOpen } from 'lucide-react';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 
 // Liste des langues disponibles
@@ -48,6 +48,27 @@ const OnboardingModal = () => {
         return null;
     }
 
+    // Step 1: Language & Theme
+    const handleThemeChange = (theme) => {
+        setSelectedTheme(theme);
+        document.documentElement.setAttribute('data-theme', theme);
+    };
+
+    const handleLangChange = (langCode) => {
+        setSelectedLang(langCode);
+        i18n.changeLanguage(langCode);
+    };
+
+    const handleStep1Continue = async () => {
+        try {
+            await updatePreferences({ theme: selectedTheme, language: selectedLang });
+        } catch (err) {
+            console.error('Error saving preferences:', err);
+        }
+        setStep(2);
+    };
+
+    // Step 2: Name
     const handleNameSubmit = (e) => {
         e.preventDefault();
         if (name.trim().length < 2) {
@@ -55,26 +76,24 @@ const OnboardingModal = () => {
             return;
         }
         setError('');
-        setStep(2);
+        setStep(3);
     };
 
+    // Step 3: Photo
     const handlePhotoSelect = (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Validate file type
         if (!file.type.startsWith('image/')) {
             setError(t('settings.profileModal.selectImage'));
             return;
         }
 
-        // Validate file size (max 2MB)
         if (file.size > 2 * 1024 * 1024) {
             setError(t('settings.profileModal.imageTooLarge'));
             return;
         }
 
-        // Convert to base64
         const reader = new FileReader();
         reader.onload = (event) => {
             setAvatar(event.target.result);
@@ -83,37 +102,16 @@ const OnboardingModal = () => {
         reader.readAsDataURL(file);
     };
 
-    const handleStep2Continue = () => {
-        setStep(3);
-    };
-
-    // Changement de thème
-    const handleThemeChange = async (theme) => {
-        setSelectedTheme(theme);
-        // Appliquer le thème immédiatement
-        document.documentElement.setAttribute('data-theme', theme);
-    };
-
-    // Changement de langue
-    const handleLangChange = (langCode) => {
-        setSelectedLang(langCode);
-        i18n.changeLanguage(langCode);
-    };
-
-    const handleStep3Continue = async () => {
-        // Sauvegarder les préférences
-        try {
-            await updatePreferences({ theme: selectedTheme, language: selectedLang });
-        } catch (err) {
-            console.error('Error saving preferences:', err);
-        }
+    const handleStep3Continue = () => {
         setStep(4);
     };
 
+    // Step 4: Subject
     const handleStep4Continue = () => {
         setStep(5);
     };
 
+    // Step 5: Complete
     const handleComplete = async () => {
         setIsLoading(true);
         try {
@@ -172,120 +170,10 @@ const OnboardingModal = () => {
                 </div>
 
                 <AnimatePresence mode="wait">
-                    {/* Step 1: Name */}
+                    {/* Step 1: Language & Theme (was step 3) */}
                     {step === 1 && (
                         <motion.div
                             key="step1"
-                            variants={stepVariants}
-                            initial="hidden"
-                            animate="visible"
-                            exit="exit"
-                            transition={{ duration: 0.2 }}
-                        >
-                            <h2 className="text-2xl font-bold text-text-main text-center mb-8">
-                                {t('onboarding.step1.title')}
-                            </h2>
-                            <form onSubmit={handleNameSubmit}>
-                                <input
-                                    type="text"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    placeholder={t('onboarding.step1.placeholder')}
-                                    className="w-full px-4 py-4 rounded-xl bg-black/30 border border-white/10 text-text-main placeholder-text-muted focus:outline-none focus:border-primary transition-colors text-lg text-center"
-                                    maxLength={50}
-                                    autoFocus
-                                />
-                                {error && (
-                                    <p className="text-error text-sm text-center mt-2">{error}</p>
-                                )}
-                                <button
-                                    type="submit"
-                                    className="w-full mt-6 p-4 rounded-xl bg-primary text-white font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
-                                >
-                                    {t('onboarding.step1.button')}
-                                    <ArrowRight size={18} />
-                                </button>
-                            </form>
-                        </motion.div>
-                    )}
-
-                    {/* Step 2: Profile Photo */}
-                    {step === 2 && (
-                        <motion.div
-                            key="step2"
-                            variants={stepVariants}
-                            initial="hidden"
-                            animate="visible"
-                            exit="exit"
-                            transition={{ duration: 0.2 }}
-                        >
-                            <h2 className="text-2xl font-bold text-text-main text-center mb-2">
-                                {t('onboarding.step2.title')}
-                            </h2>
-                            <p className="text-text-muted text-center mb-8">
-                                {t('onboarding.step2.subtitle')}
-                            </p>
-
-                            {/* Avatar preview */}
-                            <div className="flex justify-center mb-6">
-                                <div className="relative">
-                                    <div className="w-28 h-28 rounded-full bg-gradient-to-br from-primary to-secondary p-[3px]">
-                                        <div className="w-full h-full rounded-full bg-surface flex items-center justify-center overflow-hidden">
-                                            {avatar ? (
-                                                <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
-                                            ) : (
-                                                <span className="text-4xl font-bold text-text-main">
-                                                    {name?.charAt(0)?.toUpperCase() || 'U'}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Upload button */}
-                            <button
-                                onClick={() => fileInputRef.current?.click()}
-                                className="w-full p-4 rounded-xl bg-black/30 border border-white/10 text-text-main hover:border-primary/50 transition-colors flex items-center justify-center gap-3"
-                            >
-                                {avatar ? <Camera size={20} /> : <Upload size={20} />}
-                                {avatar ? t('onboarding.step2.changeButton') : t('onboarding.step2.uploadButton')}
-                            </button>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*"
-                                onChange={handlePhotoSelect}
-                                className="hidden"
-                            />
-
-                            {error && (
-                                <p className="text-error text-sm text-center mt-2">{error}</p>
-                            )}
-
-                            {/* Actions */}
-                            <div className="flex gap-3 mt-6">
-                                <button
-                                    onClick={handleStep2Continue}
-                                    className="flex-1 p-4 rounded-xl bg-white/5 text-text-muted hover:bg-white/10 transition-colors"
-                                >
-                                    {t('onboarding.step2.skipButton')}
-                                </button>
-                                <button
-                                    onClick={handleStep2Continue}
-                                    className="flex-1 p-4 rounded-xl bg-primary text-white font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
-                                >
-                                    {t('onboarding.step2.continueButton')}
-                                    <ArrowRight size={18} />
-                                </button>
-                            </div>
-                        </motion.div>
-                    )}
-
-                    {/* Step 3: Theme & Language */}
-                    {step === 3 && (
-                        <motion.div
-                            key="step3"
                             variants={stepVariants}
                             initial="hidden"
                             animate="visible"
@@ -356,12 +244,122 @@ const OnboardingModal = () => {
                             </div>
 
                             <button
-                                onClick={handleStep3Continue}
+                                onClick={handleStep1Continue}
                                 className="w-full p-4 rounded-xl bg-primary text-white font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
                             >
                                 {t('common.continue')}
                                 <ArrowRight size={18} />
                             </button>
+                        </motion.div>
+                    )}
+
+                    {/* Step 2: Name (was step 1) */}
+                    {step === 2 && (
+                        <motion.div
+                            key="step2"
+                            variants={stepVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            transition={{ duration: 0.2 }}
+                        >
+                            <h2 className="text-2xl font-bold text-text-main text-center mb-8">
+                                {t('onboarding.step1.title')}
+                            </h2>
+                            <form onSubmit={handleNameSubmit}>
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    placeholder={t('onboarding.step1.placeholder')}
+                                    className="w-full px-4 py-4 rounded-xl bg-black/30 border border-white/10 text-text-main placeholder-text-muted focus:outline-none focus:border-primary transition-colors text-lg text-center"
+                                    maxLength={50}
+                                    autoFocus
+                                />
+                                {error && (
+                                    <p className="text-error text-sm text-center mt-2">{error}</p>
+                                )}
+                                <button
+                                    type="submit"
+                                    className="w-full mt-6 p-4 rounded-xl bg-primary text-white font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
+                                >
+                                    {t('onboarding.step1.button')}
+                                    <ArrowRight size={18} />
+                                </button>
+                            </form>
+                        </motion.div>
+                    )}
+
+                    {/* Step 3: Profile Photo (was step 2) */}
+                    {step === 3 && (
+                        <motion.div
+                            key="step3"
+                            variants={stepVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            transition={{ duration: 0.2 }}
+                        >
+                            <h2 className="text-2xl font-bold text-text-main text-center mb-2">
+                                {t('onboarding.step2.title')}
+                            </h2>
+                            <p className="text-text-muted text-center mb-8">
+                                {t('onboarding.step2.subtitle')}
+                            </p>
+
+                            {/* Avatar preview */}
+                            <div className="flex justify-center mb-6">
+                                <div className="relative">
+                                    <div className="w-28 h-28 rounded-full bg-gradient-to-br from-primary to-secondary p-[3px]">
+                                        <div className="w-full h-full rounded-full bg-surface flex items-center justify-center overflow-hidden">
+                                            {avatar ? (
+                                                <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="text-4xl font-bold text-text-main">
+                                                    {name?.charAt(0)?.toUpperCase() || 'U'}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Upload button */}
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                className="w-full p-4 rounded-xl bg-black/30 border border-white/10 text-text-main hover:border-primary/50 transition-colors flex items-center justify-center gap-3"
+                            >
+                                {avatar ? <Camera size={20} /> : <Upload size={20} />}
+                                {avatar ? t('onboarding.step2.changeButton') : t('onboarding.step2.uploadButton')}
+                            </button>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={handlePhotoSelect}
+                                className="hidden"
+                            />
+
+                            {error && (
+                                <p className="text-error text-sm text-center mt-2">{error}</p>
+                            )}
+
+                            {/* Actions */}
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    onClick={handleStep3Continue}
+                                    className="flex-1 p-4 rounded-xl bg-white/5 text-text-muted hover:bg-white/10 transition-colors"
+                                >
+                                    {t('onboarding.step2.skipButton')}
+                                </button>
+                                <button
+                                    onClick={handleStep3Continue}
+                                    className="flex-1 p-4 rounded-xl bg-primary text-white font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
+                                >
+                                    {t('onboarding.step2.continueButton')}
+                                    <ArrowRight size={18} />
+                                </button>
+                            </div>
                         </motion.div>
                     )}
 
@@ -434,14 +432,8 @@ const OnboardingModal = () => {
                                 {t('onboarding.step5.message')}
                             </p>
 
-                            {/* Icônes des modes d'import */}
+                            {/* Icône du mode d'import */}
                             <div className="flex justify-center gap-6 mb-8">
-                                <div className="flex flex-col items-center gap-2">
-                                    <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
-                                        <Mic size={28} className="text-primary" />
-                                    </div>
-                                    <span className="text-xs text-text-muted">{t('import.voice')}</span>
-                                </div>
                                 <div className="flex flex-col items-center gap-2">
                                     <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
                                         <CameraIcon size={28} className="text-primary" />

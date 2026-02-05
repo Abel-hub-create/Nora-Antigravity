@@ -120,20 +120,15 @@ RESPONSE: The extracted text OR "NO_TEXT"`
  * @returns {Promise<string>} - Texte combiné
  */
 export async function extractTextFromImages(base64Images) {
-  const results = [];
-
-  for (const image of base64Images) {
-    try {
-      const text = await extractTextFromImage(image);
-      if (text && text !== 'Aucun texte détecté') {
-        results.push(text);
-      }
-    } catch (error) {
+  const promises = base64Images.map(image =>
+    extractTextFromImage(image).catch(error => {
       console.error('[OpenAI] Erreur OCR pour une image:', error);
-    }
-  }
+      return '';
+    })
+  );
 
-  return results.join('\n\n');
+  const results = await Promise.all(promises);
+  return results.filter(text => text && text !== 'Aucun texte détecté').join('\n\n');
 }
 
 export default {

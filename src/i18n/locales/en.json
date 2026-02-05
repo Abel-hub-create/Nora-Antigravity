@@ -32,7 +32,7 @@
   },
   "nav": {
     "home": "Home",
-    "study": "Study",
+    "study": "Summaries",
     "collection": "Collection",
     "import": "Import",
     "profile": "Profile",
@@ -49,11 +49,13 @@
     "tagline": "\"A price made for students, not for big budgets.\"",
     "quickActions": "Quick Actions",
     "viewSyntheses": "View my summaries",
-    "allStudies": "All my studies",
+    "allStudies": "All my summaries",
     "viewCollection": "View collection",
     "myCreatures": "My creatures",
     "newImport": "New Import",
-    "textOrVoice": "Text or Voice"
+    "textOrVoice": "Take a photo",
+    "feedback": "Feedback & Ideas",
+    "feedbackSubtitle": "Share your thoughts"
   },
   "dailyProgress": {
     "title": "Daily Goals",
@@ -160,7 +162,8 @@
     "clearSelection": "Clear selection",
     "confirmDeleteTitle": "Confirm deletion",
     "confirmDeleteAll": "You are about to delete {{count}} summary(ies). This action cannot be undone.",
-    "confirmDeleteSelected": "You are about to delete {{count}} selected summary(ies). This action cannot be undone."
+    "confirmDeleteSelected": "You are about to delete {{count}} selected summary(ies). This action cannot be undone.",
+    "maxSyntheses": "max {{max}}"
   },
   "flashcards": {
     "title": "Flashcards",
@@ -290,6 +293,7 @@
       "important": "Important",
       "score": "Score: {{score}}%",
       "error": "Analysis error. Please try again.",
+      "retryHint": "Click \"I'm done\" to try again.",
       "analyzing": "Comparing with original...",
       "partialFeedback": "Keep going, you're progressing. Review the items in red.",
       "encouragement": "You're doing well. Focus on the missing points."
@@ -330,6 +334,8 @@
     "text": "Text",
     "voice": "Voice",
     "photo": "Photo",
+    "photoDescription": "Take a photo of your course to summarize it",
+    "subjectHint": "Choose your course subject then take a photo to import it",
     "textPlaceholder": "Paste or type your course here...",
     "simplify": "Simplify",
     "minChars": "Minimum 50 characters",
@@ -386,6 +392,8 @@
     "aiAnalyzing": "AI is analyzing your photos...",
     "tapCheckToExtract": "Tap ✓ to extract text",
     "takePhotosOfCourse": "Take photos of your course",
+    "maxPhotosReached": "Photo limit reached",
+    "maxPhotosInfo": "{{count}} photos maximum",
     "error": "Error"
   },
   "process": {
@@ -442,7 +450,7 @@
     "xp": "XP",
     "streak": "Streak",
     "days": "days",
-    "avgPerDay": "Average per day",
+    "masteredCount": "Mastered",
     "synthesesCount": "Summaries",
     "folders": "My Folders",
     "createFolder": "Create",
@@ -490,7 +498,9 @@
     "secretDiscovered": "Secret Discovered",
     "mysteryMessage": "Well done, you've unlocked the mystery...",
     "incredible": "Incredible!",
-    "awesome": "Awesome!"
+    "awesome": "Awesome!",
+    "inDevelopment": "Under Development",
+    "inDevelopmentHint": "This feature is coming soon. Stay tuned!"
   },
   "rarities": {
     "rare": "Rare",
@@ -538,6 +548,7 @@
   "studyDetail": {
     "loadError": "Unable to load this summary",
     "summary": "Summary",
+    "print": "Print",
     "deleteConfirm": "Delete this summary and all its content?",
     "deleteSynthesis": "Delete this summary"
   },
@@ -566,7 +577,10 @@
     "nameRequired": "Name is required",
     "namePlaceholder": "Your name",
     "loginError": "Login failed",
+    "invalidCredentials": "Incorrect email or password.",
     "registerError": "Registration failed",
+    "emailAlreadyUsed": "This email is already in use.",
+    "emailAlreadyUsedVerified": "This email is already in use. Try logging in.",
     "verifyEmail": "Verify your email",
     "verifyEmailText": "A verification link has been sent to your email address. Click on it to activate your account.",
     "linkExpiry": "This link expires in 1 hour.",
@@ -634,9 +648,27 @@
     },
     "step5": {
       "title": "How do you want to import?",
-      "message": "You can dictate your course with voice or take photos of your notes.",
+      "message": "Take photos of your notes to import them.",
       "button": "Let's go!"
     }
+  },
+  "feedback": {
+    "title": "Feedback & Ideas",
+    "reviews": "Reviews",
+    "suggestions": "Suggestions",
+    "remaining": "{{count}} remaining today",
+    "reviewPlaceholder": "Share your thoughts on Nora...",
+    "suggestionPlaceholder": "Suggest a new feature...",
+    "submitReview": "Submit review",
+    "submitSuggestion": "Submit suggestion",
+    "noReviews": "No reviews yet",
+    "noSuggestions": "No suggestions yet",
+    "dailyLimitReached": "Daily limit reached. Come back tomorrow!",
+    "errorSubmitting": "Error submitting",
+    "justNow": "Just now",
+    "minutesAgo": "{{count}} min ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago"
   },
   "errors": {
     "generic": "An error occurred",
@@ -654,6 +686,7 @@
     "deleteAccountFailed": "Failed to delete account",
     "noTextDetectedPhoto": "No text detected. Take a photo of your course so I can summarize it.",
     "noTextDetectedVoice": "No text detected. Dictate your course so I can summarize it.",
-    "googleLoginFailed": "Google login failed"
+    "googleLoginFailed": "Google login failed",
+    "synthesesLimitReached": "You've reached the limit of 40 summaries. Delete some to create new ones."
   }
 }

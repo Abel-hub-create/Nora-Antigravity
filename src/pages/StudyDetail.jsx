@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, Layers, Brain, Calendar, Trash2, Loader2, AlertCircle, BookOpen, ChevronLeft, ChevronRight, Lock } from 'lucide-react';
+import { ArrowLeft, Layers, Brain, Calendar, Trash2, Loader2, AlertCircle, BookOpen, ChevronLeft, ChevronRight, Lock, Printer } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +21,7 @@ const SUBJECT_ICONS = {
 };
 
 // Nombre de caractères par page pour la pagination
-const CHARS_PER_PAGE = 2500;
+const CHARS_PER_PAGE = 2000;
 
 const StudyDetail = () => {
     const { t, i18n } = useTranslation();
@@ -104,6 +104,73 @@ const StudyDetail = () => {
         };
         const locale = localeMap[i18n.language] || 'en-US';
         return date.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
+    };
+
+    const handlePrint = () => {
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) return;
+
+        const subjectLabel = synthese.subject ? t(`subjects.${synthese.subject}`) : '';
+        const subjectIcon = synthese.subject ? (SUBJECT_ICONS[synthese.subject] || '📝') : '';
+
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>${synthese.title}</title>
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body {
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        padding: 40px;
+                        line-height: 1.6;
+                        color: #1a1a1a;
+                    }
+                    .header {
+                        border-bottom: 2px solid #e5e5e5;
+                        padding-bottom: 20px;
+                        margin-bottom: 30px;
+                    }
+                    .title {
+                        font-size: 24px;
+                        font-weight: bold;
+                        margin-bottom: 10px;
+                    }
+                    .meta {
+                        display: flex;
+                        gap: 20px;
+                        color: #666;
+                        font-size: 14px;
+                    }
+                    .subject {
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                    }
+                    .content {
+                        white-space: pre-wrap;
+                        font-size: 14px;
+                    }
+                    @media print {
+                        body { padding: 20px; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1 class="title">${synthese.title}</h1>
+                    <div class="meta">
+                        ${subjectLabel ? `<span class="subject">${subjectIcon} ${subjectLabel}</span>` : ''}
+                        <span>${formatDate(synthese.created_at)}</span>
+                    </div>
+                </div>
+                <div class="content">${synthese.summary_content}</div>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
     };
 
     if (isLoading) {
@@ -243,11 +310,20 @@ const StudyDetail = () => {
             >
                 <div className="flex items-center justify-between mb-3">
                     <h2 className="font-semibold text-text-main">{t('studyDetail.summary')}</h2>
-                    {hasMultiplePages && (
-                        <span className="text-xs text-text-muted">
-                            {currentPage + 1} / {totalPages}
-                        </span>
-                    )}
+                    <div className="flex items-center gap-3">
+                        {hasMultiplePages && (
+                            <span className="text-xs text-text-muted">
+                                {currentPage + 1} / {totalPages}
+                            </span>
+                        )}
+                        <button
+                            onClick={handlePrint}
+                            className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                            title={t('studyDetail.print')}
+                        >
+                            <Printer size={18} />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="relative overflow-visible">

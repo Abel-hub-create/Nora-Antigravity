@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, Folder, Clock, Star, ChevronRight, Plus, Loader2 } from 'lucide-react';
+import { Settings, Folder, Award, Star, ChevronRight, Plus, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import * as folderService from '../services/folderService';
@@ -14,7 +14,7 @@ const Profile = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { user: authUser } = useAuth();
-    const { user: userData, getAverageDailyStudyTime } = useUser();
+    const { user: userData } = useUser();
 
     // Combiner les données auth (nom, avatar) et user context (level, xp)
     const user = {
@@ -26,17 +26,15 @@ const Profile = () => {
         eggs: userData?.eggs || 0
     };
 
-    // Get average daily study time
-    const averageMinutes = getAverageDailyStudyTime();
-
     // Folders state
     const [folders, setFolders] = useState([]);
     const [isLoadingFolders, setIsLoadingFolders] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
 
-    // Syntheses count
+    // Syntheses count and mastered count
     const [synthesesCount, setSynthesesCount] = useState(0);
+    const [masteredCount, setMasteredCount] = useState(0);
 
     // Fetch folders and syntheses count on mount
     useEffect(() => {
@@ -48,7 +46,11 @@ const Profile = () => {
                     syntheseService.getAllSyntheses()
                 ]);
                 setFolders(foldersData);
-                setSynthesesCount(synthesesData.syntheses?.length || 0);
+                const syntheses = synthesesData.syntheses || [];
+                setSynthesesCount(syntheses.length);
+                // Compter les synthèses maîtrisées (mastery_score === 100)
+                const mastered = syntheses.filter(s => s.mastery_score === 100).length;
+                setMasteredCount(mastered);
             } catch (error) {
                 console.error('Error fetching data:', error);
             } finally {
@@ -133,13 +135,13 @@ const Profile = () => {
             <div className="grid grid-cols-2 gap-4 mb-8">
                 <div className="bg-surface/50 p-4 rounded-2xl border border-white/5 flex flex-col items-center justify-center">
                     <span className="text-2xl font-bold text-text-main mb-1">
-                        <Clock size={20} className="inline mr-1" />
-                        {averageMinutes} {t('common.min')}
+                        <Award size={20} className="inline mr-1 text-green-500" />
+                        {masteredCount}/{synthesesCount}
                     </span>
-                    <span className="text-xs text-text-muted">{t('profile.avgPerDay')}</span>
+                    <span className="text-xs text-text-muted">{t('profile.masteredCount')}</span>
                 </div>
                 <div className="bg-surface/50 p-4 rounded-2xl border border-white/5 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-text-main mb-1">📚 {synthesesCount}</span>
+                    <span className="text-2xl font-bold text-text-main mb-1">📚 {synthesesCount}/40</span>
                     <span className="text-xs text-text-muted">{t('profile.synthesesCount')}</span>
                 </div>
             </div>

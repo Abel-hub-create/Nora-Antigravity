@@ -32,7 +32,7 @@
   },
   "nav": {
     "home": "首页",
-    "study": "学习",
+    "study": "综合笔记",
     "collection": "收藏",
     "import": "导入",
     "profile": "个人",
@@ -49,11 +49,13 @@
     "tagline": "\"为学生设计的价格，而非高预算。\"",
     "quickActions": "快捷操作",
     "viewSyntheses": "查看我的摘要",
-    "allStudies": "所有学习内容",
+    "allStudies": "所有综合笔记",
     "viewCollection": "查看收藏",
     "myCreatures": "我的生物",
     "newImport": "新建导入",
-    "textOrVoice": "文字或语音"
+    "textOrVoice": "拍照",
+    "feedback": "反馈与建议",
+    "feedbackSubtitle": "分享您的想法"
   },
   "dailyProgress": {
     "title": "今日目标",
@@ -160,7 +162,8 @@
     "clearSelection": "取消选择",
     "confirmDeleteTitle": "确认删除",
     "confirmDeleteAll": "您将删除{{count}}个摘要。此操作不可撤销。",
-    "confirmDeleteSelected": "您将删除{{count}}个已选摘要。此操作不可撤销。"
+    "confirmDeleteSelected": "您将删除{{count}}个已选摘要。此操作不可撤销。",
+    "maxSyntheses": "最多{{max}}个"
   },
   "flashcards": {
     "title": "闪卡",
@@ -212,6 +215,35 @@
     "subtitle": "最有效的记忆方法",
     "description": "比简单重读更有效。这种主动回忆技术能将信息固定在长期记忆中。",
     "inDevelopment": "功能开发中",
+    "requirementLevel": {
+      "title": "要求等级",
+      "subtitle": "选择复习所需的精确度等级",
+      "startButton": "开始复习",
+      "customSettings": "调整标准",
+      "levels": {
+        "beginner": {
+          "name": "初级",
+          "description": "首次复习，整体理解。定义准确率70%，接受大致概念，数据允许误差。"
+        },
+        "intermediate": {
+          "name": "中级",
+          "description": "标准复习（推荐）。定义准确率85%，正确的改述可接受，数据准确率95%。"
+        },
+        "expert": {
+          "name": "高级",
+          "description": "考试备考。定义接近完美（95%），需要完整解释，数据零误差。"
+        },
+        "custom": {
+          "name": "自定义",
+          "description": "使用下方滑块单独调整每个标准。"
+        }
+      },
+      "criteria": {
+        "definitions": "定义",
+        "concepts": "概念",
+        "data": "数字数据"
+      }
+    },
     "loadError": "加载时出错",
     "expired": "会话已过期",
     "expiredMessage": "您离开太久了。会话在15分钟无活动后过期。",
@@ -226,20 +258,28 @@
     "phases": {
       "study": "第一阶段：复习",
       "studyMessage": "重读摘要，复习闪卡，完成测验。",
+      "studyLoop": "复习遗漏概念",
+      "studyLoopMessage": "仔细阅读遗漏的内容，持续2分钟。",
       "pause": "休息2分钟",
       "pauseMessage": "放松一下。2分钟后回来。",
       "pauseHint": "不要关闭此页面",
+      "pauseWarning": "重要：不要关闭页面，会话正在进行中",
       "recall": "主动回忆",
       "recallMessage": "写下你记住的所有内容。不要看摘要！",
       "recallPlaceholder": "写下你记住的内容...",
       "recallVoice": "语音输入",
       "recallSubmit": "完成",
       "recallMinChars": "还需{{remaining}}个字符",
+      "compare": "对比",
+      "compareLoading": "分析中...",
       "loop": "查漏补缺",
       "loopMessage": "这些是你尚未掌握的内容。请复习。",
       "loopReviewRed": "绿色=已掌握。红色=需复习。专注于红色部分。",
+      "loopContinue": "已复习完，开始回忆",
       "analyzing": "分析中...",
       "loopIteration": "第{{current}}/{{max}}次尝试",
+      "loopHint": "还剩{{remaining}}次尝试",
+      "loopStudyTime": "5分钟复习",
       "complete": "恭喜！",
       "completeMessage": "你已掌握此摘要！",
       "completeButton": "完成"
@@ -250,8 +290,13 @@
       "understood": "已理解",
       "missing": "待复习",
       "retained": "已记住",
+      "important": "重要",
       "score": "得分：{{score}}%",
-      "error": "分析出错。请重试。"
+      "error": "分析出错。请重试。",
+      "retryHint": "点击\"完成\"重试。",
+      "analyzing": "正在与原文比较...",
+      "partialFeedback": "继续加油，你在进步。复习红色部分。",
+      "encouragement": "做得不错。专注于遗漏的要点。"
     },
     "tabs": {
       "summary": "摘要",
@@ -289,6 +334,8 @@
     "text": "文字",
     "voice": "语音",
     "photo": "照片",
+    "photoDescription": "拍摄课程照片以生成摘要",
+    "subjectHint": "选择课程科目，然后拍照导入",
     "textPlaceholder": "在此粘贴或输入您的课程...",
     "simplify": "简化",
     "minChars": "最少50个字符",
@@ -345,6 +392,8 @@
     "aiAnalyzing": "AI正在分析您的照片...",
     "tapCheckToExtract": "点击✓提取文字",
     "takePhotosOfCourse": "拍摄您的课程笔记",
+    "maxPhotosReached": "已达到照片上限",
+    "maxPhotosInfo": "最多{{count}}张照片",
     "error": "错误"
   },
   "process": {
@@ -401,7 +450,7 @@
     "xp": "经验值",
     "streak": "连续",
     "days": "天",
-    "avgPerDay": "日均",
+    "masteredCount": "已掌握",
     "synthesesCount": "摘要数",
     "folders": "我的文件夹",
     "createFolder": "创建",
@@ -449,7 +498,9 @@
     "secretDiscovered": "发现秘密",
     "mysteryMessage": "做得好，你解开了谜团...",
     "incredible": "太棒了！",
-    "awesome": "真厉害！"
+    "awesome": "真厉害！",
+    "inDevelopment": "开发中",
+    "inDevelopmentHint": "此功能即将推出，敬请期待！"
   },
   "rarities": {
     "rare": "稀有",
@@ -471,6 +522,7 @@
   "studyDetail": {
     "loadError": "无法加载此摘要",
     "summary": "摘要",
+    "print": "打印",
     "deleteConfirm": "删除此摘要及其所有内容？",
     "deleteSynthesis": "删除此摘要"
   },
@@ -491,7 +543,7 @@
     "loginButton": "登录",
     "emailRequired": "邮箱为必填项",
     "emailInvalid": "邮箱格式无效",
-    "emailPlaceholder": "your@email.com",
+    "emailPlaceholder": "你的@邮箱.com",
     "passwordPlaceholder": "••••••••",
     "passwordRequired": "密码为必填项",
     "passwordMin": "最少6个字符",
@@ -499,7 +551,10 @@
     "nameRequired": "姓名为必填项",
     "namePlaceholder": "您的姓名",
     "loginError": "登录失败",
+    "invalidCredentials": "邮箱或密码不正确。",
     "registerError": "注册失败",
+    "emailAlreadyUsed": "该邮箱已被使用。",
+    "emailAlreadyUsedVerified": "该邮箱已被使用。请尝试登录。",
     "verifyEmail": "验证您的邮箱",
     "verifyEmailText": "验证链接已发送至您的邮箱。点击激活账号。",
     "linkExpiry": "链接1小时后过期。",
@@ -567,9 +622,27 @@
     },
     "step5": {
       "title": "如何导入？",
-      "message": "你可以用语音口述课程，或拍摄笔记照片。",
+      "message": "拍摄笔记照片即可导入。",
       "button": "开始吧！"
     }
+  },
+  "feedback": {
+    "title": "反馈与建议",
+    "reviews": "评价",
+    "suggestions": "建议",
+    "remaining": "今日剩余 {{count}} 条",
+    "reviewPlaceholder": "分享您对 Nora 的看法...",
+    "suggestionPlaceholder": "建议新功能...",
+    "submitReview": "发布评价",
+    "submitSuggestion": "提交建议",
+    "noReviews": "暂无评价",
+    "noSuggestions": "暂无建议",
+    "dailyLimitReached": "已达每日限制，明天再来吧！",
+    "errorSubmitting": "提交失败",
+    "justNow": "刚刚",
+    "minutesAgo": "{{count}}分钟前",
+    "hoursAgo": "{{count}}小时前",
+    "daysAgo": "{{count}}天前"
   },
   "errors": {
     "generic": "发生错误",
@@ -587,6 +660,7 @@
     "deleteAccountFailed": "删除账号失败",
     "noTextDetectedPhoto": "未检测到文字。请拍摄您的课程笔记。",
     "noTextDetectedVoice": "未检测到文字。请口述您的课程。",
-    "googleLoginFailed": "Google登录失败"
+    "googleLoginFailed": "Google登录失败",
+    "synthesesLimitReached": "您已达到40个摘要的上限。请删除一些以创建新的。"
   }
 }

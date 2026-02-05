@@ -167,7 +167,7 @@ const generateEmailTemplate = (content, footer) => `
  * @param {string} language - Langue (fr, en, es, zh)
  */
 export const sendPasswordResetEmail = async (email, token, language = 'fr') => {
-  const resetLink = `${FRONTEND_URL}/reset-password/${token}`;
+  const resetLink = `${FRONTEND_URL}/reset-password/${token}?lang=${language}`;
   const t = getTranslations(language).passwordReset;
   const footer = getTranslations(language).footer;
 
@@ -225,7 +225,7 @@ export const sendPasswordResetEmail = async (email, token, language = 'fr') => {
  * @param {string} language - Langue (fr, en, es, zh)
  */
 export const sendVerificationEmail = async (email, token, name, language = 'fr') => {
-  const verifyLink = `${FRONTEND_URL}/verify-email/${token}`;
+  const verifyLink = `${FRONTEND_URL}/verify-email/${token}?lang=${language}`;
   const firstName = escapeHtml(name ? name.split(' ')[0] : '');
   const t = getTranslations(language).verification;
   const footer = getTranslations(language).footer;

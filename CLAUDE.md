@@ -45,7 +45,7 @@ npm start          # Start Express server (production)
 
 ## Architecture
 
-**Nora** is a bilingual (French/English) gamified learning app built as a responsive React SPA (mobile-first design).
+**Nora** is a multilingual (French/English/Spanish/Chinese) gamified learning app built as a responsive React SPA (mobile-first design).
 
 ### Tech Stack
 - React 19 + Vite 7
@@ -125,12 +125,12 @@ The Profile page (`/profile`) displays two stats cards:
 
 | Stat | Source | Description |
 |------|--------|-------------|
-| Moyenne par jour | `getAverageDailyStudyTime()` | Average study time in minutes (today + last 30 days history) |
-| Synthèses | API `/syntheses` | Total count of user's syntheses |
+| Mastered/Total | `mastery_score === 100` count / total | Mastered count out of total syntheses |
+| Synthèses X/40 | API `/syntheses` | Total count of user's syntheses out of 40 max |
 
 ## Internationalization (i18n)
 
-The app is **fully bilingual** (French/English) using i18next. All UI text is translated.
+The app is **fully multilingual** (French/English/Spanish/Chinese) using i18next. All UI text is translated.
 
 ### Structure
 
@@ -138,10 +138,10 @@ The app is **fully bilingual** (French/English) using i18next. All UI text is tr
 src/i18n/
 ├── index.js              # i18next configuration
 └── locales/
-    ├── fr.json           # French translations (~400 keys)
-    ├── en.json           # English translations (~400 keys)
-    ├── es.json           # Spanish translations (~400 keys)
-    └── zh.json           # Chinese Mandarin translations (~400 keys)
+    ├── fr.json           # French translations (~592 keys)
+    ├── en.json           # English translations (~592 keys)
+    ├── es.json           # Spanish translations (~592 keys)
+    └── zh.json           # Chinese Mandarin translations (~592 keys)
 ```
 
 ### Usage
@@ -164,7 +164,7 @@ const MyComponent = () => {
 ### Language Selection
 
 - Located in Settings page (`/settings`) as the first section
-- Also available during onboarding (step 3)
+- Also available during onboarding (step 1)
 - Component: `/src/components/Settings/LanguageSelector.jsx`
 - Stored in database (`users.language`)
 - Detects browser language on first visit, defaults to French
@@ -513,9 +513,9 @@ Full-stack authentication with JWT tokens and secure cookie-based refresh tokens
 | `/login` | Login | Email/password login with "Se souvenir de moi" + resend verification button if email not verified |
 | `/register` | Register | User registration + resend verification button if email already used |
 | `/forgot-password` | ForgotPassword | Request password reset email |
-| `/reset-password/:token` | ResetPassword | Set new password with reset token |
+| `/reset-password/:token` | ResetPassword | Set new password with reset token. Reads `?lang=` param for language. |
 | `/verify-email-sent` | VerifyEmailSent | Shows after registration, prompts to check email (1h expiry) |
-| `/verify-email/:token` | VerifyEmail | Verifies email from link. Shows: "Compte active" (success), "Compte deja actif" (already verified), "Lien expire" (token expired), or error |
+| `/verify-email/:token` | VerifyEmail | Verifies email from link. Reads `?lang=` param for language. Shows: success, already verified, expired, or error |
 
 **Components**:
 - `ProtectedRoute` - HOC wrapping routes that require authentication
@@ -576,6 +576,27 @@ Login/register with Google account using OAuth 2.0.
 - Password hashing with bcrypt
 - Input validation with express-validator schemas
 
+**Error Code Pattern**:
+Backend returns error codes (not hardcoded messages) so the frontend can translate them via i18n:
+- `errorHandler.js` includes `code` field in error responses: `{ error: message, code: errorCode }`
+- Frontend checks `err.response?.data?.code` and uses `t('errors.xxx')` to display translated messages
+
+| Error Code | Context | Frontend Translation Key |
+|------------|---------|--------------------------|
+| `EMAIL_ALREADY_VERIFIED` | Register with existing verified email | `auth.emailAlreadyUsedVerified` |
+| `EMAIL_NOT_VERIFIED` | Register with existing unverified email / Login without verification | `auth.emailAlreadyUsed` / `auth.emailNotVerified` |
+| `INVALID_CREDENTIALS` | Wrong email/password on login | `auth.invalidCredentials` |
+| `SYNTHESES_LIMIT_REACHED` | Creating synthese when at 40 limit | `errors.synthesesLimitReached` |
+| `NO_TEXT_DETECTED_PHOTO` | OCR found no text in photos | `errors.noTextDetectedPhoto` |
+| `NO_TEXT_DETECTED_VOICE` | Whisper found no text in audio | `errors.noTextDetectedVoice` |
+
+**Limits**:
+
+| Resource | Max | Enforcement | User Info |
+|----------|-----|-------------|-----------|
+| Photos per import | 6 | Frontend (`MAX_PHOTOS` in PhotoCapture.jsx) | Info text + buttons disabled at limit |
+| Syntheses per user | 40 | Backend (`POST /api/syntheses` checks count) | Study tab shows "max 40", Profile shows "X/40" |
+
 **File Structure**:
 ```
 backend/
@@ -606,11 +627,11 @@ The onboarding is a 5-step modal that appears after first login:
 
 | Step | Content | Required |
 |------|---------|----------|
-| 1 | "Comment tu t'appelles ?" - Name input | Yes (min 2 chars) |
-| 2 | "Ajoute une photo de profil" - Avatar upload | No (skip available) |
-| 3 | "Personnalise ton expérience" - Language & Theme selection | No (defaults applied) |
+| 1 | "Personnalise ton expérience" - Language & Theme selection | No (defaults applied) |
+| 2 | "Comment tu t'appelles ?" - Name input | Yes (min 2 chars) |
+| 3 | "Ajoute une photo de profil" - Avatar upload | No (skip available) |
 | 4 | "Choisis ta matière" - Info about subject selection | Info only |
-| 5 | "Comment veux-tu importer ?" - Info about voice/photo modes | Button click → Import |
+| 5 | "Comment veux-tu importer ?" - Info about photo import | Button click → Import |
 
 ### Technical Implementation
 
@@ -891,9 +912,9 @@ After capturing content via voice or photo, users can optionally customize their
 
 **`/src/components/Import/PhotoCapture.jsx`**
 - Camera access via getUserMedia
-- Multi-photo capture from camera
-- Gallery import button (select multiple images from device)
-- Sends images to backend for GPT-4 Vision OCR
+- Multi-photo capture from camera (**max 6 photos** - buttons disabled at limit, info text shown)
+- Gallery import button (select multiple images from device, limited to remaining slots)
+- Sends images to backend for GPT-4 Vision OCR (parallel processing via `Promise.all()`)
 - Progress indicator during processing
 - Combined text extraction from multiple photos
 - **Layout**: Full-screen modal (`z-[60]` to overlay mobile nav), camera zone takes available space (`flex-1`), compact controls band at bottom
@@ -1036,8 +1057,8 @@ Centralized educational content generation with the Nora personality.
 
 ```javascript
 transcribeAudio(filePath)        // Whisper transcription
-extractTextFromImage(base64)     // GPT-4 Vision OCR
-extractTextFromImages(base64[])  // Multi-image OCR
+extractTextFromImage(base64)     // GPT-4 Vision OCR (single image)
+extractTextFromImages(base64[])  // Multi-image OCR (parallel via Promise.all())
 ```
 
 **`/backend/src/services/contentGenerationService.js`** - Content Generation
@@ -1277,9 +1298,11 @@ Both emails use dark-themed HTML templates matching the app design:
 
 ```javascript
 // emailService.js
-sendPasswordResetEmail(email, token)     // Send reset link
-sendVerificationEmail(email, token, name) // Send verification link
+sendPasswordResetEmail(email, token, language)     // Send reset link with ?lang= param
+sendVerificationEmail(email, token, name, language) // Send verification link with ?lang= param
 ```
+
+**Language in Email Links**: Email links include `?lang=${language}` query param so the unauthenticated verification/reset pages display in the user's selected language. The frontend pages (`VerifyEmail.jsx`, `ResetPassword.jsx`) read this param via `useSearchParams()` and call `i18n.changeLanguage()`.
 
 ### Auth Flow Integration
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Lock, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -7,8 +7,17 @@ import { useAuth } from '../hooks/useAuth';
 import AuthInput from '../components/AuthInput';
 
 const ResetPassword = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { token } = useParams();
+  const [searchParams] = useSearchParams();
+
+  // Apply language from URL query param (set when email was sent)
+  React.useEffect(() => {
+    const lang = searchParams.get('lang');
+    if (lang && ['fr', 'en', 'es', 'zh'].includes(lang)) {
+      i18n.changeLanguage(lang);
+    }
+  }, [searchParams, i18n]);
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({

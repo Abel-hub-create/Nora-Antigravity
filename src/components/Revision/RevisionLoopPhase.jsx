@@ -6,7 +6,7 @@ import useRevisionTimer from '../../hooks/useRevisionTimer';
 import useActiveTimer from '../../hooks/useActiveTimer';
 
 const LOOP_DURATION = 8; // 1 minute
-const CHARS_PER_PAGE = 2500; // Nombre de caractères par page pour la pagination
+const CHARS_PER_PAGE = 2000; // Nombre de caractères par page pour la pagination
 
 /**
  * RevisionLoopPhase - Phase 5
@@ -30,7 +30,9 @@ const RevisionLoopPhase = ({
     // Diviser la synthèse en pages
     const summaryPages = useMemo(() => {
         if (!originalSummary) return [];
-        if (originalSummary.length <= CHARS_PER_PAGE) return [originalSummary];
+        if (originalSummary.length <= CHARS_PER_PAGE) {
+            return [{ content: originalSummary, startIndex: 0, endIndex: originalSummary.length }];
+        }
 
         const pages = [];
         let start = 0;

@@ -32,7 +32,7 @@
   },
   "nav": {
     "home": "Inicio",
-    "study": "Estudio",
+    "study": "Síntesis",
     "collection": "Colección",
     "import": "Importar",
     "profile": "Perfil",
@@ -49,11 +49,13 @@
     "tagline": "\"Un precio pensado para quienes estudian, no para grandes presupuestos.\"",
     "quickActions": "Acciones Rápidas",
     "viewSyntheses": "Ver mis síntesis",
-    "allStudies": "Todos mis estudios",
+    "allStudies": "Todas mis síntesis",
     "viewCollection": "Ver colección",
     "myCreatures": "Mis criaturas",
     "newImport": "Nueva Importación",
-    "textOrVoice": "Texto o Voz"
+    "textOrVoice": "Tomar una foto",
+    "feedback": "Opiniones e Ideas",
+    "feedbackSubtitle": "Comparte tu opinión"
   },
   "dailyProgress": {
     "title": "Objetivos del Día",
@@ -160,7 +162,8 @@
     "clearSelection": "Deseleccionar",
     "confirmDeleteTitle": "Confirmar eliminación",
     "confirmDeleteAll": "Vas a eliminar {{count}} síntesis. Esta acción es irreversible.",
-    "confirmDeleteSelected": "Vas a eliminar {{count}} síntesis seleccionada(s). Esta acción es irreversible."
+    "confirmDeleteSelected": "Vas a eliminar {{count}} síntesis seleccionada(s). Esta acción es irreversible.",
+    "maxSyntheses": "máx {{max}}"
   },
   "flashcards": {
     "title": "Flashcards",
@@ -212,6 +215,35 @@
     "subtitle": "El método más efectivo para retener",
     "description": "Más efectivo que una simple relectura. Esta técnica de recuerdo activo fija la información en la memoria a largo plazo.",
     "inDevelopment": "Función en desarrollo",
+    "requirementLevel": {
+      "title": "Nivel de exigencia",
+      "subtitle": "Elige el nivel de precisión esperado para tu revisión",
+      "startButton": "Iniciar revisión",
+      "customSettings": "Ajustar criterios",
+      "levels": {
+        "beginner": {
+          "name": "Principiante",
+          "description": "Primera revisión, comprensión general. Definiciones al 70%, idea general aceptada, margen de error en datos."
+        },
+        "intermediate": {
+          "name": "Intermedio",
+          "description": "Revisión estándar (recomendado). Definiciones al 85%, reformulaciones aceptadas si correctas, datos al 95%."
+        },
+        "expert": {
+          "name": "Experto",
+          "description": "Preparación examen/concurso. Definiciones casi perfectas (95%), explicación completa requerida, sin errores en datos."
+        },
+        "custom": {
+          "name": "Personalizado",
+          "description": "Ajusta cada criterio individualmente con los deslizadores."
+        }
+      },
+      "criteria": {
+        "definitions": "Definiciones",
+        "concepts": "Conceptos",
+        "data": "Datos numéricos"
+      }
+    },
     "loadError": "Error al cargar",
     "expired": "Sesión expirada",
     "expiredMessage": "Estuviste ausente demasiado tiempo. La sesión expiró después de 15 minutos de inactividad.",
@@ -226,20 +258,28 @@
     "phases": {
       "study": "Fase 1: Revisión",
       "studyMessage": "Relee la síntesis, revisa las flashcards y haz el quiz.",
+      "studyLoop": "Revisar conceptos faltantes",
+      "studyLoopMessage": "Lee atentamente los elementos faltantes durante 2 minutos.",
       "pause": "Pausa de 2 minutos",
       "pauseMessage": "Relájate. Vuelve en 2 minutos.",
       "pauseHint": "No cierres esta página",
+      "pauseWarning": "Importante: no cierres la página, la sesión está en curso",
       "recall": "Recuerdo activo",
       "recallMessage": "Escribe todo lo que recuerdes de memoria. ¡No mires la síntesis!",
       "recallPlaceholder": "Escribe lo que recuerdas...",
       "recallVoice": "Dictar con voz",
       "recallSubmit": "Terminé",
       "recallMinChars": "Faltan {{remaining}} caracteres mínimo",
+      "compare": "Comparación",
+      "compareLoading": "Analizando...",
       "loop": "Revisión de lagunas",
       "loopMessage": "Aquí están los elementos que aún no dominas. Revísalos.",
       "loopReviewRed": "Verde = retenido. Rojo = por revisar. Concéntrate en las partes rojas.",
+      "loopContinue": "Ya revisé, iniciar recuerdo",
       "analyzing": "Analizando...",
       "loopIteration": "Intento {{current}}/{{max}}",
+      "loopHint": "Te quedan {{remaining}} intentos más",
+      "loopStudyTime": "5 minutos de revisión",
       "complete": "¡Felicidades!",
       "completeMessage": "¡Dominas esta síntesis!",
       "completeButton": "Terminar"
@@ -250,8 +290,13 @@
       "understood": "Comprendido",
       "missing": "Por revisar",
       "retained": "Retenido",
+      "important": "Importante",
       "score": "Puntuación: {{score}}%",
-      "error": "Error en el análisis. Intenta de nuevo."
+      "error": "Error en el análisis. Intenta de nuevo.",
+      "retryHint": "Haz clic en \"He terminado\" para intentar de nuevo.",
+      "analyzing": "Comparando con el original...",
+      "partialFeedback": "Sigue así, estás progresando. Revisa los elementos en rojo.",
+      "encouragement": "Vas bien. Concéntrate en los puntos faltantes."
     },
     "tabs": {
       "summary": "Síntesis",
@@ -289,6 +334,8 @@
     "text": "Texto",
     "voice": "Voz",
     "photo": "Foto",
+    "photoDescription": "Toma una foto de tu curso para resumirlo",
+    "subjectHint": "Elige la materia de tu curso y tómale una foto para importarlo",
     "textPlaceholder": "Pega o escribe tu curso aquí...",
     "simplify": "Simplificar",
     "minChars": "Mínimo 50 caracteres",
@@ -345,6 +392,8 @@
     "aiAnalyzing": "La IA está analizando tus fotos...",
     "tapCheckToExtract": "Toca ✓ para extraer texto",
     "takePhotosOfCourse": "Toma fotos de tu curso",
+    "maxPhotosReached": "Límite de fotos alcanzado",
+    "maxPhotosInfo": "{{count}} fotos máximo",
     "error": "Error"
   },
   "process": {
@@ -401,7 +450,7 @@
     "xp": "XP",
     "streak": "Racha",
     "days": "días",
-    "avgPerDay": "Promedio por día",
+    "masteredCount": "Dominadas",
     "synthesesCount": "Síntesis",
     "folders": "Mis Carpetas",
     "createFolder": "Crear",
@@ -449,7 +498,9 @@
     "secretDiscovered": "Secreto Descubierto",
     "mysteryMessage": "Bien hecho, has descubierto el misterio...",
     "incredible": "¡Increíble!",
-    "awesome": "¡Genial!"
+    "awesome": "¡Genial!",
+    "inDevelopment": "En desarrollo",
+    "inDevelopmentHint": "Esta función llegará pronto. ¡Mantente atento!"
   },
   "rarities": {
     "rare": "Raro",
@@ -471,6 +522,7 @@
   "studyDetail": {
     "loadError": "No se puede cargar esta síntesis",
     "summary": "Síntesis",
+    "print": "Imprimir",
     "deleteConfirm": "¿Eliminar esta síntesis y todo su contenido?",
     "deleteSynthesis": "Eliminar esta síntesis"
   },
@@ -499,7 +551,10 @@
     "nameRequired": "El nombre es requerido",
     "namePlaceholder": "Tu nombre",
     "loginError": "Error al iniciar sesión",
+    "invalidCredentials": "Email o contraseña incorrectos.",
     "registerError": "Error al registrarse",
+    "emailAlreadyUsed": "Este email ya está en uso.",
+    "emailAlreadyUsedVerified": "Este email ya está en uso. Intenta iniciar sesión.",
     "verifyEmail": "Verifica tu email",
     "verifyEmailText": "Se envió un enlace de verificación a tu email. Haz clic para activar tu cuenta.",
     "linkExpiry": "Este enlace expira en 1 hora.",
@@ -567,9 +622,27 @@
     },
     "step5": {
       "title": "¿Cómo quieres importar?",
-      "message": "Puedes dictar tu curso con voz o tomar fotos de tus apuntes.",
+      "message": "Toma fotos de tus apuntes para importarlos.",
       "button": "¡Empezar!"
     }
+  },
+  "feedback": {
+    "title": "Opiniones e Ideas",
+    "reviews": "Opiniones",
+    "suggestions": "Sugerencias",
+    "remaining": "{{count}} restantes hoy",
+    "reviewPlaceholder": "Comparte tu opinión sobre Nora...",
+    "suggestionPlaceholder": "Sugiere una nueva función...",
+    "submitReview": "Publicar opinión",
+    "submitSuggestion": "Proponer sugerencia",
+    "noReviews": "Sin opiniones por ahora",
+    "noSuggestions": "Sin sugerencias por ahora",
+    "dailyLimitReached": "Límite diario alcanzado. ¡Vuelve mañana!",
+    "errorSubmitting": "Error al enviar",
+    "justNow": "Ahora mismo",
+    "minutesAgo": "Hace {{count}} min",
+    "hoursAgo": "Hace {{count}}h",
+    "daysAgo": "Hace {{count}}d"
   },
   "errors": {
     "generic": "Ocurrió un error",
@@ -587,6 +660,7 @@
     "deleteAccountFailed": "Error al eliminar cuenta",
     "noTextDetectedPhoto": "No se detectó texto. Toma una foto de tu curso.",
     "noTextDetectedVoice": "No se detectó texto. Dicta tu curso.",
-    "googleLoginFailed": "Error al iniciar sesión con Google"
+    "googleLoginFailed": "Error al iniciar sesión con Google",
+    "synthesesLimitReached": "Has alcanzado el límite de 40 síntesis. Elimina algunas para crear nuevas."
   }
 }

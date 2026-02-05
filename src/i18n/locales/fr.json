@@ -32,7 +32,7 @@
   },
   "nav": {
     "home": "Accueil",
-    "study": "Étude",
+    "study": "Synthèses",
     "collection": "Collection",
     "import": "Importer",
     "profile": "Profil",
@@ -49,11 +49,13 @@
     "tagline": "\"Un prix pensé pour ceux qui étudient, pas pour les gros budgets.\"",
     "quickActions": "Actions Rapides",
     "viewSyntheses": "Voir mes synthèses",
-    "allStudies": "Toutes mes études",
+    "allStudies": "Toutes mes synthèses",
     "viewCollection": "Voir la collection",
     "myCreatures": "Mes créatures",
     "newImport": "Nouvel Import",
-    "textOrVoice": "Texte ou Vocal"
+    "textOrVoice": "Prendre en photo",
+    "feedback": "Bug & Suggestions",
+    "feedbackSubtitle": "Signale un bug"
   },
   "dailyProgress": {
     "title": "Objectifs du Jour",
@@ -160,7 +162,8 @@
     "clearSelection": "Désélectionner",
     "confirmDeleteTitle": "Confirmer la suppression",
     "confirmDeleteAll": "Tu vas supprimer {{count}} synthèse(s). Cette action est irréversible.",
-    "confirmDeleteSelected": "Tu vas supprimer {{count}} synthèse(s) sélectionnée(s). Cette action est irréversible."
+    "confirmDeleteSelected": "Tu vas supprimer {{count}} synthèse(s) sélectionnée(s). Cette action est irréversible.",
+    "maxSyntheses": "max {{max}}"
   },
   "flashcards": {
     "title": "Flashcards",
@@ -290,6 +293,7 @@
       "important": "Important",
       "score": "Score : {{score}}%",
       "error": "Erreur lors de l'analyse. Réessaie.",
+      "retryHint": "Clique sur \"J'ai terminé\" pour réessayer.",
       "analyzing": "Comparaison avec l'original...",
       "partialFeedback": "Continue, tu progresses. Revois les éléments en rouge.",
       "encouragement": "Tu avances bien. Concentre-toi sur les points manquants."
@@ -330,6 +334,8 @@
     "text": "Texte",
     "voice": "Vocal",
     "photo": "Photo",
+    "photoDescription": "Prends en photo ton cours pour le synthétiser",
+    "subjectHint": "Choisis la matière de ton cours puis prends-le en photo pour l'importer",
     "textPlaceholder": "Colle ou tape ton cours ici...",
     "simplify": "Simplifier",
     "minChars": "Minimum 50 caractères",
@@ -386,6 +392,8 @@
     "aiAnalyzing": "L'IA analyse vos photos...",
     "tapCheckToExtract": "Appuie sur ✓ pour extraire le texte",
     "takePhotosOfCourse": "Prends des photos de ton cours",
+    "maxPhotosReached": "Limite de photos atteinte",
+    "maxPhotosInfo": "{{count}} photos maximum",
     "error": "Erreur"
   },
   "process": {
@@ -442,7 +450,7 @@
     "xp": "XP",
     "streak": "Série",
     "days": "jours",
-    "avgPerDay": "Moyenne par jour",
+    "masteredCount": "Maîtrisées",
     "synthesesCount": "Synthèses",
     "folders": "Mes Dossiers",
     "createFolder": "Créer",
@@ -490,7 +498,9 @@
     "secretDiscovered": "Secret Découvert",
     "mysteryMessage": "Bien joué, tu as percé le mystère...",
     "incredible": "Incroyable !",
-    "awesome": "Génial !"
+    "awesome": "Génial !",
+    "inDevelopment": "En cours de développement",
+    "inDevelopmentHint": "Cette fonctionnalité arrive bientôt. Reste connecté !"
   },
   "rarities": {
     "rare": "Rare",
@@ -538,6 +548,7 @@
   "studyDetail": {
     "loadError": "Impossible de charger cette synthèse",
     "summary": "Synthèse",
+    "print": "Imprimer",
     "deleteConfirm": "Supprimer cette synthèse et tout son contenu ?",
     "deleteSynthesis": "Supprimer cette synthèse"
   },
@@ -566,7 +577,10 @@
     "nameRequired": "Le nom est requis",
     "namePlaceholder": "Ton nom",
     "loginError": "Échec de la connexion",
+    "invalidCredentials": "Email ou mot de passe incorrect.",
     "registerError": "Échec de l'inscription",
+    "emailAlreadyUsed": "Cet email est déjà utilisé.",
+    "emailAlreadyUsedVerified": "Cet email est déjà utilisé. Essaie de te connecter.",
     "verifyEmail": "Vérifie ton email",
     "verifyEmailText": "Un lien de vérification a été envoyé à ton adresse email. Clique dessus pour activer ton compte.",
     "linkExpiry": "Ce lien expire dans 1 heure.",
@@ -634,9 +648,27 @@
     },
     "step5": {
       "title": "Comment veux-tu importer ?",
-      "message": "Tu peux dicter ton cours à voix haute ou prendre des photos de tes notes.",
+      "message": "Prends des photos de tes notes pour les importer.",
       "button": "C'est parti !"
     }
+  },
+  "feedback": {
+    "title": "Bug & Suggestions",
+    "reviews": "Bug",
+    "suggestions": "Suggestions",
+    "remaining": "{{count}} restants aujourd'hui",
+    "reviewPlaceholder": "Si il y a un bug, signale le ici...",
+    "suggestionPlaceholder": "Propose une nouvelle fonctionnalité...",
+    "submitReview": "Publier mon avis",
+    "submitSuggestion": "Proposer ma suggestion",
+    "noReviews": "Aucun avis pour le moment",
+    "noSuggestions": "Aucune suggestion pour le moment",
+    "dailyLimitReached": "Limite quotidienne atteinte. Reviens demain !",
+    "errorSubmitting": "Erreur lors de l'envoi",
+    "justNow": "À l'instant",
+    "minutesAgo": "Il y a {{count}} min",
+    "hoursAgo": "Il y a {{count}}h",
+    "daysAgo": "Il y a {{count}}j"
   },
   "errors": {
     "generic": "Une erreur s'est produite",
@@ -654,6 +686,7 @@
     "deleteAccountFailed": "Échec de la suppression du compte",
     "noTextDetectedPhoto": "Aucun texte détecté. Prends en photo ton cours pour que je puisse le synthétiser.",
     "noTextDetectedVoice": "Aucun texte détecté. Dicte ton cours pour que je puisse le synthétiser.",
-    "googleLoginFailed": "La connexion Google a échoué"
+    "googleLoginFailed": "La connexion Google a échoué",
+    "synthesesLimitReached": "Tu as atteint la limite de 40 synthèses. Supprime-en pour en créer de nouvelles."
   }
 }

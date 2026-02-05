@@ -4,7 +4,9 @@ import { Camera, X, Check, Loader2, AlertCircle, Image, RotateCcw } from 'lucide
 import { useTranslation } from 'react-i18next';
 import api from '../../lib/api';
 
-const PhotoCapture = ({ onComplete, onClose }) => {
+const MAX_PHOTOS = 6;
+
+const PhotoCapture = ({ onComplete, onClose, subjectLabel }) => {
     const { t } = useTranslation();
     const [photos, setPhotos] = useState([]);
     const [isCapturing, setIsCapturing] = useState(false);
@@ -71,6 +73,7 @@ const PhotoCapture = ({ onComplete, onClose }) => {
     // Capturer une photo
     const capturePhoto = () => {
         if (!videoRef.current || !canvasRef.current) return;
+        if (photos.length >= MAX_PHOTOS) return;
 
         const video = videoRef.current;
         const canvas = canvasRef.current;
@@ -105,10 +108,10 @@ const PhotoCapture = ({ onComplete, onClose }) => {
 
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files || []);
+        const remaining = MAX_PHOTOS - photos.length;
+        const imageFiles = files.filter(f => f.type.startsWith('image/')).slice(0, remaining);
 
-        files.forEach(file => {
-            if (!file.type.startsWith('image/')) return;
-
+        imageFiles.forEach(file => {
             const reader = new FileReader();
             reader.onload = (event) => {
                 const dataUrl = event.target.result;
@@ -119,7 +122,10 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                     success: false,
                     error: null
                 };
-                setPhotos(prev => [...prev, newPhoto]);
+                setPhotos(prev => {
+                    if (prev.length >= MAX_PHOTOS) return prev;
+                    return [...prev, newPhoto];
+                });
             };
             reader.readAsDataURL(file);
         });
@@ -212,13 +218,18 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                 >
                     <X size={24} className="text-white" />
                 </button>
-                <h2 className="text-white font-medium">
-                    {photos.length > 0
-                        ? (photos.length > 1
-                            ? t('photo.photoCountPlural', { count: photos.length })
-                            : t('photo.photoCount', { count: photos.length }))
-                        : t('photo.takePhoto')}
-                </h2>
+                <div className="flex flex-col items-center">
+                    {subjectLabel && (
+                        <span className="text-white/60 text-xs mb-0.5">{subjectLabel}</span>
+                    )}
+                    <h2 className="text-white font-medium text-sm">
+                        {photos.length > 0
+                            ? (photos.length > 1
+                                ? t('photo.photoCountPlural', { count: photos.length })
+                                : t('photo.photoCount', { count: photos.length }))
+                            : t('photo.takePhoto')}
+                    </h2>
+                </div>
                 <div className="w-10" />
             </div>
 
@@ -356,7 +367,7 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                     {/* Bouton Galerie */}
                     <button
                         onClick={handleGalleryClick}
-                        disabled={isProcessing}
+                        disabled={isProcessing || photos.length >= MAX_PHOTOS}
                         className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center disabled:opacity-50 hover:bg-white/20 transition-colors"
                     >
                         <Image size={22} className="text-white" />
@@ -365,7 +376,7 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                     {/* Bouton Capture */}
                     <button
                         onClick={capturePhoto}
-                        disabled={!isCapturing || isProcessing || cameraError}
+                        disabled={!isCapturing || isProcessing || cameraError || photos.length >= MAX_PHOTOS}
                         className="w-16 h-16 rounded-full bg-white flex items-center justify-center disabled:opacity-50 disabled:bg-white/50"
                     >
                         <div className="w-12 h-12 rounded-full border-4 border-black/20" />
@@ -393,9 +404,14 @@ const PhotoCapture = ({ onComplete, onClose }) => {
                 <p className="text-center text-white/60 text-xs mt-2">
                     {isProcessing
                         ? t('photo.aiAnalyzing')
-                        : photos.length > 0
-                            ? t('photo.tapCheckToExtract')
-                            : t('photo.takePhotosOfCourse')}
+                        : photos.length >= MAX_PHOTOS
+                            ? t('photo.maxPhotosReached')
+                            : photos.length > 0
+                                ? t('photo.tapCheckToExtract')
+                                : t('photo.takePhotosOfCourse')}
+                </p>
+                <p className="text-center text-white/40 text-xs mt-1">
+                    {t('photo.maxPhotosInfo', { count: MAX_PHOTOS })}
                 </p>
             </div>
         </motion.div>

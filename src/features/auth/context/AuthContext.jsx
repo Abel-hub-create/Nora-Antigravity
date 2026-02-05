@@ -17,6 +17,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [errorCode, setErrorCode] = useState(null);
 
   // Check if user is logged in on mount - DB is the only source of truth
   useEffect(() => {
@@ -48,8 +49,17 @@ export const AuthProvider = ({ children }) => {
       applyUserPreferences(userData);
       return userData;
     } catch (err) {
-      const message = err.response?.data?.error || i18n.t('errors.loginFailed');
+      const code = err.response?.data?.code;
+      let message;
+      if (code === 'EMAIL_NOT_VERIFIED') {
+        message = i18n.t('auth.emailNotVerified');
+      } else if (code === 'INVALID_CREDENTIALS') {
+        message = i18n.t('auth.invalidCredentials');
+      } else {
+        message = err.response?.data?.error || i18n.t('errors.loginFailed');
+      }
       setError(message);
+      setErrorCode(code || null);
       throw new Error(message);
     }
   }, []);
@@ -76,8 +86,17 @@ export const AuthProvider = ({ children }) => {
       // Don't set user - they need to verify email first
       return result;
     } catch (err) {
-      const message = err.response?.data?.error || i18n.t('errors.registerFailed');
+      const code = err.response?.data?.code;
+      let message;
+      if (code === 'EMAIL_ALREADY_VERIFIED') {
+        message = i18n.t('auth.emailAlreadyUsedVerified');
+      } else if (code === 'EMAIL_NOT_VERIFIED') {
+        message = i18n.t('auth.emailAlreadyUsed');
+      } else {
+        message = err.response?.data?.error || i18n.t('errors.registerFailed');
+      }
       setError(message);
+      setErrorCode(code || null);
       throw new Error(message);
     }
   }, []);
@@ -112,7 +131,10 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const clearError = useCallback(() => setError(null), []);
+  const clearError = useCallback(() => {
+    setError(null);
+    setErrorCode(null);
+  }, []);
 
   // Sync user data to backend and update local state with response
   const syncUserData = useCallback(async (userData) => {
@@ -189,6 +211,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!user,
     isLoading,
     error,
+    errorCode,
     login,
     loginWithGoogle,
     register,

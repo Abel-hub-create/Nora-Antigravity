@@ -210,8 +210,11 @@ Tu dois generer un JSON avec exactement cette structure :
 5. REGLE CRITIQUE SUR LES DEFINITIONS
    - Par defaut, NE METS PAS de section "DEFINITIONS ET CONCEPTS IMPORTANTS"
    - Tu n'inclus une section definitions QUE SI l'utilisateur a explicitement demande des definitions dans ses instructions
-   - Si l'utilisateur demande des definitions specifiques, inclus UNIQUEMENT celles qu'il a demandees (pas d'autres)
-   - Sans instructions de l'utilisateur concernant les definitions → AUCUNE section definitions
+   - Si l'utilisateur demande des definitions specifiques :
+     → Cree "## DEFINITIONS ET CONCEPTS IMPORTANTS" comme PREMIERE section de la synthese
+     → Utilise le format : - **Terme** : definition rigoureuse
+     → Voir EXEMPLE 1 ci-dessous
+   - Sans instructions de l'utilisateur concernant les definitions → AUCUNE section definitions (voir EXEMPLE 2)
 
 5. TABLEAUX ET DONNEES STRUCTUREES (REGLE CRITIQUE)
 
@@ -269,8 +272,33 @@ Tu dois generer un JSON avec exactement cette structure :
 
    EXCEPTION : Si AUCUNE donnee structuree n'est trouvee → Ne cree PAS cette section
 
-===== EXEMPLE DE SYNTHESE CORRECTEMENT FORMATEE =====
-(Note: Cet exemple N'INCLUT PAS de section definitions car l'utilisateur ne les a pas demandees)
+===== EXEMPLE 1 - SYNTHESE AVEC DEFINITIONS DEMANDEES =====
+(Quand l'utilisateur a demande des definitions, la section DEFINITIONS apparait EN PREMIER)
+
+## DEFINITIONS ET CONCEPTS IMPORTANTS
+
+- **Generateur** : Composant electrique qui fournit l'energie necessaire au fonctionnement du circuit en creant une difference de potentiel entre ses bornes.
+- **Recepteur** : Composant qui recoit et utilise l'energie electrique fournie par le generateur pour accomplir une fonction (eclairage, mouvement, etc.).
+
+## LE CIRCUIT ELECTRIQUE
+
+Un circuit electrique est un ensemble de composants relies entre eux permettant la circulation du courant...
+
+### Les composants essentiels
+- Generateur (pile, batterie)
+- Recepteurs (lampes, moteurs)
+- Conducteurs (fils)
+
+## TYPES DE CIRCUITS
+
+### Circuit en serie
+Les composants sont relies les uns a la suite des autres...
+
+### Circuit en parallele
+Les composants sont relies sur des branches differentes...
+
+===== EXEMPLE 2 - SYNTHESE SANS DEFINITIONS =====
+(Quand l'utilisateur n'a PAS demande de definitions, AUCUNE section definitions)
 
 ## LES DEPENSES ENERGETIQUES
 Les depenses energetiques d'un adulte se repartissent en trois categories principales...
@@ -354,9 +382,12 @@ REGLE #1 - DEFINITIONS (CRITIQUE, A RESPECTER IMPERATIVEMENT) :
 - Meme si l'utilisateur ecrit des noms de concepts dans les objectifs, ce ne sont PAS des definitions a inclure
 
 - SI "DEFINITIONS A INCLURE ABSOLUMENT" contient des termes :
-  → Cree "## DEFINITIONS ET CONCEPTS IMPORTANTS" en PREMIERE position
+  → La synthese DOIT OBLIGATOIREMENT commencer par "## DEFINITIONS ET CONCEPTS IMPORTANTS"
+  → Cette section doit etre la TOUTE PREMIERE section, AVANT tout autre contenu
   → Inclus UNIQUEMENT les definitions des termes listes dans CETTE section specifique
-  → Format : - **Terme** : definition rigoureuse (extraite du cours)
+  → Format OBLIGATOIRE pour chaque definition :
+    - **Terme** : definition rigoureuse (extraite du cours)
+  → Ne place JAMAIS ces definitions ailleurs dans la synthese (pas dans d'autres sections)
 
 - SI "DEFINITIONS A INCLURE ABSOLUMENT" est VIDE ou contient seulement des espaces :
   → NE CREE AUCUNE section definitions

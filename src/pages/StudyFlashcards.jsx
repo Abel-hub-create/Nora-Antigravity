@@ -5,6 +5,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import useActiveTimer from '../hooks/useActiveTimer';
 import * as syntheseService from '../services/syntheseService';
+import VoiceDictation from '../components/Import/VoiceDictation';
 
 const StudyFlashcards = () => {
     const { t } = useTranslation();
@@ -216,14 +217,21 @@ const StudyFlashcards = () => {
                                                     <X size={14} />
                                                 </button>
                                             </div>
-                                            <textarea
-                                                ref={textareaRef}
-                                                value={currentAnswer}
-                                                onChange={(e) => setCurrentAnswer(e.target.value)}
-                                                onClick={handleTextareaClick}
-                                                placeholder={t('flashcards.writeAnswerPlaceholder')}
-                                                className="w-full h-20 bg-white border border-white/10 rounded-xl p-3 text-sm text-black placeholder:text-gray-400 resize-none focus:outline-none focus:border-primary/50"
-                                            />
+                                            <div className="relative">
+                                                <textarea
+                                                    ref={textareaRef}
+                                                    value={currentAnswer}
+                                                    onChange={(e) => setCurrentAnswer(e.target.value)}
+                                                    onClick={handleTextareaClick}
+                                                    placeholder={t('flashcards.writeAnswerPlaceholder')}
+                                                    className="w-full h-20 bg-white border border-white/10 rounded-xl p-3 pr-12 text-sm text-black placeholder:text-gray-400 resize-none focus:outline-none focus:border-primary/50"
+                                                />
+                                                <div className="absolute bottom-2 right-2" onClick={handleTextareaClick}>
+                                                    <VoiceDictation
+                                                        onTranscript={(text) => setCurrentAnswer(prev => prev + (prev ? ' ' : '') + text)}
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
                                     ) : (
                                         <button

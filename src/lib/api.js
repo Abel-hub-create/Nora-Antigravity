@@ -8,6 +8,9 @@ class ApiClient {
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
 
+    // Timeout par défaut de 30s, mais peut être surchargé via options.timeout
+    const timeout = options.timeout || 30000;
+
     const config = {
       ...options,
       credentials: 'include', // Important for cookies
@@ -23,8 +26,14 @@ class ApiClient {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
 
+    // Ajouter AbortController pour le timeout
+    const controller = new AbortController();
+    config.signal = controller.signal;
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
     try {
       const response = await fetch(url, config);
+      clearTimeout(timeoutId);
 
       // Handle 401 - try to refresh token (but not for auth endpoints)
       const isAuthEndpoint = endpoint.startsWith('/auth/');
@@ -49,6 +58,10 @@ class ApiClient {
 
       return data;
     } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw { response: { status: 408, data: { error: 'La requête a pris trop de temps. Veuillez réessayer.' } } };
+      }
       if (error.response) {
         throw error;
       }
@@ -79,10 +92,11 @@ class ApiClient {
     return this.request(endpoint, { method: 'GET' });
   }
 
-  post(endpoint, body) {
+  post(endpoint, body, options = {}) {
     return this.request(endpoint, {
       method: 'POST',
       body: JSON.stringify(body),
+      ...options,
     });
   }
 

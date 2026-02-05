@@ -8,8 +8,9 @@ export const register = async ({ email, password, name, language = 'fr' }) => {
   // Check if user exists
   const existingUser = await userRepository.findByEmail(email);
   if (existingUser) {
-    const error = new Error('Cet email est déjà utilisé');
+    const error = new Error('EMAIL_ALREADY_USED');
     error.statusCode = 409;
+    error.code = existingUser.is_verified ? 'EMAIL_ALREADY_VERIFIED' : 'EMAIL_NOT_VERIFIED';
     throw error;
   }
 
@@ -45,16 +46,18 @@ export const login = async ({ email, password }) => {
   // Find user
   const user = await userRepository.findByEmail(email);
   if (!user) {
-    const error = new Error('Email ou mot de passe incorrect');
+    const error = new Error('INVALID_CREDENTIALS');
     error.statusCode = 401;
+    error.code = 'INVALID_CREDENTIALS';
     throw error;
   }
 
   // Verify password
   const isValid = await hashService.comparePassword(password, user.password);
   if (!isValid) {
-    const error = new Error('Email ou mot de passe incorrect');
+    const error = new Error('INVALID_CREDENTIALS');
     error.statusCode = 401;
+    error.code = 'INVALID_CREDENTIALS';
     throw error;
   }
 

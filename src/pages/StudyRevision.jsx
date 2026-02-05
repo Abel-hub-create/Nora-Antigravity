@@ -64,6 +64,7 @@ const StudyRevision = () => {
         return () => setRevisionActive(false);
     }, [isSessionActive, setRevisionActive]);
 
+
     // Load session and synthese on mount
     useEffect(() => {
         const loadData = async () => {
@@ -194,7 +195,11 @@ const StudyRevision = () => {
             }
         } catch (err) {
             console.error('Error submitting recall:', err);
-            setError(t('revision.compare.error'));
+            // Revenir à la phase recall en cas d'erreur pour permettre de réessayer
+            updateSession({ phase: 'recall', phase_started_at: new Date().toISOString() });
+            // Afficher un message d'erreur approprié
+            const errorMessage = err?.response?.data?.error || t('revision.compare.error');
+            setError(errorMessage);
         }
     }, [id, updateSession, t, session]);
 
@@ -348,6 +353,8 @@ const StudyRevision = () => {
                         iteration={session.current_iteration}
                         onSubmit={handleRecallSubmit}
                         onStop={() => setShowStopConfirm(true)}
+                        error={error}
+                        onClearError={() => setError(null)}
                     />
                 );
 

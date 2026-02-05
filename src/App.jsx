@@ -26,6 +26,7 @@ import Settings from './pages/Settings';
 import Collection from './pages/Collection';
 import Process from './pages/Process';
 import FolderDetail from './pages/FolderDetail';
+import Feedback from './pages/Feedback';
 
 import { UserProvider } from './context/UserContext';
 import { RevisionProvider } from './context/RevisionContext';
@@ -64,6 +65,7 @@ function App() {
                       <Route path="/settings" element={<Settings />} />
                       <Route path="/collection" element={<Collection />} />
                       <Route path="/process" element={<Process />} />
+                      <Route path="/feedback" element={<Feedback />} />
                     </Routes>
                     </MobileWrapper>
                   </RevisionProvider>

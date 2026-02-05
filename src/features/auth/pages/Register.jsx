@@ -23,17 +23,22 @@ const Register = () => {
   const [resendMessage, setResendMessage] = useState('');
   const [resendSuccess, setResendSuccess] = useState(false);
 
-  const { register, loginWithGoogle, error: authError, clearError } = useAuth();
+  const { register, loginWithGoogle, error: authError, errorCode, clearError } = useAuth();
   const navigate = useNavigate();
   const [googleError, setGoogleError] = useState(null);
 
-  // Check if error is about email already used
-  const isEmailAlreadyUsed = authError?.toLowerCase().includes('email est déjà utilisé') ||
-                              authError?.toLowerCase().includes('email est deja utilise') ||
-                              authError?.toLowerCase().includes('email already');
+  // Show resend button when email is already used (verified or not)
+  const isEmailAlreadyUsed = errorCode === 'EMAIL_NOT_VERIFIED' || errorCode === 'EMAIL_ALREADY_VERIFIED';
 
   const handleResendVerification = async () => {
     if (!formData.email || isResending) return;
+
+    // Account already verified - no point resending
+    if (errorCode === 'EMAIL_ALREADY_VERIFIED') {
+      setResendMessage(t('auth.alreadyVerified'));
+      setResendSuccess(false);
+      return;
+    }
 
     setIsResending(true);
     setResendMessage('');

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sprout, BookOpen, Target, Settings, Play, Check } from 'lucide-react';
+import { X, Sprout, BookOpen, Target, Play, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 /**
@@ -21,43 +21,20 @@ const REQUIREMENT_LEVELS = {
         icon: Target,
         color: '#ef4444', // Red
         settings: { definitions: 95, concepts: 95, data: 100 }
-    },
-    custom: {
-        icon: Settings,
-        color: '#8b5cf6', // Violet
-        settings: null // User-defined
     }
 };
 
 const RequirementLevelModal = ({ isOpen, onClose, onStart }) => {
     const { t } = useTranslation();
     const [selectedLevel, setSelectedLevel] = useState('intermediate');
-    const [customSettings, setCustomSettings] = useState({
-        definitions: 85,
-        concepts: 85,
-        data: 95
-    });
 
     const handleStart = () => {
         const level = REQUIREMENT_LEVELS[selectedLevel];
-        const settings = selectedLevel === 'custom'
-            ? customSettings
-            : level.settings;
-
         onStart({
             level: selectedLevel,
-            settings
+            settings: level.settings
         });
     };
-
-    const handleSliderChange = (key, value) => {
-        setCustomSettings(prev => ({
-            ...prev,
-            [key]: parseInt(value)
-        }));
-    };
-
-    const LevelIcon = REQUIREMENT_LEVELS[selectedLevel].icon;
 
     return (
         <AnimatePresence>
@@ -136,87 +113,6 @@ const RequirementLevelModal = ({ isOpen, onClose, onStart }) => {
                                 );
                             })}
                         </div>
-
-                        {/* Custom Sliders (only shown when custom is selected) */}
-                        <AnimatePresence>
-                            {selectedLevel === 'custom' && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    className="overflow-hidden"
-                                >
-                                    <div className="bg-background rounded-xl p-4 mb-5 space-y-4">
-                                        <h3 className="text-sm font-semibold text-text-main mb-3">
-                                            {t('revision.requirementLevel.customSettings')}
-                                        </h3>
-
-                                        {/* Definitions Slider */}
-                                        <div>
-                                            <div className="flex justify-between items-center mb-2">
-                                                <label className="text-sm text-text-muted">
-                                                    {t('revision.requirementLevel.criteria.definitions')}
-                                                </label>
-                                                <span className="text-sm font-medium text-primary">
-                                                    {customSettings.definitions}%
-                                                </span>
-                                            </div>
-                                            <input
-                                                type="range"
-                                                min="50"
-                                                max="100"
-                                                step="5"
-                                                value={customSettings.definitions}
-                                                onChange={(e) => handleSliderChange('definitions', e.target.value)}
-                                                className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer slider-primary"
-                                            />
-                                        </div>
-
-                                        {/* Concepts Slider */}
-                                        <div>
-                                            <div className="flex justify-between items-center mb-2">
-                                                <label className="text-sm text-text-muted">
-                                                    {t('revision.requirementLevel.criteria.concepts')}
-                                                </label>
-                                                <span className="text-sm font-medium text-primary">
-                                                    {customSettings.concepts}%
-                                                </span>
-                                            </div>
-                                            <input
-                                                type="range"
-                                                min="50"
-                                                max="100"
-                                                step="5"
-                                                value={customSettings.concepts}
-                                                onChange={(e) => handleSliderChange('concepts', e.target.value)}
-                                                className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer slider-primary"
-                                            />
-                                        </div>
-
-                                        {/* Data Slider */}
-                                        <div>
-                                            <div className="flex justify-between items-center mb-2">
-                                                <label className="text-sm text-text-muted">
-                                                    {t('revision.requirementLevel.criteria.data')}
-                                                </label>
-                                                <span className="text-sm font-medium text-primary">
-                                                    {customSettings.data}%
-                                                </span>
-                                            </div>
-                                            <input
-                                                type="range"
-                                                min="50"
-                                                max="100"
-                                                step="5"
-                                                value={customSettings.data}
-                                                onChange={(e) => handleSliderChange('data', e.target.value)}
-                                                className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer slider-primary"
-                                            />
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
 
                         {/* Start Button */}
                         <button

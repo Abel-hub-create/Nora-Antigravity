@@ -36,9 +36,11 @@ export const submitRecall = async (syntheseId, userRecall) => {
 
 /**
  * Run AI comparison
+ * Timeout plus long (120s) car l'analyse AI peut prendre du temps
+ * pour les synthèses volumineuses
  */
 export const compare = async (syntheseId) => {
-    const response = await api.post(`/revision/${syntheseId}/compare`);
+    const response = await api.post(`/revision/${syntheseId}/compare`, {}, { timeout: 120000 });
     return response;
 };
 

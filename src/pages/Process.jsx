@@ -140,7 +140,13 @@ const Process = () => {
 
         console.error('Error processing:', err);
         setStatus('error');
-        const errorMessage = err?.message || err?.error || t('errors.generic');
+        const errorCode = err?.response?.data?.code;
+        let errorMessage;
+        if (errorCode === 'SYNTHESES_LIMIT_REACHED') {
+          errorMessage = t('errors.synthesesLimitReached');
+        } else {
+          errorMessage = err?.message || err?.error || t('errors.generic');
+        }
         setError(errorMessage);
       }
     };

@@ -145,6 +145,7 @@ const Study = () => {
                             {syntheses.length === 1
                                 ? t('study.count', { count: syntheses.length })
                                 : t('study.countPlural', { count: syntheses.length })}
+                            {' '}<span className="text-text-muted/70">({t('study.maxSyntheses', { max: 40 })})</span>
                         </p>
                     </div>
 
@@ -293,9 +294,9 @@ const Study = () => {
                                             className="flex-1 flex items-center gap-3 cursor-pointer"
                                             onClick={() => navigate(`/study/${synthese.id}`)}
                                         >
-                                            <div className="flex-1 min-w-0">
-                                                <h3 className="font-semibold text-text-main truncate">
-                                                    {synthese.title}
+                                            <div className="flex-1 min-w-0 overflow-hidden">
+                                                <h3 className="font-semibold text-text-main truncate max-w-[200px]">
+                                                    {synthese.title.length > 25 ? synthese.title.slice(0, 25) + '...' : synthese.title}
                                                 </h3>
                                                 <div className="flex items-center gap-2 mt-1">
                                                     <Calendar size={12} className="text-text-muted" />

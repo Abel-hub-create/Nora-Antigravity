@@ -1,16 +1,25 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import api from '../../../lib/api';
 
 const VerifyEmail = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { token } = useParams();
+  const [searchParams] = useSearchParams();
   const [status, setStatus] = useState('loading'); // loading, success, already_verified, expired, error
   const [message, setMessage] = useState('');
   const hasVerified = useRef(false);
+
+  // Apply language from URL query param (set when email was sent)
+  useEffect(() => {
+    const lang = searchParams.get('lang');
+    if (lang && ['fr', 'en', 'es', 'zh'].includes(lang)) {
+      i18n.changeLanguage(lang);
+    }
+  }, [searchParams, i18n]);
 
   useEffect(() => {
     const verifyEmail = async () => {
