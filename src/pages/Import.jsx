@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, X, ChevronRight, AlertTriangle, Camera, Image } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -36,6 +36,38 @@ const Import = () => {
     const [wantsSpecific, setWantsSpecific] = useState(null); // null, true, false
     const [definitionsToInclude, setDefinitionsToInclude] = useState('');
     const [examObjectives, setExamObjectives] = useState('');
+    const defNewLineRef = useRef(false); // flag : prochain ajout définition = nouvelle ligne
+    const objNewLineRef = useRef(false); // flag : prochain ajout objectif = nouvelle ligne
+
+    const NEW_LINE_REGEX = /[aà][h]?\s*la\s*lignes?/gi;
+
+    const addVoiceEntry = (setter, newLineRef, text) => {
+        const hasNewLine = NEW_LINE_REGEX.test(text);
+        NEW_LINE_REGEX.lastIndex = 0; // reset après .test()
+
+        if (hasNewLine) {
+            // Séparer sur "à la ligne"
+            const parts = text.split(NEW_LINE_REGEX);
+            parts.forEach((part, idx) => {
+                const trimmed = part.trim();
+                if (trimmed) {
+                    const formatted = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+                    const forceNew = idx > 0 || newLineRef.current;
+                    setter(prev => prev + (prev && forceNew ? '\n- ' : prev ? '\n- ' : '- ') + formatted);
+                    newLineRef.current = false;
+                }
+            });
+            // Si "à la ligne" était à la fin (dernière part vide), préparer la prochaine
+            const lastPart = parts[parts.length - 1].trim();
+            if (!lastPart) newLineRef.current = true;
+        } else {
+            const trimmed = text.trim();
+            if (!trimmed) return;
+            const formatted = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+            setter(prev => prev + (prev ? '\n- ' : '- ') + formatted);
+            newLineRef.current = false;
+        }
+    };
 
     // État pour le message d'avertissement des définitions
     const [showDefinitionsWarning, setShowDefinitionsWarning] = useState(false);
@@ -104,6 +136,8 @@ const Import = () => {
         setWantsSpecific(null);
         setDefinitionsToInclude('');
         setExamObjectives('');
+        defNewLineRef.current = false;
+        objNewLineRef.current = false;
         setSelectedSubject(null);
     };
 
@@ -236,7 +270,7 @@ const Import = () => {
                                                     {t('import.specificPrompt.definitionsLabel')}
                                                 </label>
                                                 <VoiceDictation
-                                                    onTranscript={(text) => setDefinitionsToInclude(prev => prev + (prev ? ' ' : '') + text)}
+                                                    onTranscript={(text) => addVoiceEntry(setDefinitionsToInclude, defNewLineRef, text)}
                                                 />
                                             </div>
                                             <p className="text-text-muted text-xs mb-2">
@@ -258,7 +292,7 @@ const Import = () => {
                                                     {t('import.specificPrompt.objectivesLabel')}
                                                 </label>
                                                 <VoiceDictation
-                                                    onTranscript={(text) => setExamObjectives(prev => prev + (prev ? ' ' : '') + text)}
+                                                    onTranscript={(text) => addVoiceEntry(setExamObjectives, objNewLineRef, text)}
                                                 />
                                             </div>
                                             <p className="text-text-muted text-xs mb-2">

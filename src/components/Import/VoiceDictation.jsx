@@ -6,105 +6,86 @@ const VoiceDictation = ({ onTranscript, disabled = false }) => {
     const [isListening, setIsListening] = useState(false);
     const [isSupported, setIsSupported] = useState(true);
     const recognitionRef = useRef(null);
-    const shouldRestartRef = useRef(false); // Pour redémarrer auto si arrêt involontaire
-    const isStoppingRef = useRef(false); // Pour savoir si l'arrêt est volontaire
-    const onTranscriptRef = useRef(onTranscript); // Ref pour éviter la réinitialisation
+    const onTranscriptRef = useRef(onTranscript);
+    const isStoppingRef = useRef(false); // true = arrêt volontaire, pas d'auto-restart
 
-    // Mettre à jour le ref quand le callback change (sans réinitialiser la reconnaissance)
     useEffect(() => {
         onTranscriptRef.current = onTranscript;
     }, [onTranscript]);
 
     useEffect(() => {
-        // Vérifier le support de l'API
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
             setIsSupported(false);
-            return;
         }
+    }, []);
 
-        // Créer l'instance
+    const startNewSession = () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return;
+
+        // Nouvelle instance à chaque session = pas d'état résiduel / replay
         const recognition = new SpeechRecognition();
         recognition.continuous = true;
-        recognition.interimResults = true;
+        recognition.interimResults = false;
         recognition.lang = 'fr-FR';
 
+        // Variable locale à la session : repart de -1, immune aux bugs de resultIndex
+        let lastProcessedIndex = -1;
+
         recognition.onresult = (event) => {
-            let finalTranscript = '';
-            let interimTranscript = '';
-
             for (let i = event.resultIndex; i < event.results.length; i++) {
-                const transcript = event.results[i][0].transcript;
-                if (event.results[i].isFinal) {
-                    finalTranscript += transcript;
-                } else {
-                    interimTranscript += transcript;
+                if (event.results[i].isFinal && i > lastProcessedIndex) {
+                    lastProcessedIndex = i;
+                    const text = event.results[i][0].transcript.trim();
+                    if (text && onTranscriptRef.current) {
+                        onTranscriptRef.current(text);
+                    }
                 }
-            }
-
-            // Envoyer le texte final au parent via le ref
-            if (finalTranscript && onTranscriptRef.current) {
-                onTranscriptRef.current(finalTranscript);
             }
         };
 
         recognition.onerror = (event) => {
-            console.error('Speech recognition error:', event.error);
-            // Ne pas arrêter si c'est juste une erreur "no-speech"
             if (event.error !== 'no-speech' && event.error !== 'aborted') {
-                shouldRestartRef.current = false;
+                isStoppingRef.current = true;
                 setIsListening(false);
             }
         };
 
         recognition.onend = () => {
-            // Redémarrer automatiquement si l'arrêt n'était pas volontaire
-            if (shouldRestartRef.current && !isStoppingRef.current) {
-                try {
-                    recognition.start();
-                } catch (err) {
-                    console.error('Failed to restart recognition:', err);
-                    setIsListening(false);
-                    shouldRestartRef.current = false;
-                }
+            // Auto-restart si l'arrêt n'est pas volontaire
+            if (!isStoppingRef.current) {
+                setTimeout(() => {
+                    if (!isStoppingRef.current) {
+                        startNewSession();
+                    }
+                }, 200);
             } else {
                 setIsListening(false);
-                shouldRestartRef.current = false;
             }
-            isStoppingRef.current = false;
         };
 
         recognitionRef.current = recognition;
 
-        return () => {
-            shouldRestartRef.current = false;
-            isStoppingRef.current = true;
-            if (recognitionRef.current) {
-                recognitionRef.current.abort();
-            }
-        };
-    }, []); // Pas de dépendance - la reconnaissance n'est créée qu'une fois
+        try {
+            recognition.start();
+        } catch (err) {
+            console.error('Failed to start recognition:', err);
+            setIsListening(false);
+        }
+    };
 
     const toggleListening = () => {
-        if (!recognitionRef.current) return;
-
         if (isListening) {
-            // Arrêt volontaire
             isStoppingRef.current = true;
-            shouldRestartRef.current = false;
-            recognitionRef.current.stop();
+            if (recognitionRef.current) {
+                recognitionRef.current.stop();
+            }
             setIsListening(false);
         } else {
-            try {
-                // Démarrer avec redémarrage auto activé
-                shouldRestartRef.current = true;
-                isStoppingRef.current = false;
-                recognitionRef.current.start();
-                setIsListening(true);
-            } catch (err) {
-                console.error('Failed to start recognition:', err);
-                shouldRestartRef.current = false;
-            }
+            isStoppingRef.current = false;
+            setIsListening(true);
+            startNewSession();
         }
     };
 

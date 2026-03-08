@@ -418,6 +418,7 @@ dailyProgressPercentage = (completedGoals.length / totalGoals.length) * 100
 | `/profile` | Profile | User stats, achievements, and folders |
 | `/folders/:id` | FolderDetail | View/manage folder contents |
 | `/settings` | Settings | App preferences |
+| `/feedback` | Feedback | Reviews and suggestions from users |
 
 ### Tailwind Theme
 
@@ -602,18 +603,34 @@ Backend returns error codes (not hardcoded messages) so the frontend can transla
 backend/
 ├── src/
 │   ├── app.js                  # Express app setup
+│   ├── config/database.js      # DB connection + table prefix injection
 │   ├── routes/authRoutes.js    # Auth endpoint handlers
 │   ├── routes/syntheseRoutes.js # Synthese CRUD endpoints
 │   ├── routes/aiRoutes.js      # AI endpoints (Whisper, Vision, Content Gen)
+│   ├── routes/folderRoutes.js  # Folder CRUD endpoints
+│   ├── routes/notificationRoutes.js # Push notifications + daily progress sync
+│   ├── routes/revisionRoutes.js # Guided revision endpoints
+│   ├── routes/feedbackRoutes.js # Reviews & suggestions endpoints
 │   ├── services/authService.js # Auth business logic
 │   ├── services/userRepository.js # User data access
 │   ├── services/syntheseRepository.js # Synthese data access
+│   ├── services/folderRepository.js # Folder data access
+│   ├── services/feedbackRepository.js # Feedback data access
+│   ├── services/dailyProgressRepository.js # Daily progress & study history
+│   ├── services/revisionRepository.js # Revision session data access
+│   ├── services/revisionCompareService.js # AI semantic comparison (GPT-4o-mini)
 │   ├── services/openaiService.js # OpenAI Whisper & Vision
 │   ├── services/contentGenerationService.js # ChatGPT content generation
+│   ├── services/contentVerificationService.js # AI subject matching verification
+│   ├── services/googleAuthService.js # Google OAuth token verification
+│   ├── services/emailService.js # Resend email service
+│   ├── services/notificationService.js # Push notification service
+│   ├── services/subjectPrompts.js # Subject-specific AI prompt templates
 │   ├── middlewares/auth.js     # JWT verification middleware
 │   ├── middlewares/rateLimiter.js # Rate limiting config
 │   ├── validators/authValidators.js # Auth validation schemas
-│   └── validators/syntheseValidators.js # Synthese validation schemas
+│   ├── validators/syntheseValidators.js # Synthese validation schemas
+│   └── validators/feedbackValidators.js # Feedback validation schemas (Zod)
 ├── uploads/                    # Temporary audio files (auto-cleaned)
 ```
 
@@ -805,8 +822,22 @@ mysql -u $DB_USER -p$DB_PASSWORD $DB_NAME < backend/src/database/migrations/005_
 mysql -u $DB_USER -p$DB_PASSWORD $DB_NAME < backend/src/database/migrations/006_create_quiz_questions.sql
 mysql -u $DB_USER -p$DB_PASSWORD $DB_NAME < backend/src/database/migrations/007_create_folders.sql
 mysql -u $DB_USER -p$DB_PASSWORD $DB_NAME < backend/src/database/migrations/008_create_folder_syntheses.sql
-# ... (009-019 for notifications, daily progress, avatar, email verification, study stats, revision, preferences)
-mysql -u $DB_USER -p$DB_PASSWORD $DB_NAME < backend/src/database/migrations/020_add_onboarding_completed.sql
+# 009: notifications (notifications_enabled, last_notification_sent_at, push_subscriptions)
+# 010: daily_progress table
+# 011: avatar column on users
+# 012: email verification (email_verified, email_verification_tokens)
+# 013: study stats (study_history table, study time columns on daily_progress)
+# 014: revision_sessions and revision_completions tables
+# 015: specific_instructions column on syntheses
+# 016: loop_time_remaining column on revision_sessions
+# 017: phase_started_at column on revision_sessions
+# 018: mastery_score column on syntheses (+ index)
+# 019: user preferences (language, theme columns)
+# 020: onboarding_completed column on users
+# 021: requirement_level + custom_settings on revision_sessions
+# 022: subject column on syntheses
+# 023: google_id column on users (+ password nullable)
+# 024: feedbacks + feedback_votes tables
 ```
 
 ## Import System
@@ -909,6 +940,16 @@ After capturing content via voice or photo, users can optionally customize their
 - Microphone permission handling
 - Visual feedback with animations
 - **Error handling**: Backend returns error codes (`NO_TEXT_DETECTED_VOICE`), frontend translates via i18n
+
+**`/src/components/Import/VoiceDictation.jsx`**
+- Inline mic button (petit bouton) used in the specific instructions fields (definitions, objectives) and in flashcard answer input
+- Uses browser Web Speech API (`SpeechRecognition`) — NOT Whisper
+- **Crée une nouvelle instance à chaque démarrage** pour éviter tout état résiduel/replay d'audio
+- Auto-restart : quand la session expire (silence), redémarre automatiquement sans désactiver le bouton — seul l'utilisateur peut stopper
+- `interimResults = false` + variable closure `lastProcessedIndex` par session pour éviter les doublons
+- `isStoppingRef` distingue arrêt volontaire (bouton) vs timeout navigateur
+- **Objectifs/Définitions** : chaque prise de parole ajoute `- Texte` avec majuscule automatique
+- **Commande vocale "à la ligne"** : détectée via regex `/[aà][h]?\s*la\s*lignes?/gi`, insère un saut de ligne + nouveau tiret. Fonctionne aussi si dit seul (flag `defNewLineRef`/`objNewLineRef` activé pour la prochaine prise de parole)
 
 **`/src/components/Import/PhotoCapture.jsx`**
 - Camera access via getUserMedia
@@ -1460,16 +1501,27 @@ Instead of congratulations and summary re-read, shows:
 
 ```sql
 -- revision_sessions: Active revision session state
-revision_sessions (id, user_id, synthese_id, phase, phase_started_at, study_time_remaining,
-                   pause_time_remaining, current_iteration, user_recall, missing_concepts JSON,
+revision_sessions (id, user_id, synthese_id, requirement_level ENUM, custom_settings JSON,
+                   phase, phase_started_at, study_time_remaining, pause_time_remaining,
+                   loop_time_remaining, current_iteration, user_recall, missing_concepts JSON,
                    understood_concepts JSON, last_activity_at, started_at, completed_at)
 
 -- revision_completions: History of completed revisions
 revision_completions (id, user_id, synthese_id, iterations_count, completed_at)
 
--- syntheses: Added specific_instructions column for important elements
-syntheses.specific_instructions TEXT -- User-defined important elements
+-- syntheses: Added columns for revision
+syntheses.specific_instructions TEXT    -- User-defined important elements
+syntheses.mastery_score INT UNSIGNED    -- Last revision score (0-100), NULL = never revised
 ```
+
+**Requirement Level**: Adjusts AI evaluation strictness during revision.
+
+| Level | Description |
+|-------|-------------|
+| `beginner` | More lenient evaluation |
+| `intermediate` | Default, balanced evaluation |
+| `expert` | Strict evaluation |
+| `custom` | Uses `custom_settings` JSON with precision percentages for definitions/concepts/data |
 
 ### API Endpoints (`/api/revision/`)
 
@@ -1519,7 +1571,96 @@ All revision UI text is translated under `revision.*` namespace in both `fr.json
 
 - `014_create_revision_sessions.sql` - Creates revision_sessions and revision_completions tables
 - `015_add_specific_instructions.sql` - Adds specific_instructions column to syntheses
+- `016_add_loop_time_remaining.sql` - Adds loop_time_remaining (default 300s) to revision_sessions
 - `017_add_phase_started_at.sql` - Adds phase_started_at timestamp for real-time timer calculation
+- `018_add_mastery_score.sql` - Adds mastery_score column to syntheses (0-100, for badge display)
+- `021_add_requirement_level.sql` - Adds requirement_level (beginner/intermediate/expert/custom) + custom_settings JSON to revision_sessions
+
+## Content Verification Service
+
+AI-powered verification that imported content matches the user's selected subject.
+
+**Service**: `/backend/src/services/contentVerificationService.js`
+
+**How It Works**:
+1. After content capture (voice/photo/text), before AI generation
+2. Sends first 1500 chars of content + selected subject to GPT-4o-mini
+3. AI classifies the content and compares with selected subject
+4. Returns: `{ correspondance: boolean, matiere_detectee, matiere_detectee_id, confiance, message }`
+
+**Confidence Levels**: `forte`, `moyenne`, `faible`
+
+**Subject Indicators**: Each subject has keyword lists for faster detection (e.g., mathematics: equation, theorem, function...)
+
+```javascript
+verifyContentSubject(content, selectedSubject) // Returns match result
+```
+
+## Feedback System
+
+Community feedback system allowing users to share reviews and suggestions, with voting.
+
+### Database Schema
+
+```sql
+-- feedbacks: Reviews and suggestions (auto-expire after 3 days)
+feedbacks (id, user_id, type ENUM('review','suggestion'), content VARCHAR(150), created_at)
+
+-- feedback_votes: Like/dislike system
+feedback_votes (id, feedback_id, user_id, vote TINYINT, created_at)
+-- vote: 1 = like, -1 = dislike
+-- UNIQUE(feedback_id, user_id) - one vote per user per feedback
+```
+
+### API Endpoints (`/api/feedback/`)
+
+| Method | Route | Description | Auth |
+|--------|-------|-------------|------|
+| GET | `/reviews` | Get all reviews (with vote counts, excludes >3 days) | Yes |
+| GET | `/suggestions` | Get all suggestions (with vote counts, excludes >3 days) | Yes |
+| GET | `/daily-count` | Get today's count and remaining | Yes |
+| POST | `/reviews` | Create a review (max 120 chars) | Yes |
+| POST | `/suggestions` | Create a suggestion (max 70 chars) | Yes |
+| POST | `/:id/vote` | Vote on feedback (1, -1, or 0 to remove) | Yes |
+| DELETE | `/:id` | Delete own feedback | Yes |
+
+### Business Rules
+
+- **Daily Limit**: 100 combined reviews + suggestions per day (global, not per user)
+- **Auto-Expiry**: Feedbacks older than 3 days are excluded from queries
+- **Voting**: Each user can vote once per feedback (upsert on duplicate)
+- **Net Score**: Feedbacks sorted by net score (likes - dislikes) descending
+- **Owner Delete**: Users can only delete their own feedbacks
+
+### Frontend
+
+**Page**: `/src/pages/Feedback.jsx`
+- Two tabs: Reviews / Suggestions
+- Submit form with character limit
+- Vote buttons (thumbs up/down) with net score display
+- Relative time display (just now, X minutes ago, X hours ago)
+- Owner can delete their own feedbacks
+
+**Service**: `/src/services/feedbackService.js`
+```javascript
+getReviews()
+getSuggestions()
+getDailyCount()
+createReview(content)
+createSuggestion(content)
+vote(feedbackId, voteValue)    // 1, -1, or 0
+deleteFeedback(feedbackId)
+```
+
+**Validators** (`/backend/src/validators/feedbackValidators.js`): Zod schemas
+- Review: content 1-120 chars
+- Suggestion: content 1-70 chars
+- Vote: -1, 0, or 1
+- Delete: valid numeric ID
+
+**i18n Keys**: `feedback.*`
+
+**Migration**: `024_create_feedbacks.sql`
 
 ## DEV/PROD Environment Separation
 
