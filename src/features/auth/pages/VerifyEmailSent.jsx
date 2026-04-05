@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Mail, ArrowLeft, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import api from '../../../lib/api';
+import OpenEmailButton from '../../../components/UI/OpenEmailButton';
 
 const VerifyEmailSent = () => {
   const { t } = useTranslation();
@@ -73,6 +74,8 @@ const VerifyEmailSent = () => {
               {resendMessage}
             </motion.p>
           )}
+
+          {email && <OpenEmailButton email={email} />}
 
           {email && (
             <button

@@ -5,9 +5,8 @@ import { ArrowRight } from 'lucide-react';
 
 const QuickActionCard = ({ title, subtitle, icon: Icon, to, color = "bg-surface" }) => {
     return (
-        <Link to={to} className="block w-full">
+        <Link to={to} className="block w-full hover-lift">
             <motion.div
-                whileTap={{ scale: 0.98 }}
                 className={`w-full p-5 rounded-2xl ${color} border border-white/5 shadow-lg relative overflow-hidden group`}
             >
                 <div className="relative z-10 flex justify-between items-center">

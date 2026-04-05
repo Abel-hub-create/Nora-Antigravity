@@ -30,9 +30,16 @@ import Feedback from './pages/Feedback';
 
 import { UserProvider } from './context/UserContext';
 import { RevisionProvider } from './context/RevisionContext';
+import { useTimeLight } from './hooks/useTimeLight';
+
+function AppWithLight({ children }) {
+  useTimeLight();
+  return children;
+}
 
 function App() {
   return (
+    <AppWithLight>
     <AuthProvider>
       <Router>
         <Routes>
@@ -76,6 +83,7 @@ function App() {
         </Routes>
       </Router>
     </AuthProvider>
+    </AppWithLight>
   );
 }
 

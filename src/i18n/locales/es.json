@@ -203,11 +203,26 @@
     "noQuestions": "Sin preguntas para esta síntesis",
     "questionOf": "Pregunta {{current}} de {{total}}",
     "messages": {
-      "zero": ["Vuelve a practicar", "Concéntrate más"],
-      "low": ["Tú puedes", "¡Estás mejorando!"],
-      "medium": ["Bastante bien", "¡Bien hecho!"],
-      "high": ["¡Sigue así!", "¡Muy bien!"],
-      "perfect": ["Simplemente perfecto", "¡Felicidades, todo correcto!"]
+      "zero": [
+        "Vuelve a practicar",
+        "Concéntrate más"
+      ],
+      "low": [
+        "Tú puedes",
+        "¡Estás mejorando!"
+      ],
+      "medium": [
+        "Bastante bien",
+        "¡Bien hecho!"
+      ],
+      "high": [
+        "¡Sigue así!",
+        "¡Muy bien!"
+      ],
+      "perfect": [
+        "Simplemente perfecto",
+        "¡Felicidades, todo correcto!"
+      ]
     }
   },
   "revision": {
@@ -413,6 +428,9 @@
     "summaryCreated": "Síntesis creada",
     "summaryCreatedDemo": "Síntesis creada (modo demo)",
     "summaryCreatedSuccess": "¡Síntesis creada con éxito!",
+    "accessDraft": "Acceder al borrador",
+    "generationFailed": "La síntesis falló, inténtalo de nuevo.",
+    "rateLimitError": "Servidor ocupado, inténtalo en 1 minuto.",
     "autoRedirect": "Redirección automática...",
     "demoModeActive": "Modo demostración activo.",
     "verifying": "Verificando...",
@@ -511,13 +529,39 @@
     "secret": "Secreto"
   },
   "creatures": {
-    "r1": "Hoja", "r2": "Gota", "r3": "Piedra", "r4": "Ramita", "r5": "Arena",
-    "r6": "Nube", "r7": "Flor", "r8": "Hongo", "r9": "Cactus", "r10": "Bambú",
-    "vr1": "Cristal", "vr2": "Perla", "vr3": "Zafiro", "vr4": "Hielo",
-    "vr5": "Luna", "vr6": "Estrella", "vr7": "Cometa", "vr8": "Tormenta",
-    "e1": "Dragoncito", "e2": "Unicornio", "e3": "Fénix", "e4": "Grifo", "e5": "Hidra", "e6": "Quimera",
-    "l1": "Rey Dragón", "l2": "Titán", "l3": "Arcángel", "l4": "Demonio", "l5": "Dios Solar",
-    "m1": "Cthulhu", "m2": "Leviatán", "m3": "Kraken", "s1": "El Vacío"
+    "r1": "Hoja",
+    "r2": "Gota",
+    "r3": "Piedra",
+    "r4": "Ramita",
+    "r5": "Arena",
+    "r6": "Nube",
+    "r7": "Flor",
+    "r8": "Hongo",
+    "r9": "Cactus",
+    "r10": "Bambú",
+    "vr1": "Cristal",
+    "vr2": "Perla",
+    "vr3": "Zafiro",
+    "vr4": "Hielo",
+    "vr5": "Luna",
+    "vr6": "Estrella",
+    "vr7": "Cometa",
+    "vr8": "Tormenta",
+    "e1": "Dragoncito",
+    "e2": "Unicornio",
+    "e3": "Fénix",
+    "e4": "Grifo",
+    "e5": "Hidra",
+    "e6": "Quimera",
+    "l1": "Rey Dragón",
+    "l2": "Titán",
+    "l3": "Arcángel",
+    "l4": "Demonio",
+    "l5": "Dios Solar",
+    "m1": "Cthulhu",
+    "m2": "Leviatán",
+    "m3": "Kraken",
+    "s1": "El Vacío"
   },
   "studyDetail": {
     "loadError": "No se puede cargar esta síntesis",
@@ -559,6 +603,7 @@
     "verifyEmailText": "Se envió un enlace de verificación a tu email. Haz clic para activar tu cuenta.",
     "linkExpiry": "Este enlace expira en 1 hora.",
     "resendEmail": "Reenviar email",
+    "openMailbox": "Abrir mi buzón",
     "emailVerified": "¡Email verificado!",
     "accountActivated": "¡Tu cuenta ha sido activada!",
     "accountAlreadyActive": "Cuenta ya activa",

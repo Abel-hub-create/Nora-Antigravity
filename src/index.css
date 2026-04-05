@@ -45,23 +45,98 @@
 
   /* Dark theme */
   [data-theme="dark"] {
-    /* Background - Intensity: Low */
-    --color-background: #0f172a; /* Slate 900 - Main page background */
+    --color-background: #0d1524;   /* sombre mais lisible */
+    --color-surface: #162038;      /* distinguable du fond */
 
-    /* Surface - Intensity: Medium */
-    --color-surface: #1e293b; /* Slate 800 - Cards, modals, elevated elements */
+    --color-primary: #38bdf8;
+    --color-primary-dark: #0ea5e9;
 
-    /* Primary - Intensity: Accent (interactive only) */
-    --color-primary: #38bdf8; /* Sky 400 - Buttons, links, active states */
-    --color-primary-dark: #0ea5e9; /* Sky 500 - Hover states */
+    --color-secondary: #818cf8;
+    --color-accent: #f472b6;
 
-    /* Secondary */
-    --color-secondary: #818cf8; /* Indigo 400 - Secondary accents */
-    --color-accent: #f472b6; /* Pink 400 - Highlights, badges */
+    --color-text-main: #ffffff;
+    --color-text-muted: #6b7d96;
+  }
 
-    /* Text - WCAG AA compliant */
-    --color-text-main: #f8fafc; /* Slate 50 - Primary text, contrast 15.4:1 */
-    --color-text-muted: #94a3b8; /* Slate 400 - Secondary text, contrast 4.6:1 */
+  /* ── Valeurs par défaut des CSS vars de lumière (remplacées par useTimeLight) ── */
+  :root {
+    --glass-inset-x:        0px;
+    --glass-inset-y:        -2px;
+    --glass-border-alpha:   0.12;
+    --glass-highlight-alpha:0.07;
+    --glass-bg-x:           50%;
+    --glass-bg-y:           12%;
+  }
+
+  /* ── Fond — lueur solaire (les deux thèmes) ────────────────────────────── */
+  [data-theme="dark"] body {
+    background-image:
+      radial-gradient(ellipse at var(--glass-bg-x) var(--glass-bg-y),
+        rgba(56, 189, 248, 0.03) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 82%, rgba(99, 102, 241, 0.03) 0%, transparent 55%);
+  }
+  [data-theme="light"] body {
+    background-image:
+      radial-gradient(ellipse at var(--glass-bg-x) var(--glass-bg-y),
+        rgba(2, 132, 199, 0.03) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 82%, rgba(99, 102, 241, 0.03) 0%, transparent 55%);
+  }
+
+  /* ── Effet verre — structure identique, couleurs adaptées au thème ─── */
+  .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl {
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+  }
+  /* Désactiver complètement l'effet verre (caméra, vidéo, etc.) */
+  .no-glass,
+  .no-glass * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+  }
+
+  /* CLAIR : bord noir léger, reflet blanc fort, ombre douce */
+  [data-theme="light"] .rounded-lg,
+  [data-theme="light"] .rounded-xl,
+  [data-theme="light"] .rounded-2xl,
+  [data-theme="light"] .rounded-3xl {
+    box-shadow:
+      0 0 0 1.5px rgba(0, 0, 0, 0.10),
+      inset var(--glass-inset-x, 0px) var(--glass-inset-y, -2px) 14px rgba(255, 255, 255, 0.75),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.06),
+      0 8px 28px rgba(0, 0, 0, 0.09);
+  }
+
+  /* bg-primary sélectionné clair */
+  [data-theme="light"] .bg-primary.rounded-xl,
+  [data-theme="light"] .bg-primary.rounded-2xl,
+  [data-theme="light"] .bg-primary.rounded-3xl {
+    box-shadow:
+      0 0 0 1.5px rgba(255, 255, 255, 0.38),
+      inset 0 1px 0 rgba(255, 255, 255, 0.45),
+      0 8px 20px rgba(2, 132, 199, 0.32);
+  }
+
+  /* SOMBRE : bord blanc, reflet blanc, ombre noire profonde (après clair = gagne) */
+  [data-theme="dark"] .rounded-lg,
+  [data-theme="dark"] .rounded-xl,
+  [data-theme="dark"] .rounded-2xl,
+  [data-theme="dark"] .rounded-3xl {
+    box-shadow:
+      0 0 0 1.5px rgba(255, 255, 255, var(--glass-border-alpha, 0.14)),
+      inset var(--glass-inset-x, 0px) var(--glass-inset-y, -2px) 14px rgba(255, 255, 255, var(--glass-highlight-alpha, 0.08)),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.50),
+      0 12px 40px rgba(0, 0, 0, 0.70);
+  }
+
+  /* bg-primary sélectionné sombre */
+  [data-theme="dark"] .bg-primary.rounded-xl,
+  [data-theme="dark"] .bg-primary.rounded-2xl,
+  [data-theme="dark"] .bg-primary.rounded-3xl {
+    box-shadow:
+      0 0 0 1.5px rgba(255, 255, 255, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.32),
+      0 8px 24px rgba(56, 189, 248, 0.28);
   }
 
   body {
@@ -91,9 +166,9 @@
     transition: none;
   }
 
-  /* Re-enable specific transitions for buttons */
+  /* Re-enable color transitions for buttons (transform/filter handled outside @layer) */
   button {
-    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, transform 0.15s ease;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   }
 }
 
@@ -224,6 +299,20 @@
   }
 }
 
+/* ── Hover lift — agrandissement + légère luminosité ──────────────────── */
+.hover-lift {
+  transition: transform 220ms ease-out, filter 220ms ease-out,
+              background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease !important;
+}
+.hover-lift:hover {
+  transform: scale(1.03) !important;
+  filter: brightness(1.07) !important;
+}
+.hover-lift:active {
+  transform: scale(0.98) !important;
+  transition-duration: 100ms !important;
+}
+
 /* Custom Range Slider */
 .slider-primary {
   -webkit-appearance: none;
@@ -261,4 +350,83 @@
 :root .slider-primary,
 [data-theme="light"] .slider-primary {
   background: rgba(0, 0, 0, 0.1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLOW TEXTE — couleur du texte, visible mais discret
+   Règle : [data-theme="light"] en premier, [data-theme="dark"] en dernier
+   (même spécificité → last-wins : dark écrase light en thème sombre)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── CLAIR : glow très léger, uniforme sur tous les éléments ────── */
+[data-theme="light"] body,
+[data-theme="light"] h1,
+[data-theme="light"] h2,
+[data-theme="light"] h3,
+[data-theme="light"] .text-2xl,
+[data-theme="light"] .text-3xl,
+[data-theme="light"] .text-4xl {
+  text-shadow: 0 0 6px rgba(15, 23, 42, 0.07),
+               0 0 16px rgba(15, 23, 42, 0.03);
+}
+[data-theme="light"] .text-primary {
+  text-shadow: 0 0 6px rgba(2, 132, 199, 0.22),
+               0 0 16px rgba(2, 132, 199, 0.08);
+}
+[data-theme="light"] ::selection {
+  background: rgba(2, 132, 199, 0.25);
+  color: #0f172a;
+  text-shadow: 0 0 6px rgba(2, 132, 199, 0.12);
+}
+
+/* ── SOMBRE : glow uniforme sur tous les éléments ─────────────────
+   Ces règles viennent APRÈS le clair → elles gagnent en thème sombre */
+[data-theme="dark"] body,
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] .text-2xl,
+[data-theme="dark"] .text-3xl,
+[data-theme="dark"] .text-4xl {
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.12),
+               0 0 12px rgba(255, 255, 255, 0.04);
+}
+[data-theme="dark"] .text-primary {
+  text-shadow: 0 0 5px rgba(56, 189, 248, 0.20),
+               0 0 12px rgba(56, 189, 248, 0.07);
+}
+/* Glow coloré — couleur de l'élément */
+[data-theme="light"] .text-success {
+  text-shadow: 0 0 6px rgba(74, 222, 128, 0.45), 0 0 16px rgba(74, 222, 128, 0.15);
+}
+[data-theme="light"] .text-error {
+  text-shadow: 0 0 6px rgba(248, 113, 113, 0.45), 0 0 16px rgba(248, 113, 113, 0.15);
+}
+[data-theme="dark"] .text-success {
+  text-shadow: 0 0 5px rgba(74, 222, 128, 0.30), 0 0 14px rgba(74, 222, 128, 0.10);
+}
+[data-theme="dark"] .text-error {
+  text-shadow: 0 0 5px rgba(248, 113, 113, 0.30), 0 0 14px rgba(248, 113, 113, 0.10);
+}
+[data-theme="dark"] ::selection {
+  background: rgba(56, 189, 248, 0.40);
+  color: #ffffff;
+  text-shadow: 0 0 7px rgba(56, 189, 248, 0.35);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   HOVER UNIVERSEL SUR BOUTONS — hors @layer pour priorité maximale
+   Écrase Tailwind's transition-colors qui est dans @layer utilities
+   ══════════════════════════════════════════════════════════════════ */
+button:not(:disabled):not(.no-hover) {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease,
+              transform 0.18s ease-out, filter 0.18s ease-out !important;
+}
+button:not(:disabled):not(.no-hover):hover {
+  transform: scale(1.04) !important;
+  filter: brightness(1.09) !important;
+}
+button:not(:disabled):not(.no-hover):active {
+  transform: scale(0.97) !important;
+  transition-duration: 0.08s !important;
 }

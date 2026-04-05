@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import LiquidProgressBar from '../components/UI/LiquidProgressBar';
 import { Settings, Folder, Award, Star, ChevronRight, Plus, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +10,7 @@ import FolderCard from '../components/Folders/FolderCard';
 import CreateFolderModal from '../components/Folders/CreateFolderModal';
 import { useAuth } from '../features/auth/hooks/useAuth';
 import { useUser } from '../context/UserContext';
+import AnimatedNumber from '../components/UI/AnimatedNumber';
 
 const Profile = () => {
     const { t } = useTranslation();
@@ -100,28 +102,25 @@ const Profile = () => {
                         <h2 className="text-xl font-bold text-text-main">{user.name || t('common.user')}</h2>
                         <div className="flex items-center gap-2 text-sm text-primary font-medium">
                             <Star size={14} className="fill-current" />
-                            {t('profile.level')} {user.level}
+                            {t('profile.level')} <AnimatedNumber value={user.level} duration={800} />
                         </div>
                     </div>
                     <div className="ml-auto bg-black/30 px-3 py-1 rounded-full border border-white/10 flex items-center gap-2">
                         <span className="text-lg">🥚</span>
-                        <span className="text-sm font-bold text-text-main">{user.eggs}</span>
+                        <AnimatedNumber value={user.eggs} duration={800} className="text-sm font-bold text-text-main" />
                     </div>
                 </div>
                 {/* EXP Bar */}
                 <div className="relative z-10">
                     <div className="flex justify-between text-xs text-text-muted mb-2">
-                        <span>{user.exp} XP</span>
+                        <span><AnimatedNumber value={user.exp} duration={1200} /> XP</span>
                         <span>{user.nextLevelExp} XP</span>
                     </div>
-                    <div className="h-3 w-full bg-black/30 rounded-full overflow-hidden">
-                        <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${(user.exp / user.nextLevelExp) * 100}%` }}
-                            transition={{ duration: 1.5, ease: "easeOut" }}
-                            className="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
-                        />
-                    </div>
+                    <LiquidProgressBar
+                        progress={(user.exp / user.nextLevelExp) * 100}
+                        height={12}
+                        className="w-full"
+                    />
                     <p className="text-xs text-text-muted mt-2 text-center">
                         {t('profile.xpToLevel', { xp: user.nextLevelExp - user.exp, level: user.level + 1 })}
                     </p>
@@ -136,12 +135,12 @@ const Profile = () => {
                 <div className="bg-surface/50 p-4 rounded-2xl border border-white/5 flex flex-col items-center justify-center">
                     <span className="text-2xl font-bold text-text-main mb-1">
                         <Award size={20} className="inline mr-1 text-green-500" />
-                        {masteredCount}/{synthesesCount}
+                        <AnimatedNumber value={masteredCount} duration={1000} />/{synthesesCount}
                     </span>
                     <span className="text-xs text-text-muted">{t('profile.masteredCount')}</span>
                 </div>
                 <div className="bg-surface/50 p-4 rounded-2xl border border-white/5 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-text-main mb-1">📚 {synthesesCount}/40</span>
+                    <span className="text-2xl font-bold text-text-main mb-1">📚 <AnimatedNumber value={synthesesCount} duration={1000} />/40</span>
                     <span className="text-xs text-text-muted">{t('profile.synthesesCount')}</span>
                 </div>
             </div>

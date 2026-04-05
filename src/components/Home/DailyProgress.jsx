@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { Check, Target, Trophy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useUser, ACTIVITY_TYPES } from '../../context/UserContext';
+import LiquidProgressBar from '../UI/LiquidProgressBar';
+import AnimatedNumber from '../UI/AnimatedNumber';
 
 const DailyProgress = () => {
     const { t } = useTranslation();
@@ -51,30 +53,17 @@ const DailyProgress = () => {
                     {dailyGoalsRewardClaimed && (
                         <Trophy className="w-5 h-5 text-yellow-400" />
                     )}
-                    <span className="text-2xl font-bold text-primary">{dailyProgressPercentage}%</span>
+                    <span className="text-2xl font-bold text-primary"><AnimatedNumber value={dailyProgressPercentage} />%</span>
                 </div>
             </div>
 
             {/* Main Progress Bar */}
-            <div className="h-4 w-full bg-surface rounded-full overflow-hidden relative mb-4">
-                {/* Background Glow */}
-                <div className="absolute inset-0 bg-primary/10" />
-
-                {/* Progress Bar */}
-                <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${dailyProgressPercentage}%` }}
-                    transition={{ duration: 1.5, ease: "easeOut" }}
-                    className={`h-full rounded-full relative ${
-                        dailyProgressPercentage === 100
-                            ? 'bg-gradient-to-r from-green-500 to-green-400'
-                            : 'bg-gradient-to-r from-primary-dark to-primary'
-                    }`}
-                >
-                    {/* Shine Effect */}
-                    <div className="absolute top-0 right-0 bottom-0 w-1 bg-white/30 blur-[2px]" />
-                </motion.div>
-            </div>
+            <LiquidProgressBar
+                progress={dailyProgressPercentage}
+                height={16}
+                completed={dailyProgressPercentage === 100}
+                className="w-full mb-4"
+            />
 
             {/* Goals Summary */}
             {totalGoals > 0 ? (
@@ -126,23 +115,17 @@ const DailyProgress = () => {
                                         <span className={`text-xs ${
                                             goal.completed ? 'text-green-400' : 'text-text-muted'
                                         }`}>
-                                            {currentMinutes}/{goal.targetMinutes} {t('common.min')}
+                                            <AnimatedNumber value={currentMinutes} duration={900} />/{goal.targetMinutes} {t('common.min')}
                                         </span>
                                     </div>
 
-                                    {/* Mini progress bar for each goal */}
-                                    <div className="h-2 w-full bg-background/50 rounded-full overflow-hidden border border-white/10">
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            animate={{ width: `${goalProgress}%` }}
-                                            transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
-                                            className={`h-full rounded-full ${
-                                                goal.completed
-                                                    ? 'bg-green-400'
-                                                    : 'bg-primary'
-                                            }`}
-                                        />
-                                    </div>
+                                    {/* Mini liquid progress bar for each goal */}
+                                    <LiquidProgressBar
+                                        progress={goalProgress}
+                                        height={8}
+                                        completed={goal.completed}
+                                        className="w-full"
+                                    />
                                 </motion.div>
                             );
                         })}

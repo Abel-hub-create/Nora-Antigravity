@@ -101,6 +101,11 @@ export const updateNotificationSettings = async (enabled) => {
   return await api.patch('/notifications/settings', { enabled });
 };
 
+// Update notification schedule (hour + days)
+export const updateNotificationSchedule = async (hour, days) => {
+  return await api.patch('/notifications/schedule', { hour, days });
+};
+
 // Sync daily progress to backend (for notification eligibility check)
 export const syncDailyProgress = async (dailyGoals, progressPercentage, rewardClaimed, dailyStats = null) => {
   const payload = {

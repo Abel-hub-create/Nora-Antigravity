@@ -13,7 +13,7 @@ const openai = new OpenAI({
 });
 
 const MODEL = 'gpt-4o-mini';
-const MAX_TOKENS = 10000;
+const MAX_TOKENS = 13000;
 
 /**
  * Construit les consignes spécifiques à une matière
@@ -443,45 +443,45 @@ function parseAndValidateResponse(text) {
     throw new Error('Synthese manquante ou invalide');
   }
 
-  if (!Array.isArray(parsed.flashcards) || parsed.flashcards.length !== 6) {
-    throw new Error(`Nombre de flashcards incorrect: ${parsed.flashcards?.length || 0}/6`);
+  if (!Array.isArray(parsed.flashcards) || parsed.flashcards.length < 3) {
+    throw new Error(`Nombre de flashcards insuffisant: ${parsed.flashcards?.length || 0}/6`);
   }
 
-  if (!Array.isArray(parsed.quizQuestions) || parsed.quizQuestions.length !== 4) {
-    throw new Error(`Nombre de questions incorrect: ${parsed.quizQuestions?.length || 0}/4`);
+  if (!Array.isArray(parsed.quizQuestions) || parsed.quizQuestions.length < 3) {
+    throw new Error(`Nombre de questions insuffisant: ${parsed.quizQuestions?.length || 0}/4`);
   }
 
-  // Normaliser et valider les flashcards
-  const flashcards = parsed.flashcards.map((fc, index) => {
-    if (!fc.front || !fc.back) {
-      throw new Error(`Flashcard ${index + 1} incomplete (front ou back manquant)`);
-    }
-    return {
+  // Normaliser et valider les flashcards (accepte 3-6, prend les 6 premières valides)
+  const flashcards = parsed.flashcards
+    .filter(fc => fc.front && fc.back)
+    .slice(0, 6)
+    .map(fc => ({
       front: String(fc.front).trim(),
       back: String(fc.back).trim(),
       difficulty: ['easy', 'medium', 'hard'].includes(fc.difficulty) ? fc.difficulty : 'medium'
-    };
-  });
+    }));
 
-  // Normaliser et valider les questions quiz
-  const quizQuestions = parsed.quizQuestions.map((q, index) => {
-    if (!q.question) {
-      throw new Error(`Question ${index + 1} manquante`);
-    }
-    if (!Array.isArray(q.options) || q.options.length !== 4) {
-      throw new Error(`Question ${index + 1} doit avoir exactement 4 options`);
-    }
-    const correctAnswer = typeof q.correctAnswer === 'number' ? q.correctAnswer : 0;
-    if (correctAnswer < 0 || correctAnswer > 3) {
-      throw new Error(`Index de reponse invalide pour question ${index + 1}`);
-    }
-    return {
-      question: String(q.question).trim(),
-      options: q.options.map(opt => String(opt).trim()),
-      correctAnswer: correctAnswer,
-      explanation: String(q.explanation || '').trim()
-    };
-  });
+  if (flashcards.length < 3) {
+    throw new Error(`Flashcards valides insuffisantes après filtrage: ${flashcards.length}`);
+  }
+
+  // Normaliser et valider les questions quiz (prendre les 4 premières valides)
+  const quizQuestions = parsed.quizQuestions
+    .filter(q => q.question && Array.isArray(q.options) && q.options.length >= 4)
+    .slice(0, 4)
+    .map((q, index) => {
+      const correctAnswer = typeof q.correctAnswer === 'number' ? q.correctAnswer : 0;
+      return {
+        question: String(q.question).trim(),
+        options: q.options.slice(0, 4).map(opt => String(opt).trim()),
+        correctAnswer: Math.min(Math.max(correctAnswer, 0), 3),
+        explanation: String(q.explanation || '').trim()
+      };
+    });
+
+  if (quizQuestions.length < 3) {
+    throw new Error(`Questions quiz insuffisantes après filtrage: ${quizQuestions.length}/4`);
+  }
 
   return {
     title: parsed.title.trim().substring(0, 255),
@@ -499,6 +499,27 @@ function parseAndValidateResponse(text) {
  * @param {string|null} subject - Matiere selectionnee par l'utilisateur (optionnel, ex: 'mathematics')
  * @returns {Promise<Object>} - { title, summary, flashcards, quizQuestions }
  */
+async function callOpenAI(trimmedContent, specificInstructions, subject) {
+  const response = await openai.chat.completions.create({
+    model: MODEL,
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: buildUserPrompt(trimmedContent, specificInstructions, subject) }
+    ],
+    max_tokens: MAX_TOKENS,
+    temperature: 0.7,
+    response_format: { type: 'json_object' }
+  });
+
+  const rawContent = response.choices[0]?.message?.content;
+  if (!rawContent) throw new Error('Reponse vide de l\'API');
+
+  const tokens = response.usage?.total_tokens || 'N/A';
+  console.log(`[ContentGen] Reponse reçue (${tokens} tokens)`);
+
+  return parseAndValidateResponse(rawContent);
+}
+
 export async function generateEducationalContent(content, specificInstructions = null, subject = null) {
   if (!content || typeof content !== 'string') {
     throw new Error('Contenu invalide');
@@ -513,62 +534,46 @@ export async function generateEducationalContent(content, specificInstructions =
     throw new Error('Contenu trop long (maximum 100000 caracteres)');
   }
 
+  console.log('[ContentGen] Generation en cours...', subject ? `(matiere: ${subject})` : '');
+  const startTime = Date.now();
+
+  // Tentative 1
   try {
-    console.log('[ContentGen] Generation en cours...', subject ? `(matiere: ${subject})` : '');
-    const startTime = Date.now();
-
-    const response = await openai.chat.completions.create({
-      model: MODEL,
-      messages: [
-        {
-          role: 'system',
-          content: SYSTEM_PROMPT
-        },
-        {
-          role: 'user',
-          content: buildUserPrompt(trimmedContent, specificInstructions, subject)
-        }
-      ],
-      max_tokens: MAX_TOKENS,
-      temperature: 0.7,
-      response_format: { type: 'json_object' }
-    });
-
-    const rawContent = response.choices[0]?.message?.content;
-    if (!rawContent) {
-      throw new Error('Reponse vide de l\'API');
+    const result = await callOpenAI(trimmedContent, specificInstructions, subject);
+    console.log(`[ContentGen] Succes en ${Date.now() - startTime}ms`);
+    return result;
+  } catch (firstError) {
+    // Ne pas retry sur les erreurs d'auth, quota ou rate limit
+    if (firstError.code === 'insufficient_quota' || firstError.status === 401) {
+      throw firstError;
+    }
+    if (firstError.code === 'rate_limit_exceeded') {
+      console.warn('[ContentGen] Rate limit atteint, pas de retry');
+      throw new Error('rate_limit_exceeded');
     }
 
-    const validatedContent = parseAndValidateResponse(rawContent);
+    console.warn('[ContentGen] Tentative 1 echouee:', firstError.message, '— retry dans 3s...');
+    await new Promise(r => setTimeout(r, 3000));
 
-    const duration = Date.now() - startTime;
-    const tokens = response.usage?.total_tokens || 'N/A';
-    console.log(`[ContentGen] Succes en ${duration}ms (${tokens} tokens)`);
+    try {
+      const result = await callOpenAI(trimmedContent, specificInstructions, subject);
+      console.log(`[ContentGen] Succes (retry) en ${Date.now() - startTime}ms`);
+      return result;
+    } catch (secondError) {
+      console.error('[ContentGen] Echec definitif:', secondError.message);
 
-    return validatedContent;
+      if (secondError.code === 'insufficient_quota') {
+        throw new Error('Quota API depasse. Veuillez reessayer plus tard.');
+      }
+      if (secondError.code === 'rate_limit_exceeded') {
+        throw new Error('rate_limit_exceeded');
+      }
+      if (secondError.status === 401) {
+        throw new Error('Erreur d\'authentification API');
+      }
 
-  } catch (error) {
-    console.error('[ContentGen] Erreur:', error.message);
-
-    // Erreurs specifiques OpenAI
-    if (error.code === 'insufficient_quota') {
-      throw new Error('Quota API depasse. Veuillez reessayer plus tard.');
+      throw secondError;
     }
-
-    if (error.code === 'rate_limit_exceeded') {
-      throw new Error('Trop de requetes. Veuillez patienter quelques secondes.');
-    }
-
-    if (error.status === 401) {
-      throw new Error('Erreur d\'authentification API');
-    }
-
-    // Erreurs de parsing
-    if (error.message.includes('JSON') || error.message.includes('parser')) {
-      throw new Error('Erreur de format. Veuillez reessayer.');
-    }
-
-    throw error;
   }
 }
 

@@ -7,6 +7,166 @@ import * as syntheseService from '../services/syntheseService';
 import useActiveTimer from '../hooks/useActiveTimer';
 import { useAuth } from '../features/auth/hooks/useAuth';
 
+const SECTION_EMOJIS = {
+    définitions: '📖', definitions: '📖', vocabulaire: '📖', lexique: '📖',
+    tableaux: '📊', tableau: '📊', données: '📊', statistiques: '📊', chiffres: '📊',
+    méthodes: '🔧', methodes: '🔧', méthode: '🔧', technique: '🔧', procédé: '🔧',
+    exemples: '💡', exemple: '💡', application: '💡', exercice: '💡',
+    formules: '🧮', calculs: '🧮', calcul: '🧮', équation: '🧮', algorithme: '🧮',
+    conclusion: '🎯', bilan: '🎯', synthèse: '🎯',
+    introduction: '🚀', contexte: '🚀', présentation: '🚀',
+    histoire: '🏛️', historique: '🏛️', chronologie: '🏛️', période: '🏛️', siècle: '🏛️',
+    biologie: '🧬', cellule: '🧬', organisme: '🧬', gène: '🧬', ADN: '🧬',
+    chimie: '🧪', réaction: '🧪', molécule: '🧪', atome: '🧪', composé: '🧪',
+    physique: '⚡', énergie: '⚡', force: '⚡', lumière: '⚡', électricité: '⚡',
+    géographie: '🌍', continent: '🌍', territoire: '🌍', carte: '🌍', région: '🌍',
+    économie: '💰', marché: '💰', budget: '💰', prix: '💰', monnaie: '💰',
+    guerre: '⚔️', conflit: '⚔️', bataille: '⚔️', armée: '⚔️',
+    politique: '🏛️', gouvernement: '🏛️', état: '🏛️', loi: '🏛️',
+    science: '🔬', recherche: '🔬', expérience: '🔬', observation: '🔬',
+    math: '📐', algèbre: '📐', géométrie: '📐', fonction: '📐', vecteur: '📐',
+    littérature: '📜', texte: '📜', auteur: '📜', roman: '📜', poème: '📜',
+    philosophie: '🤔', pensée: '🤔', concept: '🤔', théorie: '🤔',
+    propriété: '✅', caractéristique: '✅', avantage: '✅', inconvénient: '❌',
+    attention: '⚠️', important: '⚠️', remarque: '⚠️', note: '📝',
+    résumé: '✏️', rappel: '✏️',
+};
+
+const getSectionEmoji = (title) => {
+    const lower = title.toLowerCase();
+    for (const [key, emoji] of Object.entries(SECTION_EMOJIS)) {
+        if (lower.includes(key)) return emoji;
+    }
+    return '🔹';
+};
+
+// Convertit le markdown en éléments React pour l'affichage
+const renderMarkdown = (text) => {
+    if (!text) return null;
+    const lines = text.split('\n');
+    const elements = [];
+    let i = 0;
+
+    const parseBold = (str) => {
+        const parts = str.split(/\*\*(.+?)\*\*/g);
+        return parts.map((part, idx) =>
+            idx % 2 === 1
+                ? <strong key={idx} className="text-text-main font-semibold">{part}</strong>
+                : part
+        );
+    };
+
+    while (i < lines.length) {
+        const line = lines[i];
+
+        // H2
+        if (line.startsWith('## ')) {
+            const title = line.slice(3).trim();
+            const emoji = getSectionEmoji(title);
+            elements.push(
+                <div key={i} className={`${i > 0 ? 'mt-5' : ''} mb-2`}>
+                    <h2 className="text-base font-bold text-text-main border-b border-white/10 pb-1">
+                        {emoji} {title}
+                    </h2>
+                </div>
+            );
+        }
+        // H3
+        else if (line.startsWith('### ')) {
+            const title = line.slice(4).trim();
+            elements.push(
+                <div key={i} className="mt-3 mb-1">
+                    <h3 className="text-sm font-semibold text-primary/90">{title}</h3>
+                </div>
+            );
+        }
+        // Table row
+        else if (line.startsWith('|') && line.endsWith('|')) {
+            // Collect all table rows
+            const tableRows = [];
+            let j = i;
+            while (j < lines.length && lines[j].startsWith('|')) {
+                tableRows.push(lines[j]);
+                j++;
+            }
+            const headers = tableRows[0].split('|').filter(c => c.trim() !== '').map(c => c.trim());
+            const dataRows = tableRows.slice(2).map(r => r.split('|').filter(c => c.trim() !== '').map(c => c.trim()));
+            elements.push(
+                <div key={i} className="my-3 overflow-x-auto">
+                    <table className="w-full text-xs border-collapse">
+                        <thead>
+                            <tr>
+                                {headers.map((h, hi) => (
+                                    <th key={hi} className="text-left px-2 py-1.5 bg-primary/10 text-primary font-semibold border border-white/10">{h}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {dataRows.map((row, ri) => (
+                                <tr key={ri} className={ri % 2 === 0 ? '' : 'bg-white/3'}>
+                                    {row.map((cell, ci) => (
+                                        <td key={ci} className="px-2 py-1.5 text-text-muted border border-white/10">{parseBold(cell)}</td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            );
+            i = j;
+            continue;
+        }
+        // Bullet
+        else if (line.match(/^[-*] /)) {
+            const content = line.slice(2).trim();
+            elements.push(
+                <div key={i} className="flex gap-2 text-sm text-text-muted leading-relaxed ml-1">
+                    <span className="shrink-0 text-primary/60 mt-0.5">•</span>
+                    <span>{parseBold(content)}</span>
+                </div>
+            );
+        }
+        // Empty line
+        else if (line.trim() === '') {
+            elements.push(<div key={i} className="h-2" />);
+        }
+        // Normal paragraph
+        else {
+            elements.push(
+                <p key={i} className="text-sm text-text-muted leading-relaxed">
+                    {parseBold(line)}
+                </p>
+            );
+        }
+        i++;
+    }
+    return elements;
+};
+
+// Convertit le markdown en HTML pour le print
+const markdownToHtml = (text) => {
+    if (!text) return '';
+    return text
+        .split('\n')
+        .map(line => {
+            const bold = s => s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            if (line.startsWith('## ')) {
+                const title = line.slice(3).trim();
+                const emoji = getSectionEmoji(title);
+                return `<h2>${emoji} ${title}</h2>`;
+            }
+            if (line.startsWith('### ')) return `<h3>▸ ${line.slice(4).trim()}</h3>`;
+            if (line.match(/^[-*] /)) return `<li>${bold(line.slice(2).trim())}</li>`;
+            if (line.startsWith('|') && line.endsWith('|')) return `<tr>${line.split('|').filter(c=>c.trim()).map(c=>`<td>${c.trim()}</td>`).join('')}</tr>`;
+            if (line.match(/^[|-]+$/)) return '';
+            if (line.trim() === '') return '<br>';
+            return `<p>${bold(line.trim())}</p>`;
+        })
+        .join('\n')
+        .replace(/(<li>.*<\/li>\n?)+/g, match => `<ul>${match}</ul>`)
+        .replace(/(<tr>.*<\/tr>\n?)+/g, match => `<table>${match}</table>`);
+};
+
 // Mapping des matières avec leurs icônes
 const SUBJECT_ICONS = {
     mathematics: '📐',
@@ -148,12 +308,29 @@ const StudyDetail = () => {
                         align-items: center;
                         gap: 6px;
                     }
-                    .content {
-                        white-space: pre-wrap;
-                        font-size: 14px;
+                    .content { font-size: 14px; }
+                    .content h2 {
+                        font-size: 16px; font-weight: bold; margin: 20px 0 6px;
+                        padding-bottom: 4px; border-bottom: 1px solid #ddd; color: #111;
                     }
+                    .content h3 {
+                        font-size: 14px; font-weight: 600; margin: 12px 0 4px; color: #333;
+                    }
+                    .content p { margin: 4px 0; color: #333; line-height: 1.7; }
+                    .content ul { margin: 4px 0 8px 16px; }
+                    .content li { margin: 2px 0; color: #444; line-height: 1.6; }
+                    .content br { display: block; margin: 6px 0; content: ''; }
+                    .content table {
+                        border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 13px;
+                    }
+                    .content td, .content th {
+                        border: 1px solid #ccc; padding: 6px 10px; text-align: left;
+                    }
+                    .content th { background: #f0f0f0; font-weight: 600; }
+                    .content tr:nth-child(even) { background: #fafafa; }
                     @media print {
                         body { padding: 20px; }
+                        .content h2 { page-break-after: avoid; }
                     }
                 </style>
             </head>
@@ -165,7 +342,7 @@ const StudyDetail = () => {
                         <span>${formatDate(synthese.created_at)}</span>
                     </div>
                 </div>
-                <div class="content">${synthese.summary_content}</div>
+                <div class="content">${markdownToHtml(synthese.summary_content)}</div>
             </body>
             </html>
         `);
@@ -328,8 +505,8 @@ const StudyDetail = () => {
 
                 <div className="relative overflow-visible">
                     {/* Contenu de la synthèse */}
-                    <div className="text-text-muted text-sm leading-relaxed whitespace-pre-wrap">
-                        {summaryPages[currentPage] || synthese.summary_content}
+                    <div className="flex flex-col gap-0.5">
+                        {renderMarkdown(summaryPages[currentPage] || synthese.summary_content)}
                     </div>
 
                     {/* Boutons de navigation */}

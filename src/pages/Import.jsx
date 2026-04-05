@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, X, ChevronRight, AlertTriangle, Camera, Image } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import PhotoCapture from '../components/Import/PhotoCapture';
 import VoiceDictation from '../components/Import/VoiceDictation';
@@ -25,6 +25,7 @@ const Import = () => {
     const { t } = useTranslation();
     const [showPhotoCapture, setShowPhotoCapture] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
 
     // État pour la sélection de matière
     const [selectedSubject, setSelectedSubject] = useState(null);
@@ -74,11 +75,26 @@ const Import = () => {
     const [dontShowWarningAgain, setDontShowWarningAgain] = useState(false);
     const [hideWarningPermanently, setHideWarningPermanently] = useState(false);
 
-    // Charger la préférence "ne plus afficher" au montage
+    // Charger la préférence "ne plus afficher" au montage + restaurer brouillon si retour depuis Process
     useEffect(() => {
         const hidden = localStorage.getItem(DEFINITIONS_WARNING_KEY) === 'true';
         setHideWarningPermanently(hidden);
-    }, []);
+
+        if (location.state?.isDraft) {
+            try {
+                const draft = JSON.parse(localStorage.getItem('nora_process_draft') || 'null');
+                if (draft?.content) {
+                    setCapturedContent(draft.content);
+                    setCapturedSourceType(draft.sourceType || 'photo');
+                    setSelectedSubject(draft.subject || null);
+                    setDefinitionsToInclude(draft.definitionsToInclude || '');
+                    setExamObjectives(draft.examObjectives || '');
+                    setWantsSpecific(draft.wantsSpecific ?? null);
+                    setShowSpecificPrompt(true);
+                }
+            } catch (_) {}
+        }
+    }, []); // eslint-disable-line
 
     // Sélectionner une matière → ouvrir directement la caméra
     const handleSelectSubject = (subjectId) => {
@@ -118,6 +134,16 @@ const Import = () => {
             }
         }
 
+        // Sauvegarder le brouillon pour récupération en cas d'échec
+        localStorage.setItem('nora_process_draft', JSON.stringify({
+            content: capturedContent,
+            sourceType: capturedSourceType,
+            subject: selectedSubject,
+            definitionsToInclude,
+            examObjectives,
+            wantsSpecific
+        }));
+
         navigate('/process', {
             state: {
                 content: capturedContent,
@@ -155,11 +181,11 @@ const Import = () => {
                         {SUBJECTS.map((subject, index) => (
                             <motion.button
                                 key={subject.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05 }}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: index * 0.04 }}
                                 onClick={() => handleSelectSubject(subject.id)}
-                                className="bg-surface border border-white/5 rounded-2xl p-4 flex items-center gap-3 hover:bg-surface/80 active:scale-95 transition-all text-left overflow-hidden"
+                                className="bg-surface border border-white/5 rounded-2xl p-4 flex items-center gap-3 hover:bg-surface/80 active:scale-95 transition-all text-left overflow-hidden no-hover"
                             >
                                 <span className="text-2xl shrink-0">{subject.icon}</span>
                                 <span className="font-medium text-text-main flex-1 truncate text-sm">

@@ -1,6 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, FileText, Calendar, ChevronRight, Pencil, Check, X, Loader2, Award, Trash2, Circle, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+
+const SUBJECT_EMOJIS = {
+    mathematics: '📐',
+    french: '📚',
+    physics: '⚡',
+    chemistry: '🧪',
+    biology: '🧬',
+    history: '🏛️',
+    geography: '🌍',
+    english: '🇬🇧',
+    dutch: '🇳🇱',
+};
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import * as syntheseService from '../services/syntheseService';
@@ -13,6 +25,30 @@ const Study = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [editingId, setEditingId] = useState(null);
     const [editTitle, setEditTitle] = useState('');
+
+    // Courbe de défilement
+    const listRef = useRef(null);
+
+    useEffect(() => {
+        const apply = () => {
+            if (!listRef.current) return;
+            const items = listRef.current.querySelectorAll('[data-curve]');
+            const vh = window.innerHeight;
+            items.forEach(item => {
+                const rect = item.getBoundingClientRect();
+                const center = rect.top + rect.height / 2;
+                const dist = (center - vh / 2) / (vh * 0.55);
+                const ratio = Math.max(-1, Math.min(1, dist));
+                const angle = ratio * 8;
+                const scale = 1 - Math.abs(ratio) * 0.025;
+                item.style.transform = `perspective(700px) rotateX(${angle}deg) scale(${scale})`;
+                item.style.opacity = 1 - Math.abs(ratio) * 0.25;
+            });
+        };
+        window.addEventListener('scroll', apply, { passive: true });
+        apply();
+        return () => window.removeEventListener('scroll', apply);
+    }, [syntheses]);
 
     // États pour la sélection et suppression
     const [selectedIds, setSelectedIds] = useState(new Set());
@@ -230,6 +266,7 @@ const Study = () => {
             )}
 
             {/* Syntheses List */}
+            <div ref={listRef}>
             <AnimatePresence mode="popLayout">
                 {!isLoading && syntheses.map((synthese, index) => (
                     <motion.div
@@ -240,6 +277,7 @@ const Study = () => {
                         transition={{ delay: index * 0.05 }}
                         className="mb-3"
                     >
+                        <div data-curve className={`${editingId !== synthese.id ? 'hover-lift' : ''}`}>
                         <div className="bg-surface rounded-2xl border border-white/5 overflow-hidden">
                             {/* Editing Mode */}
                             {editingId === synthese.id ? (
@@ -274,7 +312,7 @@ const Study = () => {
                                 /* Normal View */
                                 <div className="p-4">
                                     <div className="flex items-center gap-3">
-                                        {/* Cercle de sélection */}
+                                        {/* Emoji matière / cercle de sélection */}
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -285,12 +323,15 @@ const Study = () => {
                                             {selectedIds.has(synthese.id) ? (
                                                 <CheckCircle2 size={24} className="text-primary" />
                                             ) : (
-                                                <Circle size={24} className="text-text-muted hover:text-primary" />
+                                                <span className="text-2xl leading-none select-none">
+                                                    {SUBJECT_EMOJIS[synthese.subject] || '📄'}
+                                                </span>
                                             )}
                                         </button>
 
                                         {/* Contenu cliquable */}
                                         <div
+                                            role="button"
                                             className="flex-1 flex items-center gap-3 cursor-pointer"
                                             onClick={() => navigate(`/study/${synthese.id}`)}
                                         >
@@ -332,9 +373,11 @@ const Study = () => {
                                 </div>
                             )}
                         </div>
+                        </div>
                     </motion.div>
                 ))}
             </AnimatePresence>
+            </div>
 
             {/* Modal de confirmation de suppression */}
             <AnimatePresence>

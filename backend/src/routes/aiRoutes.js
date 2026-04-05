@@ -108,7 +108,7 @@ router.post('/transcribe', authenticate, (req, res, next) => {
  * OCR avec GPT-4 Vision
  * Body: { image: "base64..." } ou { images: ["base64...", "base64..."] }
  */
-router.post('/ocr', authenticate, express.json({ limit: '50mb' }), async (req, res) => {
+router.post('/ocr', authenticate, express.json({ limit: '120mb' }), async (req, res) => {
   const { image, images } = req.body;
 
   if (!image && (!images || !Array.isArray(images) || images.length === 0)) {
@@ -157,7 +157,9 @@ router.post('/generate-content', authenticate, express.json({ limit: '10mb' }), 
     res.json(result);
   } catch (error) {
     console.error('Erreur generation contenu:', error);
-    // Erreurs de validation retournent 400, erreurs serveur retournent 500
+    if (error.message === 'rate_limit_exceeded') {
+      return res.status(429).json({ error: 'Serveur occupé', code: 'RATE_LIMIT_EXCEEDED' });
+    }
     const statusCode = error.message.includes('trop court') ||
                        error.message.includes('trop long') ||
                        error.message.includes('invalide') ? 400 : 500;

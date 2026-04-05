@@ -133,7 +133,21 @@
       "updateError": "Erreur lors de la mise à jour"
     },
     "goalExists": "Un objectif de ce type existe déjà",
-    "selectGoalType": "Veuillez sélectionner un type d'objectif"
+    "selectGoalType": "Veuillez sélectionner un type d'objectif",
+    "sounds": "Sons",
+    "soundEffects": "Effets sonores",
+    "soundEffectsDesc": "Clics et survol",
+    "notificationHour": "Heure de rappel",
+    "notificationDays": "Jours",
+    "days": {
+      "sun": "D",
+      "mon": "L",
+      "tue": "M",
+      "wed": "M",
+      "thu": "J",
+      "fri": "V",
+      "sat": "S"
+    }
   },
   "study": {
     "title": "Mes Synthèses",
@@ -203,11 +217,26 @@
     "noQuestions": "Aucune question pour cette synthèse",
     "questionOf": "Question {{current}} sur {{total}}",
     "messages": {
-      "zero": ["Retourne t'entrainer", "Concentre toi"],
-      "low": ["Tu peux y arriver", "Tu t'améliores !"],
-      "medium": ["C'est plutôt pas mal", "Bien joué !"],
-      "high": ["Continue comme ça !", "C'est très bien !"],
-      "perfect": ["C'est tout simplement parfait", "Bravo, tu as tout bon !"]
+      "zero": [
+        "Retourne t'entrainer",
+        "Concentre toi"
+      ],
+      "low": [
+        "Tu peux y arriver",
+        "Tu t'améliores !"
+      ],
+      "medium": [
+        "C'est plutôt pas mal",
+        "Bien joué !"
+      ],
+      "high": [
+        "Continue comme ça !",
+        "C'est très bien !"
+      ],
+      "perfect": [
+        "C'est tout simplement parfait",
+        "Bravo, tu as tout bon !"
+      ]
     }
   },
   "revision": {
@@ -413,6 +442,9 @@
     "summaryCreated": "Synthèse créée",
     "summaryCreatedDemo": "Synthèse créée (mode démo)",
     "summaryCreatedSuccess": "Synthèse créée avec succès !",
+    "accessDraft": "Accéder au brouillon",
+    "generationFailed": "La synthèse a échoué, recommence.",
+    "rateLimitError": "Serveur surchargé, réessaie dans 1 minute.",
     "autoRedirect": "Redirection automatique...",
     "demoModeActive": "Mode démonstration actif. Connectez l'API OpenAI pour la génération réelle.",
     "verifying": "Vérification...",
@@ -585,6 +617,7 @@
     "verifyEmailText": "Un lien de vérification a été envoyé à ton adresse email. Clique dessus pour activer ton compte.",
     "linkExpiry": "Ce lien expire dans 1 heure.",
     "resendEmail": "Renvoyer l'email",
+    "openMailbox": "Ouvrir ma boîte mail",
     "emailVerified": "Email vérifié !",
     "accountActivated": "Ton compte a bien été activé !",
     "accountAlreadyActive": "Compte déjà actif",

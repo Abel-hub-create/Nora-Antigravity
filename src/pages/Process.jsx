@@ -144,8 +144,10 @@ const Process = () => {
         let errorMessage;
         if (errorCode === 'SYNTHESES_LIMIT_REACHED') {
           errorMessage = t('errors.synthesesLimitReached');
+        } else if (errorCode === 'RATE_LIMIT_EXCEEDED') {
+          errorMessage = t('process.rateLimitError');
         } else {
-          errorMessage = err?.message || err?.error || t('errors.generic');
+          errorMessage = t('process.generationFailed');
         }
         setError(errorMessage);
       }
@@ -175,6 +177,11 @@ const Process = () => {
   // Retourner à l'import
   const handleBack = () => {
     navigate('/import');
+  };
+
+  // Accéder au brouillon sauvegardé
+  const handleAccessDraft = () => {
+    navigate('/import', { state: { isDraft: true } });
   };
 
   // Handlers pour le modal de verification
@@ -388,6 +395,12 @@ const Process = () => {
                 className="w-full py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark transition-colors"
               >
                 {t('common.retry')}
+              </button>
+              <button
+                onClick={handleAccessDraft}
+                className="w-full py-3 mt-3 bg-surface border border-white/10 text-text-muted rounded-xl font-medium hover:bg-white/5 transition-colors text-sm"
+              >
+                {t('process.accessDraft')}
               </button>
             </motion.div>
           )}

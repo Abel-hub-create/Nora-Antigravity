@@ -319,7 +319,7 @@ export async function generateComplete(content, specificInstructions = null, sub
       payload.subject = subject;
     }
 
-    const data = await api.post('/ai/generate-content', payload);
+    const data = await api.post('/ai/generate-content', payload, { timeout: 120000 });
 
     return {
       title: data.title,

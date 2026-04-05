@@ -54,9 +54,15 @@ export const setNotificationsEnabled = async (userId, enabled) => {
 
 // Get notification settings for a user
 export const getNotificationSettings = async (userId) => {
-  const sql = 'SELECT notifications_enabled, last_notification_sent_at FROM users WHERE id = ?';
+  const sql = 'SELECT notifications_enabled, last_notification_sent_at, notification_hour, notification_days FROM users WHERE id = ?';
   const users = await query(sql, [userId]);
   return users[0] || null;
+};
+
+// Update notification schedule (hour + days)
+export const updateNotificationSchedule = async (userId, hour, days) => {
+  const sql = 'UPDATE users SET notification_hour = ?, notification_days = ? WHERE id = ?';
+  await query(sql, [hour, JSON.stringify(days), userId]);
 };
 
 // Mark notification as sent today
@@ -116,7 +122,9 @@ export const sendNotification = async (userId, title, body) => {
 // 3. progress < 100%
 // 4. reward not claimed today
 // 5. notification not already sent today
-export const getEligibleUsersForNotification = async () => {
+// 6. notification_hour matches current Paris hour
+// 7. current day is in notification_days
+export const getEligibleUsersForNotification = async (parisHour, parisDay) => {
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
   const sql = `
@@ -132,16 +140,18 @@ export const getEligibleUsersForNotification = async () => {
       AND dp.progress_percentage < 100
       AND dp.reward_claimed = FALSE
       AND (u.last_notification_sent_at IS NULL OR u.last_notification_sent_at < ?)
+      AND u.notification_hour = ?
+      AND (u.notification_days IS NULL OR JSON_CONTAINS(u.notification_days, CAST(? AS JSON)))
   `;
 
-  return await query(sql, [today, today]);
+  return await query(sql, [today, today, parisHour, parisDay]);
 };
 
 // Send daily reminder notifications to all eligible users
-export const sendDailyReminders = async () => {
-  console.log('Starting daily reminder notifications...');
+export const sendDailyReminders = async (parisHour, parisDay) => {
+  console.log(`Starting daily reminder notifications for hour=${parisHour}, day=${parisDay}...`);
 
-  const eligibleUsers = await getEligibleUsersForNotification();
+  const eligibleUsers = await getEligibleUsersForNotification(parisHour, parisDay);
   console.log(`Found ${eligibleUsers.length} eligible users`);
 
   let sent = 0;

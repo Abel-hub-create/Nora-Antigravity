@@ -1,5 +1,6 @@
 import React, { useCallback, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import LiquidProgressBar from '../UI/LiquidProgressBar';
 import { BookOpen, AlertCircle, Clock, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import useRevisionTimer from '../../hooks/useRevisionTimer';
@@ -192,14 +193,11 @@ const RevisionLoopPhase = ({
                 </p>
 
                 {/* Progress bar */}
-                <div className="mt-2 h-1 bg-surface rounded-full overflow-hidden">
-                    <motion.div
-                        className="h-full bg-primary"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${progress}%` }}
-                        transition={{ duration: 0.5 }}
-                    />
-                </div>
+                <LiquidProgressBar
+                    progress={progress}
+                    height={4}
+                    className="mt-2 w-full"
+                />
             </header>
 
             {/* Instructions */}

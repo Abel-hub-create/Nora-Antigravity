@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
+import OpenEmailButton from '../../../components/UI/OpenEmailButton';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import AuthInput from '../components/AuthInput';
@@ -64,6 +65,8 @@ const ForgotPassword = () => {
             <p className="text-text-muted mb-6">
               {t('auth.resetPasswordText')}
             </p>
+
+            <OpenEmailButton email={email} />
 
             <Link
               to="/login"

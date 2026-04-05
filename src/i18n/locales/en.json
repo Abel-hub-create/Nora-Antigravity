@@ -133,7 +133,21 @@
       "updateError": "Error updating profile"
     },
     "goalExists": "A goal of this type already exists",
-    "selectGoalType": "Please select a goal type"
+    "selectGoalType": "Please select a goal type",
+    "sounds": "Sounds",
+    "soundEffects": "Sound effects",
+    "soundEffectsDesc": "Clicks and hover",
+    "notificationHour": "Reminder time",
+    "notificationDays": "Days",
+    "days": {
+      "sun": "S",
+      "mon": "M",
+      "tue": "T",
+      "wed": "W",
+      "thu": "T",
+      "fri": "F",
+      "sat": "S"
+    }
   },
   "study": {
     "title": "My Summaries",
@@ -413,6 +427,9 @@
     "summaryCreated": "Summary created",
     "summaryCreatedDemo": "Summary created (demo mode)",
     "summaryCreatedSuccess": "Summary created successfully!",
+    "accessDraft": "Access draft",
+    "generationFailed": "Synthesis failed, please try again.",
+    "rateLimitError": "Server busy, try again in 1 minute.",
     "autoRedirect": "Automatic redirect...",
     "demoModeActive": "Demo mode active. Connect the OpenAI API for real generation.",
     "verifying": "Verifying...",
@@ -585,6 +602,7 @@
     "verifyEmailText": "A verification link has been sent to your email address. Click on it to activate your account.",
     "linkExpiry": "This link expires in 1 hour.",
     "resendEmail": "Resend email",
+    "openMailbox": "Open my mailbox",
     "emailVerified": "Email verified!",
     "accountActivated": "Your account has been activated!",
     "accountAlreadyActive": "Account already active",

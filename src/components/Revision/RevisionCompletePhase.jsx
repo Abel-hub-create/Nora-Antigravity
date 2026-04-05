@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import LiquidProgressBar from '../UI/LiquidProgressBar';
 import { BarChart3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -71,14 +72,11 @@ const RevisionCompletePhase = ({
                 transition={{ delay: 0.3 }}
                 className="w-full max-w-xs mb-6"
             >
-                <div className="h-3 bg-surface rounded-full overflow-hidden">
-                    <motion.div
-                        className={`h-full ${getProgressColor()} rounded-full`}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${percentage}%` }}
-                        transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" }}
-                    />
-                </div>
+                <LiquidProgressBar
+                    progress={percentage}
+                    height={12}
+                    completed={percentage === 100}
+                />
                 <div className="flex justify-between mt-2 text-xs text-text-muted">
                     <span>0%</span>
                     <span>100%</span>

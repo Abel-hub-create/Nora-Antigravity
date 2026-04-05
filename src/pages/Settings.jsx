@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, User, CreditCard, Bell, LogOut, Plus, Trash2, AlertTriangle, Check, Trophy, Loader2, Camera, X, UserX } from 'lucide-react';
+import { ArrowLeft, User, CreditCard, Bell, LogOut, Plus, Trash2, AlertTriangle, Check, Trophy, Loader2, Camera, X, UserX, Volume2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -33,6 +33,14 @@ const Settings = () => {
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
     const [notificationsLoading, setNotificationsLoading] = useState(true);
     const [notificationsSupported, setNotificationsSupported] = useState(true);
+    const [notifHour, setNotifHour] = useState(18);
+    const [notifDays, setNotifDays] = useState([0, 1, 2, 3, 4, 5, 6]);
+    const [scheduleLoading, setScheduleLoading] = useState(false);
+
+    // Sounds state (localStorage)
+    const [soundsEnabled, setSoundsEnabled] = useState(
+        localStorage.getItem('nora_sounds_enabled') !== 'false'
+    );
 
     // Profile edit state
     const [showProfileModal, setShowProfileModal] = useState(false);
@@ -58,6 +66,8 @@ const Settings = () => {
             try {
                 const settings = await notificationService.getNotificationSettings();
                 setNotificationsEnabled(settings.enabled);
+                if (settings.hour != null) setNotifHour(settings.hour);
+                if (settings.days != null) setNotifDays(settings.days);
             } catch (error) {
                 console.error('Failed to load notification settings:', error);
             } finally {
@@ -96,6 +106,39 @@ const Settings = () => {
         } finally {
             setNotificationsLoading(false);
         }
+    };
+
+    // Handle sounds toggle
+    const handleSoundsToggle = () => {
+        const next = !soundsEnabled;
+        setSoundsEnabled(next);
+        localStorage.setItem('nora_sounds_enabled', next ? 'true' : 'false');
+    };
+
+    // Handle notification schedule change
+    const handleScheduleChange = async (hour, days) => {
+        setScheduleLoading(true);
+        try {
+            await notificationService.updateNotificationSchedule(hour, days);
+        } catch (error) {
+            console.error('Failed to update schedule:', error);
+        } finally {
+            setScheduleLoading(false);
+        }
+    };
+
+    const toggleNotifDay = (day) => {
+        const next = notifDays.includes(day)
+            ? notifDays.filter(d => d !== day)
+            : [...notifDays, day];
+        if (next.length === 0) return; // keep at least 1 day
+        setNotifDays(next);
+        handleScheduleChange(notifHour, next);
+    };
+
+    const handleHourChange = (hour) => {
+        setNotifHour(hour);
+        handleScheduleChange(hour, notifDays);
     };
 
     // Handle profile photo selection
@@ -284,6 +327,28 @@ const Settings = () => {
                 <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">{t('settings.theme')}</h3>
                 <div className="bg-surface rounded-2xl overflow-hidden border border-white/5">
                     <ThemeSelector />
+                </div>
+            </div>
+
+            {/* Sounds Section */}
+            <div className="mb-8">
+                <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">{t('settings.sounds')}</h3>
+                <div className="bg-surface rounded-2xl overflow-hidden border border-white/5">
+                    <button
+                        onClick={handleSoundsToggle}
+                        className="w-full p-4 flex items-center justify-between"
+                    >
+                        <div className="flex items-center gap-3">
+                            <Volume2 size={20} className="text-text-muted" />
+                            <div className="text-left">
+                                <span className="text-text-main block">{t('settings.soundEffects')}</span>
+                                <span className="text-xs text-text-muted">{t('settings.soundEffectsDesc')}</span>
+                            </div>
+                        </div>
+                        <div className={`w-10 h-6 rounded-full relative transition-colors ${soundsEnabled ? 'bg-primary' : 'bg-white/10'}`}>
+                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${soundsEnabled ? 'left-5' : 'left-1'}`} />
+                        </div>
+                    </button>
                 </div>
             </div>
 
@@ -620,6 +685,7 @@ const Settings = () => {
                 <div>
                     <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">{t('settings.notifications')}</h3>
                     <div className="bg-surface rounded-2xl overflow-hidden border border-white/5">
+                        {/* Toggle */}
                         <button
                             onClick={handleNotificationToggle}
                             disabled={notificationsLoading || !notificationsSupported}
@@ -632,26 +698,67 @@ const Settings = () => {
                                     <span className="text-xs text-text-muted">
                                         {!notificationsSupported
                                             ? t('settings.notSupported')
-                                            : t('settings.notificationTime')}
+                                            : `${String(notifHour).padStart(2, '0')}:00`}
                                     </span>
                                 </div>
                             </div>
                             {notificationsLoading ? (
                                 <Loader2 size={20} className="text-primary animate-spin" />
                             ) : (
-                                <div
-                                    className={`w-10 h-6 rounded-full relative transition-colors ${
-                                        notificationsEnabled ? 'bg-primary' : 'bg-white/10'
-                                    }`}
-                                >
-                                    <div
-                                        className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${
-                                            notificationsEnabled ? 'left-5' : 'left-1'
-                                        }`}
-                                    />
+                                <div className={`w-10 h-6 rounded-full relative transition-colors ${notificationsEnabled ? 'bg-primary' : 'bg-white/10'}`}>
+                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${notificationsEnabled ? 'left-5' : 'left-1'}`} />
                                 </div>
                             )}
                         </button>
+
+                        {/* Schedule (shown when enabled) */}
+                        {notificationsEnabled && notificationsSupported && (
+                            <div className="border-t border-white/5 p-4 space-y-4">
+                                {/* Hour picker */}
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm text-text-muted">{t('settings.notificationHour')}</span>
+                                    <select
+                                        value={notifHour}
+                                        onChange={(e) => handleHourChange(parseInt(e.target.value))}
+                                        disabled={scheduleLoading}
+                                        className="bg-black/30 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-text-main focus:outline-none focus:border-primary disabled:opacity-50"
+                                    >
+                                        {Array.from({ length: 18 }, (_, i) => i + 6).map(h => (
+                                            <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Day picker */}
+                                <div>
+                                    <span className="text-sm text-text-muted block mb-2">{t('settings.notificationDays')}</span>
+                                    <div className="flex gap-1.5">
+                                        {[
+                                            { day: 1, key: 'mon' },
+                                            { day: 2, key: 'tue' },
+                                            { day: 3, key: 'wed' },
+                                            { day: 4, key: 'thu' },
+                                            { day: 5, key: 'fri' },
+                                            { day: 6, key: 'sat' },
+                                            { day: 0, key: 'sun' },
+                                        ].map(({ day, key }) => (
+                                            <button
+                                                key={day}
+                                                onClick={() => toggleNotifDay(day)}
+                                                disabled={scheduleLoading}
+                                                className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${
+                                                    notifDays.includes(day)
+                                                        ? 'bg-primary text-white'
+                                                        : 'bg-white/5 text-text-muted hover:bg-white/10'
+                                                }`}
+                                            >
+                                                {t(`settings.days.${key}`)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 

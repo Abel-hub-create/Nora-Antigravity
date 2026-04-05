@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Send, ThumbsUp, ThumbsDown, Trash2, Loader2, MessageSquare, Lightbulb } from 'lucide-react';
+import { ArrowLeft, Send, ThumbsUp, Trash2, Loader2, MessageSquare, Lightbulb } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../features/auth/hooks/useAuth';
@@ -193,23 +193,10 @@ const Feedback = () => {
 
                         {/* Score */}
                         <span className={`text-sm font-bold min-w-[2rem] text-center ${
-                            item.net_score > 0 ? 'text-green-400' :
-                            item.net_score < 0 ? 'text-red-400' : 'text-text-muted'
+                            Math.max(0, item.net_score) > 0 ? 'text-green-400' : 'text-text-muted'
                         }`}>
-                            {item.net_score > 0 ? '+' : ''}{item.net_score}
+                            {Math.max(0, item.net_score) > 0 ? '+' : ''}{Math.max(0, item.net_score)}
                         </span>
-
-                        {/* Dislike button */}
-                        <button
-                            onClick={() => handleVote(item.id, currentVote === -1 ? 0 : -1, isReview)}
-                            className={`p-2 rounded-lg transition-colors ${
-                                currentVote === -1
-                                    ? 'bg-red-500/20 text-red-400'
-                                    : 'bg-white/5 text-text-muted hover:text-red-400'
-                            }`}
-                        >
-                            <ThumbsDown size={16} />
-                        </button>
                     </div>
 
                     {/* Delete button (owner only) */}

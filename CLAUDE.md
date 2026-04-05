@@ -595,7 +595,7 @@ Backend returns error codes (not hardcoded messages) so the frontend can transla
 
 | Resource | Max | Enforcement | User Info |
 |----------|-----|-------------|-----------|
-| Photos per import | 6 | Frontend (`MAX_PHOTOS` in PhotoCapture.jsx) | Info text + buttons disabled at limit |
+| Photos per import | 15 | Frontend (`MAX_PHOTOS` in PhotoCapture.jsx) | Info text + buttons disabled at limit |
 | Syntheses per user | 40 | Backend (`POST /api/syntheses` checks count) | Study tab shows "max 40", Profile shows "X/40" |
 
 **File Structure**:
@@ -953,7 +953,7 @@ After capturing content via voice or photo, users can optionally customize their
 
 **`/src/components/Import/PhotoCapture.jsx`**
 - Camera access via getUserMedia
-- Multi-photo capture from camera (**max 6 photos** - buttons disabled at limit, info text shown)
+- Multi-photo capture from camera (**max 15 photos** - buttons disabled at limit, info text shown)
 - Gallery import button (select multiple images from device, limited to remaining slots)
 - Sends images to backend for GPT-4 Vision OCR (parallel processing via `Promise.all()`)
 - Progress indicator during processing
@@ -1127,6 +1127,29 @@ generateComplete(content)        // Returns { title, summary, flashcards, quizQu
 - **File Validation**: Audio uploads validated for type and size
 - **Content Validation**: Min 50 chars, max 100,000 chars for content generation
 
+## Sound Effects
+
+Minecraft-style UI sounds synthesized in-browser via the Web Audio API (no audio files).
+
+### Implementation
+
+**`/src/utils/sounds.js`**
+- `playClick()` — Square-wave oscillator, 600→150 Hz drop in 80ms (Minecraft UI click feel)
+- `playHover()` — Bandpass-filtered white noise, 3000→800 Hz sweep in 60ms (swoosh)
+- Both wrapped in try/catch; AudioContext lazily initialized and resumed on first interaction
+
+**`/src/components/Layout/MobileWrapper.jsx`**
+- Global `click` and `mouseover` listeners on `document` (capture phase)
+- Selector: `button, a, [role="button"], input[type="checkbox"], input[type="radio"], select, label`
+- Hover suppressed for 150ms after a click (avoids double-trigger)
+- Both sounds gated by `localStorage.getItem('nora_sounds_enabled') !== 'false'`
+
+### Settings Toggle
+
+- Key: `nora_sounds_enabled` in localStorage (default: enabled)
+- Toggle in Settings > Sons section
+- No backend sync needed — preference is per-device
+
 ## Folders System
 
 Organizational system for grouping syntheses into folders. Accessible from Profile page.
@@ -1193,7 +1216,7 @@ getAvailableSyntheses(folderId)
 
 ## Push Notifications System
 
-Daily reminder notifications sent at 18:00 (Europe/Paris) to remind users of incomplete daily goals.
+Personalized daily reminder notifications sent at the user's chosen hour and days (configurable in Settings).
 
 ### Philosophy
 
@@ -1210,6 +1233,14 @@ A notification is sent ONLY if ALL conditions are true:
 3. Daily progress < 100%
 4. Daily reward not yet claimed
 5. Notification not already sent today
+6. Current Paris hour matches user's `notification_hour`
+7. Current day is in user's `notification_days`
+
+### Notification Schedule (per user)
+
+Users configure their preferred hour (6h–23h) and days (Mon–Sun) in Settings > Notifications.
+
+**Days convention**: 0=Sunday, 1=Monday, … 6=Saturday (matches JS `Date.getDay()`)
 
 ### Database Schema
 
@@ -1217,6 +1248,9 @@ A notification is sent ONLY if ALL conditions are true:
 -- Added to users table
 notifications_enabled BOOLEAN DEFAULT FALSE
 last_notification_sent_at DATE NULL
+notification_hour TINYINT UNSIGNED NOT NULL DEFAULT 18
+notification_days JSON NULL  -- e.g. [1,2,3,4,5] Mon-Fri. NULL = all days.
+-- Migration: 025_notification_schedule.sql
 
 -- Push subscriptions table
 push_subscriptions (id, user_id, endpoint, p256dh, auth, created_at)
@@ -1232,8 +1266,9 @@ daily_progress (id, user_id, daily_goals JSON, progress_percentage, reward_claim
 - `removeSubscription(userId)` - Remove subscription
 - `setNotificationsEnabled(userId, enabled)` - Toggle notifications
 - `sendNotification(userId, title, body)` - Send push notification
-- `getEligibleUsersForNotification()` - Get users who should receive notification
-- `sendDailyReminders()` - Send notifications to all eligible users (called by cron)
+- `updateNotificationSchedule(userId, hour, days)` - Update preferred hour/days
+- `getEligibleUsersForNotification(parisHour, parisDay)` - Get users to notify at given hour/day
+- `sendDailyReminders(parisHour, parisDay)` - Send notifications (called by cron)
 
 **`/backend/src/services/dailyProgressRepository.js`**
 - `syncDailyProgress(userId, data)` - Sync frontend progress to backend (includes study times)
@@ -1243,16 +1278,17 @@ daily_progress (id, user_id, daily_goals JSON, progress_percentage, reward_claim
 - `getStudyHistory(userId)` - Get last 30 days study history
 
 **`/backend/src/cron/notificationCron.js`**
-- Runs at 18:00 Europe/Paris every day
-- Calls `sendDailyReminders()` to notify eligible users
+- Runs **every hour** (`0 * * * *` Europe/Paris)
+- Passes current Paris hour + day of week to `sendDailyReminders()`
 
 ### API Endpoints (`/api/notifications/`)
 
 | Method | Route | Description | Auth |
 |--------|-------|-------------|------|
 | GET | `/vapid-public-key` | Get VAPID public key | No |
-| GET | `/settings` | Get notification settings | Yes |
+| GET | `/settings` | Get notification settings + schedule (hour, days) | Yes |
 | PATCH | `/settings` | Enable/disable notifications | Yes |
+| PATCH | `/schedule` | Update notification hour + days | Yes |
 | POST | `/subscribe` | Subscribe to push | Yes |
 | POST | `/unsubscribe` | Unsubscribe from push | Yes |
 | POST | `/sync-progress` | Sync daily progress + study times | Yes |
@@ -1628,8 +1664,9 @@ feedback_votes (id, feedback_id, user_id, vote TINYINT, created_at)
 
 - **Daily Limit**: 100 combined reviews + suggestions per day (global, not per user)
 - **Auto-Expiry**: Feedbacks older than 3 days are excluded from queries
-- **Voting**: Each user can vote once per feedback (upsert on duplicate)
-- **Net Score**: Feedbacks sorted by net score (likes - dislikes) descending
+- **Voting**: Like only (no dislike button — dislike was removed to keep the tone positive)
+- **Score Display**: Clamped at 0 minimum — `Math.max(0, net_score)` in frontend
+- **Net Score**: Feedbacks sorted by net score descending
 - **Owner Delete**: Users can only delete their own feedbacks
 
 ### Frontend
@@ -1637,7 +1674,7 @@ feedback_votes (id, feedback_id, user_id, vote TINYINT, created_at)
 **Page**: `/src/pages/Feedback.jsx`
 - Two tabs: Reviews / Suggestions
 - Submit form with character limit
-- Vote buttons (thumbs up/down) with net score display
+- Like button only (thumbs up) with score display (min 0)
 - Relative time display (just now, X minutes ago, X hours ago)
 - Owner can delete their own feedbacks
 
@@ -1648,7 +1685,7 @@ getSuggestions()
 getDailyCount()
 createReview(content)
 createSuggestion(content)
-vote(feedbackId, voteValue)    // 1, -1, or 0
+vote(feedbackId, voteValue)    // 1 or 0 (remove)
 deleteFeedback(feedbackId)
 ```
 

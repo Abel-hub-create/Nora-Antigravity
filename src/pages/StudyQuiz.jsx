@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import LiquidProgressBar from '../components/UI/LiquidProgressBar';
 import { ArrowLeft, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -170,14 +171,11 @@ const StudyQuiz = () => {
                 </Link>
 
                 {/* Progress Bar */}
-                <div className="h-2 w-full bg-surface rounded-full overflow-hidden">
-                    <motion.div
-                        className="h-full bg-gradient-to-r from-primary to-secondary"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${((currentQuestion + 1) / questions.length) * 100}%` }}
-                        transition={{ duration: 0.3 }}
-                    />
-                </div>
+                <LiquidProgressBar
+                    progress={((currentQuestion + 1) / questions.length) * 100}
+                    height={8}
+                    className="w-full"
+                />
                 <p className="text-xs text-text-muted mt-2 text-right">
                     {t('quiz.questionOf', { current: currentQuestion + 1, total: questions.length })}
                 </p>

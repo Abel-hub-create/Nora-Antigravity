@@ -1,6 +1,8 @@
 import express from 'express';
 import { authenticate } from '../middlewares/auth.js';
 import * as notificationService from '../services/notificationService.js';
+
+const DEFAULT_DAYS = [0, 1, 2, 3, 4, 5, 6]; // all days
 import * as dailyProgressRepository from '../services/dailyProgressRepository.js';
 
 const router = express.Router();
@@ -18,7 +20,9 @@ router.get('/settings', authenticate, async (req, res, next) => {
 
     res.json({
       enabled: settings?.notifications_enabled || false,
-      subscribed: !!subscription
+      subscribed: !!subscription,
+      hour: settings?.notification_hour ?? 18,
+      days: settings?.notification_days ?? DEFAULT_DAYS
     });
   } catch (error) {
     next(error);
@@ -127,6 +131,25 @@ router.post('/study-history', authenticate, async (req, res, next) => {
 
     await dailyProgressRepository.saveStudyHistory(req.user.id, studyDate, totalSeconds);
     res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update notification schedule (hour + days)
+router.patch('/schedule', authenticate, async (req, res, next) => {
+  try {
+    const { hour, days } = req.body;
+
+    if (typeof hour !== 'number' || hour < 0 || hour > 23) {
+      return res.status(400).json({ error: 'hour doit être entre 0 et 23' });
+    }
+    if (!Array.isArray(days) || days.some(d => d < 0 || d > 6)) {
+      return res.status(400).json({ error: 'days invalide' });
+    }
+
+    await notificationService.updateNotificationSchedule(req.user.id, hour, days);
+    res.json({ hour, days });
   } catch (error) {
     next(error);
   }

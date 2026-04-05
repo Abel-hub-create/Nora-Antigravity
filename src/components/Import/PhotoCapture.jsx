@@ -4,7 +4,7 @@ import { Camera, X, Check, Loader2, AlertCircle, Image, RotateCcw } from 'lucide
 import { useTranslation } from 'react-i18next';
 import api from '../../lib/api';
 
-const MAX_PHOTOS = 6;
+const MAX_PHOTOS = 15;
 
 const PhotoCapture = ({ onComplete, onClose, subjectLabel }) => {
     const { t } = useTranslation();
@@ -234,7 +234,7 @@ const PhotoCapture = ({ onComplete, onClose, subjectLabel }) => {
             </div>
 
             {/* Zone de caméra - prend tout l'espace disponible */}
-            <div className="flex-1 relative flex items-center justify-center mt-16 mx-4 mb-2 rounded-2xl overflow-hidden bg-black/50">
+            <div className="flex-1 relative flex items-center justify-center mt-16 mx-4 mb-2 rounded-2xl overflow-hidden bg-black/50 no-glass">
                 {cameraError ? (
                     <div className="text-center p-6">
                         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-error/20 flex items-center justify-center">

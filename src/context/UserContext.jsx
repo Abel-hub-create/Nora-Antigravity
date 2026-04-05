@@ -488,7 +488,7 @@ export const UserProvider = ({ children }) => {
         syncDailyProgressToBackend(resetGoals, dailyStats, dailyGoalsRewardClaimed);
     }, [syncDailyProgressToBackend, dailyStats, dailyGoalsRewardClaimed]);
 
-    // Add a new goal
+    // Add a new goal — garde le statut des goals existants
     const addDailyGoal = useCallback((type, targetMinutes) => {
         setDailyGoalsState(prev => {
             if (prev.some(g => g.type === type)) {
@@ -497,34 +497,35 @@ export const UserProvider = ({ children }) => {
             }
             const newId = Math.max(...prev.map(g => g.id), 0) + 1;
             const newGoals = [...prev, { id: newId, type, targetMinutes, completed: false }];
-            const resetGoals = newGoals.map(g => ({ ...g, completed: false }));
-            // Sync immediately to backend
-            syncDailyProgressToBackend(resetGoals, dailyStats, dailyGoalsRewardClaimed);
-            return resetGoals;
+            syncDailyProgressToBackend(newGoals, dailyStats, dailyGoalsRewardClaimed);
+            return newGoals;
         });
     }, [addNotification, t, syncDailyProgressToBackend, dailyStats, dailyGoalsRewardClaimed]);
 
-    // Remove a goal
+    // Remove a goal — re-évalue le statut completed depuis dailyStats réels
     const removeDailyGoal = useCallback((goalId) => {
         setDailyGoalsState(prev => {
-            const newGoals = prev.filter(g => g.id !== goalId);
-            const resetGoals = newGoals.map(g => ({ ...g, completed: false }));
-            // Sync immediately to backend
-            syncDailyProgressToBackend(resetGoals, dailyStats, dailyGoalsRewardClaimed);
-            return resetGoals;
+            const newGoals = prev.filter(g => g.id !== goalId).map(g => {
+                const timeKey = ACTIVITY_TYPES[g.type]?.key;
+                const currentSeconds = timeKey ? (dailyStats[timeKey] || 0) : 0;
+                const isCompleted = currentSeconds >= g.targetMinutes * 60;
+                return { ...g, completed: isCompleted };
+            });
+            syncDailyProgressToBackend(newGoals, dailyStats, dailyGoalsRewardClaimed);
+            return newGoals;
         });
     }, [syncDailyProgressToBackend, dailyStats, dailyGoalsRewardClaimed]);
 
-    // Update a specific goal's target time
+    // Update a specific goal's target time — re-évalue uniquement ce goal
     const updateGoalTarget = useCallback((goalId, newTargetMinutes) => {
         setDailyGoalsState(prev => {
             const updatedGoals = prev.map(g => {
-                if (g.id === goalId) {
-                    return { ...g, targetMinutes: newTargetMinutes, completed: false };
-                }
-                return { ...g, completed: false };
+                if (g.id !== goalId) return g; // autres goals inchangés
+                const timeKey = ACTIVITY_TYPES[g.type]?.key;
+                const currentSeconds = timeKey ? (dailyStats[timeKey] || 0) : 0;
+                const isStillCompleted = currentSeconds >= newTargetMinutes * 60;
+                return { ...g, targetMinutes: newTargetMinutes, completed: isStillCompleted };
             });
-            // Sync immediately to backend
             syncDailyProgressToBackend(updatedGoals, dailyStats, dailyGoalsRewardClaimed);
             return updatedGoals;
         });

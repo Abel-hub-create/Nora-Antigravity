@@ -7,6 +7,7 @@ import NotificationStack from '../UI/NotificationStack';
 import OnboardingModal from '../Onboarding/OnboardingModal';
 import { useRevision } from '../../context/RevisionContext';
 import { useAuth } from '../../features/auth/hooks/useAuth';
+import { playClick, playHover } from '../../utils/sounds';
 
 const MobileWrapper = ({ children }) => {
     const { t } = useTranslation();
@@ -14,6 +15,32 @@ const MobileWrapper = ({ children }) => {
     const navigate = useNavigate();
     const { isRevisionActive } = useRevision();
     const { user } = useAuth();
+
+    // Global sound effects
+    useEffect(() => {
+        const INTERACTIVE = 'button, a, [role="button"], input[type="checkbox"], input[type="radio"], select, label';
+        let lastClickAt = 0;
+
+        const soundsOn = () => localStorage.getItem('nora_sounds_enabled') !== 'false';
+
+        const handleClick = (e) => {
+            if (e.target.closest(INTERACTIVE)) {
+                lastClickAt = Date.now();
+                if (soundsOn()) playClick();
+            }
+        };
+        const handleMouseOver = (e) => {
+            if (Date.now() - lastClickAt < 150) return;
+            if (soundsOn() && e.target.closest(INTERACTIVE)) playHover();
+        };
+
+        document.addEventListener('click', handleClick, true);
+        document.addEventListener('mouseover', handleMouseOver, true);
+        return () => {
+            document.removeEventListener('click', handleClick, true);
+            document.removeEventListener('mouseover', handleMouseOver, true);
+        };
+    }, []);
 
     // Apply user's theme when MobileWrapper mounts or user changes
     useEffect(() => {
@@ -65,7 +92,7 @@ const MobileWrapper = ({ children }) => {
                                     }
                                 }}
                                 className={clsx(
-                                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer",
+                                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer hover-lift",
                                     isActive
                                         ? "bg-primary/20 text-primary"
                                         : "text-text-muted hover:text-text-main hover:bg-white/5"
@@ -108,7 +135,7 @@ const MobileWrapper = ({ children }) => {
                                         navigate(item.path);
                                     }
                                 }}
-                                className="flex flex-col items-center justify-center w-16 h-full gap-1 group cursor-pointer"
+                                className="flex flex-col items-center justify-center w-16 h-full gap-1 group cursor-pointer hover-lift"
                             >
                                 <div className={clsx(
                                     "p-1.5 rounded-xl transition-all duration-300",
