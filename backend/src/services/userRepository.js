@@ -32,6 +32,25 @@ export const linkGoogleAccount = async (userId, googleId) => {
   await query(sql, [googleId, userId]);
 };
 
+// Apple OAuth functions
+export const findByAppleId = async (appleId) => {
+  const sql = 'SELECT * FROM users WHERE apple_id = ? AND is_active = 1';
+  const users = await query(sql, [appleId]);
+  return users[0] || null;
+};
+
+export const createAppleUser = async ({ appleId, email, name }) => {
+  const sql = `INSERT INTO users (apple_id, email, name, theme, language, is_verified, onboarding_completed)
+               VALUES (?, ?, ?, 'light', 'fr', TRUE, FALSE)`;
+  const result = await query(sql, [appleId, email || null, name || null]);
+  return { id: result.insertId, email, name };
+};
+
+export const linkAppleAccount = async (userId, appleId) => {
+  const sql = 'UPDATE users SET apple_id = ?, updated_at = NOW() WHERE id = ?';
+  await query(sql, [appleId, userId]);
+};
+
 export const findById = async (id) => {
   const sql = `SELECT id, email, name, avatar, theme, language, onboarding_completed, level, exp, next_level_exp, streak, eggs, collection, created_at
                FROM users WHERE id = ? AND is_active = 1`;

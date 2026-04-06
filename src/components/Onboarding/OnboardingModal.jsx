@@ -143,14 +143,15 @@ const OnboardingModal = () => {
 
     return (
         <motion.div
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
+            className={`fixed inset-0 ${selectedTheme === 'dark' ? 'bg-black/40' : 'bg-white/30'} backdrop-blur-sm flex items-center justify-center z-[100] p-4`}
             variants={backdropVariants}
             initial="hidden"
             animate="visible"
             exit="hidden"
         >
             <motion.div
-                className="bg-surface rounded-2xl p-6 max-w-md w-full border border-white/10 shadow-2xl max-h-[90vh] overflow-y-auto"
+                className={`${selectedTheme === 'dark' ? 'bg-white/[0.04] border-white/20' : 'bg-white/70 border-black/10'} rounded-2xl p-6 max-w-md w-full border shadow-2xl max-h-[90vh] overflow-y-auto`}
+                style={{ backdropFilter: 'blur(20px) saturate(1.4)', WebkitBackdropFilter: 'blur(20px) saturate(1.4)' }}
                 variants={modalVariants}
                 initial="hidden"
                 animate="visible"
@@ -163,7 +164,7 @@ const OnboardingModal = () => {
                         <div
                             key={s}
                             className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                                s === step ? 'bg-primary' : s < step ? 'bg-primary/50' : 'bg-white/20'
+                                s === step ? 'bg-primary' : s < step ? 'bg-primary/50' : selectedTheme === 'dark' ? 'bg-white/20' : 'bg-black/20'
                             }`}
                         />
                     ))}
@@ -201,7 +202,7 @@ const OnboardingModal = () => {
                                             className={`p-3 rounded-xl flex items-center justify-center gap-2 transition-colors ${
                                                 selectedLang === lang.code
                                                     ? 'bg-primary text-white'
-                                                    : 'bg-white/5 text-text-muted hover:bg-white/10'
+                                                    : selectedTheme === 'dark' ? 'bg-white/5 text-text-muted hover:bg-white/10' : 'bg-black/5 text-text-muted hover:bg-black/10'
                                             }`}
                                         >
                                             <span className="text-lg">{lang.flag}</span>
@@ -223,7 +224,7 @@ const OnboardingModal = () => {
                                         className={`flex-1 p-3 rounded-xl flex items-center justify-center gap-2 transition-colors ${
                                             selectedTheme === 'dark'
                                                 ? 'bg-primary text-white'
-                                                : 'bg-white/5 text-text-muted hover:bg-white/10'
+                                                : selectedTheme === 'dark' ? 'bg-white/5 text-text-muted hover:bg-white/10' : 'bg-black/5 text-text-muted hover:bg-black/10'
                                         }`}
                                     >
                                         <Moon size={18} />
@@ -234,7 +235,7 @@ const OnboardingModal = () => {
                                         className={`flex-1 p-3 rounded-xl flex items-center justify-center gap-2 transition-colors ${
                                             selectedTheme === 'light'
                                                 ? 'bg-primary text-white'
-                                                : 'bg-white/5 text-text-muted hover:bg-white/10'
+                                                : selectedTheme === 'dark' ? 'bg-white/5 text-text-muted hover:bg-white/10' : 'bg-black/5 text-text-muted hover:bg-black/10'
                                         }`}
                                     >
                                         <Sun size={18} />
@@ -272,7 +273,7 @@ const OnboardingModal = () => {
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     placeholder={t('onboarding.step1.placeholder')}
-                                    className="w-full px-4 py-4 rounded-xl bg-black/30 border border-white/10 text-text-main placeholder-text-muted focus:outline-none focus:border-primary transition-colors text-lg text-center"
+                                    className={`w-full px-4 py-4 rounded-xl ${selectedTheme === 'dark' ? 'bg-black/30 border-white/10' : 'bg-black/5 border-black/10'} border text-text-main placeholder-text-muted focus:outline-none focus:border-primary transition-colors text-lg text-center`}
                                     maxLength={50}
                                     autoFocus
                                 />
@@ -327,7 +328,7 @@ const OnboardingModal = () => {
                             {/* Upload button */}
                             <button
                                 onClick={() => fileInputRef.current?.click()}
-                                className="w-full p-4 rounded-xl bg-black/30 border border-white/10 text-text-main hover:border-primary/50 transition-colors flex items-center justify-center gap-3"
+                                className={`w-full p-4 rounded-xl ${selectedTheme === 'dark' ? 'bg-black/30 border-white/10' : 'bg-black/5 border-black/10'} border text-text-main hover:border-primary/50 transition-colors flex items-center justify-center gap-3`}
                             >
                                 {avatar ? <Camera size={20} /> : <Upload size={20} />}
                                 {avatar ? t('onboarding.step2.changeButton') : t('onboarding.step2.uploadButton')}
@@ -390,7 +391,7 @@ const OnboardingModal = () => {
                                 {SUBJECTS.slice(0, 6).map((subject) => (
                                     <div
                                         key={subject.id}
-                                        className="bg-white/5 rounded-xl p-3 flex flex-col items-center gap-1"
+                                        className={`${selectedTheme === 'dark' ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-3 flex flex-col items-center gap-1`}
                                     >
                                         <span className="text-2xl">{subject.icon}</span>
                                         <span className="text-xs text-text-muted text-center truncate w-full">
@@ -435,7 +436,7 @@ const OnboardingModal = () => {
                             {/* Icône du mode d'import */}
                             <div className="flex justify-center gap-6 mb-8">
                                 <div className="flex flex-col items-center gap-2">
-                                    <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
+                                    <div className={`w-16 h-16 rounded-2xl ${selectedTheme === 'dark' ? 'bg-white/5' : 'bg-black/5'} flex items-center justify-center`}>
                                         <CameraIcon size={28} className="text-primary" />
                                     </div>
                                     <span className="text-xs text-text-muted">{t('import.photo')}</span>

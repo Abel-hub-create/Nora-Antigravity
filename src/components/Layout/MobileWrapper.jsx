@@ -31,7 +31,10 @@ const MobileWrapper = ({ children }) => {
         };
         const handleMouseOver = (e) => {
             if (Date.now() - lastClickAt < 150) return;
-            if (soundsOn() && e.target.closest(INTERACTIVE)) playHover();
+            if (!soundsOn()) return;
+            // Swoosh uniquement sur les éléments qui s'agrandissent au hover
+            const SCALE_HOVER = '.hover-lift, [class*="hover:scale-"], [class*="hover:scale"]';
+            if (e.target.closest(SCALE_HOVER)) playHover();
         };
 
         document.addEventListener('click', handleClick, true);

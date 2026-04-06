@@ -583,6 +583,7 @@
     "noAccount": "¿Sin cuenta?",
     "hasAccount": "¿Ya tienes cuenta?",
     "orContinueWith": "o continuar con",
+    "continueWithApple": "Continuar con Apple",
     "createAccount": "Crear mi cuenta",
     "loginButton": "Iniciar sesión",
     "emailRequired": "El email es requerido",
@@ -706,6 +707,7 @@
     "noTextDetectedPhoto": "No se detectó texto. Toma una foto de tu curso.",
     "noTextDetectedVoice": "No se detectó texto. Dicta tu curso.",
     "googleLoginFailed": "Error al iniciar sesión con Google",
+    "appleLoginFailed": "Error al iniciar sesión con Apple",
     "synthesesLimitReached": "Has alcanzado el límite de 40 síntesis. Elimina algunas para crear nuevas."
   }
 }

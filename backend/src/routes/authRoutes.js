@@ -2,6 +2,7 @@ import express from 'express';
 import * as authService from '../services/authService.js';
 import * as userRepository from '../services/userRepository.js';
 import * as googleAuthService from '../services/googleAuthService.js';
+import * as appleAuthService from '../services/appleAuthService.js';
 import { validate } from '../middlewares/validation.js';
 import { authenticate } from '../middlewares/auth.js';
 import { loginLimiter, registerLimiter, forgotPasswordLimiter } from '../middlewares/rateLimiter.js';
@@ -105,6 +106,71 @@ router.post('/google', loginLimiter, async (req, res, next) => {
     res.json({ user: fullUser, accessToken });
   } catch (error) {
     console.error('[Auth Google] Error:', error);
+    next(error);
+  }
+});
+
+// Apple Sign-In
+router.post('/apple', loginLimiter, async (req, res, next) => {
+  try {
+    const { identityToken, user: appleUser } = req.body;
+
+    if (!identityToken) {
+      return res.status(400).json({ error: 'Apple identity token required' });
+    }
+
+    // 1. Verify the Apple token
+    const appleData = await appleAuthService.verifyAppleToken(identityToken);
+
+    // Apple only sends name on first sign-in
+    const firstName = appleUser?.name?.firstName || '';
+    const lastName = appleUser?.name?.lastName || '';
+    const name = [firstName, lastName].filter(Boolean).join(' ') || null;
+
+    // 2. Find or create user
+    let user = await userRepository.findByAppleId(appleData.appleId);
+
+    if (!user) {
+      if (appleData.email) {
+        const existingUser = await userRepository.findByEmail(appleData.email);
+        if (existingUser) {
+          await userRepository.linkAppleAccount(existingUser.id, appleData.appleId);
+          user = existingUser;
+        }
+      }
+      if (!user) {
+        user = await userRepository.createAppleUser({
+          appleId: appleData.appleId,
+          email: appleData.email,
+          name
+        });
+      }
+    }
+
+    // 3. Generate JWT tokens
+    const { accessToken, refreshToken } = await authService.generateTokens(
+      user.id,
+      req.headers['user-agent'],
+      req.ip
+    );
+
+    // 4. Set refresh token cookie (30 days)
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 60 * 60 * 1000
+    });
+
+    // 5. Update last login
+    await userRepository.updateLastLogin(user.id);
+
+    // 6. Get full user data
+    const fullUser = await userRepository.findById(user.id);
+
+    res.json({ user: fullUser, accessToken });
+  } catch (error) {
+    console.error('[Auth Apple] Error:', error);
     next(error);
   }
 });

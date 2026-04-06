@@ -542,6 +542,7 @@
     "noAccount": "没有账号？",
     "hasAccount": "已有账号？",
     "orContinueWith": "或继续使用",
+    "continueWithApple": "使用Apple继续",
     "createAccount": "创建账号",
     "loginButton": "登录",
     "emailRequired": "邮箱为必填项",
@@ -665,6 +666,7 @@
     "noTextDetectedPhoto": "未检测到文字。请拍摄您的课程笔记。",
     "noTextDetectedVoice": "未检测到文字。请口述您的课程。",
     "googleLoginFailed": "Google登录失败",
+    "appleLoginFailed": "Apple登录失败",
     "synthesesLimitReached": "您已达到40个摘要的上限。请删除一些以创建新的。"
   }
 }

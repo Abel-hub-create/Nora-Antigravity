@@ -521,6 +521,7 @@ Full-stack authentication with JWT tokens and secure cookie-based refresh tokens
 **Components**:
 - `ProtectedRoute` - HOC wrapping routes that require authentication
 - `AuthInput` - Styled input component for auth forms
+- `OpenEmailButton` - Detects email provider from domain (Gmail, Outlook, Yahoo, iCloud, Proton, Orange, SFR, LaPoste) and opens the correct webmail in a new tab. Used in `VerifyEmailSent`, `ForgotPassword`, and `Login` (when `EMAIL_NOT_VERIFIED` error).
 
 **Services**:
 - `authService.js` - API calls to backend auth endpoints with Axios interceptors for token refresh
@@ -609,7 +610,6 @@ backend/
 │   ├── routes/aiRoutes.js      # AI endpoints (Whisper, Vision, Content Gen)
 │   ├── routes/folderRoutes.js  # Folder CRUD endpoints
 │   ├── routes/notificationRoutes.js # Push notifications + daily progress sync
-│   ├── routes/revisionRoutes.js # Guided revision endpoints
 │   ├── routes/feedbackRoutes.js # Reviews & suggestions endpoints
 │   ├── services/authService.js # Auth business logic
 │   ├── services/userRepository.js # User data access
@@ -617,8 +617,6 @@ backend/
 │   ├── services/folderRepository.js # Folder data access
 │   ├── services/feedbackRepository.js # Feedback data access
 │   ├── services/dailyProgressRepository.js # Daily progress & study history
-│   ├── services/revisionRepository.js # Revision session data access
-│   ├── services/revisionCompareService.js # AI semantic comparison (GPT-4o-mini)
 │   ├── services/openaiService.js # OpenAI Whisper & Vision
 │   ├── services/contentGenerationService.js # ChatGPT content generation
 │   ├── services/contentVerificationService.js # AI subject matching verification
@@ -758,7 +756,7 @@ Shown in both `/study` (list) and `/study/:id` (detail) pages.
 
 ### Mastery Badge
 
-When a synthese reaches 100% mastery score (via revision), a green badge is displayed:
+When a synthese reaches 100% mastery score, a green badge is displayed:
 - **Location**: Only in the study list (`/study`), NOT in study detail page
 - **Style**: Green badge with Award icon and "Maîtrisée" / "Mastered" text
 - **Condition**: `synthese.mastery_score === 100`
@@ -827,14 +825,14 @@ mysql -u $DB_USER -p$DB_PASSWORD $DB_NAME < backend/src/database/migrations/008_
 # 011: avatar column on users
 # 012: email verification (email_verified, email_verification_tokens)
 # 013: study stats (study_history table, study time columns on daily_progress)
-# 014: revision_sessions and revision_completions tables
-# 015: specific_instructions column on syntheses
-# 016: loop_time_remaining column on revision_sessions
-# 017: phase_started_at column on revision_sessions
-# 018: mastery_score column on syntheses (+ index)
+# 014: revision_sessions and revision_completions tables (revision feature)
+# 015: specific_instructions column on syntheses (revision feature)
+# 016: loop_time_remaining column on revision_sessions (revision feature)
+# 017: phase_started_at column on revision_sessions (revision feature)
+# 018: mastery_score column on syntheses (+ index) (revision feature)
 # 019: user preferences (language, theme columns)
 # 020: onboarding_completed column on users
-# 021: requirement_level + custom_settings on revision_sessions
+# 021: requirement_level + custom_settings on revision_sessions (revision feature)
 # 022: subject column on syntheses
 # 023: google_id column on users (+ password nullable)
 # 024: feedbacks + feedback_votes tables
@@ -849,7 +847,7 @@ Multi-modal content import system supporting text, voice, and photo input. All A
 Before importing content, users MUST select a subject (matière). This enables:
 - Discipline-specific AI prompts for better quality
 - Subject-based filtering and organization
-- Improved synthesis and revision quality
+- Improved synthesis quality
 
 **Available Subjects** (9 matières):
 | ID | French | English | Icon |
@@ -1049,6 +1047,7 @@ Centralized educational content generation with the Nora personality.
    - Seuls les termes listés par l'utilisateur sont définis
    - Si champ définitions vide → AUCUNE section définitions
    - Les termes dans "Objectifs de l'interrogation" ne génèrent PAS de définitions
+   - `subjectPrompts.js` ne recommande PLUS `"## Définitions et Concepts Importants"` dans les sections — cette entrée a été retirée de toutes les matières (math, physique, chimie, bio, histoire, géo) pour éviter que l'IA crée une section définitions par défaut
 
 8. **FIDELITE ABSOLUE AU CONTENU** (CRITIQUE):
    - JAMAIS inventer de notion, exemple ou information
@@ -1388,230 +1387,6 @@ sendVerificationEmail(email, token, name, language) // Send verification link wi
 - `resendVerificationEmail()` → resend verification if needed
 - Errors are logged but don't block user creation
 
-## Guided Revision Program (Feuille Blanche)
-
-A structured revision system based on the active recall / blank sheet technique, linked to each synthese.
-
-### Overview
-
-The revision program follows 5 phases with **8 total attempts**:
-
-| Phase | Duration | Description |
-|-------|----------|-------------|
-| 1. Study | 10 min | Review synthese, flashcards, quiz (3 tabs) |
-| 2. Pause | 2 min | Forced break with countdown timer |
-| 3. Recall | No limit | Write or dictate from memory |
-| 4. Loop | 1 min, Max 8x | Re-read missing concepts (highlighted in red), auto-continues when timer ends |
-| 5. Loop Pause | 2 min | Break between loop and next recall attempt |
-| 6. Complete | - | Shows percentage, progress bar, and message based on score |
-
-**Flow**: Study → Pause → Recall → Loop → Loop Pause → Recall → Loop → ... → Complete
-
-### Evaluation Rules - Conceptual Understanding
-
-The AI evaluates **conceptual understanding**, not form. Vocabulary, style, syntax don't matter - only whether the user understood and expressed the MEANING of each notion.
-
-**Fundamental Principles**:
-
-| Principle | Description |
-|-----------|-------------|
-| **Per-Attempt** | Each attempt evaluated independently, no memory between attempts |
-| **Two States** | ✅ RETAINED (green) or ❌ NOT RETAINED (red) - no intermediate state |
-| **Deterministic** | Same response = same verdict, always. No variability. |
-
-**Rule 1 - Error vs Imprecision**:
-- **BLOCKING ERROR** (= INVALID): Contradiction, false/absurd info, inverted relation
-- **IMPRECISION** (= NOT RETAINED): Vague without contradiction, missing details but correct direction
-
-Examples:
-- Reference: "Cellular respiration releases energy"
-- ❌ INVALID: "releases poop" (false information)
-- ❌ NOT RETAINED: "releases something" (too vague)
-- ✅ RETAINED: "it produces energy" (meaning preserved)
-
-**Rule 2 - Essential Ideas**:
-- Each notion has 1-3 essential ideas
-- ALL essential ideas must be present and correct for RETAINED status
-- Missing 1+ essential idea = NOT RETAINED
-
-**Rule 3 - Meaning Priority**:
-ACCEPT if meaning preserved:
-- Synonyms and reformulations
-- Casual/simplified language
-- Different order of elements
-- Missing technical terms if idea is there
-
-REJECT if meaning altered:
-- Contradiction or logical inversion
-- Essential element missing
-- False information introduced
-
-Examples of equivalent expressions:
-- "en cas de pénurie d'oxygène" = "quand y'a pas assez d'O2" = "sans oxygène" → SAME MEANING
-- "24h/24" = "tout le temps" = "en permanence" → SAME MEANING
-
-**Rule 4 - Blocking Errors**:
-These errors invalidate the ENTIRE notion even if other parts are correct:
-- Key term replaced by FALSE or ABSURD term
-- INVERTED causal relationship
-- Attribution to wrong entity
-
-**Rule 5 - Mandatory Coverage**:
-- Every important notion must appear in exactly ONE of the two arrays
-- Notion not mentioned = NOT RETAINED
-- Notion with just keywords without relation = NOT RETAINED
-
-### Final Attempt (Attempt 8) - Specific Behavior
-
-Instead of congratulations and summary re-read, shows:
-- **Percentage**: Based on retained/total notions
-- **Progress bar**: Filled proportionally to percentage
-- **Message based on percentage**:
-  - 0-10%: "Réessaye, tu peux t'améliorer."
-  - 10-50%: "Réessaye, n'abandonne pas."
-  - 50-70%: "Tu connais déjà pas mal de matière. Continue."
-  - 70-99%: "Bravo, tu as acquis une très grosse partie de la matière."
-  - 100%: "Bravo, tu maîtrises cette synthèse."
-
-### Key Features
-
-**Simplified Flow**:
-- After Recall, AI analysis runs in background (loading screen shown)
-- No separate "Compare" phase - goes directly to Loop (if missing concepts) or Complete
-- Loop phase shows message: "Vert = acquis. Rouge = à revoir. Concentre-toi sur les parties en rouge."
-- Loop auto-continues to next iteration when timer ends (no manual button)
-
-**Full Text Coloring (No Neutral Text)**:
-- In Loop phase, ALL text is colored - no neutral/uncolored text allowed
-- GREEN = notions explicitly mentioned or correctly reformulated by user
-- RED = EVERYTHING ELSE (not just identified missing concepts)
-- Principle: anything not explicitly recognized as understood is considered not retained
-- This provides instant visual feedback on what's acquired vs needs work
-
-**Summary Pagination**:
-- Study phase and Loop phase both support pagination for long summaries
-- Same pagination system as StudyDetail (2500 chars per page)
-- Navigation buttons (prev/next) and page indicators
-- In Loop phase, highlighting (green/red) is correctly applied per page
-
-**Exit Button (X)**:
-- All phases (Study, Pause, Recall, Loop) have a close button (X) in the header
-- Shows confirmation modal before stopping the session
-
-**Session Persistence**:
-- Session survives page refresh, app close, browser restart
-- Based on timestamps stored in database
-- Expires after 15 minutes of inactivity → "Vous êtes revenu trop tard"
-- Syncs to backend every 5 seconds
-
-**Real-Time Timers**:
-- Timers use `phase_started_at` timestamp to calculate remaining time
-- Time continues even when phone is locked or app is in background
-- On return, timer shows actual remaining time (not where it paused)
-- Uses `useRevisionTimer(totalDuration, phaseStartedAt, onComplete, isActive)` hook
-- `phase_started_at` is updated on every phase transition
-
-**Exit Confirmation**:
-- `beforeunload` event warns when closing browser/tab during active session
-- `RevisionContext` tracks active revision state globally
-- `MobileWrapper` intercepts navigation clicks and shows `window.confirm()` dialog
-- Message: "Une session de révision est en cours. Si tu quittes, ta progression sera perdue."
-- Only active during revision phases (not on complete or expired)
-
-**Semantic Comparison (AI)**:
-- Runs in background after Recall phase (shows loading screen)
-- Accepts reformulations (complete ideas with explicit relations)
-- REJECTS keyword-only answers without relations
-- User's "important elements" (from import specificInstructions) MUST be present
-- Results used to highlight missing concepts in red in Loop phase
-
-**No XP Reward**: Completing a revision does not give XP (per user request)
-
-### Route
-
-| Path | Page | Description |
-|------|------|-------------|
-| `/study/:id/revision` | StudyRevision | Guided revision program |
-
-### Database Schema
-
-```sql
--- revision_sessions: Active revision session state
-revision_sessions (id, user_id, synthese_id, requirement_level ENUM, custom_settings JSON,
-                   phase, phase_started_at, study_time_remaining, pause_time_remaining,
-                   loop_time_remaining, current_iteration, user_recall, missing_concepts JSON,
-                   understood_concepts JSON, last_activity_at, started_at, completed_at)
-
--- revision_completions: History of completed revisions
-revision_completions (id, user_id, synthese_id, iterations_count, completed_at)
-
--- syntheses: Added columns for revision
-syntheses.specific_instructions TEXT    -- User-defined important elements
-syntheses.mastery_score INT UNSIGNED    -- Last revision score (0-100), NULL = never revised
-```
-
-**Requirement Level**: Adjusts AI evaluation strictness during revision.
-
-| Level | Description |
-|-------|-------------|
-| `beginner` | More lenient evaluation |
-| `intermediate` | Default, balanced evaluation |
-| `expert` | Strict evaluation |
-| `custom` | Uses `custom_settings` JSON with precision percentages for definitions/concepts/data |
-
-### API Endpoints (`/api/revision/`)
-
-| Method | Route | Description |
-|--------|-------|-------------|
-| GET | `/:syntheseId/session` | Get active session or null (checks 15min expiration) |
-| POST | `/:syntheseId/start` | Start new session |
-| PATCH | `/:syntheseId/sync` | Sync state (timer, phase, iteration) |
-| POST | `/:syntheseId/recall` | Submit user recall text |
-| POST | `/:syntheseId/compare` | Run AI semantic comparison |
-| POST | `/:syntheseId/next-iteration` | Move to next loop iteration |
-| POST | `/:syntheseId/complete` | Mark session complete |
-| DELETE | `/:syntheseId/stop` | Stop/cancel session |
-| GET | `/:syntheseId/completions` | Get completion count |
-
-### Frontend Components
-
-**`/src/pages/StudyRevision.jsx`** - Main container managing phase transitions
-- Handles `analyzing` phase (loading screen while AI comparison runs)
-- All phase transitions update `phase_started_at` for timer accuracy
-
-**`/src/components/Revision/`**:
-- `RevisionStudyPhase.jsx` - Phase 1: Timer with tabs (Synthèse, Flashcards, Quiz), X button
-- `RevisionPausePhase.jsx` - Phase 2: Forced 2-minute break with timer, X button
-- `RevisionRecallPhase.jsx` - Phase 3: Textarea + voice recorder, no timer, X button
-- `RevisionLoopPhase.jsx` - Phase 4: Show missing concepts in red only (no orange), auto-continues on timer end, X button
-- `RevisionCompletePhase.jsx` - Phase 5: Shows percentage, progress bar, message based on score (no confetti)
-- `RevisionComparePhase.jsx` - **REMOVED** (comparison now runs in background)
-
-**`/src/hooks/useRevisionTimer.js`** - Real-time countdown timer based on phase_started_at timestamp
-
-**`/src/context/RevisionContext.jsx`** - Global context for revision state (used by MobileWrapper to block navigation)
-
-**`/src/services/revisionService.js`** - API calls to revision endpoints
-
-### Backend Services
-
-**`/backend/src/services/revisionRepository.js`** - Database operations for sessions
-
-**`/backend/src/services/revisionCompareService.js`** - AI semantic comparison using GPT-4o-mini
-
-### i18n Keys
-
-All revision UI text is translated under `revision.*` namespace in both `fr.json` and `en.json`.
-
-### Migrations
-
-- `014_create_revision_sessions.sql` - Creates revision_sessions and revision_completions tables
-- `015_add_specific_instructions.sql` - Adds specific_instructions column to syntheses
-- `016_add_loop_time_remaining.sql` - Adds loop_time_remaining (default 300s) to revision_sessions
-- `017_add_phase_started_at.sql` - Adds phase_started_at timestamp for real-time timer calculation
-- `018_add_mastery_score.sql` - Adds mastery_score column to syntheses (0-100, for badge display)
-- `021_add_requirement_level.sql` - Adds requirement_level (beginner/intermediate/expert/custom) + custom_settings JSON to revision_sessions
-
 ## Content Verification Service
 
 AI-powered verification that imported content matches the user's selected subject.
@@ -1830,7 +1605,7 @@ Valeurs validées pour le thème sombre — ne pas modifier sans raison :
 | Variable | Valeur |
 |----------|--------|
 | `--color-background` | `#020408` (noir profond) |
-| `--color-surface` | `rgba(10, 18, 35, 0.40)` (semi-transparent) |
+| `--color-surface` | `rgba(10, 18, 35, 0.32)` (semi-transparent) |
 | `--color-primary` | `#38bdf8` |
 | `--color-text-main` | `#ffffff` |
 | `--color-text-muted` | `#6b7d96` |

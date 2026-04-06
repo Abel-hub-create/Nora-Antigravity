@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import LiquidProgressBar from '../components/UI/LiquidProgressBar';
-import { Settings, Folder, Award, Star, ChevronRight, Plus, Loader2 } from 'lucide-react';
+import { Settings, Folder, Star, ChevronRight, Plus, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import * as folderService from '../services/folderService';
@@ -34,9 +34,7 @@ const Profile = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
 
-    // Syntheses count and mastered count
     const [synthesesCount, setSynthesesCount] = useState(0);
-    const [masteredCount, setMasteredCount] = useState(0);
 
     // Fetch folders and syntheses count on mount
     useEffect(() => {
@@ -50,9 +48,6 @@ const Profile = () => {
                 setFolders(foldersData);
                 const syntheses = synthesesData.syntheses || [];
                 setSynthesesCount(syntheses.length);
-                // Compter les synthèses maîtrisées (mastery_score === 100)
-                const mastered = syntheses.filter(s => s.mastery_score === 100).length;
-                setMasteredCount(mastered);
             } catch (error) {
                 console.error('Error fetching data:', error);
             } finally {
@@ -131,14 +126,7 @@ const Profile = () => {
             </Link>
 
             {/* Stats Row */}
-            <div className="grid grid-cols-2 gap-4 mb-8">
-                <div className="bg-surface/50 p-4 rounded-2xl border border-white/5 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-text-main mb-1">
-                        <Award size={20} className="inline mr-1 text-green-500" />
-                        <AnimatedNumber value={masteredCount} duration={1000} />/{synthesesCount}
-                    </span>
-                    <span className="text-xs text-text-muted">{t('profile.masteredCount')}</span>
-                </div>
+            <div className="grid grid-cols-1 gap-4 mb-8">
                 <div className="bg-surface/50 p-4 rounded-2xl border border-white/5 flex flex-col items-center justify-center">
                     <span className="text-2xl font-bold text-text-main mb-1">📚 <AnimatedNumber value={synthesesCount} duration={1000} />/40</span>
                     <span className="text-xs text-text-muted">{t('profile.synthesesCount')}</span>

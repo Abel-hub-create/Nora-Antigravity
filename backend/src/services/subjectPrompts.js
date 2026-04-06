@@ -6,7 +6,6 @@
 export const SUBJECT_PROMPTS = {
   mathematics: {
     sections: [
-      "## Définitions et Concepts Importants",
       "## Théorèmes et Propriétés",
       "## Formules Essentielles",
       "## Méthodes et Démarches",
@@ -15,6 +14,7 @@ export const SUBJECT_PROMPTS = {
     ],
     guidelines: `
 RÈGLES SPÉCIFIQUES POUR LES MATHÉMATIQUES :
+⚠️ PAS DE SECTION DÉFINITIONS sauf si l'utilisateur l'a explicitement demandé dans ses instructions
 - Chaque terme mathématique nouveau avec sa définition précise
 - Notations utilisées et leur signification
 - Domaines de définition et conditions d'existence
@@ -55,7 +55,6 @@ RÈGLES SPÉCIFIQUES POUR LE FRANÇAIS :
 
   physics: {
     sections: [
-      "## Définitions et Concepts Importants",
       "## Lois et Relations Fondamentales",
       "## Phénomènes et Mécanismes",
       "## Protocoles et Expériences",
@@ -64,6 +63,7 @@ RÈGLES SPÉCIFIQUES POUR LE FRANÇAIS :
     ],
     guidelines: `
 RÈGLES SPÉCIFIQUES POUR LA PHYSIQUE :
+⚠️ PAS DE SECTION DÉFINITIONS sauf si l'utilisateur l'a explicitement demandé dans ses instructions
 - Grandeurs physiques avec leurs unités SI
 - Définitions précises de chaque concept
 - Ordres de grandeur à connaître
@@ -81,7 +81,6 @@ RÈGLES SPÉCIFIQUES POUR LA PHYSIQUE :
 
   chemistry: {
     sections: [
-      "## Définitions et Concepts Importants",
       "## Réactions et Équations",
       "## Propriétés et Caractéristiques",
       "## Protocoles et Manipulations",
@@ -90,6 +89,7 @@ RÈGLES SPÉCIFIQUES POUR LA PHYSIQUE :
     ],
     guidelines: `
 RÈGLES SPÉCIFIQUES POUR LA CHIMIE :
+⚠️ PAS DE SECTION DÉFINITIONS sauf si l'utilisateur l'a explicitement demandé dans ses instructions
 - Termes chimiques avec définitions précises
 - Grandeurs chimiques (masse molaire, concentration, etc.)
 - Unités et conversions importantes
@@ -107,7 +107,6 @@ RÈGLES SPÉCIFIQUES POUR LA CHIMIE :
 
   biology: {
     sections: [
-      "## Définitions et Concepts Importants",
       "## Mécanismes et Processus",
       "## Structures et Organisations",
       "## Expériences et Observations",
@@ -116,6 +115,7 @@ RÈGLES SPÉCIFIQUES POUR LA CHIMIE :
     ],
     guidelines: `
 RÈGLES SPÉCIFIQUES POUR LA BIOLOGIE :
+⚠️ PAS DE SECTION DÉFINITIONS sauf si l'utilisateur l'a explicitement demandé dans ses instructions
 - Vocabulaire scientifique avec définitions précises
 - Structures et leurs fonctions
 - Étymologie des termes si pertinent
@@ -134,7 +134,6 @@ RÈGLES SPÉCIFIQUES POUR LA BIOLOGIE :
 
   history: {
     sections: [
-      "## Définitions et Concepts Importants",
       "## Contexte et Chronologie",
       "## Acteurs Principaux",
       "## Causes et Déroulement",
@@ -143,6 +142,7 @@ RÈGLES SPÉCIFIQUES POUR LA BIOLOGIE :
     ],
     guidelines: `
 RÈGLES SPÉCIFIQUES POUR L'HISTOIRE :
+⚠️ PAS DE SECTION DÉFINITIONS sauf si l'utilisateur l'a explicitement demandé dans ses instructions
 - Notions historiques clés avec définitions
 - Concepts politiques, économiques, sociaux
 - Mouvements et idéologies
@@ -161,7 +161,6 @@ RÈGLES SPÉCIFIQUES POUR L'HISTOIRE :
 
   geography: {
     sections: [
-      "## Définitions et Concepts Importants",
       "## Repères Spatiaux",
       "## Acteurs et Dynamiques",
       "## Organisation et Structures",
@@ -170,6 +169,7 @@ RÈGLES SPÉCIFIQUES POUR L'HISTOIRE :
     ],
     guidelines: `
 RÈGLES SPÉCIFIQUES POUR LA GÉOGRAPHIE :
+⚠️ PAS DE SECTION DÉFINITIONS sauf si l'utilisateur l'a explicitement demandé dans ses instructions
 - Notions géographiques clés
 - Vocabulaire spatial et territorial
 - Concepts (mondialisation, métropolisation, etc.)

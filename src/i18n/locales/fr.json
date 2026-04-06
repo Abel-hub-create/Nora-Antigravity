@@ -597,6 +597,7 @@
     "noAccount": "Pas de compte ?",
     "hasAccount": "Déjà un compte ?",
     "orContinueWith": "ou continuer avec",
+    "continueWithApple": "Continuer avec Apple",
     "createAccount": "Créer mon compte",
     "loginButton": "Connexion",
     "emailRequired": "L'email est requis",
@@ -720,6 +721,7 @@
     "noTextDetectedPhoto": "Aucun texte détecté. Prends en photo ton cours pour que je puisse le synthétiser.",
     "noTextDetectedVoice": "Aucun texte détecté. Dicte ton cours pour que je puisse le synthétiser.",
     "googleLoginFailed": "La connexion Google a échoué",
+    "appleLoginFailed": "La connexion Apple a échoué",
     "synthesesLimitReached": "Tu as atteint la limite de 40 synthèses. Supprime-en pour en créer de nouvelles."
   }
 }

@@ -29,6 +29,14 @@ export const loginWithGoogle = async (credential) => {
   return data.user;
 };
 
+export const loginWithApple = async (identityToken, user) => {
+  const data = await api.post('/auth/apple', { identityToken, user });
+
+  localStorage.setItem('accessToken', data.accessToken);
+
+  return data.user;
+};
+
 export const logout = async () => {
   try {
     await api.post('/auth/logout');

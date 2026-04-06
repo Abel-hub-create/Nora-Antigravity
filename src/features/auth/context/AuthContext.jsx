@@ -4,8 +4,9 @@ import i18n from '../../../i18n';
 
 // Apply user preferences (theme and language)
 const applyUserPreferences = (user) => {
-  // Always apply theme - default to 'light' if not set
-  document.documentElement.setAttribute('data-theme', user?.theme || 'light');
+  // Use saved theme, or fall back to system preference
+  const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', user?.theme || systemTheme);
   if (user?.language) {
     i18n.changeLanguage(user.language);
   }
@@ -74,6 +75,20 @@ export const AuthProvider = ({ children }) => {
       return userData;
     } catch (err) {
       const message = err.response?.data?.error || i18n.t('errors.googleLoginFailed');
+      setError(message);
+      throw new Error(message);
+    }
+  }, []);
+
+  const loginWithApple = useCallback(async (identityToken, appleUser) => {
+    try {
+      setError(null);
+      const userData = await authService.loginWithApple(identityToken, appleUser);
+      setUser(userData);
+      applyUserPreferences(userData);
+      return userData;
+    } catch (err) {
+      const message = err.response?.data?.error || i18n.t('errors.appleLoginFailed');
       setError(message);
       throw new Error(message);
     }
@@ -214,6 +229,7 @@ export const AuthProvider = ({ children }) => {
     errorCode,
     login,
     loginWithGoogle,
+    loginWithApple,
     register,
     logout,
     forgotPassword,

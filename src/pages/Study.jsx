@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Search, FileText, Calendar, ChevronRight, Pencil, Check, X, Loader2, Award, Trash2, Circle, CheckCircle2 } from 'lucide-react';
+import { Search, FileText, Calendar, ChevronRight, Pencil, Check, X, Loader2, Trash2, Circle, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const SUBJECT_EMOJIS = {
-    mathematics: '📐',
-    french: '📚',
-    physics: '⚡',
-    chemistry: '🧪',
-    biology: '🧬',
-    history: '🏛️',
-    geography: '🌍',
-    english: '🇬🇧',
-    dutch: '🇳🇱',
+const SUBJECT_STYLES = {
+    mathematics: { background: 'rgba(59,130,246,0.18)',  color: '#60a5fa' },
+    physics:     { background: 'rgba(245,158,11,0.18)',  color: '#fbbf24' },
+    chemistry:   { background: 'rgba(34,197,94,0.18)',   color: '#4ade80' },
+    biology:     { background: 'rgba(16,185,129,0.18)',  color: '#34d399' },
+    history:     { background: 'rgba(249,115,22,0.18)',  color: '#fb923c' },
+    geography:   { background: 'rgba(6,182,212,0.18)',   color: '#22d3ee' },
+    english:     { background: 'rgba(239,68,68,0.18)',   color: '#f87171' },
+    dutch:       { background: 'rgba(168,85,247,0.18)',  color: '#c084fc' },
+    french:      { background: 'rgba(99,102,241,0.18)',  color: '#818cf8' },
 };
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -340,7 +340,7 @@ const Study = () => {
                                 /* Normal View */
                                 <div className="p-4">
                                     <div className="flex items-center gap-3">
-                                        {/* Emoji matière / cercle de sélection */}
+                                        {/* Badge matière / cercle de sélection */}
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -350,10 +350,15 @@ const Study = () => {
                                         >
                                             {selectedIds.has(synthese.id) ? (
                                                 <CheckCircle2 size={24} className="text-primary" />
-                                            ) : (
-                                                <span className="text-2xl leading-none select-none">
-                                                    {SUBJECT_EMOJIS[synthese.subject] || '📄'}
+                                            ) : synthese.subject && SUBJECT_STYLES[synthese.subject] ? (
+                                                <span
+                                                    className="inline-block px-2 py-0.5 rounded-md text-xs font-semibold uppercase tracking-wide whitespace-nowrap"
+                                                    style={SUBJECT_STYLES[synthese.subject]}
+                                                >
+                                                    {t(`subjects.${synthese.subject}`)}
                                                 </span>
+                                            ) : (
+                                                <span className="text-xl leading-none select-none">📄</span>
                                             )}
                                         </button>
 
@@ -389,15 +394,6 @@ const Study = () => {
                                         </div>
                                     </div>
 
-                                    {/* Badge maîtrisée en bas */}
-                                    {synthese.mastery_score === 100 && (
-                                        <div className="mt-3 pt-3 border-t border-white/5 ml-9">
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-success/20 text-success text-xs font-medium rounded-full">
-                                                <Award size={12} />
-                                                {t('study.mastered')}
-                                            </span>
-                                        </div>
-                                    )}
                                 </div>
                             )}
                         </div>

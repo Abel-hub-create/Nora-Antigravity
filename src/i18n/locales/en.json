@@ -582,6 +582,7 @@
     "noAccount": "No account?",
     "hasAccount": "Already have an account?",
     "orContinueWith": "or continue with",
+    "continueWithApple": "Continue with Apple",
     "createAccount": "Create my account",
     "loginButton": "Login",
     "emailRequired": "Email is required",
@@ -705,6 +706,7 @@
     "noTextDetectedPhoto": "No text detected. Take a photo of your course so I can summarize it.",
     "noTextDetectedVoice": "No text detected. Dictate your course so I can summarize it.",
     "googleLoginFailed": "Google login failed",
+    "appleLoginFailed": "Apple login failed",
     "synthesesLimitReached": "You've reached the limit of 40 summaries. Delete some to create new ones."
   }
 }

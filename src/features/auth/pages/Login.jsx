@@ -8,6 +8,7 @@ import { useAuth } from '../hooks/useAuth';
 import AuthInput from '../components/AuthInput';
 import AuthLanguageSelector from '../components/AuthLanguageSelector';
 import AppleLoginButton from '../components/AppleLoginButton';
+import OpenEmailButton from '../../../components/UI/OpenEmailButton';
 import api from '../../../lib/api';
 
 const Login = () => {
@@ -130,7 +131,8 @@ const Login = () => {
               >
                 <p>{authError}</p>
                 {isEmailNotVerified && (
-                  <div className="mt-3 pt-3 border-t border-error/20">
+                  <div className="mt-3 pt-3 border-t border-error/20 space-y-2">
+                    {formData.email && <OpenEmailButton email={formData.email} />}
                     <button
                       type="button"
                       onClick={handleResendVerification}
