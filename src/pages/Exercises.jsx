@@ -82,7 +82,7 @@ export default function Exercises() {
         </div>
         <button
           onClick={() => navigate('/assistant')}
-          className="flex items-center gap-1.5 px-3 py-2 bg-primary/20 border border-primary/30 text-primary text-sm rounded-xl hover:bg-primary/30 transition-colors mr-10"
+          className="flex items-center gap-1.5 px-3 py-2 bg-primary/20 border border-primary/30 text-primary text-sm rounded-xl hover:bg-primary/30 transition-colors mr-16"
         >
           <Plus size={15} />
           {t('exercises.monkModeBtn')}
