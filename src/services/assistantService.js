@@ -31,3 +31,8 @@ export const correctExercises = async (exerciseSetId) => {
   const response = await api.post(`/assistant/correct/${exerciseSetId}`);
   return response.correction;
 };
+
+export const analyzeExam = async (imageBase64, subject) => {
+  const response = await api.post('/assistant/ana/analyze', { image: imageBase64, subject });
+  return response; // { analysis, examText }
+};

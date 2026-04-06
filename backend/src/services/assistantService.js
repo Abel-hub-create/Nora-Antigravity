@@ -198,6 +198,46 @@ Réponds UNIQUEMENT en JSON valide avec cette structure :
   return { title: result.title || `Exercices ${subjectName}`, items };
 }
 
+// ─── /ana — Analyse d'interro par OCR ────────────────────────────────────────
+
+export async function analyzeExamDifficulties({ examText, subject }) {
+  const subjectName = SUBJECT_NAMES_FR[subject] || subject;
+
+  const prompt = `Tu es un expert pédagogique. Un étudiant t'envoie le texte de son interro ou devoir corrigé en ${subjectName}.
+
+Texte du contrôle :
+"""
+${examText.substring(0, 3000)}
+"""
+
+Analyse ce contrôle et identifie :
+- Les thèmes et notions qui semblent difficiles pour l'étudiant (questions ratées ou concepts complexes testés)
+- Les compétences évaluées dans ce contrôle
+
+Réponds UNIQUEMENT en JSON valide :
+{
+  "weakTopics": ["thème 1", "thème 2", "thème 3"],
+  "strongTopics": [],
+  "summary": "Résumé court en 2-3 phrases des points à travailler d'après ce contrôle"
+}`;
+
+  const response = await openai.chat.completions.create({
+    model: MODEL,
+    messages: [{ role: 'user', content: prompt }],
+    response_format: { type: 'json_object' },
+    max_tokens: 500,
+    temperature: 0.3
+  });
+
+  const result = JSON.parse(response.choices[0].message.content);
+  return {
+    hasSufficientData: true,
+    summary: result.summary || '',
+    weakTopics: result.weakTopics || [],
+    strongTopics: result.strongTopics || []
+  };
+}
+
 // ─── /correct — Correction commentée ─────────────────────────────────────────
 
 export async function correctExercises({ subject, items }) {

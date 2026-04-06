@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, ChevronRight, Loader2, BookOpen, Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Trash2, ChevronRight, Loader2, Plus } from 'lucide-react';
 import * as exerciseSvc from '../services/exerciseService';
+import LiquidProgressBar from '../components/UI/LiquidProgressBar';
 
 const SUBJECT_EMOJIS = {
   mathematics: '📐', french: '📚', physics: '⚡', chemistry: '🧪',
@@ -17,6 +19,7 @@ const SUBJECT_NAMES = {
 
 export default function Exercises() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [exercises, setExercises] = useState([]);
   const [total, setTotal] = useState(0);
   const [limit, setLimit] = useState(15);
@@ -74,24 +77,24 @@ export default function Exercises() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-text-main">Mes exercices</h1>
-          <p className="text-xs text-text-muted mt-0.5">{total}/{limit} sets utilisés</p>
+          <h1 className="text-xl font-bold text-text-main">{t('exercises.title')}</h1>
+          <p className="text-xs text-text-muted mt-0.5">{t('exercises.quota', { total, limit })}</p>
         </div>
         <button
           onClick={() => navigate('/assistant')}
-          className="flex items-center gap-1.5 px-3 py-2 bg-primary/20 border border-primary/30 text-primary text-sm rounded-xl hover:bg-primary/30 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-2 bg-primary/20 border border-primary/30 text-primary text-sm rounded-xl hover:bg-primary/30 transition-colors mr-10"
         >
           <Plus size={15} />
-          Monk Mode
+          {t('exercises.monkModeBtn')}
         </button>
       </div>
 
-      {/* Barre de quota */}
-      <div className="mb-6 h-1.5 bg-surface rounded-full overflow-hidden">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${(total / limit) * 100}%` }}
-          className="h-full bg-primary rounded-full"
+      {/* Barre de quota — LiquidProgressBar vert */}
+      <div className="mb-6">
+        <LiquidProgressBar
+          progress={(total / limit) * 100}
+          height={6}
+          completed={total >= limit}
         />
       </div>
 
@@ -101,14 +104,14 @@ export default function Exercises() {
             🧠
           </div>
           <div>
-            <p className="text-text-main font-medium mb-1">Aucun exercice</p>
-            <p className="text-text-muted text-sm">Lance le Monk Mode dans l'assistant pour en générer !</p>
+            <p className="text-text-main font-medium mb-1">{t('exercises.noExercises')}</p>
+            <p className="text-text-muted text-sm">{t('exercises.noExercisesHint')}</p>
           </div>
           <button
             onClick={() => navigate('/assistant')}
             className="px-4 py-2 bg-primary text-white text-sm rounded-xl"
           >
-            Ouvrir l'assistant
+            {t('exercises.openAssistant')}
           </button>
         </div>
       ) : (
@@ -121,30 +124,30 @@ export default function Exercises() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ delay: i * 0.04 }}
-                className="bg-surface border border-white/5 rounded-2xl overflow-hidden"
+                className="bg-surface border border-white/5 rounded-2xl hover-lift"
               >
                 {confirmDeleteId === ex.id ? (
                   <div className="p-4 bg-error/10 border border-error/20 rounded-2xl">
-                    <p className="text-sm text-text-main mb-3">Supprimer ce set d'exercices ?</p>
+                    <p className="text-sm text-text-main mb-3">{t('exercises.deleteConfirm')}</p>
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleDelete(ex.id)}
                         disabled={deletingId === ex.id}
                         className="flex-1 py-2 bg-error text-white text-sm rounded-xl"
                       >
-                        {deletingId === ex.id ? <Loader2 size={14} className="animate-spin mx-auto" /> : 'Supprimer'}
+                        {deletingId === ex.id ? <Loader2 size={14} className="animate-spin mx-auto" /> : t('exercises.delete')}
                       </button>
                       <button
                         onClick={() => setConfirmDeleteId(null)}
                         className="flex-1 py-2 bg-surface border border-white/10 text-text-muted text-sm rounded-xl"
                       >
-                        Annuler
+                        {t('common.cancel')}
                       </button>
                     </div>
                   </div>
                 ) : (
                   <div
-                    className="p-4 flex items-center gap-3 cursor-pointer hover:bg-white/2 transition-colors"
+                    className="p-4 flex items-center gap-3 cursor-pointer transition-colors"
                     onClick={() => navigate(`/exercises/${ex.id}`)}
                   >
                     <span className="text-2xl shrink-0">{SUBJECT_EMOJIS[ex.subject] ?? '📖'}</span>
@@ -153,7 +156,11 @@ export default function Exercises() {
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-xs text-text-muted">{SUBJECT_NAMES[ex.subject] ?? ex.subject}</span>
                         <span className="text-text-muted/30">·</span>
-                        <span className="text-xs text-text-muted">{ex.item_count} exercice{ex.item_count > 1 ? 's' : ''}</span>
+                        <span className="text-xs text-text-muted">
+                          {ex.item_count > 1
+                            ? t('exercises.exerciseCountPlural', { count: ex.item_count })
+                            : t('exercises.exerciseCount', { count: ex.item_count })}
+                        </span>
                         <span className="text-text-muted/30">·</span>
                         <span className="text-xs text-text-muted">{formatDate(ex.created_at)}</span>
                       </div>

@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Camera, ArrowRight, Upload, Loader2, Moon, Sun, Globe, CameraIcon, BookOpen } from 'lucide-react';
+import { Camera, ArrowRight, Upload, Loader2, Moon, Sun, Globe, CameraIcon, BookOpen, Bot } from 'lucide-react';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 
 // Liste des langues disponibles
@@ -26,7 +26,7 @@ const SUBJECTS = [
     { id: 'dutch', icon: '🇳🇱' }
 ];
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 
 const OnboardingModal = () => {
     const { t, i18n } = useTranslation();
@@ -111,7 +111,12 @@ const OnboardingModal = () => {
         setStep(5);
     };
 
-    // Step 5: Complete
+    // Step 5: Aron intro
+    const handleStep5Continue = () => {
+        setStep(6);
+    };
+
+    // Step 6: Complete
     const handleComplete = async () => {
         setIsLoading(true);
         try {
@@ -411,10 +416,59 @@ const OnboardingModal = () => {
                         </motion.div>
                     )}
 
-                    {/* Step 5: Import Method Info */}
+                    {/* Step 5: Aron & Monk Mode intro */}
                     {step === 5 && (
                         <motion.div
                             key="step5"
+                            variants={stepVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            transition={{ duration: 0.2 }}
+                        >
+                            <div className="flex justify-center mb-6">
+                                <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center">
+                                    <Bot size={40} className="text-primary" />
+                                </div>
+                            </div>
+                            <h2 className="text-2xl font-bold text-text-main text-center mb-4">
+                                {t('onboarding.step6.title')}
+                            </h2>
+                            <p className="text-text-muted text-center mb-6 text-sm leading-relaxed">
+                                {t('onboarding.step6.message')}
+                            </p>
+
+                            <div className={`${selectedTheme === 'dark' ? 'bg-white/5' : 'bg-black/5'} rounded-2xl p-4 mb-6 space-y-3`}>
+                                <div className="flex items-start gap-3">
+                                    <span className="text-lg shrink-0">🧘</span>
+                                    <div>
+                                        <p className="text-sm font-semibold text-text-main">{t('onboarding.step6.monkTitle')}</p>
+                                        <p className="text-xs text-text-muted mt-0.5">{t('onboarding.step6.monkDesc')}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <span className="text-lg shrink-0">📸</span>
+                                    <div>
+                                        <p className="text-sm font-semibold text-text-main">{t('onboarding.step6.anaTitle')}</p>
+                                        <p className="text-xs text-text-muted mt-0.5">{t('onboarding.step6.anaDesc')}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={handleStep5Continue}
+                                className="w-full p-4 rounded-xl bg-primary text-white font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
+                            >
+                                {t('onboarding.step6.button')}
+                                <ArrowRight size={18} />
+                            </button>
+                        </motion.div>
+                    )}
+
+                    {/* Step 6: Import Method Info */}
+                    {step === 6 && (
+                        <motion.div
+                            key="step6"
                             variants={stepVariants}
                             initial="hidden"
                             animate="visible"

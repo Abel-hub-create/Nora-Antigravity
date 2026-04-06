@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticate } from '../middlewares/auth.js';
-import { chat, analyzeDifficulties, generateExercises, correctExercises } from '../services/assistantService.js';
+import { chat, analyzeDifficulties, generateExercises, correctExercises, analyzeExamDifficulties } from '../services/assistantService.js';
+import { extractTextFromImage } from '../services/openaiService.js';
 import * as exerciseRepo from '../services/exerciseRepository.js';
 import { query } from '../config/database.js';
 
@@ -171,6 +172,29 @@ router.post('/correct/:exerciseSetId', async (req, res, next) => {
     });
 
     res.json({ correction, exerciseSetId: setId });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ─── /ana — Analyse d'interro par photo ──────────────────────────────────────
+
+router.post('/ana/analyze', async (req, res, next) => {
+  try {
+    const { image, subject } = req.body;
+    if (!image) return res.status(400).json({ error: 'image requis (base64)' });
+    if (!subject) return res.status(400).json({ error: 'subject requis' });
+
+    // Extraire le texte via OCR
+    const examText = await extractTextFromImage(image);
+    if (!examText || examText.trim().length < 20) {
+      return res.status(422).json({ error: 'NO_TEXT_DETECTED', message: 'Aucun texte détecté dans l\'image.' });
+    }
+
+    // Analyser les difficultés
+    const analysis = await analyzeExamDifficulties({ examText, subject });
+
+    res.json({ analysis, examText });
   } catch (error) {
     next(error);
   }

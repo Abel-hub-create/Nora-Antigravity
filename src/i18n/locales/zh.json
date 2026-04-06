@@ -682,5 +682,91 @@
     "googleLoginFailed": "Google登录失败",
     "appleLoginFailed": "Apple登录失败",
     "synthesesLimitReached": "您已达到40个摘要的上限。请删除一些以创建新的。"
+  },
+  "assistant": {
+    "title": "Aron",
+    "subtitle": "学习助手",
+    "myExercises": "我的练习",
+    "inputPlaceholder": "发送消息...",
+    "commandsHint": "输入 /exs 进入僧侣模式 · /correct 批改 · /ana 分析考试",
+    "thinking": "思考中...",
+    "error": "抱歉，发生了错误。请稍后重试。",
+    "welcome": "你好！我是Aron，你的个人学习助手。我在这里帮助你理解课程内容并取得进步。😊\n\n输入 /exs 启动**僧侣模式**，根据你的薄弱点生成练习题；输入 /correct 批改你的练习；或输入 /ana 分析一份考试。",
+    "welcomeShort": "你好！我是Aron，你的学习助手。😊\n\n输入 /exs 进入**僧侣模式** · /correct 批改 · /ana 分析考试。",
+    "monk": {
+      "selectSubject": "你想练习哪个科目？🎯",
+      "noSubjects": "你还没有分配科目的摘要。请先导入课程并选择科目！📚",
+      "analyzingSubject": "正在搜索你的{{subject}}摘要...",
+      "analyzingQuiz": "正在分析你的测验结果...",
+      "analyzingWeak": "正在识别你的薄弱点...",
+      "analyzed": "我分析了{{subject}}的**{{syntheses}}份摘要**和**{{answers}}个回答**。",
+      "weakTopics": "需要加强的领域：",
+      "askSpecific": "你有具体的困难要补充吗？（写出来或说"没有"）",
+      "noted": "已记录！我会考虑：*\"{{text}}\"* 📝",
+      "selectTypes": "你想要哪些类型的练习？（至少选一个）\n\n• **选择题** — 多项选择题（最多5题）\n• **开放性问题** — 书面回答（最多10题）\n• **实践练习** — 计算、操作（最多10题）",
+      "openQuestions": "开放性问题",
+      "practicalExercises": "实践练习",
+      "confirmTypes": "确认我的选择",
+      "atLeastOne": "请至少选择一种练习类型！😊",
+      "howMany": "你想要多少道**{{type}}**？（1到{{max}}）",
+      "invalidNumber": "请给我一个在1到最大值之间的数字 😊",
+      "generating": "正在生成你的个性化练习...",
+      "buildingSet": "正在构建{{subject}}练习集...",
+      "generated": "✅ **已创建{{count}}道练习**：\"{{title}}\"\n\n完成后，输入 **/correct** 让我批改！",
+      "viewExercises": "📋 查看我的练习 →",
+      "limitReached": "你已达到15个练习集的上限。请删除一个以继续。",
+      "genError": "生成时出错。请稍后重试。",
+      "analyzeError": "分析时出错。请稍后重试。"
+    },
+    "correct": {
+      "loading": "正在加载你的练习...",
+      "empty": "你还没有需要批改的练习。用 **/exs** 启动僧侣模式！💪",
+      "select": "你想批改哪个练习集？",
+      "readingAnswers": "正在读取你的答案...",
+      "correcting": "批改中...",
+      "done": "批改完成！",
+      "noAnswers": "这个练习集没有需要批改的答案。请先填写练习！✏️",
+      "error": "批改时出错。请重试。"
+    },
+    "ana": {
+      "upload": "发送一张你的考试或批改作业的照片 📸\n\n点击下面的按钮选择图片。",
+      "extracting": "正在分析图片...",
+      "extracted": "图片已分析！📝 这份考试是哪个科目的？",
+      "analyzing": "正在分析你的考试...",
+      "identifying": "正在识别需要练习的点...",
+      "analyzed": "我已分析你的考试。",
+      "extractError": "无法从此图片中提取文字。请尝试更清晰的照片 📷",
+      "uploadBtn": "选择照片"
+    }
+  },
+  "exercises": {
+    "title": "我的练习",
+    "quota": "已使用 {{total}}/{{limit}} 个练习集",
+    "noExercises": "暂无练习",
+    "noExercisesHint": "在助手中启动僧侣模式来生成练习！",
+    "openAssistant": "打开助手",
+    "monkModeBtn": "僧侣模式",
+    "deleteConfirm": "删除这个练习集？",
+    "delete": "删除",
+    "exerciseCount": "{{count}}道练习",
+    "exerciseCountPlural": "{{count}}道练习"
+  },
+  "exerciseDetail": {
+    "answered": "已回答 {{count}}/{{total}}",
+    "print": "打印",
+    "globalFeedback": "🌟 总体反馈",
+    "correctBtn": "批改我的练习 ({{answered}}/{{total}})",
+    "correcting": "批改中..."
+  },
+  "onboarding": {
+    "step6": {
+      "title": "认识Aron 🤖",
+      "message": "Aron是你的个人学习助手。他通过僧侣模式分析你的成绩并生成量身定制的练习。",
+      "monkTitle": "僧侣模式 (/exs)",
+      "monkDesc": "Aron分析你的测验并针对你的薄弱点创建定向练习。",
+      "anaTitle": "分析考试 (/ana)",
+      "anaDesc": "拍一张批改过的作业照片，Aron会创建练习帮助你进步。",
+      "button": "太好了，出发！"
+    }
   }
 }

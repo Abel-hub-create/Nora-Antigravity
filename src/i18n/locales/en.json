@@ -709,5 +709,91 @@
     "googleLoginFailed": "Google login failed",
     "appleLoginFailed": "Apple login failed",
     "synthesesLimitReached": "You've reached the limit of 40 summaries. Delete some to create new ones."
+  },
+  "assistant": {
+    "title": "Aron",
+    "subtitle": "Learning assistant",
+    "myExercises": "My exercises",
+    "inputPlaceholder": "Send a message...",
+    "commandsHint": "Type /exs for Monk Mode · /correct to grade · /ana to analyse a test",
+    "thinking": "Thinking...",
+    "error": "Sorry, an error occurred. Please try again in a moment.",
+    "welcome": "Hello! I'm Aron, your personal learning assistant. I'm here to help you understand your courses and improve. 😊\n\nType /exs to launch **Monk Mode** and generate exercises tailored to your weaknesses, /correct to grade your exercises, or /ana to analyse a test.",
+    "welcomeShort": "Hello! I'm Aron, your learning assistant. 😊\n\nType /exs for **Monk Mode** · /correct to grade · /ana to analyse a test.",
+    "monk": {
+      "selectSubject": "Which subject do you want to work on? 🎯",
+      "noSubjects": "You don't have any summaries with an assigned subject yet. Import a course first and choose a subject! 📚",
+      "analyzingSubject": "Looking for your summaries in {{subject}}...",
+      "analyzingQuiz": "Analysing your quiz results...",
+      "analyzingWeak": "Identifying your weak points...",
+      "analyzed": "I analysed **{{syntheses}} summary{{synthesesPlural}}** and **{{answers}} answer{{answersPlural}}** in {{subject}}.",
+      "weakTopics": "Areas to strengthen:",
+      "askSpecific": "Do you have specific difficulties to add? (type them or say \"no\")",
+      "noted": "Noted! I'll take into account: *\"{{text}}\"* 📝",
+      "selectTypes": "What types of exercises do you want? (select at least one)\n\n• **MCQ** — Multiple choice questions (max 5)\n• **Open questions** — Written answers (max 10)\n• **Practical exercises** — Calculations, manipulations (max 10)",
+      "openQuestions": "Open questions",
+      "practicalExercises": "Practical exercises",
+      "confirmTypes": "Confirm my selection",
+      "atLeastOne": "Select at least one exercise type! 😊",
+      "howMany": "How many **{{type}}** do you want? (1 to {{max}})",
+      "invalidNumber": "Give me a number between 1 and the indicated maximum 😊",
+      "generating": "Generating your personalised exercises...",
+      "buildingSet": "Building the {{subject}} set...",
+      "generated": "✅ **{{count}} exercise{{plural}} created** : \"{{title}}\"\n\nWhen you're done, type **/correct** so I can grade them!",
+      "viewExercises": "📋 View my exercises →",
+      "limitReached": "You've reached the limit of 15 exercise sets. Delete one to continue.",
+      "genError": "Error during generation. Please try again in a moment.",
+      "analyzeError": "Error during analysis. Please try again in a moment."
+    },
+    "correct": {
+      "loading": "Loading your exercises...",
+      "empty": "You don't have any exercises to grade yet. Launch Monk Mode with **/exs**! 💪",
+      "select": "Which exercise set do you want to grade?",
+      "readingAnswers": "Reading your answers...",
+      "correcting": "Grading in progress...",
+      "done": "Grading complete!",
+      "noAnswers": "There are no answers to grade for this set. Fill in the exercises first! ✏️",
+      "error": "Error during grading. Please try again."
+    },
+    "ana": {
+      "upload": "Send a photo of your graded test or homework 📸\n\nClick the button below to choose an image.",
+      "extracting": "Analysing image...",
+      "extracted": "Image analysed! 📝 What subject is this test for?",
+      "analyzing": "Analysing your test...",
+      "identifying": "Identifying areas to work on...",
+      "analyzed": "I have analysed your test.",
+      "extractError": "I couldn't extract text from this image. Try with a clearer photo 📷",
+      "uploadBtn": "Choose a photo"
+    }
+  },
+  "exercises": {
+    "title": "My exercises",
+    "quota": "{{total}}/{{limit}} sets used",
+    "noExercises": "No exercises",
+    "noExercisesHint": "Launch Monk Mode in the assistant to generate some!",
+    "openAssistant": "Open assistant",
+    "monkModeBtn": "Monk Mode",
+    "deleteConfirm": "Delete this exercise set?",
+    "delete": "Delete",
+    "exerciseCount": "{{count}} exercise",
+    "exerciseCountPlural": "{{count}} exercises"
+  },
+  "exerciseDetail": {
+    "answered": "{{count}}/{{total}} answered",
+    "print": "Print",
+    "globalFeedback": "🌟 Overall feedback",
+    "correctBtn": "Grade my exercises ({{answered}}/{{total}})",
+    "correcting": "Grading in progress..."
+  },
+  "onboarding": {
+    "step6": {
+      "title": "Meet Aron 🤖",
+      "message": "Aron is your personal learning assistant. He analyses your results and generates tailored exercises using Monk Mode.",
+      "monkTitle": "Monk Mode (/exs)",
+      "monkDesc": "Aron analyses your quizzes and creates targeted exercises for your weak spots.",
+      "anaTitle": "Analyse a test (/ana)",
+      "anaDesc": "Take a photo of a graded assignment and Aron creates exercises to help you improve.",
+      "button": "Great, let's go!"
+    }
   }
 }

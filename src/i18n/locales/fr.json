@@ -724,5 +724,91 @@
     "googleLoginFailed": "La connexion Google a échoué",
     "appleLoginFailed": "La connexion Apple a échoué",
     "synthesesLimitReached": "Tu as atteint la limite de 40 synthèses. Supprime-en pour en créer de nouvelles."
+  },
+  "assistant": {
+    "title": "Aron",
+    "subtitle": "Assistant pédagogique",
+    "myExercises": "Mes exercices",
+    "inputPlaceholder": "Envoie un message...",
+    "commandsHint": "Tape /exs pour le Monk Mode · /correct pour corriger · /ana pour analyser une interro",
+    "thinking": "En train de réfléchir...",
+    "error": "Désolé, une erreur s'est produite. Réessaie dans un moment.",
+    "welcome": "Bonjour ! Je suis Aron, ton assistant pédagogique. Je suis là pour t'aider à comprendre tes cours et à progresser. 😊\n\nTape /exs pour lancer le **Monk Mode** et générer des exercices adaptés à tes difficultés, /correct pour corriger tes exercices, ou /ana pour analyser une interro.",
+    "welcomeShort": "Bonjour ! Je suis Aron, ton assistant pédagogique. 😊\n\nTape /exs pour le **Monk Mode** · /correct pour corriger · /ana pour analyser une interro.",
+    "monk": {
+      "selectSubject": "Dans quelle matière veux-tu travailler ? 🎯",
+      "noSubjects": "Tu n'as pas encore de synthèses avec une matière assignée. Importe d'abord un cours en choisissant une matière ! 📚",
+      "analyzingSubject": "Recherche de tes synthèses en {{subject}}...",
+      "analyzingQuiz": "Analyse de tes résultats aux quiz...",
+      "analyzingWeak": "Identification de tes points faibles...",
+      "analyzed": "J'ai analysé **{{syntheses}} synthèse{{synthesesPlural}}** et **{{answers}} réponse{{answersPlural}}** en {{subject}}.",
+      "weakTopics": "Tes points à renforcer :",
+      "askSpecific": "As-tu des difficultés spécifiques à ajouter ? (écris-les ou dis \"non\")",
+      "noted": "Noté ! Je prendrai en compte : *\"{{text}}\"* 📝",
+      "selectTypes": "Quels types d'exercices veux-tu ? (sélectionne au moins un)\n\n• **QCM** — Questions à choix multiples (max 5)\n• **Questions ouvertes** — Réponses rédigées (max 10)\n• **Exercices pratiques** — Calculs, manipulations (max 10)",
+      "openQuestions": "Questions ouvertes",
+      "practicalExercises": "Exercices pratiques",
+      "confirmTypes": "Valider ma sélection",
+      "atLeastOne": "Sélectionne au moins un type d'exercice ! 😊",
+      "howMany": "Combien de **{{type}}** veux-tu ? (1 à {{max}})",
+      "invalidNumber": "Donne-moi un nombre entre 1 et le maximum indiqué 😊",
+      "generating": "Génération de tes exercices personnalisés...",
+      "buildingSet": "Construction du set {{subject}}...",
+      "generated": "✅ **{{count}} exercice{{plural}} créé{{plural}}** : \"{{title}}\"\n\nQuand tu auras terminé, tape **/correct** pour que je les corrige !",
+      "viewExercises": "📋 Voir mes exercices →",
+      "limitReached": "Tu as atteint la limite de 15 sets d'exercices. Supprime-en un pour continuer.",
+      "genError": "Erreur lors de la génération. Réessaie dans un moment.",
+      "analyzeError": "Erreur lors de l'analyse. Réessaie dans un moment."
+    },
+    "correct": {
+      "loading": "Chargement de tes exercices...",
+      "empty": "Tu n'as pas encore d'exercices à corriger. Lance le Monk Mode avec **/exs** ! 💪",
+      "select": "Quel set d'exercices veux-tu corriger ?",
+      "readingAnswers": "Lecture de tes réponses...",
+      "correcting": "Correction en cours...",
+      "done": "Correction terminée !",
+      "noAnswers": "Il n'y a aucune réponse à corriger pour ce set. Remplis les exercices d'abord ! ✏️",
+      "error": "Erreur lors de la correction. Réessaie."
+    },
+    "ana": {
+      "upload": "Envoie une photo de ton interro ou devoir corrigé 📸\n\nClique sur le bouton ci-dessous pour choisir une image.",
+      "extracting": "Analyse de l'image en cours...",
+      "extracted": "Image analysée ! 📝 Dans quelle matière est cette interro ?",
+      "analyzing": "Analyse de ton contrôle...",
+      "identifying": "Identification des points à travailler...",
+      "analyzed": "J'ai analysé ton contrôle.",
+      "extractError": "Je n'ai pas pu extraire de texte de cette image. Essaie avec une photo plus nette 📷",
+      "uploadBtn": "Choisir une photo"
+    }
+  },
+  "exercises": {
+    "title": "Mes exercices",
+    "quota": "{{total}}/{{limit}} sets utilisés",
+    "noExercises": "Aucun exercice",
+    "noExercisesHint": "Lance le Monk Mode dans l'assistant pour en générer !",
+    "openAssistant": "Ouvrir l'assistant",
+    "monkModeBtn": "Monk Mode",
+    "deleteConfirm": "Supprimer ce set d'exercices ?",
+    "delete": "Supprimer",
+    "exerciseCount": "{{count}} exercice",
+    "exerciseCountPlural": "{{count}} exercices"
+  },
+  "exerciseDetail": {
+    "answered": "{{count}}/{{total}} répondus",
+    "print": "Imprimer",
+    "globalFeedback": "🌟 Bilan global",
+    "correctBtn": "Corriger mes exercices ({{answered}}/{{total}})",
+    "correcting": "Correction en cours..."
+  },
+  "onboarding": {
+    "step6": {
+      "title": "Rencontre Aron 🤖",
+      "message": "Aron est ton assistant pédagogique personnel. Il analyse tes résultats et génère des exercices sur-mesure grâce au Monk Mode.",
+      "monkTitle": "Monk Mode (/exs)",
+      "monkDesc": "Aron analyse tes quiz et crée des exercices ciblés sur tes lacunes.",
+      "anaTitle": "Analyser une interro (/ana)",
+      "anaDesc": "Prends en photo un devoir corrigé et Aron crée des exercices pour t'aider à progresser.",
+      "button": "Super, allons-y !"
+    }
   }
 }

@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Printer, Loader2, CheckCircle2, Circle, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Printer, Loader2, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import * as exerciseSvc from '../services/exerciseService';
 import * as assistantSvc from '../services/assistantService';
+import LiquidProgressBar from '../components/UI/LiquidProgressBar';
 
 const SUBJECT_EMOJIS = {
   mathematics: '📐', french: '📚', physics: '⚡', chemistry: '🧪',
@@ -105,6 +107,7 @@ function TextItem({ item, onChange, correction, placeholder }) {
 export default function ExerciseDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [exercise, setExercise] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCorrecting, setIsCorrecting] = useState(false);
@@ -291,24 +294,23 @@ export default function ExerciseDetail() {
         </Link>
         <div className="flex-1 min-w-0">
           <h1 className="font-bold text-text-main truncate text-sm">{exercise.title}</h1>
-          <p className="text-xs text-text-muted">{answeredCount}/{exercise.items.length} répondus</p>
+          <p className="text-xs text-text-muted">{t('exerciseDetail.answered', { count: answeredCount, total: exercise.items.length })}</p>
         </div>
         <button
           onClick={handlePrint}
-          className="p-2 text-text-muted hover:text-primary transition-colors"
-          title="Imprimer"
+          className="p-2 text-text-muted hover:text-primary transition-colors mr-10"
+          title={t('exerciseDetail.print')}
         >
           <Printer size={20} />
         </button>
       </div>
 
-      {/* Barre de progression */}
-      <div className="h-1 bg-surface">
-        <motion.div
-          animate={{ width: `${(answeredCount / Math.max(exercise.items.length, 1)) * 100}%` }}
-          className="h-full bg-primary"
-        />
-      </div>
+      {/* Barre de progression — liquide vert */}
+      <LiquidProgressBar
+        progress={(answeredCount / Math.max(exercise.items.length, 1)) * 100}
+        height={4}
+        completed={answeredCount >= exercise.items.length}
+      />
 
       <div className="px-4 py-4 space-y-4">
         {/* Feedback global correction */}
@@ -341,7 +343,7 @@ export default function ExerciseDetail() {
             <div key={type} className="bg-surface border border-white/5 rounded-2xl overflow-hidden">
               <button
                 onClick={() => toggleSection(type)}
-                className="w-full flex items-center justify-between p-4 text-left"
+                className="w-full flex items-center justify-between p-4 text-left no-hover"
               >
                 <div className="flex items-center gap-2">
                   <span className="text-lg">{TYPE_ICONS[type]}</span>
@@ -394,7 +396,7 @@ export default function ExerciseDetail() {
 
       {/* Bouton correction fixe en bas */}
       {!correction && (
-        <div className="fixed bottom-20 left-0 right-0 px-4 max-w-3xl mx-auto">
+        <div className="fixed bottom-28 left-0 right-0 px-4 max-w-3xl mx-auto">
           <motion.button
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -403,9 +405,9 @@ export default function ExerciseDetail() {
             className="w-full py-3.5 bg-primary text-white font-semibold rounded-2xl shadow-lg shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {isCorrecting ? (
-              <><Loader2 size={18} className="animate-spin" /> Correction en cours...</>
+              <><Loader2 size={18} className="animate-spin" /> {t('exerciseDetail.correcting')}</>
             ) : (
-              <>✨ Corriger mes exercices ({answeredCount}/{exercise.items.length})</>
+              <>✨ {t('exerciseDetail.correctBtn', { answered: answeredCount, total: exercise.items.length })}</>
             )}
           </motion.button>
         </div>
