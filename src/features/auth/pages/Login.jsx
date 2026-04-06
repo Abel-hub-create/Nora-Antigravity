@@ -7,6 +7,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../hooks/useAuth';
 import AuthInput from '../components/AuthInput';
 import AuthLanguageSelector from '../components/AuthLanguageSelector';
+import AppleLoginButton from '../components/AppleLoginButton';
 import api from '../../../lib/api';
 
 const Login = () => {
@@ -22,8 +23,9 @@ const Login = () => {
   const [resendMessage, setResendMessage] = useState('');
   const [resendSuccess, setResendSuccess] = useState(false);
 
-  const { login, loginWithGoogle, error: authError, errorCode, clearError } = useAuth();
+  const { login, loginWithGoogle, loginWithApple, error: authError, errorCode, clearError } = useAuth();
   const [googleError, setGoogleError] = useState(null);
+  const [appleError, setAppleError] = useState(null);
   const navigate = useNavigate();
 
   // Check if error is about email not verified
@@ -238,6 +240,7 @@ const Login = () => {
           {googleError && (
             <p className="text-error text-sm text-center mt-3">{googleError}</p>
           )}
+
 
           <p className="text-center text-text-muted text-sm mt-6">
             {t('auth.noAccount')}{' '}

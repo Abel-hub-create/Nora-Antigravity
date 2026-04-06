@@ -95,8 +95,8 @@ const DailyProgress = () => {
                                     animate={{ opacity: 1, y: 0 }}
                                     className={`p-3 rounded-xl transition-colors ${
                                         goal.completed
-                                            ? 'bg-green-500/10 border border-green-500/20'
-                                            : 'bg-surface/50 border border-white/5'
+                                            ? 'bg-green-500/10 border border-green-500/30'
+                                            : 'bg-surface/50 border border-white/20'
                                     }`}
                                 >
                                     <div className="flex items-center justify-between mb-2">

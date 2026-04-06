@@ -14,7 +14,7 @@ const FolderCard = ({ folder, index = 0 }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
       onClick={() => navigate(`/folders/${folder.id}`)}
-      className="bg-surface rounded-2xl border border-white/5 p-4 flex items-center gap-3 cursor-pointer active:bg-white/5 transition-colors"
+      className="hover-lift bg-surface rounded-2xl border border-white/5 p-4 flex items-center gap-3 cursor-pointer"
     >
       {/* Folder Icon with color */}
       <div

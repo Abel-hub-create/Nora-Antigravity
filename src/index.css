@@ -45,8 +45,8 @@
 
   /* Dark theme */
   [data-theme="dark"] {
-    --color-background: #0d1524;   /* sombre mais lisible */
-    --color-surface: #162038;      /* distinguable du fond */
+    --color-background: #020408;              /* noir profond */
+    --color-surface: rgba(10, 18, 35, 0.32);  /* semi-transparent pour glassmorphism */
 
     --color-primary: #38bdf8;
     --color-primary-dark: #0ea5e9;
@@ -84,8 +84,8 @@
 
   /* ── Effet verre — structure identique, couleurs adaptées au thème ─── */
   .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl {
-    backdrop-filter: blur(22px);
-    -webkit-backdrop-filter: blur(22px);
+    backdrop-filter: blur(52px) saturate(1.6);
+    -webkit-backdrop-filter: blur(52px) saturate(1.6);
   }
   /* Désactiver complètement l'effet verre (caméra, vidéo, etc.) */
   .no-glass,
@@ -101,10 +101,11 @@
   [data-theme="light"] .rounded-2xl,
   [data-theme="light"] .rounded-3xl {
     box-shadow:
-      0 0 0 1.5px rgba(0, 0, 0, 0.10),
-      inset var(--glass-inset-x, 0px) var(--glass-inset-y, -2px) 14px rgba(255, 255, 255, 0.75),
+      0 0 0 1px rgba(0, 0, 0, 0.10),
+      inset var(--glass-inset-x, 0px) var(--glass-inset-y, -2px) 22px rgba(255, 255, 255, 0.88),
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
       inset 0 -1px 0 rgba(0, 0, 0, 0.06),
-      0 8px 28px rgba(0, 0, 0, 0.09);
+      0 10px 36px rgba(0, 0, 0, 0.12);
   }
 
   /* bg-primary sélectionné clair */
@@ -117,16 +118,18 @@
       0 8px 20px rgba(2, 132, 199, 0.32);
   }
 
-  /* SOMBRE : bord blanc, reflet blanc, ombre noire profonde (après clair = gagne) */
+  /* SOMBRE : bord blanc, trait lumineux extrême gauche, ombre noire profonde */
   [data-theme="dark"] .rounded-lg,
   [data-theme="dark"] .rounded-xl,
   [data-theme="dark"] .rounded-2xl,
   [data-theme="dark"] .rounded-3xl {
     box-shadow:
-      0 0 0 1.5px rgba(255, 255, 255, var(--glass-border-alpha, 0.14)),
-      inset var(--glass-inset-x, 0px) var(--glass-inset-y, -2px) 14px rgba(255, 255, 255, var(--glass-highlight-alpha, 0.08)),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.50),
-      0 12px 40px rgba(0, 0, 0, 0.70);
+      0 0 0 1.5px rgba(255, 255, 255, var(--glass-border-alpha, 0.28)),
+      inset 2px 0 0 rgba(255, 255, 255, 0.30),
+      inset var(--glass-inset-x, 0px) var(--glass-inset-y, -2px) 22px rgba(255, 255, 255, var(--glass-highlight-alpha, 0.08)),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.60),
+      0 16px 48px rgba(0, 0, 0, 0.85);
   }
 
   /* bg-primary sélectionné sombre */

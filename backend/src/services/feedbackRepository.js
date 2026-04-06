@@ -90,7 +90,7 @@ export const getNetScore = async (feedbackId) => {
   `;
 
   const results = await query(sql, [feedbackId]);
-  return results[0]?.net_score || 0;
+  return Number(results[0]?.net_score) || 0;
 };
 
 // Check if feedback exists and is not expired

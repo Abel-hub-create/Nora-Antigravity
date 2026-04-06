@@ -157,7 +157,7 @@ const LiquidProgressBar = ({ progress, height = 16, completed = false, className
     return (
         <div
             ref={containerRef}
-            className={`relative overflow-hidden rounded-full ${className}`}
+            className={`relative overflow-hidden rounded-full border border-white/20 ${className}`}
             style={{ height }}
         >
             <div className="absolute inset-0 bg-surface" />

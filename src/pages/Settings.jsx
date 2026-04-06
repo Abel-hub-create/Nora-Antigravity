@@ -333,11 +333,10 @@ const Settings = () => {
             {/* Sounds Section */}
             <div className="mb-8">
                 <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">{t('settings.sounds')}</h3>
-                <div className="bg-surface rounded-2xl overflow-hidden border border-white/5">
-                    <button
-                        onClick={handleSoundsToggle}
-                        className="w-full p-4 flex items-center justify-between"
-                    >
+                <button
+                    onClick={handleSoundsToggle}
+                    className="hover-lift no-hover w-full p-4 flex items-center justify-between bg-surface rounded-2xl border border-white/10"
+                >
                         <div className="flex items-center gap-3">
                             <Volume2 size={20} className="text-text-muted" />
                             <div className="text-left">
@@ -348,8 +347,7 @@ const Settings = () => {
                         <div className={`w-10 h-6 rounded-full relative transition-colors ${soundsEnabled ? 'bg-primary' : 'bg-white/10'}`}>
                             <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${soundsEnabled ? 'left-5' : 'left-1'}`} />
                         </div>
-                    </button>
-                </div>
+                </button>
             </div>
 
             {/* Daily Goals Section */}
@@ -653,14 +651,14 @@ const Settings = () => {
                 {sections.map((section) => (
                     <div key={section.title}>
                         <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">{section.title}</h3>
-                        <div className="bg-surface rounded-2xl overflow-hidden border border-white/5">
+                        <div className="space-y-2">
                             {section.items.map((item, index) => {
                                 const ItemWrapper = item.onClick ? 'button' : 'div';
                                 return (
                                     <ItemWrapper
                                         key={item.label}
                                         onClick={item.onClick}
-                                        className={`w-full p-4 flex items-center justify-between ${index !== section.items.length - 1 ? 'border-b border-white/5' : ''} ${item.onClick ? 'hover:bg-white/5 transition-colors' : ''}`}
+                                        className={`${item.onClick ? 'hover-lift no-hover' : ''} w-full p-4 flex items-center justify-between bg-surface border border-white/10 rounded-2xl`}
                                     >
                                         <div className="flex items-center gap-3">
                                             <item.icon size={20} className="text-text-muted" />
@@ -684,12 +682,12 @@ const Settings = () => {
                 {/* Notifications Section */}
                 <div>
                     <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">{t('settings.notifications')}</h3>
-                    <div className="bg-surface rounded-2xl overflow-hidden border border-white/5">
+                    <div className="space-y-2">
                         {/* Toggle */}
                         <button
                             onClick={handleNotificationToggle}
                             disabled={notificationsLoading || !notificationsSupported}
-                            className="w-full p-4 flex items-center justify-between disabled:opacity-50"
+                            className="hover-lift no-hover w-full p-4 flex items-center justify-between bg-surface border border-white/10 rounded-2xl disabled:opacity-50"
                         >
                             <div className="flex items-center gap-3">
                                 <Bell size={20} className="text-text-muted" />
@@ -713,7 +711,7 @@ const Settings = () => {
 
                         {/* Schedule (shown when enabled) */}
                         {notificationsEnabled && notificationsSupported && (
-                            <div className="border-t border-white/5 p-4 space-y-4">
+                            <div className="bg-surface border border-white/10 rounded-2xl p-4 space-y-4">
                                 {/* Hour picker */}
                                 <div className="flex items-center justify-between">
                                     <span className="text-sm text-text-muted">{t('settings.notificationHour')}</span>
@@ -746,7 +744,7 @@ const Settings = () => {
                                                 key={day}
                                                 onClick={() => toggleNotifDay(day)}
                                                 disabled={scheduleLoading}
-                                                className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${
+                                                className={`no-hover w-8 h-8 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${
                                                     notifDays.includes(day)
                                                         ? 'bg-primary text-white'
                                                         : 'bg-white/5 text-text-muted hover:bg-white/10'

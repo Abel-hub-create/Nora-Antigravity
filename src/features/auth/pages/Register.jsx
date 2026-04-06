@@ -7,6 +7,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../hooks/useAuth';
 import AuthInput from '../components/AuthInput';
 import AuthLanguageSelector from '../components/AuthLanguageSelector';
+import AppleLoginButton from '../components/AppleLoginButton';
 import { resendVerification } from '../services/authService';
 
 const Register = () => {
@@ -23,9 +24,10 @@ const Register = () => {
   const [resendMessage, setResendMessage] = useState('');
   const [resendSuccess, setResendSuccess] = useState(false);
 
-  const { register, loginWithGoogle, error: authError, errorCode, clearError } = useAuth();
+  const { register, loginWithGoogle, loginWithApple, error: authError, errorCode, clearError } = useAuth();
   const navigate = useNavigate();
   const [googleError, setGoogleError] = useState(null);
+  const [appleError, setAppleError] = useState(null);
 
   // Show resend button when email is already used (verified or not)
   const isEmailAlreadyUsed = errorCode === 'EMAIL_NOT_VERIFIED' || errorCode === 'EMAIL_ALREADY_VERIFIED';
@@ -264,6 +266,7 @@ const Register = () => {
           {googleError && (
             <p className="text-error text-sm text-center mt-3">{googleError}</p>
           )}
+
 
           <p className="text-center text-text-muted text-sm mt-6">
             {t('auth.hasAccount')}{' '}

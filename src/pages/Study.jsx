@@ -26,29 +26,57 @@ const Study = () => {
     const [editingId, setEditingId] = useState(null);
     const [editTitle, setEditTitle] = useState('');
 
-    // Courbe de défilement
+    // Courbe de défilement (effet roulette)
     const listRef = useRef(null);
+    const rafRef = useRef(null);
+    const cachedRef = useRef([]); // positions pré-calculées, zéro reflow au scroll
+
+    const cachePositions = useCallback(() => {
+        if (!listRef.current) return;
+        const scrollY = window.scrollY;
+        const items = listRef.current.querySelectorAll('[data-curve]');
+        // getBoundingClientRect uniquement ici (mount/resize), jamais dans le scroll
+        cachedRef.current = Array.from(items).map(el => {
+            const r = el.getBoundingClientRect();
+            return { el, top: r.top + scrollY, height: r.height };
+        });
+    }, []);
+
+    const applyFromCache = useCallback(() => {
+        const vh = window.innerHeight;
+        const centerY = window.scrollY + vh / 2;
+        cachedRef.current.forEach(({ el, top, height }) => {
+            const dist = (top + height / 2 - centerY) / (vh * 0.42);
+            const ratio = Math.max(-1, Math.min(1, dist));
+            const angle = ratio * 28;
+            const scale = 1 - Math.abs(ratio) * 0.12;
+            el.style.transform = `perspective(900px) rotateX(${angle}deg) scale(${scale})`;
+        });
+    }, []);
 
     useEffect(() => {
-        const apply = () => {
-            if (!listRef.current) return;
-            const items = listRef.current.querySelectorAll('[data-curve]');
-            const vh = window.innerHeight;
-            items.forEach(item => {
-                const rect = item.getBoundingClientRect();
-                const center = rect.top + rect.height / 2;
-                const dist = (center - vh / 2) / (vh * 0.55);
-                const ratio = Math.max(-1, Math.min(1, dist));
-                const angle = ratio * 8;
-                const scale = 1 - Math.abs(ratio) * 0.025;
-                item.style.transform = `perspective(700px) rotateX(${angle}deg) scale(${scale})`;
-                item.style.opacity = 1 - Math.abs(ratio) * 0.25;
-            });
+        // Désactivé sur desktop — le scroll JS casse la fluidité compositor-thread
+        const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+        if (!isTouch) return;
+
+        const onScroll = () => {
+            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+            rafRef.current = requestAnimationFrame(applyFromCache);
         };
-        window.addEventListener('scroll', apply, { passive: true });
-        apply();
-        return () => window.removeEventListener('scroll', apply);
-    }, [syntheses]);
+        const onResize = () => { cachePositions(); applyFromCache(); };
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onResize, { passive: true });
+
+        const t = setTimeout(() => { cachePositions(); applyFromCache(); }, 250);
+
+        return () => {
+            window.removeEventListener('scroll', onScroll);
+            window.removeEventListener('resize', onResize);
+            clearTimeout(t);
+            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        };
+    }, [syntheses, cachePositions, applyFromCache]);
 
     // États pour la sélection et suppression
     const [selectedIds, setSelectedIds] = useState(new Set());
@@ -274,11 +302,11 @@ const Study = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, x: -100 }}
-                        transition={{ delay: index * 0.05 }}
+                        transition={{ duration: 0.2 }}
                         className="mb-3"
                     >
-                        <div data-curve className={`${editingId !== synthese.id ? 'hover-lift' : ''}`}>
-                        <div className="bg-surface rounded-2xl border border-white/5 overflow-hidden">
+                        <div data-curve style={{ willChange: 'transform' }}>
+                        <div className={`bg-surface rounded-2xl border border-white/5 overflow-hidden ${editingId !== synthese.id ? 'hover-lift' : ''}`}>
                             {/* Editing Mode */}
                             {editingId === synthese.id ? (
                                 <div className="p-4">

@@ -1818,3 +1818,78 @@ sudo ./setup-dev-nginx.sh
 - DEV users, syntheses, etc. are stored in `dev_*` tables
 - PROD users, syntheses, etc. are stored in regular tables (no prefix)
 - No risk of DEV bugs affecting PROD data
+
+---
+
+## UI/UX Design System
+
+### Dark Theme (Glassmorphism)
+
+Valeurs validées pour le thème sombre — ne pas modifier sans raison :
+
+| Variable | Valeur |
+|----------|--------|
+| `--color-background` | `#020408` (noir profond) |
+| `--color-surface` | `rgba(10, 18, 35, 0.40)` (semi-transparent) |
+| `--color-primary` | `#38bdf8` |
+| `--color-text-main` | `#ffffff` |
+| `--color-text-muted` | `#6b7d96` |
+
+**Glassmorphism** (`/src/index.css`) :
+- `backdrop-filter: blur(52px) saturate(1.6)` sur tous les `.rounded-*`
+- Bordure : `1.5px rgba(255,255,255,0.28)`
+- Lumière gauche (trait net, extrême bord) : `inset 2px 0 0 rgba(255,255,255,0.30)`
+- Ombre : `0 16px 48px rgba(0,0,0,0.85)`
+
+### Système de Hover
+
+**Règle globale** (`/src/index.css`) :
+```css
+button:not(:disabled):not(.no-hover):hover {
+  transform: scale(1.04) !important;
+  filter: brightness(1.09) !important;
+}
+```
+
+**Classe `hover-lift`** : scale `1.03` + brightness `1.07` — utilisée sur les éléments non-button (divs, links) et sur les boutons standalone qui ne sont pas dans un conteneur `overflow-hidden`.
+
+**Règle critique** : ne JAMAIS mettre `hover-lift` sur un élément enfant d'un `overflow-hidden` — le scale est clippé et donne un effet de "zoom interne". La bonne pratique :
+- Soit mettre `hover-lift` sur l'élément parent (hors `overflow-hidden`)
+- Soit retirer `overflow-hidden` du parent et rendre chaque item indépendant avec ses propres bords arrondis
+
+**Classe `no-hover`** : désactive la règle globale button. À utiliser sur les boutons full-width dans les Settings ou dans des conteneurs contraints.
+
+**Settings** : chaque ligne de paramètre est une **carte indépendante** (`bg-surface rounded-2xl border border-white/10`) avec `hover-lift no-hover` — pas de `overflow-hidden` parent qui clippe.
+
+### Feedback Page (`/src/pages/Feedback.jsx`)
+
+- **Email auteur** : non affiché (vie privée)
+- **Score like/dislike** : valeur réelle affichée (`+1`, `0`, `-1`), pas de `Math.max(0, ...)`
+- **Boutons tab** : séparés avec `gap-2` (pas collés)
+- **mysql2** : `SUM(vote)` retourné comme string → toujours caster avec `Number()` dans `getNetScore()`
+
+### Scroll Effect Roulette (`/src/pages/Study.jsx`)
+
+Effet de courbe cylindrique sur la liste des synthèses — **mobile uniquement** :
+
+```js
+// Désactivé sur desktop (scroll JS casse la fluidité compositor-thread)
+const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+if (!isTouch) return;
+```
+
+**Performance** : positions pré-calculées une seule fois via `cachePositions()` (appelé au mount/resize). Le scroll handler lit uniquement `window.scrollY` (zéro reflow). Valeurs : `rotateX ±28°`, `scale 0.88–1.0`, `perspective 900px`.
+
+**Structure DOM** : `data-curve` sur le wrapper externe, `hover-lift` sur la carte interne — les deux transforms n'entrent pas en conflit.
+
+### Authentification
+
+- **Apple Login** : retiré de Login et Register (non fonctionnel)
+- **Google Login** : seul provider OAuth actif
+
+### Composants — Bordures visibles en thème sombre
+
+- `LiquidProgressBar` : `border border-white/20` sur le track
+- `DailyProgress` goal cards : `border border-white/20` (non-complété), `border border-green-500/30` (complété)
+- `FolderCard` : `hover-lift` ajouté
+- `FolderDetail` synthèse cards : `hover-lift` ajouté
