@@ -643,6 +643,15 @@
       "title": "如何导入？",
       "message": "拍摄笔记照片即可导入。",
       "button": "开始吧！"
+    },
+    "step6": {
+      "title": "认识Aron 🤖",
+      "message": "Aron是你的个人学习助手。他通过僧侣模式分析你的成绩并生成量身定制的练习。",
+      "monkTitle": "僧侣模式 (/exs)",
+      "monkDesc": "Aron分析你的测验并针对你的薄弱点创建定向练习。",
+      "anaTitle": "分析考试 (/ana)",
+      "anaDesc": "拍一张批改过的作业照片，Aron会创建练习帮助你进步。",
+      "button": "太好了，出发！"
     }
   },
   "feedback": {
@@ -757,16 +766,5 @@
     "globalFeedback": "🌟 总体反馈",
     "correctBtn": "批改我的练习 ({{answered}}/{{total}})",
     "correcting": "批改中..."
-  },
-  "onboarding": {
-    "step6": {
-      "title": "认识Aron 🤖",
-      "message": "Aron是你的个人学习助手。他通过僧侣模式分析你的成绩并生成量身定制的练习。",
-      "monkTitle": "僧侣模式 (/exs)",
-      "monkDesc": "Aron分析你的测验并针对你的薄弱点创建定向练习。",
-      "anaTitle": "分析考试 (/ana)",
-      "anaDesc": "拍一张批改过的作业照片，Aron会创建练习帮助你进步。",
-      "button": "太好了，出发！"
-    }
   }
 }

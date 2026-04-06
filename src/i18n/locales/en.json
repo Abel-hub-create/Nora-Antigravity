@@ -670,6 +670,15 @@
       "title": "How do you want to import?",
       "message": "Take photos of your notes to import them.",
       "button": "Let's go!"
+    },
+    "step6": {
+      "title": "Meet Aron 🤖",
+      "message": "Aron is your personal learning assistant. He analyses your results and generates tailored exercises using Monk Mode.",
+      "monkTitle": "Monk Mode (/exs)",
+      "monkDesc": "Aron analyses your quizzes and creates targeted exercises for your weak spots.",
+      "anaTitle": "Analyse a test (/ana)",
+      "anaDesc": "Take a photo of a graded assignment and Aron creates exercises to help you improve.",
+      "button": "Great, let's go!"
     }
   },
   "feedback": {
@@ -784,16 +793,5 @@
     "globalFeedback": "🌟 Overall feedback",
     "correctBtn": "Grade my exercises ({{answered}}/{{total}})",
     "correcting": "Grading in progress..."
-  },
-  "onboarding": {
-    "step6": {
-      "title": "Meet Aron 🤖",
-      "message": "Aron is your personal learning assistant. He analyses your results and generates tailored exercises using Monk Mode.",
-      "monkTitle": "Monk Mode (/exs)",
-      "monkDesc": "Aron analyses your quizzes and creates targeted exercises for your weak spots.",
-      "anaTitle": "Analyse a test (/ana)",
-      "anaDesc": "Take a photo of a graded assignment and Aron creates exercises to help you improve.",
-      "button": "Great, let's go!"
-    }
   }
 }

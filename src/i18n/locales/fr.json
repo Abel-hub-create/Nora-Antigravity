@@ -685,6 +685,15 @@
       "title": "Comment veux-tu importer ?",
       "message": "Prends des photos de tes notes pour les importer.",
       "button": "C'est parti !"
+    },
+    "step6": {
+      "title": "Rencontre Aron 🤖",
+      "message": "Aron est ton assistant pédagogique personnel. Il analyse tes résultats et génère des exercices sur-mesure grâce au Monk Mode.",
+      "monkTitle": "Monk Mode (/exs)",
+      "monkDesc": "Aron analyse tes quiz et crée des exercices ciblés sur tes lacunes.",
+      "anaTitle": "Analyser une interro (/ana)",
+      "anaDesc": "Prends en photo un devoir corrigé et Aron crée des exercices pour t'aider à progresser.",
+      "button": "Super, allons-y !"
     }
   },
   "feedback": {
@@ -799,16 +808,5 @@
     "globalFeedback": "🌟 Bilan global",
     "correctBtn": "Corriger mes exercices ({{answered}}/{{total}})",
     "correcting": "Correction en cours..."
-  },
-  "onboarding": {
-    "step6": {
-      "title": "Rencontre Aron 🤖",
-      "message": "Aron est ton assistant pédagogique personnel. Il analyse tes résultats et génère des exercices sur-mesure grâce au Monk Mode.",
-      "monkTitle": "Monk Mode (/exs)",
-      "monkDesc": "Aron analyse tes quiz et crée des exercices ciblés sur tes lacunes.",
-      "anaTitle": "Analyser une interro (/ana)",
-      "anaDesc": "Prends en photo un devoir corrigé et Aron crée des exercices pour t'aider à progresser.",
-      "button": "Super, allons-y !"
-    }
   }
 }

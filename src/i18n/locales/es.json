@@ -684,6 +684,15 @@
       "title": "¿Cómo quieres importar?",
       "message": "Toma fotos de tus apuntes para importarlos.",
       "button": "¡Empezar!"
+    },
+    "step6": {
+      "title": "Conoce a Aron 🤖",
+      "message": "Aron es tu asistente pedagógico personal. Analiza tus resultados y genera ejercicios a medida con el Monk Mode.",
+      "monkTitle": "Monk Mode (/exs)",
+      "monkDesc": "Aron analiza tus quizzes y crea ejercicios específicos para tus puntos débiles.",
+      "anaTitle": "Analizar un examen (/ana)",
+      "anaDesc": "Toma una foto de una tarea corregida y Aron crea ejercicios para ayudarte a progresar.",
+      "button": "¡Genial, vamos!"
     }
   },
   "feedback": {
@@ -798,16 +807,5 @@
     "globalFeedback": "🌟 Resumen global",
     "correctBtn": "Corregir mis ejercicios ({{answered}}/{{total}})",
     "correcting": "Corrección en progreso..."
-  },
-  "onboarding": {
-    "step6": {
-      "title": "Conoce a Aron 🤖",
-      "message": "Aron es tu asistente pedagógico personal. Analiza tus resultados y genera ejercicios a medida con el Monk Mode.",
-      "monkTitle": "Monk Mode (/exs)",
-      "monkDesc": "Aron analiza tus quizzes y crea ejercicios específicos para tus puntos débiles.",
-      "anaTitle": "Analizar un examen (/ana)",
-      "anaDesc": "Toma una foto de una tarea corregida y Aron crea ejercicios para ayudarte a progresar.",
-      "button": "¡Genial, vamos!"
-    }
   }
 }
