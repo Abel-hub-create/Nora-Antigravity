@@ -396,7 +396,7 @@ export default function ExerciseDetail() {
 
       {/* Bouton correction fixe en bas */}
       {!correction && (
-        <div className="fixed bottom-36 md:bottom-8 left-0 right-0 px-4 max-w-3xl mx-auto">
+        <div className="fixed bottom-32 md:bottom-8 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] md:max-w-sm px-0">
           <motion.button
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
