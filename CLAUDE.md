@@ -598,6 +598,7 @@ Backend returns error codes (not hardcoded messages) so the frontend can transla
 |----------|-----|-------------|-----------|
 | Photos per import | 15 | Frontend (`MAX_PHOTOS` in PhotoCapture.jsx) | Info text + buttons disabled at limit |
 | Syntheses per user | 40 | Backend (`POST /api/syntheses` checks count) | Study tab shows "max 40", Profile shows "X/40" |
+| Exercise sets per user | 15 | Backend (`POST /api/assistant/monk-mode/generate` checks count) | `EXERCISES_LIMIT_REACHED` error code |
 
 **File Structure**:
 ```
@@ -624,10 +625,14 @@ backend/
 │   ├── services/emailService.js # Resend email service
 │   ├── services/notificationService.js # Push notification service
 │   ├── services/subjectPrompts.js # Subject-specific AI prompt templates
+│   ├── services/assistantService.js # GPT chat + Monk Mode analyze/generate + correct
+│   ├── services/exerciseRepository.js # CRUD exercises/items + quiz_answers logging
+│   ├── routes/assistantRoutes.js # /api/assistant/* endpoints
+│   ├── routes/exerciseRoutes.js # /api/exercises/* endpoints
 │   ├── middlewares/auth.js     # JWT verification middleware
 │   ├── middlewares/rateLimiter.js # Rate limiting config
 │   ├── validators/authValidators.js # Auth validation schemas
-│   ├── validators/syntheseValidators.js # Synthese validation schemas
+│   ├── validators/syntheseValidators.js # Synthese validation schemas (subject + specificInstructions ajoutés)
 │   └── validators/feedbackValidators.js # Feedback validation schemas (Zod)
 ├── uploads/                    # Temporary audio files (auto-cleaned)
 ```
@@ -1668,3 +1673,118 @@ if (!isTouch) return;
 - `DailyProgress` goal cards : `border border-white/20` (non-complété), `border border-green-500/30` (complété)
 - `FolderCard` : `hover-lift` ajouté
 - `FolderDetail` synthèse cards : `hover-lift` ajouté
+
+---
+
+## Assistant NORA + Monk Mode
+
+Système complet d'assistant pédagogique IA avec génération d'exercices personnalisés basée sur les lacunes détectées.
+
+### Pages
+
+| Route | Page | Description |
+|-------|------|-------------|
+| `/assistant` | `Assistant.jsx` | Chat GPT + state machine Monk Mode + `/correct` |
+| `/exercises` | `Exercises.jsx` | Liste des sets d'exercices (max 15) |
+| `/exercises/:id` | `ExerciseDetail.jsx` | Exercices interactifs + correction + impression |
+
+### Bouton Assistant
+
+Présent dans **toutes les pages** via `MobileWrapper.jsx` (coin haut-droit). Icône `Bot` (lucide-react). Sur desktop : texte "Assistant" visible. Sur mobile : icône seule.
+
+### Commandes Chat
+
+| Commande | Effet |
+|----------|-------|
+| `/exs` | Lance le **Monk Mode** — génération d'exercices personnalisés |
+| `/correct` | Lance la correction commentée d'un set d'exercices |
+| Tout autre message | Chat GPT normal (historique persisté en DB) |
+
+### Monk Mode — Flow complet
+
+```
+/exs
+ 1. Sélection matière (boutons générés depuis synthèses du user)
+ 2. Analyse quiz_answers → analyzeDifficulties() → GPT identifie les thèmes faibles
+ 3. Difficultés spécifiques (saisie libre ou "non")
+ 4. Sélection types d'exercices (QCM / Ouvertes / Pratiques) avec toggle
+ 5. Sélection compteurs pour chaque type sélectionné
+ 6. generateExercises() → GPT génère les exercices
+ 7. Redirection vers /exercises
+```
+
+**Indicateurs "thinking"** : messages animés avec spinner pendant l'analyse et la génération.
+
+### Structure DB
+
+```sql
+-- quiz_answers: log de chaque réponse quiz pour analyse Monk Mode
+quiz_answers (id, user_id, question_id, synthese_id, selected_answer, is_correct, answered_at)
+-- Alimenté par : POST /api/syntheses/:id/quiz/progress (selectedAnswer ajouté au payload)
+
+-- exercises: sets générés par Monk Mode
+exercises (id, user_id, subject, title, difficulty_summary, created_at)
+-- Limite : 15 par user
+
+-- exercise_items: exercices individuels
+exercise_items (id, exercise_set_id, type ENUM('qcm','open','practical'), position,
+                question, options JSON, correct_answer, expected_answer, user_answer)
+
+-- chat_messages: historique du chat (persisté)
+chat_messages (id, user_id, role ENUM('user','assistant'), content, created_at)
+```
+
+**Migrations** : `026_create_quiz_answers.sql`, `027_create_exercises.sql`, `028_create_exercise_items.sql`, `029_create_chat_messages.sql`
+
+### Limites exercices
+
+| Type | Max par set |
+|------|-------------|
+| QCM | 5 |
+| Questions ouvertes | 10 |
+| Exercices pratiques | 10 |
+| Sets total par user | 15 |
+
+Au moins 1 type doit être sélectionné, avec minimum 1 question.
+
+### API Endpoints
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | `/api/assistant/chat` | Chat GPT (messages[], historique sauvegardé) |
+| GET | `/api/assistant/history` | 100 derniers messages |
+| GET | `/api/assistant/subjects` | Matières disponibles du user |
+| POST | `/api/assistant/monk-mode/analyze` | Analyse quiz_answers pour une matière |
+| POST | `/api/assistant/monk-mode/generate` | Génère + sauvegarde un set d'exercices |
+| POST | `/api/assistant/correct/:id` | Correction commentée par GPT |
+| GET | `/api/exercises` | Liste des sets |
+| GET | `/api/exercises/:id` | Détail + items |
+| PATCH | `/api/exercises/items/:itemId/answer` | Sauvegarde une réponse |
+| DELETE | `/api/exercises/:id` | Supprime un set |
+
+### Services Backend
+
+- `assistantService.js` : `chat()`, `analyzeDifficulties()`, `generateExercises()`, `correctExercises()`
+- `exerciseRepository.js` : CRUD exercises/items + `logQuizAnswer()` + `getQuizAnswersForSubject()`
+
+### ExerciseDetail — Impression
+
+`handlePrint()` génère une fenêtre HTML avec CSS print-friendly :
+- Sections par type (QCM avec options A/B/C/D, open avec ligne, practical avec bloc)
+- Typographie Georgia, max-width 800px, page-break-inside: avoid
+
+### /correct Flow
+
+```
+/correct
+ 1. Charge les sets → boutons de sélection
+ 2. Lecture des user_answer via exerciseRepo.findById()
+ 3. correctExercises() → GPT corrige avec feedback par item
+ 4. Retourne : corrections[{ isCorrect, isPartial, feedback, tip }] + globalFeedback
+```
+
+La correction est accessible **dans le chat** (via `/correct`) et **dans ExerciseDetail** (bouton "Corriger mes exercices").
+
+### Avatar
+
+Placeholder `🤖` en attendant le PNG fourni par le user. Format attendu : PNG, affiché dans le header de `/assistant`. Prévu pour être animé ultérieurement.

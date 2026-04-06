@@ -37,6 +37,7 @@
     "import": "Importar",
     "profile": "Perfil",
     "settings": "Ajustes",
+    "assistant": "Asistente",
     "tagline": "Aprender sin esfuerzo"
   },
   "activities": {
@@ -106,6 +107,19 @@
     "notificationsDisabled": "Notificaciones desactivadas",
     "permissionDenied": "Permiso de notificación denegado",
     "notificationError": "Error al cambiar las notificaciones",
+    "soundEffects": "Efectos de sonido",
+    "soundEffectsDesc": "Clics y hover",
+    "notificationHour": "Hora de recordatorio",
+    "notificationDays": "Días",
+    "days": {
+      "sun": "D",
+      "mon": "L",
+      "tue": "M",
+      "wed": "X",
+      "thu": "J",
+      "fri": "V",
+      "sat": "S"
+    },
     "logout": "Cerrar Sesión",
     "loggingOut": "Cerrando sesión...",
     "dangerZone": "Zona de peligro",

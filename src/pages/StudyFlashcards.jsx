@@ -93,7 +93,7 @@ const StudyFlashcards = () => {
 
     const variants = {
         enter: (direction) => ({
-            x: direction > 0 ? 1000 : -1000,
+            x: direction > 0 ? 280 : -280,
             opacity: 0
         }),
         center: {
@@ -103,9 +103,21 @@ const StudyFlashcards = () => {
         },
         exit: (direction) => ({
             zIndex: 0,
-            x: direction < 0 ? 1000 : -1000,
+            x: direction < 0 ? 280 : -280,
             opacity: 0
         })
+    };
+
+    // Swipe tactile
+    const dragStartX = useRef(null);
+    const handleTouchStart = (e) => { dragStartX.current = e.touches[0].clientX; };
+    const handleTouchEnd = (e) => {
+        if (dragStartX.current === null) return;
+        const dx = e.changedTouches[0].clientX - dragStartX.current;
+        dragStartX.current = null;
+        if (Math.abs(dx) < 50) return;
+        if (dx < 0) handleNext();
+        else handlePrev();
     };
 
     if (isLoading) {
@@ -173,7 +185,12 @@ const StudyFlashcards = () => {
             </header>
 
             <div className="flex-1 flex flex-col items-center justify-center relative">
-                <div className="w-full max-w-xs aspect-[3/4] relative perspective-1000">
+                <div
+                    className="w-full max-w-xs aspect-[3/4] relative perspective-1000 overflow-hidden"
+                    style={{ touchAction: 'pan-y' }}
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                >
                     <AnimatePresence initial={false} custom={direction} mode='wait'>
                         <motion.div
                             key={currentCardIndex}
@@ -183,8 +200,8 @@ const StudyFlashcards = () => {
                             animate="center"
                             exit="exit"
                             transition={{
-                                x: { type: "spring", stiffness: 300, damping: 30 },
-                                opacity: { duration: 0.2 }
+                                x: { type: "tween", duration: 0.2, ease: "easeOut" },
+                                opacity: { duration: 0.15 }
                             }}
                             className="w-full h-full absolute top-0 left-0"
                         >

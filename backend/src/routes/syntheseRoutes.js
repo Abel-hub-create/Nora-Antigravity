@@ -3,6 +3,7 @@ import { authenticate } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validation.js';
 import * as validators from '../validators/syntheseValidators.js';
 import * as syntheseRepo from '../services/syntheseRepository.js';
+import { logQuizAnswer } from '../services/exerciseRepository.js';
 
 const router = express.Router();
 
@@ -181,13 +182,23 @@ router.get('/:id/quiz', async (req, res, next) => {
   }
 });
 
-// Update quiz progress
+// Update quiz progress + log answer for Monk Mode analysis
 router.post('/:id/quiz/progress', validate(validators.quizProgressSchema), async (req, res, next) => {
   try {
-    await syntheseRepo.updateQuizProgress(
-      req.body.questionId,
-      req.body.isCorrect
-    );
+    const syntheseId = parseInt(req.params.id);
+    const { questionId, isCorrect, selectedAnswer } = req.body;
+
+    await syntheseRepo.updateQuizProgress(questionId, isCorrect);
+
+    // Log dans quiz_answers pour analyse Monk Mode (fire-and-forget)
+    logQuizAnswer({
+      userId: req.user.id,
+      questionId,
+      syntheseId,
+      selectedAnswer: selectedAnswer ?? -1,
+      isCorrect
+    }).catch(err => console.error('[QuizAnswer] Log failed:', err));
+
     res.json({ message: 'Progression mise à jour' });
   } catch (error) {
     next(error);

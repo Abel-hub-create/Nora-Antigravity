@@ -27,6 +27,9 @@ import Collection from './pages/Collection';
 import Process from './pages/Process';
 import FolderDetail from './pages/FolderDetail';
 import Feedback from './pages/Feedback';
+import Assistant from './pages/Assistant';
+import Exercises from './pages/Exercises';
+import ExerciseDetail from './pages/ExerciseDetail';
 
 import { UserProvider } from './context/UserContext';
 import { RevisionProvider } from './context/RevisionContext';
@@ -73,6 +76,9 @@ function App() {
                       <Route path="/collection" element={<Collection />} />
                       <Route path="/process" element={<Process />} />
                       <Route path="/feedback" element={<Feedback />} />
+                      <Route path="/assistant" element={<Assistant />} />
+                      <Route path="/exercises" element={<Exercises />} />
+                      <Route path="/exercises/:id" element={<ExerciseDetail />} />
                     </Routes>
                     </MobileWrapper>
                   </RevisionProvider>

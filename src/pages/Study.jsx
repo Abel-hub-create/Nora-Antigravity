@@ -13,6 +13,18 @@ const SUBJECT_STYLES = {
     dutch:       { background: 'rgba(168,85,247,0.18)',  color: '#c084fc' },
     french:      { background: 'rgba(99,102,241,0.18)',  color: '#818cf8' },
 };
+
+const SUBJECT_EMOJIS = {
+    mathematics: '📐',
+    french:      '📚',
+    physics:     '⚡',
+    chemistry:   '🧪',
+    biology:     '🧬',
+    history:     '🏛️',
+    geography:   '🌍',
+    english:     '🇬🇧',
+    dutch:       '🇳🇱',
+};
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import * as syntheseService from '../services/syntheseService';
@@ -350,15 +362,10 @@ const Study = () => {
                                         >
                                             {selectedIds.has(synthese.id) ? (
                                                 <CheckCircle2 size={24} className="text-primary" />
-                                            ) : synthese.subject && SUBJECT_STYLES[synthese.subject] ? (
-                                                <span
-                                                    className="inline-block px-2 py-0.5 rounded-md text-xs font-semibold uppercase tracking-wide whitespace-nowrap"
-                                                    style={SUBJECT_STYLES[synthese.subject]}
-                                                >
-                                                    {t(`subjects.${synthese.subject}`)}
-                                                </span>
                                             ) : (
-                                                <span className="text-xl leading-none select-none">📄</span>
+                                                <span className="text-xl leading-none select-none">
+                                                    {SUBJECT_EMOJIS[synthese.subject] ?? '📄'}
+                                                </span>
                                             )}
                                         </button>
 

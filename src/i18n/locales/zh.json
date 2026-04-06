@@ -37,6 +37,7 @@
     "import": "导入",
     "profile": "个人",
     "settings": "设置",
+    "assistant": "助手",
     "tagline": "轻松学习"
   },
   "activities": {
@@ -106,6 +107,19 @@
     "notificationsDisabled": "通知已禁用",
     "permissionDenied": "通知权限被拒绝",
     "notificationError": "更改通知时出错",
+    "soundEffects": "音效",
+    "soundEffectsDesc": "点击与悬停",
+    "notificationHour": "提醒时间",
+    "notificationDays": "天",
+    "days": {
+      "sun": "日",
+      "mon": "一",
+      "tue": "二",
+      "wed": "三",
+      "thu": "四",
+      "fri": "五",
+      "sat": "六"
+    },
     "logout": "退出登录",
     "loggingOut": "退出中...",
     "dangerZone": "危险区域",

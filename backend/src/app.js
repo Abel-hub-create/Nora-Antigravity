@@ -11,6 +11,8 @@ import folderRoutes from './routes/folderRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import revisionRoutes from './routes/revisionRoutes.js';
 import feedbackRoutes from './routes/feedbackRoutes.js';
+import assistantRoutes from './routes/assistantRoutes.js';
+import exerciseRoutes from './routes/exerciseRoutes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
 dotenv.config();
@@ -42,6 +44,8 @@ app.use('/api/folders', folderRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/revision', revisionRoutes);
 app.use('/api/feedback', feedbackRoutes);
+app.use('/api/assistant', assistantRoutes);
+app.use('/api/exercises', exerciseRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

@@ -54,23 +54,28 @@ const Process = () => {
   useEffect(() => {
     if (!content) return;
 
-    let isCancelled = false;
+    // isMounted contrôle uniquement les setState — jamais les appels API
+    // Ainsi, si l'user navigue ailleurs, la génération et la sauvegarde continuent en arrière-plan
+    let isMounted = true;
     let stepInterval = null;
 
     const runProcess = async () => {
       // Etape 1: Verification (si matiere selectionnee et pas de force)
       if (currentSubject && !forceGenerate) {
         try {
-          setStatus('verifying');
+          if (isMounted) setStatus('verifying');
           const result = await verifySubject(content, currentSubject);
 
-          if (isCancelled) return;
-          setVerificationResult(result);
+          if (isMounted) {
+            setVerificationResult(result);
 
-          // Si mismatch detecte, afficher le modal et arreter
-          if (!result.correspondance && !result.error) {
-            setShowVerificationModal(true);
-            return;
+            // Si mismatch detecte, afficher le modal et arreter
+            if (!result.correspondance && !result.error) {
+              setShowVerificationModal(true);
+              return;
+            }
+          } else if (!result.correspondance && !result.error) {
+            // Navigué ailleurs pendant la vérif → on continue avec la matière actuelle
           }
         } catch (err) {
           console.error('Verification error:', err);
@@ -78,29 +83,33 @@ const Process = () => {
         }
       }
 
-      if (isCancelled) return;
-
       // Etape 2: Generation
-      setStatus('processing');
-      setCurrentStep(0);
+      if (isMounted) {
+        setStatus('processing');
+        setCurrentStep(0);
+      }
 
-      // Animation des etapes
-      stepInterval = setInterval(() => {
-        setCurrentStep(prev => prev < 3 ? prev + 1 : prev);
-      }, 1500);
+      // Animation des etapes (seulement si monté)
+      if (isMounted) {
+        stepInterval = setInterval(() => {
+          setCurrentStep(prev => prev < 3 ? prev + 1 : prev);
+        }, 1500);
+      }
 
       try {
-        // Appel unique au backend qui genere tout
+        // Appel unique au backend qui genere tout — continue même si l'user navigue ailleurs
         const { title, summary, flashcards, quizQuestions } = await generateComplete(content, specificInstructions, currentSubject);
 
-        if (isCancelled) return;
+        if (stepInterval) {
+          clearInterval(stepInterval);
+          stepInterval = null;
+        }
+        if (isMounted) {
+          setGeneratedData({ title, summary, flashcards, quizQuestions });
+          setCurrentStep(4);
+        }
 
-        clearInterval(stepInterval);
-        stepInterval = null;
-        setGeneratedData({ title, summary, flashcards, quizQuestions });
-
-        // Etape 5: Sauvegarder dans la base de donnees
-        setCurrentStep(4);
+        // Sauvegarde — toujours exécutée, même si l'user a navigué ailleurs
         const synthese = await createSynthese({
           title,
           originalContent: content,
@@ -112,33 +121,33 @@ const Process = () => {
           specificInstructions: specificInstructions || null
         });
 
-        if (isCancelled) return;
-
-        // Succes !
-        setStatus('success');
-
-        // Notification
+        // Notification toujours envoyée (UserContext persiste)
         if (isMockMode()) {
           addNotification(t('process.summaryCreatedDemo'), 'success');
         } else {
           addNotification(t('process.summaryCreatedSuccess'), 'success');
         }
 
-        // Rediriger vers la synthese creee apres un court delai
-        setTimeout(() => {
-          if (!isCancelled) {
+        if (isMounted) {
+          // Encore sur la page → animer le succès puis rediriger
+          setStatus('success');
+          setTimeout(() => {
             navigate(`/study/${synthese.id}`);
-          }
-        }, 1500);
+          }, 1500);
+        } else {
+          // Navigué ailleurs → rediriger directement vers la synthèse créée
+          navigate(`/study/${synthese.id}`);
+        }
 
       } catch (err) {
         if (stepInterval) {
           clearInterval(stepInterval);
           stepInterval = null;
         }
-        if (isCancelled) return;
 
         console.error('Error processing:', err);
+        if (!isMounted) return;
+
         setStatus('error');
         const errorCode = err?.response?.data?.code;
         let errorMessage;
@@ -155,9 +164,9 @@ const Process = () => {
 
     runProcess();
 
-    // Cleanup function
+    // Cleanup: stoppe seulement les setState et l'animation — pas la génération/sauvegarde
     return () => {
-      isCancelled = true;
+      isMounted = false;
       if (stepInterval) {
         clearInterval(stepInterval);
       }

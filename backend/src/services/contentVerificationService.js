@@ -35,10 +35,13 @@ const SUBJECT_INDICATORS = {
     dutch: ['grammatica', 'werkwoord', 'zin', 'taal', 'woord', 'lidwoord', 'bijvoeglijk', 'naamwoord', 'uitspraak', 'spelling']
 };
 
+const SUBJECT_LIST = Object.values(SUBJECT_NAMES).join(', ');
+
 const SYSTEM_PROMPT = `Tu es un classificateur de matières scolaires rapide et précis.
 Tu dois déterminer si un contenu de cours correspond à la matière sélectionnée par l'utilisateur.
 
-Les matières possibles sont : Mathématiques, Français, Physique, Chimie, Biologie, Histoire, Géographie, Anglais, Néerlandais.
+Les SEULES matières autorisées sont : ${SUBJECT_LIST}.
+Tu ne peux PAS inventer d'autres matières. Si le contenu ne correspond à aucune de ces matières, utilise la plus proche parmi la liste.
 
 Tu dois répondre UNIQUEMENT en JSON valide, sans texte avant ou après.`;
 
@@ -81,7 +84,7 @@ INSTRUCTIONS :
 RÉPONDS UNIQUEMENT AVEC CE JSON (pas d'autre texte) :
 {
   "correspondance": true ou false,
-  "matiere_detectee": "nom de la matière détectée en français (Mathématiques, Français, Physique, Chimie, Biologie, Histoire, Géographie, Anglais, ou Néerlandais)",
+  "matiere_detectee": "nom EXACT parmi : ${SUBJECT_LIST}",
   "confiance": "forte" ou "moyenne" ou "faible",
   "message": "message court expliquant pourquoi (1-2 phrases max)"
 }`;
@@ -142,6 +145,18 @@ RÉPONDS UNIQUEMENT AVEC CE JSON (pas d'autre texte) :
         const detectedSubjectId = Object.entries(SUBJECT_NAMES).find(
             ([, name]) => name.toLowerCase() === result.matiere_detectee.toLowerCase()
         )?.[0] || null;
+
+        // Si la matière détectée n'est pas dans notre liste, on ne signale pas de désaccord
+        if (!detectedSubjectId) {
+            console.log('[ContentVerification] Matière inventée ignorée:', result.matiere_detectee);
+            return {
+                correspondance: true,
+                matiere_detectee: null,
+                matiere_detectee_id: null,
+                confiance: 'faible',
+                message: result.message
+            };
+        }
 
         console.log('[ContentVerification] Résultat:', {
             correspondance: result.correspondance,

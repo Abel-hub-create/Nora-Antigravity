@@ -55,7 +55,11 @@ export const getQuizQuestions = async (syntheseId) => {
   return response;
 };
 
-export const updateQuizProgress = async (syntheseId, questionId, isCorrect) => {
-  const response = await api.post(`/syntheses/${syntheseId}/quiz/progress`, { questionId, isCorrect });
+export const updateQuizProgress = async (syntheseId, questionId, isCorrect, selectedAnswer) => {
+  const response = await api.post(`/syntheses/${syntheseId}/quiz/progress`, {
+    questionId,
+    isCorrect,
+    selectedAnswer: selectedAnswer ?? -1
+  });
   return response;
 };

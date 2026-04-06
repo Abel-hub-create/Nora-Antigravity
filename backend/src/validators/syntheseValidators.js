@@ -6,6 +6,8 @@ export const createSyntheseSchema = z.object({
     originalContent: z.string().min(1, 'Le contenu original est requis'),
     summaryContent: z.string().min(1, 'Le résumé est requis'),
     sourceType: z.enum(['text', 'voice', 'photo']).optional().default('text'),
+    subject: z.string().max(50).nullable().optional(),
+    specificInstructions: z.string().nullable().optional(),
     flashcards: z.array(z.object({
       front: z.string().min(1),
       back: z.string().min(1),
@@ -43,6 +45,7 @@ export const flashcardProgressSchema = z.object({
 export const quizProgressSchema = z.object({
   body: z.object({
     questionId: z.number().int().positive(),
-    isCorrect: z.boolean()
+    isCorrect: z.boolean(),
+    selectedAnswer: z.number().int().min(0).optional()
   })
 });

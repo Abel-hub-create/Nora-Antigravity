@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import LiquidProgressBar from '../components/UI/LiquidProgressBar';
 import { ArrowLeft, CheckCircle, XCircle, Loader2 } from 'lucide-react';
@@ -20,6 +20,18 @@ const StudyQuiz = () => {
     const [showResult, setShowResult] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [resultMessage, setResultMessage] = useState('');
+    const optionRefs = useRef([]);
+    const [optionHeight, setOptionHeight] = useState(null);
+
+    useEffect(() => {
+        setOptionHeight(null);
+        const frame = requestAnimationFrame(() => {
+            const heights = optionRefs.current.map(r => r?.offsetHeight ?? 0);
+            const max = Math.max(...heights);
+            if (max > 0) setOptionHeight(max);
+        });
+        return () => cancelAnimationFrame(frame);
+    }, [currentQuestion]);
 
     // Get result message based on percentage
     const getResultMessage = (percentage) => {
@@ -58,9 +70,9 @@ const StudyQuiz = () => {
         setSelectedOption(index);
         const correct = index === questions[currentQuestion].correct_answer;
 
-        // Update progress on backend
+        // Update progress on backend (+ log answer pour Monk Mode)
         try {
-            await syntheseService.updateQuizProgress(id, questions[currentQuestion].id, correct);
+            await syntheseService.updateQuizProgress(id, questions[currentQuestion].id, correct, index);
         } catch (error) {
             console.error('Error updating progress:', error);
         }
@@ -164,7 +176,7 @@ const StudyQuiz = () => {
 
     return (
         <div className="h-full flex flex-col p-6 pb-24">
-            <header className="mb-6">
+            <header className="mb-6 shrink-0">
                 <Link to={`/study/${id}`} className="inline-flex items-center gap-2 text-text-muted hover:text-text-main mb-4">
                     <ArrowLeft size={20} />
                     <span className="text-sm truncate max-w-[200px]">{syntheseTitle}</span>
@@ -181,63 +193,63 @@ const StudyQuiz = () => {
                 </p>
             </header>
 
-            <div className="flex-1">
-                <motion.h2
-                    key={currentQuestion}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="text-xl font-bold text-text-main mb-8 leading-relaxed"
-                >
-                    {currentQ.question}
-                </motion.h2>
+            <motion.h2
+                key={currentQuestion}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="text-xl font-bold text-text-main mb-8 leading-relaxed shrink-0"
+            >
+                {currentQ.question}
+            </motion.h2>
 
-                <div className="space-y-3">
-                    {options.map((option, index) => {
-                        let stateStyle = "bg-surface border-white/5 hover:bg-surface/80 active:scale-[0.98]";
-                        if (selectedOption !== null) {
-                            if (index === currentQ.correct_answer) {
-                                stateStyle = "bg-success/20 border-success text-success";
-                            } else if (index === selectedOption) {
-                                stateStyle = "bg-error/20 border-error text-error";
-                            } else {
-                                stateStyle = "opacity-40 pointer-events-none";
-                            }
+            <div className="flex-1 space-y-3">
+                {options.map((option, index) => {
+                    let stateStyle = "bg-surface border-white/5 hover:bg-surface/80 active:scale-[0.98]";
+                    if (selectedOption !== null) {
+                        if (index === currentQ.correct_answer) {
+                            stateStyle = "bg-success/20 border-success text-success";
+                        } else if (index === selectedOption) {
+                            stateStyle = "bg-error/20 border-error text-error";
+                        } else {
+                            stateStyle = "opacity-40 pointer-events-none";
                         }
+                    }
 
-                        return (
-                            <motion.button
-                                key={index}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05 }}
-                                whileTap={selectedOption === null ? { scale: 0.98 } : {}}
-                                onClick={() => handleOptionClick(index)}
-                                disabled={selectedOption !== null}
-                                className={`w-full p-4 rounded-2xl border text-left font-medium transition-all duration-200 flex justify-between items-center ${stateStyle}`}
-                            >
-                                <span>{option}</span>
-                                {selectedOption !== null && index === currentQ.correct_answer && (
-                                    <CheckCircle size={20} className="shrink-0" />
-                                )}
-                                {selectedOption === index && index !== currentQ.correct_answer && (
-                                    <XCircle size={20} className="shrink-0" />
-                                )}
-                            </motion.button>
-                        );
-                    })}
-                </div>
-
-                {/* Explanation */}
-                {selectedOption !== null && currentQ.explanation && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-2xl"
-                    >
-                        <p className="text-sm text-text-main">{currentQ.explanation}</p>
-                    </motion.div>
-                )}
+                    return (
+                        <motion.button
+                            key={index}
+                            ref={el => optionRefs.current[index] = el}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            whileTap={selectedOption === null ? { scale: 0.98 } : {}}
+                            onClick={() => handleOptionClick(index)}
+                            disabled={selectedOption !== null}
+                            style={optionHeight ? { height: optionHeight } : {}}
+                            className={`w-full p-4 rounded-2xl border text-left font-medium transition-all duration-200 flex justify-between items-center ${stateStyle}`}
+                        >
+                            <span className="flex-1">{option}</span>
+                            {selectedOption !== null && index === currentQ.correct_answer && (
+                                <CheckCircle size={20} className="shrink-0 ml-2" />
+                            )}
+                            {selectedOption === index && index !== currentQ.correct_answer && (
+                                <XCircle size={20} className="shrink-0 ml-2" />
+                            )}
+                        </motion.button>
+                    );
+                })}
             </div>
+
+            {/* Explanation */}
+            {selectedOption !== null && currentQ.explanation && (
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 p-4 bg-primary/10 border border-primary/20 rounded-2xl shrink-0"
+                >
+                    <p className="text-sm text-text-main">{currentQ.explanation}</p>
+                </motion.div>
+            )}
         </div>
     );
 };

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { Home, GraduationCap, PlusCircle, User, Gift, Settings } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Home, GraduationCap, PlusCircle, User, Gift, Settings, Bot } from 'lucide-react';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import NotificationStack from '../UI/NotificationStack';
@@ -62,6 +62,7 @@ const MobileWrapper = ({ children }) => {
         { icon: PlusCircle, labelKey: 'nav.import', path: '/import' },
         { icon: User, labelKey: 'nav.profile', path: '/profile' },
         { icon: Settings, labelKey: 'nav.settings', path: '/settings' },
+        { icon: Bot, labelKey: 'nav.assistant', path: '/assistant' },
     ];
 
     return (
@@ -113,6 +114,22 @@ const MobileWrapper = ({ children }) => {
             <div className="md:ml-64 min-h-screen">
                 {/* Notifications */}
                 <NotificationStack />
+
+                {/* Bouton Assistant flottant (haut droite, toutes pages) */}
+                <div className="fixed top-4 right-4 z-40">
+                    <Link
+                        to="/assistant"
+                        className={clsx(
+                            "flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all shadow-lg",
+                            location.pathname === '/assistant'
+                                ? "bg-primary text-white shadow-primary/30"
+                                : "bg-surface border border-white/10 text-text-muted hover:text-primary hover:border-primary/30 shadow-black/20"
+                        )}
+                    >
+                        <Bot size={16} />
+                        <span className="hidden sm:inline">Assistant</span>
+                    </Link>
+                </div>
 
                 {/* Content */}
                 <main className="pb-24 md:pb-6">

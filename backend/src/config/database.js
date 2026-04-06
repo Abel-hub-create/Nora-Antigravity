@@ -11,7 +11,8 @@ const TABLES = [
   'users', 'password_resets', 'refresh_tokens', 'syntheses',
   'flashcards', 'quiz_questions', 'folders', 'folder_syntheses',
   'push_subscriptions', 'daily_progress', 'study_history',
-  'revision_sessions', 'revision_completions', 'feedbacks', 'feedback_votes'
+  'revision_sessions', 'revision_completions', 'feedbacks', 'feedback_votes',
+  'quiz_answers', 'exercises', 'exercise_items', 'chat_messages'
 ];
 
 // Validate prefix contains only safe characters and ends with underscore
