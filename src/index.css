@@ -87,6 +87,13 @@
     backdrop-filter: blur(52px) saturate(1.6);
     -webkit-backdrop-filter: blur(52px) saturate(1.6);
   }
+  [data-theme="light"] .rounded-lg,
+  [data-theme="light"] .rounded-xl,
+  [data-theme="light"] .rounded-2xl,
+  [data-theme="light"] .rounded-3xl {
+    backdrop-filter: blur(72px) saturate(2.0);
+    -webkit-backdrop-filter: blur(72px) saturate(2.0);
+  }
   /* Désactiver complètement l'effet verre (caméra, vidéo, etc.) */
   .no-glass,
   .no-glass * {
@@ -95,17 +102,18 @@
     box-shadow: none !important;
   }
 
-  /* CLAIR : bord noir léger, reflet blanc fort, ombre douce */
+  /* CLAIR : verre dépoli renforcé */
   [data-theme="light"] .rounded-lg,
   [data-theme="light"] .rounded-xl,
   [data-theme="light"] .rounded-2xl,
   [data-theme="light"] .rounded-3xl {
     box-shadow:
-      0 0 0 1px rgba(0, 0, 0, 0.10),
-      inset var(--glass-inset-x, 0px) var(--glass-inset-y, -2px) 22px rgba(255, 255, 255, 0.88),
-      inset 0 1px 0 rgba(255, 255, 255, 0.95),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.06),
-      0 10px 36px rgba(0, 0, 0, 0.12);
+      0 0 0 1px rgba(0, 0, 0, 0.08),
+      inset var(--glass-inset-x, 0px) var(--glass-inset-y, -2px) 32px rgba(255, 255, 255, 0.96),
+      inset 0 1px 0 rgba(255, 255, 255, 1),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.05),
+      0 12px 40px rgba(0, 0, 0, 0.10),
+      0 2px 8px rgba(0, 0, 0, 0.06);
   }
 
   /* bg-primary sélectionné clair */
@@ -356,25 +364,23 @@
    (même spécificité → last-wins : dark écrase light en thème sombre)
    ═══════════════════════════════════════════════════════════════════ */
 
-/* ── CLAIR : glow très léger, uniforme sur tous les éléments ────── */
+/* ── CLAIR : aucun glow sur les textes ───────────────────────────── */
 [data-theme="light"] body,
 [data-theme="light"] h1,
 [data-theme="light"] h2,
 [data-theme="light"] h3,
 [data-theme="light"] .text-2xl,
 [data-theme="light"] .text-3xl,
-[data-theme="light"] .text-4xl {
-  text-shadow: 0 0 6px rgba(15, 23, 42, 0.07),
-               0 0 16px rgba(15, 23, 42, 0.03);
-}
-[data-theme="light"] .text-primary {
-  text-shadow: 0 0 6px rgba(2, 132, 199, 0.22),
-               0 0 16px rgba(2, 132, 199, 0.08);
+[data-theme="light"] .text-4xl,
+[data-theme="light"] .text-primary,
+[data-theme="light"] .text-success,
+[data-theme="light"] .text-error {
+  text-shadow: none;
 }
 [data-theme="light"] ::selection {
   background: rgba(2, 132, 199, 0.25);
   color: #0f172a;
-  text-shadow: 0 0 6px rgba(2, 132, 199, 0.12);
+  text-shadow: none;
 }
 
 /* ── SOMBRE : glow uniforme sur tous les éléments ─────────────────
@@ -393,13 +399,7 @@
   text-shadow: 0 0 5px rgba(56, 189, 248, 0.20),
                0 0 12px rgba(56, 189, 248, 0.07);
 }
-/* Glow coloré — couleur de l'élément */
-[data-theme="light"] .text-success {
-  text-shadow: 0 0 6px rgba(74, 222, 128, 0.45), 0 0 16px rgba(74, 222, 128, 0.15);
-}
-[data-theme="light"] .text-error {
-  text-shadow: 0 0 6px rgba(248, 113, 113, 0.45), 0 0 16px rgba(248, 113, 113, 0.15);
-}
+/* Glow coloré — sombre uniquement */
 [data-theme="dark"] .text-success {
   text-shadow: 0 0 5px rgba(74, 222, 128, 0.30), 0 0 14px rgba(74, 222, 128, 0.10);
 }
