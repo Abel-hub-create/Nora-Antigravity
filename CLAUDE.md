@@ -442,7 +442,7 @@ The app supports two themes: **light** (default) and **dark**. Users can switch 
 
 **Optimistic Update**: Theme change is applied instantly (no lag), then synced to backend in background. If API fails, reverts to previous theme.
 
-**Fade Animation**: Smooth 0.3s CSS transition on background-color, color, and border-color when switching themes.
+**Fade Animation**: Smooth 0.3s CSS transition sur `body`, `.bg-background`, `.bg-surface`, `.bg-card` uniquement. La règle `* { transition }` a été supprimée (causait du lag en conflictant avec Framer Motion).
 
 **Components**:
 - `ThemeSelector` (`/src/components/Settings/ThemeSelector.jsx`) - Two buttons with Moon/Sun icons, uses local state for instant feedback
@@ -643,7 +643,7 @@ First-time user onboarding flow displayed only on first login after account crea
 
 ### Flow
 
-The onboarding is a 5-step modal that appears after first login:
+The onboarding is a **6-step modal** that appears after first login:
 
 | Step | Content | Required |
 |------|---------|----------|
@@ -651,7 +651,8 @@ The onboarding is a 5-step modal that appears after first login:
 | 2 | "Comment tu t'appelles ?" - Name input | Yes (min 2 chars) |
 | 3 | "Ajoute une photo de profil" - Avatar upload | No (skip available) |
 | 4 | "Choisis ta matière" - Info about subject selection | Info only |
-| 5 | "Comment veux-tu importer ?" - Info about photo import | Button click → Import |
+| 5 | "Rencontre Aron" - Présentation de l'assistant + Monk Mode + /ana | Info only |
+| 6 | "Comment veux-tu importer ?" - Info about photo import | Button click → Import |
 
 ### Technical Implementation
 
@@ -671,7 +672,7 @@ The onboarding is a 5-step modal that appears after first login:
 - `authService.completeOnboarding({ name, avatar })` API call
 - `useAuth().completeOnboarding()` context method
 
-**i18n Keys**: `onboarding.step1.*`, `onboarding.step2.*`, `onboarding.step3.*`, `onboarding.step4.*`, `onboarding.step5.*`
+**i18n Keys**: `onboarding.step1.*`, `onboarding.step2.*`, `onboarding.step3.*`, `onboarding.step4.*`, `onboarding.step5.*`, `onboarding.step6.*`
 
 ### Behavior
 
@@ -1615,11 +1616,19 @@ Valeurs validées pour le thème sombre — ne pas modifier sans raison :
 | `--color-text-main` | `#ffffff` |
 | `--color-text-muted` | `#6b7d96` |
 
-**Glassmorphism** (`/src/index.css`) :
+**Glassmorphism sombre** (`/src/index.css`) :
 - `backdrop-filter: blur(52px) saturate(1.6)` sur tous les `.rounded-*`
 - Bordure : `1.5px rgba(255,255,255,0.28)`
 - Lumière gauche (trait net, extrême bord) : `inset 2px 0 0 rgba(255,255,255,0.30)`
 - Ombre : `0 16px 48px rgba(0,0,0,0.85)`
+
+### Light Theme (Glassmorphism renforcé)
+
+**Glassmorphism clair** (`/src/index.css`) :
+- `backdrop-filter: blur(72px) saturate(2.0)` — plus fort que le dark (72 vs 52)
+- Reflet blanc quasi-opaque : `inset ... 32px rgba(255,255,255,0.96)`
+- Bord supérieur blanc pur : `inset 0 1px 0 rgba(255,255,255,1)`
+- **Aucun `text-shadow`** sur les textes — supprimé intentionnellement (visuellement propre sur fond clair)
 
 ### Système de Hover
 
@@ -1698,6 +1707,7 @@ Présent dans **toutes les pages** via `MobileWrapper.jsx` (coin haut-droit). Ic
 |----------|-------|
 | `/exs` | Lance le **Monk Mode** — génération d'exercices personnalisés |
 | `/correct` | Lance la correction commentée d'un set d'exercices |
+| `/ana` | Analyse une interro/devoir corrigé par photo (OCR → GPT → exercices ciblés) |
 | Tout autre message | Chat GPT normal (historique persisté en DB) |
 
 ### Monk Mode — Flow complet
@@ -1706,14 +1716,27 @@ Présent dans **toutes les pages** via `MobileWrapper.jsx` (coin haut-droit). Ic
 /exs
  1. Sélection matière (boutons générés depuis synthèses du user)
  2. Analyse quiz_answers → analyzeDifficulties() → GPT identifie les thèmes faibles
- 3. Difficultés spécifiques (saisie libre ou "non")
+ 3. Difficultés spécifiques (saisie libre ou "non") + VoiceDictation disponible
  4. Sélection types d'exercices (QCM / Ouvertes / Pratiques) avec toggle
  5. Sélection compteurs pour chaque type sélectionné
  6. generateExercises() → GPT génère les exercices
  7. Redirection vers /exercises
 ```
 
-**Indicateurs "thinking"** : messages animés avec spinner pendant l'analyse et la génération.
+### /ana Flow (Analyse d'interro)
+
+```
+/ana
+ 1. Upload photo du contrôle corrigé (fileInputRef, base64)
+ 2. POST /api/assistant/ana/analyze → OCR (extractTextFromImage) → analyzeExamDifficulties()
+ 3. Sélection matière (même boutons que Monk Mode)
+ 4. GPT identifie weakTopics depuis le texte extrait
+ 5. Suite identique au Monk Mode (types → counts → génération)
+```
+
+**Backend** : `analyzeExamDifficulties({ examText, subject })` — retourne `{ weakTopics, strongTopics, summary }`.
+
+**Indicateurs "thinking"** : messages animés avec spinner pendant l'analyse et la génération. Textes traduits et dynamiques par étape.
 
 ### Structure DB
 
@@ -1757,6 +1780,7 @@ Au moins 1 type doit être sélectionné, avec minimum 1 question.
 | POST | `/api/assistant/monk-mode/analyze` | Analyse quiz_answers pour une matière |
 | POST | `/api/assistant/monk-mode/generate` | Génère + sauvegarde un set d'exercices |
 | POST | `/api/assistant/correct/:id` | Correction commentée par GPT |
+| POST | `/api/assistant/ana/analyze` | OCR image + analyse difficultés GPT |
 | GET | `/api/exercises` | Liste des sets |
 | GET | `/api/exercises/:id` | Détail + items |
 | PATCH | `/api/exercises/items/:itemId/answer` | Sauvegarde une réponse |
@@ -1764,7 +1788,7 @@ Au moins 1 type doit être sélectionné, avec minimum 1 question.
 
 ### Services Backend
 
-- `assistantService.js` : `chat()`, `analyzeDifficulties()`, `generateExercises()`, `correctExercises()`
+- `assistantService.js` : `chat()`, `analyzeDifficulties()`, `generateExercises()`, `correctExercises()`, `analyzeExamDifficulties()`
 - `exerciseRepository.js` : CRUD exercises/items + `logQuizAnswer()` + `getQuizAnswersForSubject()`
 
 ### ExerciseDetail — Impression
