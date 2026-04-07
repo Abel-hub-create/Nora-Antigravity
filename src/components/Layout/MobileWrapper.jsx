@@ -127,7 +127,7 @@ const MobileWrapper = ({ children }) => {
                         )}
                     >
                         <Bot size={16} />
-                        <span className="hidden sm:inline">Assistant</span>
+                        <span className="hidden sm:inline">{t('nav.assistant')}</span>
                     </Link>
                 </div>
 

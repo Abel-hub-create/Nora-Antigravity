@@ -11,11 +11,6 @@ const SUBJECT_EMOJIS = {
   biology: '🧬', history: '🏛️', geography: '🌍', english: '🇬🇧', dutch: '🇳🇱'
 };
 
-const SUBJECT_NAMES = {
-  mathematics: 'Mathématiques', french: 'Français', physics: 'Physique',
-  chemistry: 'Chimie', biology: 'Biologie', history: 'Histoire',
-  geography: 'Géographie', english: 'Anglais', dutch: 'Néerlandais'
-};
 
 // ─── Étapes Monk Mode ─────────────────────────────────────────────────────────
 const MONK_STEPS = {
@@ -183,13 +178,13 @@ export default function Assistant() {
 
     setActionButtons(subjects.map(s => ({
       value: s,
-      label: `${SUBJECT_EMOJIS[s] ?? '📖'} ${SUBJECT_NAMES[s] ?? s}`
+      label: `${SUBJECT_EMOJIS[s] ?? '📖'} ${t(`subjects.${s}`) ?? s}`
     })));
   }, [availableSubjects, addMessage, t]);
 
   const handleSubjectSelect = useCallback(async (subject) => {
     setActionButtons(null);
-    addMessage('user', `${SUBJECT_EMOJIS[subject] ?? '📖'} ${SUBJECT_NAMES[subject] ?? subject}`);
+    addMessage('user', `${SUBJECT_EMOJIS[subject] ?? '📖'} ${t(`subjects.${subject}`) ?? subject}`);
     setMonkData(prev => ({ ...prev, subject }));
     setMonkStep(MONK_STEPS.ANALYZING);
 
@@ -223,7 +218,7 @@ export default function Assistant() {
       }
     } else {
       // Regular monk mode: analyze quiz answers
-      setThinkingText(t('assistant.monk.analyzingSubject', { subject: SUBJECT_NAMES[subject] }));
+      setThinkingText(t('assistant.monk.analyzingSubject', { subject: t(`subjects.${subject}`) }));
       await new Promise(r => setTimeout(r, 800));
       setThinkingText(t('assistant.monk.analyzingQuiz'));
       await new Promise(r => setTimeout(r, 1000));
@@ -240,7 +235,7 @@ export default function Assistant() {
           synthesesPlural: synthesesCount > 1 ? 's' : '',
           answers: answersCount,
           answersPlural: answersCount > 1 ? 's' : '',
-          subject: SUBJECT_NAMES[subject]
+          subject: t(`subjects.${subject}`)
         }) + '\n\n';
 
         if (analysis.hasSufficientData && analysis.weakTopics.length > 0) {
@@ -357,7 +352,7 @@ export default function Assistant() {
     setMonkStep(MONK_STEPS.GENERATING);
     setThinkingText(t('assistant.monk.generating'));
     await new Promise(r => setTimeout(r, 800));
-    setThinkingText(t('assistant.monk.buildingSet', { subject: SUBJECT_NAMES[data.subject] }));
+    setThinkingText(t('assistant.monk.buildingSet', { subject: t(`subjects.${data.subject}`) }));
 
     try {
       const result = await assistantSvc.generateExercises({
@@ -496,7 +491,7 @@ export default function Assistant() {
 
         setActionButtons(subjects.map(s => ({
           value: s,
-          label: `${SUBJECT_EMOJIS[s] ?? '📖'} ${SUBJECT_NAMES[s] ?? s}`
+          label: `${SUBJECT_EMOJIS[s] ?? '📖'} ${t(`subjects.${s}`) ?? s}`
         })));
       } catch {
         setThinkingText('');
@@ -543,7 +538,7 @@ export default function Assistant() {
     if (!text || isLoading) return;
     setInput('');
 
-    if (text === '/exs') {
+    if (text === '/exs' || text === '/练习') {
       addMessage('user', text);
       setMonkStep(MONK_STEPS.IDLE);
       setActionButtons(null);
@@ -551,7 +546,7 @@ export default function Assistant() {
       return;
     }
 
-    if (text === '/correct') {
+    if (text === '/correct' || text === '/批改') {
       addMessage('user', text);
       setMonkStep(MONK_STEPS.IDLE);
       setActionButtons(null);
@@ -559,7 +554,7 @@ export default function Assistant() {
       return;
     }
 
-    if (text === '/ana') {
+    if (text === '/ana' || text === '/分析') {
       addMessage('user', text);
       setMonkStep(MONK_STEPS.IDLE);
       setActionButtons(null);

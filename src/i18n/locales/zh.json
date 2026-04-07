@@ -647,9 +647,9 @@
     "step6": {
       "title": "认识Aron 🤖",
       "message": "Aron是你的个人学习助手。他通过僧侣模式分析你的成绩并生成量身定制的练习。",
-      "monkTitle": "僧侣模式 (/exs)",
+      "monkTitle": "僧侣模式 (/练习)",
       "monkDesc": "Aron分析你的测验并针对你的薄弱点创建定向练习。",
-      "anaTitle": "分析考试 (/ana)",
+      "anaTitle": "分析考试 (/分析)",
       "anaDesc": "拍一张批改过的作业照片，Aron会创建练习帮助你进步。",
       "button": "太好了，出发！"
     }
@@ -697,11 +697,11 @@
     "subtitle": "学习助手",
     "myExercises": "我的练习",
     "inputPlaceholder": "发送消息...",
-    "commandsHint": "输入 /exs 进入僧侣模式 · /correct 批改 · /ana 分析考试",
+    "commandsHint": "输入 /练习 进入僧侣模式 · /批改 批改 · /分析 分析考试",
     "thinking": "思考中...",
     "error": "抱歉，发生了错误。请稍后重试。",
-    "welcome": "你好！我是Aron，你的个人学习助手。我在这里帮助你理解课程内容并取得进步。😊\n\n输入 /exs 启动**僧侣模式**，根据你的薄弱点生成练习题；输入 /correct 批改你的练习；或输入 /ana 分析一份考试。",
-    "welcomeShort": "你好！我是Aron，你的学习助手。😊\n\n输入 /exs 进入**僧侣模式** · /correct 批改 · /ana 分析考试。",
+    "welcome": "你好！我是Aron，你的个人学习助手。我在这里帮助你理解课程内容并取得进步。😊\n\n输入 /练习 启动**僧侣模式**，根据你的薄弱点生成练习题；输入 /批改 批改你的练习；或输入 /分析 分析一份考试。",
+    "welcomeShort": "你好！我是Aron，你的学习助手。😊\n\n输入 /练习 进入**僧侣模式** · /批改 批改 · /分析 分析考试。",
     "monk": {
       "selectSubject": "你想练习哪个科目？🎯",
       "noSubjects": "你还没有分配科目的摘要。请先导入课程并选择科目！📚",
@@ -721,7 +721,7 @@
       "invalidNumber": "请给我一个在1到最大值之间的数字 😊",
       "generating": "正在生成你的个性化练习...",
       "buildingSet": "正在构建{{subject}}练习集...",
-      "generated": "✅ **已创建{{count}}道练习**：\"{{title}}\"\n\n完成后，输入 **/correct** 让我批改！",
+      "generated": "✅ **已创建{{count}}道练习**：\"{{title}}\"\n\n完成后，输入 **/批改** 让我批改！",
       "viewExercises": "📋 查看我的练习 →",
       "limitReached": "你已达到15个练习集的上限。请删除一个以继续。",
       "genError": "生成时出错。请稍后重试。",
@@ -729,7 +729,7 @@
     },
     "correct": {
       "loading": "正在加载你的练习...",
-      "empty": "你还没有需要批改的练习。用 **/exs** 启动僧侣模式！💪",
+      "empty": "你还没有需要批改的练习。用 **/练习** 启动僧侣模式！💪",
       "select": "你想批改哪个练习集？",
       "readingAnswers": "正在读取你的答案...",
       "correcting": "批改中...",

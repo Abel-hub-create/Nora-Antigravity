@@ -416,10 +416,52 @@ const OnboardingModal = () => {
                         </motion.div>
                     )}
 
-                    {/* Step 5: Aron & Monk Mode intro */}
+                    {/* Step 5: Import Method Info */}
                     {step === 5 && (
                         <motion.div
                             key="step5"
+                            variants={stepVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            transition={{ duration: 0.2 }}
+                        >
+                            <div className="flex justify-center mb-6">
+                                <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center">
+                                    <span className="text-4xl">🎉</span>
+                                </div>
+                            </div>
+                            <h2 className="text-2xl font-bold text-text-main text-center mb-4">
+                                {t('onboarding.step5.title')}
+                            </h2>
+                            <p className="text-text-muted text-center mb-6">
+                                {t('onboarding.step5.message')}
+                            </p>
+
+                            {/* Icône du mode d'import */}
+                            <div className="flex justify-center gap-6 mb-8">
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className={`w-16 h-16 rounded-2xl ${selectedTheme === 'dark' ? 'bg-white/5' : 'bg-black/5'} flex items-center justify-center`}>
+                                        <CameraIcon size={28} className="text-primary" />
+                                    </div>
+                                    <span className="text-xs text-text-muted">{t('import.photo')}</span>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={handleStep5Continue}
+                                className="w-full p-4 rounded-xl bg-primary text-white font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
+                            >
+                                {t('onboarding.step5.button')}
+                                <ArrowRight size={18} />
+                            </button>
+                        </motion.div>
+                    )}
+
+                    {/* Step 6: Aron & Monk Mode intro (last step) */}
+                    {step === 6 && (
+                        <motion.div
+                            key="step6"
                             variants={stepVariants}
                             initial="hidden"
                             animate="visible"
@@ -455,48 +497,6 @@ const OnboardingModal = () => {
                                 </div>
                             </div>
 
-                            <button
-                                onClick={handleStep5Continue}
-                                className="w-full p-4 rounded-xl bg-primary text-white font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
-                            >
-                                {t('onboarding.step6.button')}
-                                <ArrowRight size={18} />
-                            </button>
-                        </motion.div>
-                    )}
-
-                    {/* Step 6: Import Method Info */}
-                    {step === 6 && (
-                        <motion.div
-                            key="step6"
-                            variants={stepVariants}
-                            initial="hidden"
-                            animate="visible"
-                            exit="exit"
-                            transition={{ duration: 0.2 }}
-                        >
-                            <div className="flex justify-center mb-6">
-                                <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center">
-                                    <span className="text-4xl">🎉</span>
-                                </div>
-                            </div>
-                            <h2 className="text-2xl font-bold text-text-main text-center mb-4">
-                                {t('onboarding.step5.title')}
-                            </h2>
-                            <p className="text-text-muted text-center mb-6">
-                                {t('onboarding.step5.message')}
-                            </p>
-
-                            {/* Icône du mode d'import */}
-                            <div className="flex justify-center gap-6 mb-8">
-                                <div className="flex flex-col items-center gap-2">
-                                    <div className={`w-16 h-16 rounded-2xl ${selectedTheme === 'dark' ? 'bg-white/5' : 'bg-black/5'} flex items-center justify-center`}>
-                                        <CameraIcon size={28} className="text-primary" />
-                                    </div>
-                                    <span className="text-xs text-text-muted">{t('import.photo')}</span>
-                                </div>
-                            </div>
-
                             {error && (
                                 <p className="text-error text-sm text-center mb-4">{error}</p>
                             )}
@@ -510,7 +510,7 @@ const OnboardingModal = () => {
                                     <Loader2 size={20} className="animate-spin" />
                                 ) : (
                                     <>
-                                        {t('onboarding.step5.button')}
+                                        {t('onboarding.step6.button')}
                                         <ArrowRight size={18} />
                                     </>
                                 )}
