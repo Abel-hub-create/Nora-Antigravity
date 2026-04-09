@@ -2,6 +2,7 @@ import * as userRepository from './userRepository.js';
 import * as hashService from './hashService.js';
 import * as tokenService from './tokenService.js';
 import * as emailService from './emailService.js';
+import { createSubjectFolders } from './folderRepository.js';
 import crypto from 'crypto';
 
 export const register = async ({ email, password, name, language = 'fr' }) => {
@@ -39,6 +40,14 @@ export const register = async ({ email, password, name, language = 'fr' }) => {
     // Continue even if email fails - user can request resend
   }
 
+  // Create subject folders for the new user
+  try {
+    await createSubjectFolders(user.id, language);
+  } catch (error) {
+    console.error('[Auth] Erreur création dossiers matières:', error);
+    // Non-blocking
+  }
+
   return user;
 };
 
@@ -58,6 +67,15 @@ export const login = async ({ email, password }) => {
     const error = new Error('INVALID_CREDENTIALS');
     error.statusCode = 401;
     error.code = 'INVALID_CREDENTIALS';
+    throw error;
+  }
+
+  // Check if account is banned
+  if (user.is_banned) {
+    const error = new Error('Ton compte a été suspendu.');
+    error.statusCode = 403;
+    error.code = 'ACCOUNT_BANNED';
+    error.reason = user.banned_reason || null;
     throw error;
   }
 

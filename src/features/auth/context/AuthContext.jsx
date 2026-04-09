@@ -56,6 +56,8 @@ export const AuthProvider = ({ children }) => {
         message = i18n.t('auth.emailNotVerified');
       } else if (code === 'INVALID_CREDENTIALS') {
         message = i18n.t('auth.invalidCredentials');
+      } else if (code === 'ACCOUNT_BANNED') {
+        message = err.response?.data?.reason || i18n.t('errors.accountBanned');
       } else {
         message = err.response?.data?.error || i18n.t('errors.loginFailed');
       }
@@ -74,8 +76,15 @@ export const AuthProvider = ({ children }) => {
       applyUserPreferences(userData);
       return userData;
     } catch (err) {
-      const message = err.response?.data?.error || i18n.t('errors.googleLoginFailed');
+      const code = err.response?.data?.code;
+      let message;
+      if (code === 'ACCOUNT_BANNED') {
+        message = i18n.t('errors.accountBanned');
+      } else {
+        message = err.response?.data?.error || i18n.t('errors.googleLoginFailed');
+      }
       setError(message);
+      setErrorCode(code || null);
       throw new Error(message);
     }
   }, []);
@@ -188,10 +197,10 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const updatePreferences = useCallback(async ({ theme, language }) => {
+  const updatePreferences = useCallback(async ({ theme, language, auto_folder }) => {
     try {
       setError(null);
-      const updatedUser = await authService.updatePreferences({ theme, language });
+      const updatedUser = await authService.updatePreferences({ theme, language, auto_folder });
       setUser(updatedUser);
       // Apply preferences immediately
       if (theme) {

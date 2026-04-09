@@ -102,6 +102,16 @@
     box-shadow: none !important;
   }
 
+  /* Admin panel — pas de glassmorphism, style plat */
+  .admin-root .rounded-lg,
+  .admin-root .rounded-xl,
+  .admin-root .rounded-2xl,
+  .admin-root .rounded-3xl {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+  }
+
   /* CLAIR : verre dépoli renforcé */
   [data-theme="light"] .rounded-lg,
   [data-theme="light"] .rounded-xl,

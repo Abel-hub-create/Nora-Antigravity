@@ -279,7 +279,84 @@ export const sendVerificationEmail = async (email, token, name, language = 'fr')
   }
 };
 
+const TYPE_COLORS = {
+  info: '#0284c7', warning: '#d97706', maintenance: '#dc2626', feature: '#059669'
+};
+const TYPE_BG = {
+  info: '#f0f9ff', warning: '#fffbeb', maintenance: '#fef2f2', feature: '#f0fdf4'
+};
+const TYPE_LABELS = {
+  info: 'Information', warning: 'Important', maintenance: 'Maintenance', feature: 'Nouveauté'
+};
+
+export const sendAnnouncementEmail = async (email, name, announcement) => {
+  const color = TYPE_COLORS[announcement.type] || '#0284c7';
+  const bg = TYPE_BG[announcement.type] || '#f0f9ff';
+  const typeLabel = TYPE_LABELS[announcement.type] || 'Annonce';
+  const safeName = escapeHtml(name || 'là');
+  const safeTitle = escapeHtml(announcement.title);
+  const safeBody = escapeHtml(announcement.body).replace(/\n/g, '<br/>');
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>${safeTitle}</title>
+</head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:540px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:${color};padding:28px 32px;">
+            <p style="margin:0;font-size:13px;font-weight:600;color:rgba(255,255,255,0.85);text-transform:uppercase;letter-spacing:1px;">${typeLabel}</p>
+            <h1 style="margin:8px 0 0;font-size:22px;font-weight:700;color:#ffffff;line-height:1.3;">${safeTitle}</h1>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:32px;">
+            <p style="margin:0 0 16px;font-size:15px;color:#475569;">Bonjour <strong style="color:#0f172a;">${safeName}</strong>,</p>
+            <div style="background:${bg};border-left:4px solid ${color};border-radius:0 8px 8px 0;padding:16px 20px;margin:0 0 24px;">
+              <p style="margin:0;font-size:15px;color:#1e293b;line-height:1.7;">${safeBody}</p>
+            </div>
+            <table cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="border-radius:10px;background:${color};">
+                  <a href="${FRONTEND_URL}" style="display:inline-block;padding:12px 28px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;">Ouvrir Nora →</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:16px 32px;border-top:1px solid #e2e8f0;">
+            <p style="margin:0;font-size:12px;color:#94a3b8;">Nora · <a href="${FRONTEND_URL}" style="color:#94a3b8;">${FRONTEND_URL}</a></p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: email,
+    subject: `[Nora] ${announcement.title}`,
+    html
+  });
+};
+
 export default {
   sendPasswordResetEmail,
-  sendVerificationEmail
+  sendVerificationEmail,
+  sendAnnouncementEmail
 };

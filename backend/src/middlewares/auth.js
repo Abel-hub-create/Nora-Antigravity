@@ -25,6 +25,11 @@ export const authenticate = async (req, res, next) => {
       return res.status(401).json({ error: 'Utilisateur non trouvé' });
     }
 
+    // Check ban — immediately kicks out even if token is still valid
+    if (user.is_banned) {
+      return res.status(403).json({ error: 'Ton compte a été suspendu.', code: 'ACCOUNT_BANNED', reason: user.banned_reason || null });
+    }
+
     // Attach user to request
     req.user = user;
     next();

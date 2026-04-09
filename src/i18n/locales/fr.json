@@ -138,6 +138,9 @@
     "sounds": "Sons",
     "soundEffects": "Effets sonores",
     "soundEffectsDesc": "Clics et survol",
+    "autoFolder": "Organisation",
+    "autoFolderToggle": "Tri automatique par matière",
+    "autoFolderDesc": "Les nouvelles synthèses rejoignent automatiquement leur dossier matière",
     "notificationHour": "Heure de rappel",
     "notificationDays": "Jours",
     "days": {
@@ -732,18 +735,20 @@
     "noTextDetectedVoice": "Aucun texte détecté. Dicte ton cours pour que je puisse le synthétiser.",
     "googleLoginFailed": "La connexion Google a échoué",
     "appleLoginFailed": "La connexion Apple a échoué",
-    "synthesesLimitReached": "Tu as atteint la limite de 40 synthèses. Supprime-en pour en créer de nouvelles."
+    "synthesesLimitReached": "Tu as atteint la limite de 40 synthèses. Supprime-en pour en créer de nouvelles.",
+    "accountBanned": "Ton compte a été suspendu. Contacte le support si tu penses qu'il s'agit d'une erreur."
   },
   "assistant": {
     "title": "Aron",
     "subtitle": "Assistant pédagogique",
     "myExercises": "Mes exercices",
     "inputPlaceholder": "Envoie un message...",
-    "commandsHint": "Tape /exs pour le Monk Mode · /correct pour corriger · /ana pour analyser une interro",
+    "commandsHint": "Tape /exs pour le Monk Mode · /ana pour analyser une interro",
     "thinking": "En train de réfléchir...",
     "error": "Désolé, une erreur s'est produite. Réessaie dans un moment.",
-    "welcome": "Bonjour ! Je suis Aron, ton assistant pédagogique. Je suis là pour t'aider à comprendre tes cours et à progresser. 😊\n\nTape /exs pour lancer le **Monk Mode** et générer des exercices adaptés à tes difficultés, /correct pour corriger tes exercices, ou /ana pour analyser une interro.",
-    "welcomeShort": "Bonjour ! Je suis Aron, ton assistant pédagogique. 😊\n\nTape /exs pour le **Monk Mode** · /correct pour corriger · /ana pour analyser une interro.",
+    "dailyChatLimit": "Tu as atteint la limite de {{limit}} messages aujourd'hui. Reviens demain ! 🌙",
+    "welcome": "Bonjour ! Je suis Aron, ton assistant pédagogique. Je suis là pour t'aider à comprendre tes cours et à progresser. 😊\n\nTape /exs pour lancer le **Monk Mode** et générer des exercices adaptés à tes difficultés, ou /ana pour analyser une interro.",
+    "welcomeShort": "Bonjour ! Je suis Aron, ton assistant pédagogique. 😊\n\nTape /exs pour le **Monk Mode** · /ana pour analyser une interro.",
     "monk": {
       "selectSubject": "Dans quelle matière veux-tu travailler ? 🎯",
       "noSubjects": "Tu n'as pas encore de synthèses avec une matière assignée. Importe d'abord un cours en choisissant une matière ! 📚",
@@ -763,11 +768,20 @@
       "invalidNumber": "Donne-moi un nombre entre 1 et le maximum indiqué 😊",
       "generating": "Génération de tes exercices personnalisés...",
       "buildingSet": "Construction du set {{subject}}...",
-      "generated": "✅ **{{count}} exercice{{plural}} créé{{plural}}** : \"{{title}}\"\n\nQuand tu auras terminé, tape **/correct** pour que je les corrige !",
+      "generated": "✅ **{{count}} exercice{{plural}} créé{{plural}}** : \"{{title}}\"",
       "viewExercises": "📋 Voir mes exercices →",
       "limitReached": "Tu as atteint la limite de 15 sets d'exercices. Supprime-en un pour continuer.",
       "genError": "Erreur lors de la génération. Réessaie dans un moment.",
-      "analyzeError": "Erreur lors de l'analyse. Réessaie dans un moment."
+      "dailyExsLimit": "Tu as atteint la limite de {{limit}} /exs aujourd'hui. Reviens demain ! 🌙",
+      "dailyAnaLimit": "Tu as atteint la limite de {{limit}} /ana aujourd'hui. Reviens demain ! 🌙",
+      "analyzeError": "Erreur lors de l'analyse. Réessaie dans un moment.",
+      "mcq": "QCM",
+      "maxExceeded": "Le maximum pour ce type est {{max}}. Donne un nombre entre 1 et {{max}} 😊",
+      "selectDifficulty": "Quelle difficulté veux-tu pour tes exercices ? 🎯",
+      "easy": "😊 Facile",
+      "medium": "💪 Moyen",
+      "hard": "🔥 Difficile",
+      "tellDifficulties": "Décris-moi tes difficultés spécifiques 📝 (ex: \"j'ai du mal avec les conjugaisons au passé\" ou \"je confonds la photosynthèse et la respiration\")"
     },
     "correct": {
       "loading": "Chargement de tes exercices...",
@@ -787,7 +801,11 @@
       "identifying": "Identification des points à travailler...",
       "analyzed": "J'ai analysé ton contrôle.",
       "extractError": "Je n'ai pas pu extraire de texte de cette image. Essaie avec une photo plus nette 📷",
-      "uploadBtn": "Choisir une photo"
+      "uploadBtn": "Choisir une photo",
+      "captureBtn": "Prendre une photo",
+      "galleryBtn": "Depuis la galerie",
+      "cameraTitle": "Photo de l'interro",
+      "cameraTip": "Appuie pour capturer"
     }
   },
   "exercises": {
@@ -800,7 +818,25 @@
     "deleteConfirm": "Supprimer ce set d'exercices ?",
     "delete": "Supprimer",
     "exerciseCount": "{{count}} exercice",
-    "exerciseCountPlural": "{{count}} exercices"
+    "exerciseCountPlural": "{{count}} exercices",
+    "deleteAll": "Tout supprimer",
+    "deleteAllConfirmTitle": "Supprimer tous les exercices ?",
+    "deleteAllConfirmDesc": "Cette action est irréversible. Tous tes sets d'exercices seront supprimés.",
+    "deleteAllConfirm": "Tout supprimer",
+    "quotaLabel": "Sets utilisés",
+    "type": {
+      "qcm": "QCM",
+      "open": "Questions ouvertes",
+      "practical": "Exercices pratiques"
+    },
+    "placeholderOpen": "Rédige ta réponse ici...",
+    "placeholderPractical": "Montre ton développement et ta solution...",
+    "globalFeedback": "🌟 Bilan global",
+    "printAnswer": "Réponse :",
+    "printDevelopment": "Développement :",
+    "correctionCorrect": "Correct",
+    "correctionPartial": "Partiellement correct",
+    "correctionWrong": "À retravailler"
   },
   "exerciseDetail": {
     "answered": "{{count}}/{{total}} répondus",

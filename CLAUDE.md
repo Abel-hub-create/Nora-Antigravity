@@ -1812,3 +1812,158 @@ La correction est accessible **dans le chat** (via `/correct`) et **dans Exercis
 ### Avatar
 
 Placeholder `🤖` en attendant le PNG fourni par le user. Format attendu : PNG, affiché dans le header de `/assistant`. Prévu pour être animé ultérieurement.
+
+---
+
+## Admin Panel
+
+Panel d'administration complet, **complètement isolé** de l'app utilisateur (contexte React séparé, JWT séparé, API client séparé).
+
+### Accès
+
+- **URL** : `https://mirora.cloud/admin/login`
+- **Emails autorisés** : `abeldemora@gmail.com`, `merchezjulien2011@gmail.com` (hardcodé dans `adminConfig.js`)
+- **Authentification** : Email + mot de passe + **TOTP 2FA obligatoire** (Google Authenticator)
+- **Première connexion** : génère et affiche un QR code à scanner, puis confirmer avec le premier code
+
+### Sécurité
+
+- Email restriction hardcodée dans `backend/src/config/adminConfig.js` (`allowedEmails`)
+- TOTP vérifié à chaque connexion (otplib + qrcode)
+- JWT admin séparé (`ADMIN_JWT_SECRET`, `ADMIN_JWT_REFRESH_SECRET`) — 15min access, 8h refresh
+- Rate limiter 5 tentatives / 15 min sur le login
+- Pas de restriction IP (accessible depuis n'importe où)
+
+### Flow d'authentification (3 étapes)
+
+```
+POST /api/admin/auth/login { email, password }
+  → { status: 'setup_required' | 'totp_required', pendingToken }
+
+POST /api/admin/auth/totp/qrcode { pendingToken }    ← première fois seulement
+  → { qrCodeDataUrl, secret }
+
+POST /api/admin/auth/totp/enable { pendingToken, code }   ← première fois
+POST /api/admin/auth/totp/verify { pendingToken, code }   ← connexions suivantes
+  → { adminAccessToken, admin }
+```
+
+### Fonctionnalités
+
+**Dashboard** (`/admin/dashboard`) — 6 stats : total users, synthèses, premium, bannis, nouveaux aujourd'hui, nouveaux cette semaine.
+
+**Gestion utilisateurs** (`/admin/users`) — tableau paginé (50/page), recherche par email/nom, filtres (tous/premium/bannis/gratuit), clic → détail.
+
+**Détail utilisateur** (`/admin/users/:id`) :
+- Infos : niveau, XP, synthèses, date inscription, dernière connexion, premium expire
+- **Ban/Unban** avec raison optionnelle — force déconnexion immédiate (supprime refresh tokens + le middleware auth vérifie `is_banned` à chaque requête)
+- **Premium** : date d'expiration ou permanent (checkbox)
+- **Supprimer** : supprime TOUTES les données de l'utilisateur (cascade complète)
+- Synthèses récentes affichées
+
+**Annonces** (`/admin/announcements`) — CRUD complet + envoi email à tous les utilisateurs actifs/vérifiés/non-bannis.
+- Types : `info` (bleu), `warning` (orange), `maintenance` (rouge), `feature` (vert)
+- Audience : tous / premium / gratuit
+- Dates début/fin optionnelles
+- Bouton "Envoyer" → email HTML à tous les users eligibles (template clair, compatible tous clients mail)
+
+### Ban — comportement
+
+1. Admin définit une raison (optionnel)
+2. Backend supprime tous les refresh tokens → déconnexion forcée
+3. Middleware `auth.js` vérifie `is_banned` + retourne `banned_reason` sur chaque requête → disconnect immédiat même si le token est encore valide
+4. Côté frontend : `api.js` intercepte le 403 `ACCOUNT_BANNED`, stocke `ban_reason` en localStorage, redirige vers `/login`
+5. Page login affiche : message de ban + raison si renseignée
+
+### Structure fichiers
+
+**Backend :**
+```
+backend/src/config/adminConfig.js          # JWT secrets, allowedEmails
+backend/src/middlewares/adminAuth.js       # Vérifie Bearer token admin
+backend/src/middlewares/adminIpAllowlist.js # (kept but unused — no IP restriction)
+backend/src/routes/adminRoutes.js          # Tous les endpoints /api/admin/*
+backend/src/services/adminRepository.js   # DB : stats, users CRUD, announcements CRUD
+backend/src/services/adminTokenService.js # generateAdminAccessToken/Refresh/Pending
+```
+
+**Frontend :**
+```
+src/features/admin/
+├── context/AdminAuthContext.jsx      # adminLogin, adminCompleteLogin, adminLogout
+├── components/AdminLayout.jsx        # Sidebar + main (class admin-root = no glassmorphism)
+├── components/AdminProtectedRoute.jsx
+├── services/adminApiClient.js        # Fetch client isolé (Bearer admin token)
+├── pages/AdminLogin.jsx              # 3 steps : credentials → QR setup → verify
+├── pages/AdminDashboard.jsx
+├── pages/AdminUsers.jsx
+├── pages/AdminUserDetail.jsx
+└── pages/AdminAnnouncements.jsx
+```
+
+**Migrations :**
+```
+032_admin_columns.sql       # admins table (email, password_hash, last_login_at)
+033_create_announcements.sql
+034_add_admin_totp.sql      # totp_secret, totp_enabled sur admins
+```
+
+**CSS :** `.admin-root` dans `index.css` désactive le glassmorphism sur tous les éléments `.rounded-*` du panel admin.
+
+**Packages backend ajoutés :** `otplib`, `qrcode`
+
+### Suppressions compte — cascade complète
+
+`deleteUser()` supprime dans l'ordre : refresh_tokens, password_resets, push_subscriptions, chat_messages, daily_usage, daily_progress, study_history, quiz_answers, exercise_items, exercises, revision_completions, revision_sessions, feedback_votes, feedbacks, folders, flashcards, quiz_questions, folder_syntheses, syntheses, users.
+
+### Emails annonces
+
+`sendAnnouncementEmail()` dans `emailService.js` — template HTML clair (fond blanc), compatible tous clients mail :
+- Header coloré selon le type
+- Titre en grand
+- Message dans bloc coloré
+- Bouton CTA
+
+---
+
+## Limites d'utilisation quotidienne
+
+Système de comptage par user par jour via table `daily_usage` (reset automatique via `CURDATE()`).
+
+| Feature | Limite |
+|---------|--------|
+| Chat Aron (`/chat`) | 15/jour |
+| Génération exercices (`/exs`) | 5/jour |
+| Analyse interro (`/ana`) | 5/jour |
+
+**Backend :** `dailyUsageRepository.js` — `checkAndIncrement(userId, type)` — upsert atomique.
+**Migration :** `030_create_daily_usage.sql`
+**Codes erreur :** `DAILY_CHAT_LIMIT`, `DAILY_EXS_LIMIT`, `DAILY_ANA_LIMIT`
+
+---
+
+## Dossiers matières (Subject Folders)
+
+9 dossiers créés automatiquement à l'inscription (mathématiques, français, physique, chimie, biologie, histoire, géographie, anglais, néerlandais).
+
+- **Auto-sort** : à la création d'une synthèse avec `subject` défini, si `user.auto_folder = 1`, la synthèse va automatiquement dans le dossier correspondant (créé si absent).
+- **Toggle** dans Settings > Organisation — `auto_folder` stocké en DB sur `users`.
+- `folderRepository.js` : `createSubjectFolders(userId, lang)`, `findOrCreateSubjectFolder(userId, subject, lang)`
+- **Migration :** `031_add_subject_folders.sql` — colonne `subject` sur `folders`, colonne `auto_folder` sur `users`
+
+---
+
+## Caméra réelle pour /ana
+
+`/ana` propose deux options : galerie (`fileInputRef`) ou caméra directe (`AnaCameraModal`).
+
+`src/components/Assistant/AnaCameraModal.jsx` : modal plein écran, stream `getUserMedia({ facingMode: 'environment' })`, bouton capture (canvas), callback `onCapture(base64)`.
+
+---
+
+## Correction per-item (ExerciseDetail)
+
+- **QCM** : correction instantanée locale (pas d'API) — `correct_answer` disponible dans l'item
+- **Open/Practical** : correction GPT au blur du champ (`correctItem(setId, itemId)`)
+- Endpoint : `POST /api/assistant/correct-item` — `correctSingleItem()` dans `assistantService.js` (max_tokens: 400)
+- Pas de bouton "Corriger" global — correction automatique item par item

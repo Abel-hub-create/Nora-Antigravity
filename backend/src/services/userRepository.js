@@ -52,19 +52,21 @@ export const linkAppleAccount = async (userId, appleId) => {
 };
 
 export const findById = async (id) => {
-  const sql = `SELECT id, email, name, avatar, theme, language, onboarding_completed, level, exp, next_level_exp, streak, eggs, collection, created_at
+  const sql = `SELECT id, email, name, avatar, theme, language, auto_folder, onboarding_completed, level, exp, next_level_exp, streak, eggs, collection, created_at, is_banned, banned_reason
                FROM users WHERE id = ? AND is_active = 1`;
   const users = await query(sql, [id]);
   return users[0] || null;
 };
 
-export const updatePreferences = async (userId, { theme, language }) => {
+export const updatePreferences = async (userId, { theme, language, auto_folder }) => {
   const sql = `UPDATE users SET
     theme = COALESCE(?, theme),
     language = COALESCE(?, language),
+    auto_folder = CASE WHEN ? IS NOT NULL THEN ? ELSE auto_folder END,
     updated_at = NOW()
     WHERE id = ?`;
-  await query(sql, [theme, language, userId]);
+  const autoFolderVal = auto_folder !== undefined ? (auto_folder ? 1 : 0) : null;
+  await query(sql, [theme, language, autoFolderVal, autoFolderVal, userId]);
 };
 
 export const updateProfile = async (userId, { name, avatar }) => {

@@ -138,6 +138,9 @@
     "sounds": "Sounds",
     "soundEffects": "Sound effects",
     "soundEffectsDesc": "Clicks and hover",
+    "autoFolder": "Organisation",
+    "autoFolderToggle": "Auto-sort by subject",
+    "autoFolderDesc": "New summaries are automatically added to their subject folder",
     "notificationHour": "Reminder time",
     "notificationDays": "Days",
     "days": {
@@ -218,11 +221,26 @@
     "noQuestions": "No questions for this summary",
     "questionOf": "Question {{current}} of {{total}}",
     "messages": {
-      "zero": ["Go back to practice", "Focus more"],
-      "low": ["You can do it", "You're improving!"],
-      "medium": ["Pretty good", "Well done!"],
-      "high": ["Keep it up!", "Very good!"],
-      "perfect": ["Simply perfect", "Congratulations, you got them all right!"]
+      "zero": [
+        "Go back to practice",
+        "Focus more"
+      ],
+      "low": [
+        "You can do it",
+        "You're improving!"
+      ],
+      "medium": [
+        "Pretty good",
+        "Well done!"
+      ],
+      "high": [
+        "Keep it up!",
+        "Very good!"
+      ],
+      "perfect": [
+        "Simply perfect",
+        "Congratulations, you got them all right!"
+      ]
     }
   },
   "revision": {
@@ -717,18 +735,20 @@
     "noTextDetectedVoice": "No text detected. Dictate your course so I can summarize it.",
     "googleLoginFailed": "Google login failed",
     "appleLoginFailed": "Apple login failed",
-    "synthesesLimitReached": "You've reached the limit of 40 summaries. Delete some to create new ones."
+    "synthesesLimitReached": "You've reached the limit of 40 summaries. Delete some to create new ones.",
+    "accountBanned": "Your account has been suspended. Contact support if you think this is an error."
   },
   "assistant": {
     "title": "Aron",
     "subtitle": "Learning assistant",
     "myExercises": "My exercises",
     "inputPlaceholder": "Send a message...",
-    "commandsHint": "Type /exs for Monk Mode · /correct to grade · /ana to analyse a test",
+    "commandsHint": "Type /exs for Monk Mode · /ana to analyse a test",
     "thinking": "Thinking...",
     "error": "Sorry, an error occurred. Please try again in a moment.",
-    "welcome": "Hello! I'm Aron, your personal learning assistant. I'm here to help you understand your courses and improve. 😊\n\nType /exs to launch **Monk Mode** and generate exercises tailored to your weaknesses, /correct to grade your exercises, or /ana to analyse a test.",
-    "welcomeShort": "Hello! I'm Aron, your learning assistant. 😊\n\nType /exs for **Monk Mode** · /correct to grade · /ana to analyse a test.",
+    "dailyChatLimit": "You've reached the {{limit}} message limit for today. Come back tomorrow! 🌙",
+    "welcome": "Hello! I'm Aron, your personal learning assistant. I'm here to help you understand your courses and improve. 😊\n\nType /exs to launch **Monk Mode** and generate exercises tailored to your weaknesses, or /ana to analyse a test.",
+    "welcomeShort": "Hello! I'm Aron, your learning assistant. 😊\n\nType /exs for **Monk Mode** · /ana to analyse a test.",
     "monk": {
       "selectSubject": "Which subject do you want to work on? 🎯",
       "noSubjects": "You don't have any summaries with an assigned subject yet. Import a course first and choose a subject! 📚",
@@ -748,11 +768,20 @@
       "invalidNumber": "Give me a number between 1 and the indicated maximum 😊",
       "generating": "Generating your personalised exercises...",
       "buildingSet": "Building the {{subject}} set...",
-      "generated": "✅ **{{count}} exercise{{plural}} created** : \"{{title}}\"\n\nWhen you're done, type **/correct** so I can grade them!",
+      "generated": "✅ **{{count}} exercise{{plural}} created** : \"{{title}}\"",
       "viewExercises": "📋 View my exercises →",
       "limitReached": "You've reached the limit of 15 exercise sets. Delete one to continue.",
       "genError": "Error during generation. Please try again in a moment.",
-      "analyzeError": "Error during analysis. Please try again in a moment."
+      "dailyExsLimit": "You've reached the {{limit}} /exs limit for today. Come back tomorrow! 🌙",
+      "dailyAnaLimit": "You've reached the {{limit}} /ana limit for today. Come back tomorrow! 🌙",
+      "analyzeError": "Error during analysis. Please try again in a moment.",
+      "mcq": "MCQ",
+      "maxExceeded": "The maximum for this type is {{max}}. Give me a number between 1 and {{max}} 😊",
+      "selectDifficulty": "What difficulty level do you want for your exercises? 🎯",
+      "easy": "😊 Easy",
+      "medium": "💪 Medium",
+      "hard": "🔥 Hard",
+      "tellDifficulties": "Describe your specific difficulties 📝 (e.g. \"I struggle with past tense conjugations\" or \"I mix up photosynthesis and respiration\")"
     },
     "correct": {
       "loading": "Loading your exercises...",
@@ -772,7 +801,11 @@
       "identifying": "Identifying areas to work on...",
       "analyzed": "I have analysed your test.",
       "extractError": "I couldn't extract text from this image. Try with a clearer photo 📷",
-      "uploadBtn": "Choose a photo"
+      "uploadBtn": "Choose a photo",
+      "captureBtn": "Take a photo",
+      "galleryBtn": "From gallery",
+      "cameraTitle": "Test photo",
+      "cameraTip": "Tap to capture"
     }
   },
   "exercises": {
@@ -785,7 +818,25 @@
     "deleteConfirm": "Delete this exercise set?",
     "delete": "Delete",
     "exerciseCount": "{{count}} exercise",
-    "exerciseCountPlural": "{{count}} exercises"
+    "exerciseCountPlural": "{{count}} exercises",
+    "deleteAll": "Delete all",
+    "deleteAllConfirmTitle": "Delete all exercises?",
+    "deleteAllConfirmDesc": "This action is irreversible. All your exercise sets will be deleted.",
+    "deleteAllConfirm": "Delete all",
+    "quotaLabel": "Sets used",
+    "type": {
+      "qcm": "MCQ",
+      "open": "Open questions",
+      "practical": "Practical exercises"
+    },
+    "placeholderOpen": "Write your answer here...",
+    "placeholderPractical": "Show your working and solution...",
+    "globalFeedback": "🌟 Overall feedback",
+    "printAnswer": "Answer:",
+    "printDevelopment": "Working:",
+    "correctionCorrect": "Correct",
+    "correctionPartial": "Partially correct",
+    "correctionWrong": "To review"
   },
   "exerciseDetail": {
     "answered": "{{count}}/{{total}} answered",

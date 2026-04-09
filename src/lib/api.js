@@ -11,11 +11,14 @@ class ApiClient {
     // Timeout par défaut de 30s, mais peut être surchargé via options.timeout
     const timeout = options.timeout || 30000;
 
+    const lang = localStorage.getItem('i18nextLng') || 'fr';
+
     const config = {
       ...options,
       credentials: 'include', // Important for cookies
       headers: {
         'Content-Type': 'application/json',
+        'Accept-Language': lang,
         ...options.headers,
       },
     };
@@ -48,6 +51,18 @@ class ApiClient {
         localStorage.removeItem('accessToken');
         window.location.href = '/login';
         throw new Error('Session expired');
+      }
+
+      // Handle 403 ACCOUNT_BANNED — force logout immediately (except on auth endpoints so the login page can show the message)
+      if (response.status === 403 && !isAuthEndpoint) {
+        const body = await response.json();
+        if (body?.code === 'ACCOUNT_BANNED') {
+          localStorage.removeItem('accessToken');
+          if (body.reason) localStorage.setItem('ban_reason', body.reason);
+          window.location.href = '/login';
+          throw { response: { status: 403, data: body } };
+        }
+        throw { response: { status: 403, data: body } };
       }
 
       const data = await response.json();

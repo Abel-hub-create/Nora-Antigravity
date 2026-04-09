@@ -29,8 +29,16 @@ const Login = () => {
   const [appleError, setAppleError] = useState(null);
   const navigate = useNavigate();
 
+  // Ban reason passed via localStorage when forcefully disconnected
+  const [banReason] = useState(() => {
+    const r = localStorage.getItem('ban_reason');
+    if (r) localStorage.removeItem('ban_reason');
+    return r || null;
+  });
+
   // Check if error is about email not verified
   const isEmailNotVerified = errorCode === 'EMAIL_NOT_VERIFIED';
+  const isBanned = errorCode === 'ACCOUNT_BANNED';
 
   const handleResendVerification = async () => {
     if (!formData.email || isResending) return;
@@ -123,7 +131,21 @@ const Login = () => {
         {/* Form Card */}
         <div className="bg-surface rounded-3xl shadow-xl p-8 border border-white/5">
           <form onSubmit={handleSubmit} className="space-y-4">
-            {authError && (
+            {/* Ban notice (from forced disconnect or login attempt) */}
+            {(banReason || isBanned) && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-sm space-y-1"
+              >
+                <p className="font-medium">{t('errors.accountBanned')}</p>
+                {(banReason || (isBanned && authError)) && (
+                  <p className="text-red-400/80 opacity-80">{banReason || authError}</p>
+                )}
+              </motion.div>
+            )}
+
+            {authError && !isBanned && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}

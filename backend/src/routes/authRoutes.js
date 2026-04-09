@@ -2,6 +2,7 @@ import express from 'express';
 import * as authService from '../services/authService.js';
 import * as userRepository from '../services/userRepository.js';
 import * as googleAuthService from '../services/googleAuthService.js';
+import { createSubjectFolders } from '../services/folderRepository.js';
 import * as appleAuthService from '../services/appleAuthService.js';
 import { validate } from '../middlewares/validation.js';
 import { authenticate } from '../middlewares/auth.js';
@@ -79,6 +80,12 @@ router.post('/google', loginLimiter, async (req, res, next) => {
       } else {
         // Create new Google user
         user = await userRepository.createGoogleUser(googleUser);
+        // Create subject folders for new Google user
+        try {
+          await createSubjectFolders(user.id, 'fr');
+        } catch (e) {
+          console.error('[Google Auth] Erreur création dossiers:', e);
+        }
       }
     }
 
@@ -88,6 +95,11 @@ router.post('/google', loginLimiter, async (req, res, next) => {
       req.headers['user-agent'],
       req.ip
     );
+
+    // 3.5. Check if account is banned
+    if (user.is_banned) {
+      return res.status(403).json({ error: 'Ton compte a été suspendu.', code: 'ACCOUNT_BANNED' });
+    }
 
     // 4. Set refresh token cookie (30 days)
     res.cookie('refreshToken', refreshToken, {
@@ -293,23 +305,23 @@ router.post('/sync', authenticate, validate(validators.syncUserDataSchema), asyn
   }
 });
 
-// Update user preferences (theme and language)
+// Update user preferences (theme, language, auto_folder)
 router.patch('/preferences', authenticate, async (req, res, next) => {
   try {
-    const { theme, language } = req.body;
+    const { theme, language, auto_folder } = req.body;
 
     // Validate theme
     if (theme && !['dark', 'light'].includes(theme)) {
       return res.status(400).json({ error: 'Theme invalide' });
     }
 
-    // Validate language (fr, en, es, zh)
+    // Validate language
     if (language && !['fr', 'en', 'es', 'zh'].includes(language)) {
       return res.status(400).json({ error: 'Langue invalide' });
     }
 
     // Update preferences
-    await userRepository.updatePreferences(req.user.id, { theme, language });
+    await userRepository.updatePreferences(req.user.id, { theme, language, auto_folder });
 
     // Get updated user
     const updatedUser = await userRepository.findById(req.user.id);
