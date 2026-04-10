@@ -7,10 +7,8 @@ import { useAuth } from '../../features/auth/hooks/useAuth';
 
 // Liste des langues disponibles
 const languages = [
-    { code: 'fr', label: 'Français', flag: '🇫🇷' },
-    { code: 'en', label: 'English', flag: '🇬🇧' },
-    { code: 'es', label: 'Español', flag: '🇪🇸' },
-    { code: 'zh', label: '中文', flag: '🇨🇳' }
+    { code: 'fr', label: 'Français', countryCode: 'fr' },
+    { code: 'en', label: 'English', countryCode: 'gb' }
 ];
 
 // Liste des matières
@@ -22,8 +20,8 @@ const SUBJECTS = [
     { id: 'biology', icon: '🧬' },
     { id: 'history', icon: '🏛️' },
     { id: 'geography', icon: '🌍' },
-    { id: 'english', icon: '🇬🇧' },
-    { id: 'dutch', icon: '🇳🇱' }
+    { id: 'english', icon: '📖' },
+    { id: 'dutch', icon: '🌷' }
 ];
 
 const TOTAL_STEPS = 6;
@@ -210,7 +208,7 @@ const OnboardingModal = () => {
                                                     : selectedTheme === 'dark' ? 'bg-white/5 text-text-muted hover:bg-white/10' : 'bg-black/5 text-text-muted hover:bg-black/10'
                                             }`}
                                         >
-                                            <span className="text-lg">{lang.flag}</span>
+                                            <img src={`https://flagcdn.com/24x18/${lang.countryCode}.png`} alt={lang.code} width="24" height="18" className="rounded-sm" />
                                             <span className="font-medium text-sm">{lang.label}</span>
                                         </button>
                                     ))}

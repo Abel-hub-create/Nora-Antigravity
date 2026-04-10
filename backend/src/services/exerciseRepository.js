@@ -9,10 +9,10 @@ export const countByUser = async (userId) => {
   return Number(rows[0].count);
 };
 
-export const createSet = async ({ userId, subject, title, difficultySummary }) => {
+export const createSet = async ({ userId, subject, title, difficultySummary, feedbackNote }) => {
   const result = await query(
-    `INSERT INTO exercises (user_id, subject, title, difficulty_summary) VALUES (?, ?, ?, ?)`,
-    [userId, subject, title, difficultySummary || null]
+    `INSERT INTO exercises (user_id, subject, title, difficulty_summary, feedback_note) VALUES (?, ?, ?, ?, ?)`,
+    [userId, subject, title, difficultySummary || null, feedbackNote || null]
   );
   return { id: result.insertId, userId, subject, title };
 };
@@ -46,6 +46,11 @@ export const findById = async (id, userId) => {
 export const deleteSet = async (id, userId) => {
   await query(`DELETE FROM exercise_items WHERE exercise_set_id = ?`, [id]);
   await query(`DELETE FROM exercises WHERE id = ? AND user_id = ?`, [id, userId]);
+};
+
+export const deleteAllByUser = async (userId) => {
+  await query(`DELETE ei FROM exercise_items ei JOIN exercises e ON ei.exercise_set_id = e.id WHERE e.user_id = ?`, [userId]);
+  await query(`DELETE FROM exercises WHERE user_id = ?`, [userId]);
 };
 
 // ─── Exercise Items ───────────────────────────────────────────────────────────

@@ -76,8 +76,8 @@ export const updateProfile = async ({ name, avatar }) => {
   return data.user;
 };
 
-export const updatePreferences = async ({ theme, language }) => {
-  const data = await api.patch('/auth/preferences', { theme, language });
+export const updatePreferences = async ({ theme, language, auto_folder }) => {
+  const data = await api.patch('/auth/preferences', { theme, language, auto_folder });
   return data.user;
 };
 

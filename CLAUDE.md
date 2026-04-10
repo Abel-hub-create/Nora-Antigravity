@@ -1132,6 +1132,26 @@ generateComplete(content)        // Returns { title, summary, flashcards, quizQu
 - **File Validation**: Audio uploads validated for type and size
 - **Content Validation**: Min 50 chars, max 100,000 chars for content generation
 
+## Notation Mathématique (formatMath)
+
+**`/src/utils/formatMath.js`** — convertit les notations mathématiques textuelles en caractères unicode propres. Appliqué partout où du contenu IA est affiché.
+
+**Conversions** :
+| Input | Output |
+|-------|--------|
+| `x^2`, `x^n` | `x²`, `xⁿ` (exposants unicode) |
+| `H_2O`, `CO_2` | `H₂O`, `CO₂` (indices unicode) |
+| `>=`, `<=`, `!=` | `≥`, `≤`, `≠` |
+| `->`, `<->` | `→`, `↔` |
+| `sqrt(x)` | `√x` |
+| `pi`, `alpha`, `beta`, `delta`, `theta`, `lambda`, `mu`, `sigma`, `omega` | `π`, `α`, `β`, `Δ`, `θ`, `λ`, `μ`, `σ`, `Ω` |
+| `infinity` | `∞` |
+| `+-` | `±` |
+
+**Usage** : `formatMath(text)` retourne une string transformée. Utilisé dans `StudyDetail`, `StudyFlashcards`, `StudyQuiz`, `ExerciseDetail`, `Assistant` (renderContent).
+
+---
+
 ## Sound Effects
 
 Minecraft-style UI sounds synthesized in-browser via the Web Audio API (no audio files).
@@ -1710,6 +1730,8 @@ Présent dans **toutes les pages** via `MobileWrapper.jsx` (coin haut-droit). Ic
 | `/ana` | Analyse une interro/devoir corrigé par photo (OCR → GPT → exercices ciblés) |
 | Tout autre message | Chat GPT normal (historique persisté en DB) |
 
+**Mémoire contextuelle** : les 10 derniers messages de la session sont envoyés à GPT (glissant). Au chargement de `/assistant`, les 10 derniers messages de l'historique DB sont affichés.
+
 ### Monk Mode — Flow complet
 
 ```
@@ -1727,16 +1749,30 @@ Présent dans **toutes les pages** via `MobileWrapper.jsx` (coin haut-droit). Ic
 
 ```
 /ana
- 1. Upload photo du contrôle corrigé (fileInputRef, base64)
+ 1. Upload photo du contrôle corrigé (galerie fileInputRef ou caméra AnaCameraModal)
+    → Si l'utilisateur écrit du texte pendant l'étape upload : annule /ana, bascule en chat normal (sans consommer de quota)
  2. POST /api/assistant/ana/analyze → OCR (extractTextFromImage) → analyzeExamDifficulties()
+    → Retourne { weakTopics, strongTopics, summary, examText, feedbackNote }
  3. Sélection matière (même boutons que Monk Mode)
- 4. GPT identifie weakTopics depuis le texte extrait
- 5. Suite identique au Monk Mode (types → counts → génération)
+ 4. Suite identique au Monk Mode (types → counts → génération)
+ 5. generateExercises() reçoit feedbackNote → stocké dans exercises.feedback_note (DB)
 ```
 
 **Backend** : `analyzeExamDifficulties({ examText, subject })` — retourne `{ weakTopics, strongTopics, summary }`.
 
+**`generateAnaFeedback({ weakTopics, strongTopics, summary, examText, subject, lang })`** : génère une note de coaching personnalisée. Règles strictes : ne cite JAMAIS un concept absent du texte du contrôle, ton décontracté (grande sœur/grand frère), conseils actionnables, zéro intro.
+
+**`generateTTS(text)`** : génère un audio MP3 via OpenAI `tts-1-hd`, voix `fable`, vitesse `1.15x`. Retourne base64. Endpoint `/api/assistant/tts`.
+
 **Indicateurs "thinking"** : messages animés avec spinner pendant l'analyse et la génération. Textes traduits et dynamiques par étape.
+
+### Note de feedback /ana (ExerciseDetail)
+
+Quand un set provient d'un `/ana`, `exercises.feedback_note` contient la note de coaching. Elle s'affiche en haut de `ExerciseDetail` dans une carte collapsible "Analyse personnalisée" :
+- Bouton **"Écouter"** → génère le TTS à la demande (POST `/api/assistant/tts`) et affiche un `<audio>` player
+- Bouton **"Transcription"** → toggle AnimatePresence pour afficher/masquer le texte
+
+**Migration** : `035_add_feedback_note.sql` — `ALTER TABLE exercises ADD COLUMN feedback_note TEXT NULL`
 
 ### Structure DB
 
@@ -1746,7 +1782,8 @@ quiz_answers (id, user_id, question_id, synthese_id, selected_answer, is_correct
 -- Alimenté par : POST /api/syntheses/:id/quiz/progress (selectedAnswer ajouté au payload)
 
 -- exercises: sets générés par Monk Mode
-exercises (id, user_id, subject, title, difficulty_summary, created_at)
+exercises (id, user_id, subject, title, difficulty_summary, feedback_note, created_at)
+-- feedback_note : note coaching /ana (NULL pour sets /exs normaux)
 -- Limite : 15 par user
 
 -- exercise_items: exercices individuels
@@ -1757,7 +1794,7 @@ exercise_items (id, exercise_set_id, type ENUM('qcm','open','practical'), positi
 chat_messages (id, user_id, role ENUM('user','assistant'), content, created_at)
 ```
 
-**Migrations** : `026_create_quiz_answers.sql`, `027_create_exercises.sql`, `028_create_exercise_items.sql`, `029_create_chat_messages.sql`
+**Migrations** : `026_create_quiz_answers.sql`, `027_create_exercises.sql`, `028_create_exercise_items.sql`, `029_create_chat_messages.sql`, `035_add_feedback_note.sql`
 
 ### Limites exercices
 
@@ -1780,7 +1817,8 @@ Au moins 1 type doit être sélectionné, avec minimum 1 question.
 | POST | `/api/assistant/monk-mode/analyze` | Analyse quiz_answers pour une matière |
 | POST | `/api/assistant/monk-mode/generate` | Génère + sauvegarde un set d'exercices |
 | POST | `/api/assistant/correct/:id` | Correction commentée par GPT |
-| POST | `/api/assistant/ana/analyze` | OCR image + analyse difficultés GPT |
+| POST | `/api/assistant/ana/analyze` | OCR image + analyse difficultés GPT + génère feedbackNote |
+| POST | `/api/assistant/tts` | Génère audio MP3 base64 depuis texte (tts-1-hd, fable, 1.15x) |
 | GET | `/api/exercises` | Liste des sets |
 | GET | `/api/exercises/:id` | Détail + items |
 | PATCH | `/api/exercises/items/:itemId/answer` | Sauvegarde une réponse |
@@ -1788,7 +1826,7 @@ Au moins 1 type doit être sélectionné, avec minimum 1 question.
 
 ### Services Backend
 
-- `assistantService.js` : `chat()`, `analyzeDifficulties()`, `generateExercises()`, `correctExercises()`, `analyzeExamDifficulties()`
+- `assistantService.js` : `chat()`, `analyzeDifficulties()`, `generateExercises()`, `correctExercises()`, `analyzeExamDifficulties()`, `generateAnaFeedback()`, `generateTTS()`
 - `exerciseRepository.js` : CRUD exercises/items + `logQuizAnswer()` + `getQuizAnswersForSubject()`
 
 ### ExerciseDetail — Impression
@@ -1958,6 +1996,8 @@ Système de comptage par user par jour via table `daily_usage` (reset automatiqu
 `/ana` propose deux options : galerie (`fileInputRef`) ou caméra directe (`AnaCameraModal`).
 
 `src/components/Assistant/AnaCameraModal.jsx` : modal plein écran, stream `getUserMedia({ facingMode: 'environment' })`, bouton capture (canvas), callback `onCapture(base64)`.
+
+**Important** : le container caméra et le viewfinder utilisent `style={{ borderRadius, backdropFilter: 'none' }}` au lieu de classes Tailwind `rounded-*` — le glassmorphism global (appliqué via `.rounded-*`) floutait sinon le flux caméra.
 
 ---
 

@@ -4,10 +4,8 @@ import { Globe } from 'lucide-react';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 
 const languages = [
-    { code: 'fr', label: 'Français', flag: '🇫🇷' },
-    { code: 'en', label: 'English', flag: '🇬🇧' },
-    { code: 'es', label: 'Español', flag: '🇪🇸' },
-    { code: 'zh', label: '中文', flag: '🇨🇳' }
+    { code: 'fr', label: 'Français', countryCode: 'fr' },
+    { code: 'en', label: 'English', countryCode: 'gb' }
 ];
 
 const LanguageSelector = () => {
@@ -48,7 +46,7 @@ const LanguageSelector = () => {
                                 : 'bg-white/5 text-text-muted hover:bg-white/10'
                         }`}
                     >
-                        <span className="text-lg">{lang.flag}</span>
+                        <img src={`https://flagcdn.com/24x18/${lang.countryCode}.png`} alt={lang.code} width="24" height="18" className="rounded-sm" />
                         <span className="font-medium text-sm">{lang.label}</span>
                     </button>
                 ))}

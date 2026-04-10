@@ -153,7 +153,8 @@ router.post('/ocr', authenticate, express.json({ limit: '120mb' }), async (req, 
 router.post('/generate-content', authenticate, express.json({ limit: '10mb' }), async (req, res) => {
   try {
     const { content, specificInstructions, subject } = req.body;
-    const result = await generateEducationalContent(content, specificInstructions, subject);
+    const lang = (req.headers['accept-language'] || 'fr').split(',')[0].split('-')[0];
+    const result = await generateEducationalContent(content, specificInstructions, subject, lang);
     res.json(result);
   } catch (error) {
     console.error('Erreur generation contenu:', error);

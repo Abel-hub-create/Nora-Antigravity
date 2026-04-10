@@ -117,7 +117,7 @@ const AddSynthesesModal = ({
                       <button
                         key={synthese.id}
                         onClick={() => toggleSelection(synthese.id)}
-                        className={`w-full p-4 rounded-xl border transition-all flex items-center gap-3 text-left ${
+                        className={`no-hover w-full p-4 rounded-xl border transition-colors flex items-center gap-3 text-left ${
                           isSelected
                             ? 'bg-primary/10 border-primary'
                             : 'bg-background border-white/5 hover:border-white/10'

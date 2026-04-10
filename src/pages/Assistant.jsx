@@ -1,16 +1,43 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, BookOpen, Loader2, Camera } from 'lucide-react';
+import { Send, BookOpen, Loader2, Camera, Image as ImageIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import * as assistantSvc from '../services/assistantService';
+import { formatMath } from '../utils/formatMath';
 import VoiceDictation from '../components/Import/VoiceDictation';
+import AnaCameraModal from '../components/Assistant/AnaCameraModal';
+import frLocale from '../i18n/locales/fr.json';
+import enLocale from '../i18n/locales/en.json';
+
+const LOCALES = { fr: frLocale, en: enLocale };
+
+// Traduction explicite par langue — indépendant du contexte React i18n
+function tl(lang, key, params = {}) {
+  const parts = key.split('.');
+  let val = LOCALES[lang] || LOCALES.fr;
+  for (const p of parts) {
+    val = val?.[p];
+    if (val === undefined) {
+      // fallback français
+      let fb = LOCALES.fr;
+      for (const p2 of parts) fb = fb?.[p2];
+      val = fb ?? key;
+      break;
+    }
+  }
+  if (typeof val !== 'string') return key;
+  return val.replace(/\{\{(\w+)\}\}/g, (_, k) => String(params[k] ?? `{{${k}}}`));
+}
 
 const SUBJECT_EMOJIS = {
   mathematics: '📐', french: '📚', physics: '⚡', chemistry: '🧪',
-  biology: '🧬', history: '🏛️', geography: '🌍', english: '🇬🇧', dutch: '🇳🇱'
+  biology: '🧬', history: '🏛️', geography: '🌍', english: '📖', dutch: '🌷'
 };
 
+const ALL_SUBJECTS = ['mathematics', 'french', 'physics', 'chemistry', 'biology', 'history', 'geography', 'english', 'dutch'];
+
+const DAILY_LIMITS = { chat: 15, exs: 5, ana: 5 };
 
 // ─── Étapes Monk Mode ─────────────────────────────────────────────────────────
 const MONK_STEPS = {
@@ -20,11 +47,9 @@ const MONK_STEPS = {
   SPECIFIC_DIFFICULTIES: 'specific_difficulties',
   SELECT_TYPES: 'select_types',
   SELECT_COUNTS: 'select_counts',
+  SELECT_DIFFICULTY: 'select_difficulty',
   GENERATING: 'generating',
   DONE: 'done',
-  // /correct
-  CORRECT_SELECT: 'correct_select',
-  CORRECTING: 'correcting',
   // /ana
   ANA_UPLOAD: 'ana_upload',
   ANA_ANALYZING: 'ana_analyzing'
@@ -91,15 +116,19 @@ const ActionButtons = ({ buttons, onSelect }) => (
 
 export default function Assistant() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const [showAnaCamera, setShowAnaCamera] = useState(false);
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [thinkingText, setThinkingText] = useState('');
+  // Mémoire silencieuse des 5 derniers messages pour le contexte IA
+  const memoryRef = useRef([]);
 
   // État Monk Mode
   const [monkStep, setMonkStep] = useState(MONK_STEPS.IDLE);
@@ -109,22 +138,29 @@ export default function Assistant() {
     specificDifficulties: null,
     selectedTypes: [],
     counts: { qcm: 0, open: 0, practical: 0 },
+    difficulty: 'medium',
     currentTypeIndex: 0,
     exerciseSetId: null,
     exerciseSets: [],
     isAnaMode: false,
-    examText: null
+    examText: null,
+    feedbackNote: null
   });
 
   const [availableSubjects, setAvailableSubjects] = useState([]);
   const [actionButtons, setActionButtons] = useState(null);
+  // Langue active du flow — ref pour éviter les stale closures dans useCallback
+  const langRef = useRef(i18n.language?.split('-')[0] || 'fr');
+  useEffect(() => {
+    langRef.current = i18n.language?.split('-')[0] || 'fr';
+  }, [i18n.language]);
 
   // Scroll to bottom
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, thinkingText, actionButtons]);
 
-  // Charger l'historique
+  // Charger l'historique : afficher les 10 derniers messages et les mettre en mémoire
   useEffect(() => {
     const load = async () => {
       try {
@@ -133,19 +169,18 @@ export default function Assistant() {
           assistantSvc.getAvailableSubjects()
         ]);
         setAvailableSubjects(subjects);
-        if (history.length > 0) {
-          setMessages(history.map(m => ({ role: m.role, content: m.content })));
+        // Garder les 10 derniers messages comme contexte IA
+        const last10 = history.slice(-10);
+        memoryRef.current = last10.map(m => ({ role: m.role, content: m.content }));
+        // Afficher ces messages dans le chat (session courante)
+        if (last10.length > 0) {
+          setMessages(last10.map(m => ({ role: m.role, content: m.content })));
         } else {
-          setMessages([{
-            role: 'assistant',
-            content: t('assistant.welcome')
-          }]);
+          setMessages([{ role: 'assistant', content: t('assistant.welcome') }]);
         }
       } catch {
-        setMessages([{
-          role: 'assistant',
-          content: t('assistant.welcomeShort')
-        }]);
+        // pas de mémoire si erreur
+        setMessages([{ role: 'assistant', content: t('assistant.welcome') }]);
       }
     };
     load();
@@ -158,9 +193,10 @@ export default function Assistant() {
   // ─── Monk Mode handlers ────────────────────────────────────────────────────
 
   const startMonkMode = useCallback(async () => {
+    const lang = langRef.current;
     setMonkStep(MONK_STEPS.SELECT_SUBJECT);
     setMonkData(prev => ({ ...prev, isAnaMode: false, examText: null }));
-    addMessage('assistant', t('assistant.monk.selectSubject'));
+    addMessage('assistant', tl(lang, 'assistant.monk.selectSubject'));
 
     let subjects = availableSubjects;
     if (subjects.length === 0) {
@@ -171,58 +207,57 @@ export default function Assistant() {
     }
 
     if (subjects.length === 0) {
-      addMessage('assistant', t('assistant.monk.noSubjects'));
+      addMessage('assistant', tl(lang, 'assistant.monk.noSubjects'));
       setMonkStep(MONK_STEPS.IDLE);
       return;
     }
 
     setActionButtons(subjects.map(s => ({
       value: s,
-      label: `${SUBJECT_EMOJIS[s] ?? '📖'} ${t(`subjects.${s}`) ?? s}`
+      label: `${SUBJECT_EMOJIS[s] ?? '📖'} ${tl(lang, `subjects.${s}`) || s}`
     })));
-  }, [availableSubjects, addMessage, t]);
+  }, [availableSubjects, addMessage]);
 
   const handleSubjectSelect = useCallback(async (subject) => {
+    const lang = langRef.current;
     setActionButtons(null);
-    addMessage('user', `${SUBJECT_EMOJIS[subject] ?? '📖'} ${t(`subjects.${subject}`) ?? subject}`);
+    addMessage('user', `${SUBJECT_EMOJIS[subject] ?? '📖'} ${tl(lang, `subjects.${subject}`) || subject}`);
     setMonkData(prev => ({ ...prev, subject }));
     setMonkStep(MONK_STEPS.ANALYZING);
 
     const isAna = monkData.isAnaMode;
 
     if (isAna) {
-      // /ana mode: analyze exam text
-      setThinkingText(t('assistant.ana.analyzing'));
+      setThinkingText(tl(lang, 'assistant.ana.analyzing'));
       await new Promise(r => setTimeout(r, 800));
-      setThinkingText(t('assistant.ana.identifying'));
+      setThinkingText(tl(lang, 'assistant.ana.identifying'));
 
       try {
         const result = await assistantSvc.analyzeExam(monkData.examText, subject);
         setThinkingText('');
-        const { analysis } = result;
-        setMonkData(prev => ({ ...prev, analysis }));
+        const { analysis, feedbackNote } = result;
+        setMonkData(prev => ({ ...prev, analysis, feedbackNote: feedbackNote || null }));
 
-        let msg = `📸 ${t('assistant.ana.analyzed')}\n\n`;
+        let msg = `📊 ${tl(lang, 'assistant.monk.weakTopics')}\n`;
         if (analysis.weakTopics?.length > 0) {
-          msg += `📊 ${t('assistant.monk.weakTopics')}\n${analysis.weakTopics.map(t => `• ${t}`).join('\n')}\n\n`;
+          msg += analysis.weakTopics.map(tp => `• ${tp}`).join('\n');
         } else {
-          msg += `${analysis.summary}\n\n`;
+          msg += analysis.summary;
         }
-        msg += t('assistant.monk.askSpecific');
+        msg += `\n\n${tl(lang, 'assistant.monk.askSpecific')}`;
         addMessage('assistant', msg);
         setMonkStep(MONK_STEPS.SPECIFIC_DIFFICULTIES);
       } catch {
         setThinkingText('');
-        addMessage('assistant', t('assistant.monk.analyzeError'));
+        addMessage('assistant', tl(lang, 'assistant.monk.analyzeError'));
         setMonkStep(MONK_STEPS.IDLE);
       }
     } else {
-      // Regular monk mode: analyze quiz answers
-      setThinkingText(t('assistant.monk.analyzingSubject', { subject: t(`subjects.${subject}`) }));
+      setThinkingText(tl(lang, 'assistant.monk.analyzingSubject', { subject: tl(lang, `subjects.${subject}`) }));
       await new Promise(r => setTimeout(r, 800));
-      setThinkingText(t('assistant.monk.analyzingQuiz'));
+      setThinkingText(tl(lang, 'assistant.monk.analyzingQuiz'));
       await new Promise(r => setTimeout(r, 1000));
-      setThinkingText(t('assistant.monk.analyzingWeak'));
+      setThinkingText(tl(lang, 'assistant.monk.analyzingWeak'));
 
       try {
         const result = await assistantSvc.analyzeSubject(subject);
@@ -230,58 +265,67 @@ export default function Assistant() {
         const { analysis, synthesesCount, answersCount } = result;
         setMonkData(prev => ({ ...prev, analysis }));
 
-        let msg = t('assistant.monk.analyzed', {
+        let msg = tl(lang, 'assistant.monk.analyzed', {
           syntheses: synthesesCount,
           synthesesPlural: synthesesCount > 1 ? 's' : '',
           answers: answersCount,
           answersPlural: answersCount > 1 ? 's' : '',
-          subject: t(`subjects.${subject}`)
+          subject: tl(lang, `subjects.${subject}`)
         }) + '\n\n';
 
         if (analysis.hasSufficientData && analysis.weakTopics.length > 0) {
-          msg += `📊 ${t('assistant.monk.weakTopics')}\n${analysis.weakTopics.map(tp => `• ${tp}`).join('\n')}\n\n`;
+          msg += `📊 ${tl(lang, 'assistant.monk.weakTopics')}\n${analysis.weakTopics.map(tp => `• ${tp}`).join('\n')}\n\n`;
         } else {
           msg += `${analysis.summary}\n\n`;
         }
 
-        msg += t('assistant.monk.askSpecific');
+        msg += tl(lang, 'assistant.monk.askSpecific');
         addMessage('assistant', msg);
         setMonkStep(MONK_STEPS.SPECIFIC_DIFFICULTIES);
       } catch {
         setThinkingText('');
-        addMessage('assistant', t('assistant.monk.analyzeError'));
+        addMessage('assistant', tl(lang, 'assistant.monk.analyzeError'));
         setMonkStep(MONK_STEPS.IDLE);
       }
     }
-  }, [addMessage, monkData.isAnaMode, monkData.examText, t]);
+  }, [addMessage, monkData.isAnaMode, monkData.examText]);
 
   const handleSpecificDifficulties = useCallback((text) => {
+    const lang = langRef.current;
     const isNo = /^(non|no|nope|pas|rien|skip|aucun)/i.test(text.trim());
+    const isJustYes = /^(oui|yes|ok|ouais|yep|yeah|bien sûr|of course|absolument|absolutely|yup|yep)\s*[.!?]?\s*$/i.test(text.trim());
+
+    if (isJustYes) {
+      addMessage('assistant', tl(lang, 'assistant.monk.tellDifficulties'));
+      return; // Stay in SPECIFIC_DIFFICULTIES, wait for actual description
+    }
+
     setMonkData(prev => ({
       ...prev,
       specificDifficulties: isNo ? null : text.trim()
     }));
 
     if (!isNo) {
-      addMessage('assistant', t('assistant.monk.noted', { text: text.trim() }));
+      addMessage('assistant', tl(lang, 'assistant.monk.noted', { text: text.trim() }));
     }
 
     setMonkStep(MONK_STEPS.SELECT_TYPES);
-    addMessage('assistant', t('assistant.monk.selectTypes'));
+    addMessage('assistant', tl(lang, 'assistant.monk.selectTypes'));
     setActionButtons([
-      { value: 'qcm', label: '📝 QCM' },
-      { value: 'open', label: '✍️ ' + t('assistant.monk.openQuestions') },
-      { value: 'practical', label: '🔬 ' + t('assistant.monk.practicalExercises') },
-      { value: 'confirm_types', label: '✅ ' + t('assistant.monk.confirmTypes') }
+      { value: 'qcm', label: `📝 ${tl(lang, 'assistant.monk.mcq')}` },
+      { value: 'open', label: `✍️ ${tl(lang, 'assistant.monk.openQuestions')}` },
+      { value: 'practical', label: `🔬 ${tl(lang, 'assistant.monk.practicalExercises')}` },
+      { value: 'confirm_types', label: `✅ ${tl(lang, 'assistant.monk.confirmTypes')}` }
     ]);
     setMonkData(prev => ({ ...prev, selectedTypes: [] }));
-  }, [addMessage, t]);
+  }, [addMessage]);
 
   const handleTypeToggle = useCallback((type) => {
+    const lang = langRef.current;
     if (type === 'confirm_types') {
       setMonkData(prev => {
         if (prev.selectedTypes.length === 0) {
-          addMessage('assistant', t('assistant.monk.atLeastOne'));
+          addMessage('assistant', tl(lang, 'assistant.monk.atLeastOne'));
           return prev;
         }
         setActionButtons(null);
@@ -289,11 +333,11 @@ export default function Assistant() {
         const firstType = prev.selectedTypes[0];
         const maxMap = { qcm: 5, open: 10, practical: 10 };
         const nameMap = {
-          qcm: 'QCM',
-          open: t('assistant.monk.openQuestions'),
-          practical: t('assistant.monk.practicalExercises')
+          qcm: tl(lang, 'assistant.monk.mcq'),
+          open: tl(lang, 'assistant.monk.openQuestions'),
+          practical: tl(lang, 'assistant.monk.practicalExercises')
         };
-        addMessage('assistant', t('assistant.monk.howMany', { type: nameMap[firstType], max: maxMap[firstType] }));
+        addMessage('assistant', tl(lang, 'assistant.monk.howMany', { type: nameMap[firstType], max: maxMap[firstType] }));
         return { ...prev, currentTypeIndex: 0 };
       });
       return;
@@ -314,12 +358,13 @@ export default function Assistant() {
       }
       return btn;
     }));
-  }, [addMessage, t]);
+  }, [addMessage]);
 
   const handleCountInput = useCallback((text) => {
+    const lang = langRef.current;
     const num = parseInt(text);
     if (isNaN(num) || num < 1) {
-      addMessage('assistant', t('assistant.monk.invalidNumber'));
+      addMessage('assistant', tl(lang, 'assistant.monk.invalidNumber'));
       return;
     }
 
@@ -328,179 +373,143 @@ export default function Assistant() {
       const type = types[prev.currentTypeIndex];
       const maxMap = { qcm: 5, open: 10, practical: 10 };
       const nameMap = {
-        qcm: 'QCM',
-        open: t('assistant.monk.openQuestions'),
-        practical: t('assistant.monk.practicalExercises')
+        qcm: tl(lang, 'assistant.monk.mcq'),
+        open: tl(lang, 'assistant.monk.openQuestions'),
+        practical: tl(lang, 'assistant.monk.practicalExercises')
       };
-      const clampedNum = Math.min(Math.max(1, num), maxMap[type]);
-      const newCounts = { ...prev.counts, [type]: clampedNum };
+
+      if (num > maxMap[type]) {
+        addMessage('assistant', tl(lang, 'assistant.monk.maxExceeded', { max: maxMap[type] }));
+        return prev;
+      }
+
+      const newCounts = { ...prev.counts, [type]: num };
       const nextIndex = prev.currentTypeIndex + 1;
 
       if (nextIndex < types.length) {
         const nextType = types[nextIndex];
-        addMessage('assistant', t('assistant.monk.howMany', { type: nameMap[nextType], max: maxMap[nextType] }));
+        addMessage('assistant', tl(lang, 'assistant.monk.howMany', { type: nameMap[nextType], max: maxMap[nextType] }));
         return { ...prev, counts: newCounts, currentTypeIndex: nextIndex };
       } else {
-        const self = { ...prev, counts: newCounts };
-        generateExercisesFlow(self);
-        return self;
+        // All counts done → ask difficulty
+        setMonkStep(MONK_STEPS.SELECT_DIFFICULTY);
+        addMessage('assistant', tl(lang, 'assistant.monk.selectDifficulty'));
+        setActionButtons([
+          { value: 'easy', label: tl(lang, 'assistant.monk.easy') },
+          { value: 'medium', label: tl(lang, 'assistant.monk.medium') },
+          { value: 'hard', label: tl(lang, 'assistant.monk.hard') }
+        ]);
+        return { ...prev, counts: newCounts };
       }
     });
-  }, [addMessage, t]);
+  }, [addMessage]);
+
+  const handleDifficultySelect = useCallback((difficulty) => {
+    setActionButtons(null);
+    setMonkData(prev => {
+      const updated = { ...prev, difficulty };
+      generateExercisesFlow(updated);
+      return updated;
+    });
+  }, []);
 
   const generateExercisesFlow = useCallback(async (data) => {
+    const lang = langRef.current;
     setMonkStep(MONK_STEPS.GENERATING);
-    setThinkingText(t('assistant.monk.generating'));
+    setThinkingText(tl(lang, 'assistant.monk.generating'));
     await new Promise(r => setTimeout(r, 800));
-    setThinkingText(t('assistant.monk.buildingSet', { subject: t(`subjects.${data.subject}`) }));
+    setThinkingText(tl(lang, 'assistant.monk.buildingSet', { subject: tl(lang, `subjects.${data.subject}`) }));
 
     try {
       const result = await assistantSvc.generateExercises({
         subject: data.subject,
         weakTopics: data.analysis?.weakTopics || [],
+        errorPatterns: data.analysis?.errorPatterns || [],
+        analysisSummary: data.analysis?.summary || '',
         specificDifficulties: data.specificDifficulties,
-        counts: data.counts
+        counts: data.counts,
+        difficulty: data.difficulty || 'medium',
+        source: data.isAnaMode ? 'ana' : 'exs',
+        feedbackNote: data.isAnaMode ? data.feedbackNote : null
       });
       setThinkingText('');
 
       const total = (data.counts.qcm || 0) + (data.counts.open || 0) + (data.counts.practical || 0);
-      addMessage('assistant', t('assistant.monk.generated', {
+      addMessage('assistant', tl(lang, 'assistant.monk.generated', {
         count: total,
         plural: total > 1 ? 's' : '',
         title: result.title
       }));
-      setActionButtons([{ value: 'goto_exercises', label: t('assistant.monk.viewExercises') }]);
+      setActionButtons([{ value: 'goto_exercises', label: tl(lang, 'assistant.monk.viewExercises') }]);
       setMonkData(prev => ({ ...prev, exerciseSetId: result.exerciseSetId }));
       setMonkStep(MONK_STEPS.DONE);
     } catch (err) {
       setThinkingText('');
-      const msg = err?.response?.data?.error === 'EXERCISES_LIMIT_REACHED'
-        ? t('assistant.monk.limitReached')
-        : t('assistant.monk.genError');
+      const code = err?.response?.data?.error;
+      let msg;
+      if (code === 'EXERCISES_LIMIT_REACHED') msg = tl(lang, 'assistant.monk.limitReached');
+      else if (code === 'DAILY_EXS_LIMIT') msg = tl(lang, 'assistant.monk.dailyExsLimit', { limit: DAILY_LIMITS.exs });
+      else if (code === 'DAILY_ANA_LIMIT') msg = tl(lang, 'assistant.monk.dailyAnaLimit', { limit: DAILY_LIMITS.ana });
+      else msg = tl(lang, 'assistant.monk.genError');
       addMessage('assistant', msg);
       setMonkStep(MONK_STEPS.IDLE);
     }
-  }, [addMessage, t]);
-
-  // ─── /correct handlers ─────────────────────────────────────────────────────
-
-  const startCorrectMode = useCallback(async () => {
-    setMonkStep(MONK_STEPS.CORRECT_SELECT);
-    addMessage('assistant', t('assistant.correct.loading'));
-    try {
-      const { exercises } = await import('../services/exerciseService').then(m => m.getExercises());
-      if (!exercises || exercises.length === 0) {
-        addMessage('assistant', t('assistant.correct.empty'));
-        setMonkStep(MONK_STEPS.IDLE);
-        return;
-      }
-      setMonkData(prev => ({ ...prev, exerciseSets: exercises }));
-      addMessage('assistant', t('assistant.correct.select'));
-      setActionButtons(exercises.map(e => ({
-        value: `correct_set_${e.id}`,
-        label: `${SUBJECT_EMOJIS[e.subject] ?? '📖'} ${e.title}`
-      })));
-    } catch {
-      addMessage('assistant', t('assistant.correct.error'));
-      setMonkStep(MONK_STEPS.IDLE);
-    }
-  }, [addMessage, t]);
-
-  const handleCorrectSet = useCallback(async (setId) => {
-    setActionButtons(null);
-    setMonkStep(MONK_STEPS.CORRECTING);
-    setThinkingText(t('assistant.correct.readingAnswers'));
-    await new Promise(r => setTimeout(r, 700));
-    setThinkingText(t('assistant.correct.correcting'));
-
-    try {
-      const correction = await assistantSvc.correctExercises(setId);
-      setThinkingText('');
-
-      const { corrections, globalFeedback } = correction;
-      let msg = `📝 **${t('assistant.correct.done')}**\n\n`;
-
-      corrections.forEach((c, i) => {
-        const icon = c.isCorrect ? '✅' : c.isPartial ? '🟡' : '❌';
-        msg += `${icon} **Exercice ${i + 1}** — ${c.feedback}\n`;
-        if (c.tip) msg += `   💡 *${c.tip}*\n`;
-        msg += '\n';
-      });
-
-      if (globalFeedback) msg += `---\n🌟 ${globalFeedback}`;
-      addMessage('assistant', msg);
-      setMonkStep(MONK_STEPS.IDLE);
-    } catch (err) {
-      setThinkingText('');
-      const msg = err?.response?.data?.error === 'Aucune réponse à corriger'
-        ? t('assistant.correct.noAnswers')
-        : t('assistant.correct.error');
-      addMessage('assistant', msg);
-      setMonkStep(MONK_STEPS.IDLE);
-    }
-  }, [addMessage, t]);
+  }, [addMessage]);
 
   // ─── /ana handlers ─────────────────────────────────────────────────────────
 
   const startAnaMode = useCallback(async () => {
+    const lang = langRef.current;
     setMonkStep(MONK_STEPS.ANA_UPLOAD);
     setMonkData(prev => ({ ...prev, isAnaMode: true, examText: null }));
-    addMessage('assistant', t('assistant.ana.upload'));
-  }, [addMessage, t]);
+    addMessage('assistant', tl(lang, 'assistant.ana.upload'));
+  }, [addMessage]);
 
-  const handleAnaImageUpload = useCallback(async (file) => {
-    if (!file) return;
+  // Accepts either a File object (from gallery input) or a raw base64 string (from camera capture)
+  const handleAnaImageUpload = useCallback(async (fileOrBase64) => {
+    if (!fileOrBase64) return;
+    const lang = langRef.current;
+    setThinkingText(tl(lang, 'assistant.ana.extracting'));
 
-    setThinkingText(t('assistant.ana.extracting'));
-
-    // Convert to base64
-    const reader = new FileReader();
-    reader.onload = async (e) => {
+    const processBase64 = async (base64) => {
       try {
-        const base64 = e.target.result.split(',')[1]; // remove data:image/...;base64, prefix
-
-        // We just need base64 for OCR — set examText directly
-        // First check if image is valid
         if (!base64 || base64.length < 100) {
           setThinkingText('');
-          addMessage('assistant', t('assistant.ana.extractError'));
+          addMessage('assistant', tl(lang, 'assistant.ana.extractError'));
           setMonkStep(MONK_STEPS.IDLE);
           return;
         }
 
         setMonkData(prev => ({ ...prev, examText: base64 }));
         setThinkingText('');
-        addMessage('assistant', t('assistant.ana.extracted'));
+        addMessage('assistant', tl(lang, 'assistant.ana.extracted'));
 
-        // Move to subject selection
         setMonkStep(MONK_STEPS.SELECT_SUBJECT);
 
-        let subjects = availableSubjects;
-        if (subjects.length === 0) {
-          try {
-            subjects = await assistantSvc.getAvailableSubjects();
-            setAvailableSubjects(subjects);
-          } catch { subjects = []; }
-        }
-
-        if (subjects.length === 0) {
-          addMessage('assistant', t('assistant.monk.noSubjects'));
-          setMonkStep(MONK_STEPS.IDLE);
-          return;
-        }
-
-        setActionButtons(subjects.map(s => ({
+        setActionButtons(ALL_SUBJECTS.map(s => ({
           value: s,
-          label: `${SUBJECT_EMOJIS[s] ?? '📖'} ${t(`subjects.${s}`) ?? s}`
+          label: `${SUBJECT_EMOJIS[s] ?? '📖'} ${tl(lang, `subjects.${s}`) || s}`
         })));
       } catch {
         setThinkingText('');
-        addMessage('assistant', t('assistant.ana.extractError'));
+        addMessage('assistant', tl(lang, 'assistant.ana.extractError'));
         setMonkStep(MONK_STEPS.IDLE);
       }
     };
-    reader.readAsDataURL(file);
-  }, [availableSubjects, addMessage, t]);
+
+    // If it's already a base64 string (from camera), use it directly
+    if (typeof fileOrBase64 === 'string') {
+      processBase64(fileOrBase64);
+    } else {
+      // It's a File object — read it
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = e.target.result.split(',')[1];
+        processBase64(base64);
+      };
+      reader.readAsDataURL(fileOrBase64);
+    }
+  }, [availableSubjects, addMessage]);
 
   // ─── Handler boutons d'action ──────────────────────────────────────────────
 
@@ -523,12 +532,12 @@ export default function Assistant() {
       return;
     }
 
-    if (value.startsWith('correct_set_')) {
-      const setId = parseInt(value.replace('correct_set_', ''));
-      handleCorrectSet(setId);
+    if (monkStep === MONK_STEPS.SELECT_DIFFICULTY) {
+      handleDifficultySelect(value);
       return;
     }
-  }, [monkStep, handleSubjectSelect, handleTypeToggle, handleCorrectSet, navigate]);
+
+  }, [monkStep, handleSubjectSelect, handleTypeToggle, handleDifficultySelect, navigate]);
 
   // ─── Submit message ────────────────────────────────────────────────────────
 
@@ -546,20 +555,19 @@ export default function Assistant() {
       return;
     }
 
-    if (text === '/correct' || text === '/批改') {
-      addMessage('user', text);
-      setMonkStep(MONK_STEPS.IDLE);
-      setActionButtons(null);
-      await startCorrectMode();
-      return;
-    }
-
     if (text === '/ana' || text === '/分析') {
       addMessage('user', text);
       setMonkStep(MONK_STEPS.IDLE);
       setActionButtons(null);
       await startAnaMode();
       return;
+    }
+
+    // User typed something during /ana upload step → cancel /ana (doesn't count toward quota)
+    if (monkStep === MONK_STEPS.ANA_UPLOAD) {
+      setMonkStep(MONK_STEPS.IDLE);
+      setMonkData(prev => ({ ...prev, isAnaMode: false, examText: null }));
+      // Fall through to normal chat (message added below)
     }
 
     if (monkStep === MONK_STEPS.SPECIFIC_DIFFICULTIES) {
@@ -574,19 +582,26 @@ export default function Assistant() {
       return;
     }
 
-    // Chat normal
+    // Chat normal — utilise la mémoire silencieuse des 5 derniers messages comme contexte
     addMessage('user', text);
     setIsLoading(true);
     try {
-      const history = [...messages, { role: 'user', content: text }].slice(-20);
-      const response = await assistantSvc.sendMessage(history);
+      const context = [...memoryRef.current, { role: 'user', content: text }];
+      const response = await assistantSvc.sendMessage(context);
       addMessage('assistant', response);
-    } catch {
-      addMessage('assistant', t('assistant.error'));
+      // Mettre à jour la mémoire : garder les 5 derniers messages
+      memoryRef.current = [...memoryRef.current, { role: 'user', content: text }, { role: 'assistant', content: response }].slice(-10);
+    } catch (err) {
+      const code = err?.response?.data?.error;
+      const lang = langRef.current;
+      const msg = code === 'DAILY_CHAT_LIMIT'
+        ? tl(lang, 'assistant.dailyChatLimit', { limit: DAILY_LIMITS.chat })
+        : t('assistant.error');
+      addMessage('assistant', msg);
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading, messages, monkStep, addMessage, startMonkMode, startCorrectMode, startAnaMode, handleSpecificDifficulties, handleCountInput, t]);
+  }, [input, isLoading, monkStep, addMessage, startMonkMode, startAnaMode, handleSpecificDifficulties, handleCountInput, t]);
 
   // ─── Voice dictation handler ───────────────────────────────────────────────
 
@@ -597,15 +612,17 @@ export default function Assistant() {
   // ─── Render messages ───────────────────────────────────────────────────────
 
   const renderContent = (content) => {
-    const parts = content.split('\n').map((line, i) => {
+    const formatted = formatMath(content);
+    const lines = formatted.split('\n');
+    const parts = lines.map((line, i) => {
       const bold = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
       const italic = bold.replace(/\*(.*?)\*/g, '<em>$1</em>');
-      return <span key={i} dangerouslySetInnerHTML={{ __html: italic + (i < content.split('\n').length - 1 ? '<br/>' : '') }} />;
+      return <span key={i} dangerouslySetInnerHTML={{ __html: italic + (i < lines.length - 1 ? '<br/>' : '') }} />;
     });
     return <>{parts}</>;
   };
 
-  const isInputDisabled = isLoading || !!thinkingText || monkStep === MONK_STEPS.ANA_UPLOAD;
+  const isInputDisabled = isLoading || !!thinkingText;
 
   return (
     <div className="h-full flex flex-col bg-background">
@@ -622,7 +639,7 @@ export default function Assistant() {
         </div>
         <button
           onClick={() => navigate('/exercises')}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-surface border border-white/10 rounded-xl text-xs text-text-muted hover:text-primary hover:border-primary/30 transition-colors mr-10"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/15 border border-primary/30 rounded-xl text-xs text-primary font-medium hover:bg-primary/25 transition-colors mr-10"
         >
           <BookOpen size={13} />
           {t('assistant.myExercises')}
@@ -649,9 +666,10 @@ export default function Assistant() {
           <ActionButtons buttons={actionButtons} onSelect={handleActionButton} />
         )}
 
-        {/* /ana upload button */}
+        {/* /ana upload buttons */}
         {monkStep === MONK_STEPS.ANA_UPLOAD && !thinkingText && (
-          <div className="pl-11">
+          <div className="pl-11 flex gap-2 flex-wrap">
+            {/* Galerie */}
             <input
               ref={fileInputRef}
               type="file"
@@ -662,11 +680,21 @@ export default function Assistant() {
             <motion.button
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => setShowAnaCamera(true)}
               className="flex items-center gap-2 px-4 py-2.5 bg-primary/20 border border-primary/30 text-primary text-sm rounded-xl hover:bg-primary/30 transition-colors"
             >
               <Camera size={16} />
-              {t('assistant.ana.uploadBtn')}
+              {t('assistant.ana.captureBtn')}
+            </motion.button>
+            <motion.button
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.05 }}
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 text-text-muted text-sm rounded-xl hover:bg-white/10 transition-colors"
+            >
+              <ImageIcon size={16} />
+              {t('assistant.ana.galleryBtn')}
             </motion.button>
           </div>
         )}
@@ -697,7 +725,7 @@ export default function Assistant() {
           )}
           <button
             type="submit"
-            disabled={!input.trim() || isLoading || !!thinkingText || monkStep === MONK_STEPS.ANA_UPLOAD}
+            disabled={!input.trim() || isLoading || !!thinkingText}
             className="p-2.5 bg-primary text-white rounded-xl disabled:opacity-40 transition-opacity"
           >
             <Send size={18} />
@@ -707,6 +735,19 @@ export default function Assistant() {
           {t('assistant.commandsHint')}
         </p>
       </form>
+
+      {/* Modal caméra /ana */}
+      <AnimatePresence>
+        {showAnaCamera && (
+          <AnaCameraModal
+            onCapture={(base64) => {
+              setShowAnaCamera(false);
+              handleAnaImageUpload(base64);
+            }}
+            onClose={() => setShowAnaCamera(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

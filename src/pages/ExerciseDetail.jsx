@@ -1,102 +1,136 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Printer, Loader2, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, Printer, Loader2, CheckCircle2, ChevronDown, ChevronUp, Volume2 } from 'lucide-react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import * as exerciseSvc from '../services/exerciseService';
-import * as assistantSvc from '../services/assistantService';
+import { correctItem, tts } from '../services/assistantService';
+import { formatMath } from '../utils/formatMath';
 import LiquidProgressBar from '../components/UI/LiquidProgressBar';
 
 const SUBJECT_EMOJIS = {
   mathematics: '📐', french: '📚', physics: '⚡', chemistry: '🧪',
-  biology: '🧬', history: '🏛️', geography: '🌍', english: '🇬🇧', dutch: '🇳🇱'
+  biology: '🧬', history: '🏛️', geography: '🌍', english: '📖', dutch: '🌷'
 };
 
-const TYPE_LABELS = { qcm: 'QCM', open: 'Questions ouvertes', practical: 'Exercices pratiques' };
 const TYPE_ICONS = { qcm: '📝', open: '✍️', practical: '🔬' };
 
-// ─── Composant QCM ────────────────────────────────────────────────────────────
+// ─── Composant QCM — feedback immédiat local ─────────────────────────────────
 
-function QCMItem({ item, onChange, correction }) {
+function QCMItem({ item, onChange }) {
   const [selected, setSelected] = useState(
     item.user_answer !== null && item.user_answer !== undefined ? parseInt(item.user_answer) : null
   );
+  const [corrected, setCorrected] = useState(
+    item.user_answer !== null && item.user_answer !== undefined
+  );
 
   const handleSelect = (idx) => {
-    if (correction) return;
+    if (corrected) return;
     setSelected(idx);
+    setCorrected(true);
     onChange(String(idx));
   };
-
-  const corrData = correction
-    ? correction.corrections?.find(c => c.exerciseIndex === item._globalIndex)
-    : null;
 
   return (
     <div className="space-y-2">
       {(item.options || []).map((opt, idx) => {
         let cls = 'border-white/10 bg-surface';
-        if (correction && item.correct_answer === idx) cls = 'border-success bg-success/10 text-success';
-        else if (correction && selected === idx && item.correct_answer !== idx) cls = 'border-error bg-error/10 text-error';
-        else if (!correction && selected === idx) cls = 'border-primary/50 bg-primary/10';
+        if (corrected && item.correct_answer === idx) cls = 'border-success bg-success/10 text-success';
+        else if (corrected && selected === idx && item.correct_answer !== idx) cls = 'border-error bg-error/10 text-error';
+        else if (!corrected && selected === idx) cls = 'border-primary/50 bg-primary/10';
 
         return (
           <button
             key={idx}
             onClick={() => handleSelect(idx)}
-            disabled={!!correction}
-            className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left text-sm transition-all ${cls}`}
+            disabled={corrected}
+            className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left text-sm transition-all no-hover ${cls}`}
           >
             <span className="w-6 h-6 rounded-full border border-current flex items-center justify-center text-xs font-bold shrink-0">
               {String.fromCharCode(65 + idx)}
             </span>
-            <span className="flex-1">{opt}</span>
-            {correction && item.correct_answer === idx && <CheckCircle2 size={16} className="shrink-0" />}
+            <span className="flex-1">{formatMath(opt)}</span>
+            {corrected && item.correct_answer === idx && <CheckCircle2 size={16} className="shrink-0" />}
           </button>
         );
       })}
-      {corrData && (
-        <div className={`mt-2 p-3 rounded-xl text-sm ${corrData.isCorrect ? 'bg-success/10 border border-success/20 text-success' : 'bg-error/10 border border-error/20 text-error'}`}>
-          <p>{corrData.feedback}</p>
-          {corrData.tip && <p className="mt-1 text-text-muted text-xs">💡 {corrData.tip}</p>}
-        </div>
-      )}
     </div>
   );
 }
 
-// ─── Composant Réponse texte ──────────────────────────────────────────────────
+// ─── Composant Réponse texte — correction GPT au blur ────────────────────────
 
-function TextItem({ item, onChange, correction, placeholder }) {
+function TextItem({ item, exerciseSetId, onChange, placeholder }) {
+  const { t } = useTranslation();
   const [value, setValue] = useState(item.user_answer || '');
+  const [corrData, setCorrData] = useState(null);
+  const [isChecking, setIsChecking] = useState(false);
   const saveTimeout = useRef(null);
+  const lastCorrectedValue = useRef(item.user_answer || '');
 
   const handleChange = (e) => {
-    setValue(e.target.value);
+    const newVal = e.target.value;
+    setValue(newVal);
+    // Reset correction if user edits after getting feedback
+    if (corrData) setCorrData(null);
     clearTimeout(saveTimeout.current);
-    saveTimeout.current = setTimeout(() => onChange(e.target.value), 800);
+    saveTimeout.current = setTimeout(() => onChange(newVal), 800);
   };
 
-  const corrData = correction
-    ? correction.corrections?.find(c => c.exerciseIndex === item._globalIndex)
-    : null;
+  const handleBlur = async () => {
+    const trimmed = value.trim();
+    if (!trimmed || trimmed === lastCorrectedValue.current) return;
+    lastCorrectedValue.current = trimmed;
+
+    // Save immediately before correcting
+    clearTimeout(saveTimeout.current);
+    await onChange(trimmed);
+
+    setIsChecking(true);
+    try {
+      const result = await correctItem(exerciseSetId, item.id);
+      setCorrData(result);
+    } catch {
+      // Silent fail — user can retry by clicking out again
+    } finally {
+      setIsChecking(false);
+    }
+  };
+
+  const borderClass = corrData
+    ? corrData.isCorrect ? 'border-success/60' : corrData.isPartial ? 'border-amber-500/60' : 'border-error/60'
+    : isChecking ? 'border-primary/50' : 'border-white/10 focus:border-primary/40';
 
   return (
     <div>
-      <textarea
-        value={value}
-        onChange={handleChange}
-        disabled={!!correction}
-        placeholder={placeholder}
-        rows={4}
-        className="w-full bg-surface border border-white/10 rounded-xl p-3 text-sm text-text-main placeholder:text-text-muted resize-none focus:outline-none focus:border-primary/40 disabled:opacity-60"
-      />
+      <div className="relative">
+        <textarea
+          value={value}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          placeholder={placeholder}
+          rows={4}
+          className={`w-full bg-surface border rounded-xl p-3 text-sm text-text-main placeholder:text-text-muted resize-none focus:outline-none transition-colors ${borderClass}`}
+        />
+        {isChecking && (
+          <div className="absolute bottom-3 right-3">
+            <Loader2 size={14} className="animate-spin text-primary opacity-60" />
+          </div>
+        )}
+      </div>
       {corrData && (
-        <div className={`mt-2 p-3 rounded-xl text-sm ${corrData.isCorrect ? 'bg-success/10 border border-success/20 text-success' : corrData.isPartial ? 'bg-amber-500/10 border border-amber-500/20 text-amber-400' : 'bg-error/10 border border-error/20 text-error'}`}>
-          <p className="font-medium mb-1">{corrData.isCorrect ? '✅ Correct' : corrData.isPartial ? '🟡 Partiellement correct' : '❌ À retravailler'}</p>
-          <p>{corrData.feedback}</p>
-          {corrData.tip && <p className="mt-1 text-text-muted text-xs">💡 {corrData.tip}</p>}
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`mt-2 p-3 rounded-xl text-sm ${corrData.isCorrect ? 'bg-success/10 border border-success/20' : corrData.isPartial ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-error/10 border border-error/20'}`}
+        >
+          <p className={`font-semibold mb-1.5 ${corrData.isCorrect ? 'text-success' : corrData.isPartial ? 'text-amber-400' : 'text-error'}`}>
+            {corrData.isCorrect ? `✅ ${t('exercises.correctionCorrect')}` : corrData.isPartial ? `🟡 ${t('exercises.correctionPartial')}` : `❌ ${t('exercises.correctionWrong')}`}
+          </p>
+          <p className="text-text-main leading-relaxed">{corrData.feedback}</p>
+          {corrData.tip && <p className="mt-2 text-text-muted text-xs leading-relaxed">💡 {corrData.tip}</p>}
+        </motion.div>
       )}
     </div>
   );
@@ -107,13 +141,14 @@ function TextItem({ item, onChange, correction, placeholder }) {
 export default function ExerciseDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [exercise, setExercise] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCorrecting, setIsCorrecting] = useState(false);
-  const [correction, setCorrection] = useState(null);
-  const [showGlobalFeedback, setShowGlobalFeedback] = useState(false);
   const [collapsedSections, setCollapsedSections] = useState({});
+  const [feedbackOpen, setFeedbackOpen] = useState(true);
+  const [ttsAudioUrl, setTtsAudioUrl] = useState(null);
+  const [ttsLoading, setTtsLoading] = useState(false);
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
 
   useEffect(() => {
     load();
@@ -131,6 +166,19 @@ export default function ExerciseDetail() {
     }
   };
 
+  const handleListenFeedback = async () => {
+    if (ttsAudioUrl || ttsLoading || !exercise?.feedback_note) return;
+    setTtsLoading(true);
+    try {
+      const base64 = await tts(exercise.feedback_note);
+      setTtsAudioUrl(`data:audio/mpeg;base64,${base64}`);
+    } catch {
+      // silently fail
+    } finally {
+      setTtsLoading(false);
+    }
+  };
+
   const handleAnswer = useCallback(async (itemId, answer) => {
     try {
       await exerciseSvc.saveAnswer(itemId, answer);
@@ -145,24 +193,12 @@ export default function ExerciseDetail() {
     }
   }, []);
 
-  const handleCorrect = async () => {
-    setIsCorrecting(true);
-    try {
-      const result = await assistantSvc.correctExercises(id);
-      setCorrection(result);
-      setShowGlobalFeedback(true);
-    } catch (err) {
-      const msg = err?.response?.data?.error;
-      alert(msg || 'Erreur lors de la correction');
-    } finally {
-      setIsCorrecting(false);
-    }
-  };
-
   const handlePrint = () => {
     if (!exercise) return;
     const subjectEmoji = SUBJECT_EMOJIS[exercise.subject] ?? '📖';
-    const date = new Date(exercise.created_at).toLocaleDateString('fr-FR', {
+    const localeMap = { fr: 'fr-FR', en: 'en-US' };
+    const locale = localeMap[i18n.language] || 'en-US';
+    const date = new Date(exercise.created_at).toLocaleDateString(locale, {
       day: 'numeric', month: 'long', year: 'numeric'
     });
 
@@ -177,8 +213,13 @@ export default function ExerciseDetail() {
     md += `**Date :** ${date}\n\n`;
     md += `---\n\n`;
 
+    const typeLabels = {
+      qcm: t('exercises.type.qcm'),
+      open: t('exercises.type.open'),
+      practical: t('exercises.type.practical')
+    };
     const printType = (type, items) => {
-      md += `## ${TYPE_ICONS[type]} ${TYPE_LABELS[type]}\n\n`;
+      md += `## ${TYPE_ICONS[type]} ${typeLabels[type]}\n\n`;
       items.forEach((item, i) => {
         md += `**${i + 1}.** ${item.question}\n\n`;
         if (type === 'qcm' && item.options) {
@@ -187,9 +228,9 @@ export default function ExerciseDetail() {
           });
           md += '\n';
         } else {
-          md += `_Réponse :_ _______________________________________________\n\n`;
+          md += `_${t('exercises.printAnswer')}_ _______________________________________________\n\n`;
           if (type === 'practical') {
-            md += `_Développement :_\n\n\n\n`;
+            md += `_${t('exercises.printDevelopment')}_\n\n\n\n`;
           }
         }
         md += '\n';
@@ -235,9 +276,14 @@ export default function ExerciseDetail() {
   };
 
   const renderPrintHTML = (byType) => {
+    const typeLabels = {
+      qcm: t('exercises.type.qcm'),
+      open: t('exercises.type.open'),
+      practical: t('exercises.type.practical')
+    };
     let html = '';
     const renderSection = (type, items) => {
-      html += `<h2>${TYPE_ICONS[type]} ${TYPE_LABELS[type]}</h2>`;
+      html += `<h2>${TYPE_ICONS[type]} ${typeLabels[type]}</h2>`;
       items.forEach((item, i) => {
         html += `<div class="question">`;
         html += `<p class="question-title">${i + 1}. ${item.question.replace(/</g, '&lt;')}</p>`;
@@ -313,24 +359,73 @@ export default function ExerciseDetail() {
       />
 
       <div className="px-4 py-4 space-y-4">
-        {/* Feedback global correction */}
-        {correction?.globalFeedback && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-4 bg-primary/10 border border-primary/20 rounded-2xl"
-          >
+
+        {/* Note de feedback /ana */}
+        {exercise.feedback_note && (
+          <div className="bg-surface border border-primary/20 rounded-2xl overflow-hidden">
             <button
-              onClick={() => setShowGlobalFeedback(v => !v)}
-              className="flex items-center justify-between w-full"
+              onClick={() => setFeedbackOpen(prev => !prev)}
+              className="w-full flex items-center justify-between p-4 text-left no-hover"
             >
-              <span className="font-semibold text-primary text-sm">🌟 Bilan global</span>
-              {showGlobalFeedback ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              <div className="flex items-center gap-2">
+                <span className="text-lg">📋</span>
+                <span className="font-semibold text-text-main text-sm">Analyse personnalisée</span>
+              </div>
+              {feedbackOpen ? <ChevronUp size={16} className="text-text-muted" /> : <ChevronDown size={16} className="text-text-muted" />}
             </button>
-            {showGlobalFeedback && (
-              <p className="mt-2 text-sm text-text-main">{correction.globalFeedback}</p>
-            )}
-          </motion.div>
+            <AnimatePresence initial={false}>
+              {feedbackOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-4 pb-4 space-y-3">
+                    {/* Audio player */}
+                    <div className="flex items-center gap-3">
+                      {ttsAudioUrl ? (
+                        <audio controls src={ttsAudioUrl} className="h-8 flex-1" style={{ accentColor: '#38bdf8' }} />
+                      ) : (
+                        <button
+                          onClick={handleListenFeedback}
+                          disabled={ttsLoading}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-primary/15 border border-primary/30 rounded-xl text-xs text-primary font-medium hover:bg-primary/25 transition-colors disabled:opacity-50"
+                        >
+                          {ttsLoading
+                            ? <><Loader2 size={12} className="animate-spin" /> Chargement...</>
+                            : <><Volume2 size={13} /> Écouter</>
+                          }
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setTranscriptOpen(prev => !prev)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-xl text-xs text-text-muted hover:text-text-main transition-colors"
+                      >
+                        {transcriptOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                        Transcription
+                      </button>
+                    </div>
+                    {/* Transcript — hidden behind toggle */}
+                    <AnimatePresence initial={false}>
+                      {transcriptOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <p className="text-sm text-text-main leading-relaxed whitespace-pre-wrap pt-1">{exercise.feedback_note}</p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         )}
 
         {/* Sections par type */}
@@ -347,7 +442,7 @@ export default function ExerciseDetail() {
               >
                 <div className="flex items-center gap-2">
                   <span className="text-lg">{TYPE_ICONS[type]}</span>
-                  <span className="font-semibold text-text-main">{TYPE_LABELS[type]}</span>
+                  <span className="font-semibold text-text-main">{t(`exercises.type.${type}`)}</span>
                   <span className="text-xs text-text-muted bg-white/5 px-2 py-0.5 rounded-full">
                     {items.length}
                   </span>
@@ -366,23 +461,22 @@ export default function ExerciseDetail() {
                     >
                       <p className="text-sm font-medium text-text-main mb-3">
                         <span className="text-primary font-bold mr-2">{i + 1}.</span>
-                        {item.question}
+                        {formatMath(item.question)}
                       </p>
 
                       {type === 'qcm' ? (
                         <QCMItem
                           item={item}
                           onChange={(val) => handleAnswer(item.id, val)}
-                          correction={correction}
                         />
                       ) : (
                         <TextItem
                           item={item}
+                          exerciseSetId={parseInt(id)}
                           onChange={(val) => handleAnswer(item.id, val)}
-                          correction={correction}
                           placeholder={type === 'open'
-                            ? 'Rédige ta réponse ici...'
-                            : 'Montre ton développement et ta solution...'}
+                            ? t('exercises.placeholderOpen')
+                            : t('exercises.placeholderPractical')}
                         />
                       )}
                     </motion.div>
@@ -394,24 +488,6 @@ export default function ExerciseDetail() {
         })}
       </div>
 
-      {/* Bouton correction fixe en bas */}
-      {!correction && (
-        <div className="fixed bottom-32 md:bottom-8 left-0 right-0 px-4 max-w-3xl mx-auto">
-          <motion.button
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            onClick={handleCorrect}
-            disabled={isCorrecting || answeredCount === 0}
-            className="w-full py-3.5 bg-primary text-white font-semibold rounded-2xl shadow-lg shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {isCorrecting ? (
-              <><Loader2 size={18} className="animate-spin" /> {t('exerciseDetail.correcting')}</>
-            ) : (
-              <>✨ {t('exerciseDetail.correctBtn', { answered: answeredCount, total: exercise.items.length })}</>
-            )}
-          </motion.button>
-        </div>
-      )}
     </div>
   );
 }

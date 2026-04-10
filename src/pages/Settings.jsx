@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, User, CreditCard, Bell, LogOut, Plus, Trash2, AlertTriangle, Check, Trophy, Loader2, Camera, X, UserX, Volume2 } from 'lucide-react';
+import { ArrowLeft, User, CreditCard, Bell, LogOut, Plus, Trash2, AlertTriangle, Check, Trophy, Loader2, Camera, X, UserX, Volume2, FolderOpen } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -11,7 +11,7 @@ import ThemeSelector from '../components/Settings/ThemeSelector';
 
 const Settings = () => {
     const { t } = useTranslation();
-    const { user, logout, updateProfile, deleteAccount } = useAuth();
+    const { user, logout, updateProfile, deleteAccount, updatePreferences } = useAuth();
     const {
         dailyGoals,
         dailyProgressPercentage,
@@ -41,6 +41,18 @@ const Settings = () => {
     const [soundsEnabled, setSoundsEnabled] = useState(
         localStorage.getItem('nora_sounds_enabled') !== 'false'
     );
+
+    // Auto-folder state
+    const [autoFolder, setAutoFolder] = useState(user?.auto_folder !== false);
+    const handleAutoFolderToggle = async () => {
+        const newVal = !autoFolder;
+        setAutoFolder(newVal);
+        try {
+            await updatePreferences({ auto_folder: newVal });
+        } catch {
+            setAutoFolder(!newVal); // revert on error
+        }
+    };
 
     // Profile edit state
     const [showProfileModal, setShowProfileModal] = useState(false);
@@ -347,6 +359,26 @@ const Settings = () => {
                         <div className={`w-10 h-6 rounded-full relative transition-colors ${soundsEnabled ? 'bg-primary' : 'bg-white/10'}`}>
                             <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${soundsEnabled ? 'left-5' : 'left-1'}`} />
                         </div>
+                </button>
+            </div>
+
+            {/* Auto-folder Section */}
+            <div className="mb-8">
+                <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">{t('settings.autoFolder')}</h3>
+                <button
+                    onClick={handleAutoFolderToggle}
+                    className="hover-lift no-hover w-full p-4 flex items-center justify-between bg-surface rounded-2xl border border-white/10"
+                >
+                    <div className="flex items-center gap-3">
+                        <FolderOpen size={20} className="text-text-muted" />
+                        <div className="text-left">
+                            <span className="text-text-main block">{t('settings.autoFolderToggle')}</span>
+                            <span className="text-xs text-text-muted">{t('settings.autoFolderDesc')}</span>
+                        </div>
+                    </div>
+                    <div className={`w-10 h-6 rounded-full relative transition-colors shrink-0 ${autoFolder ? 'bg-primary' : 'bg-white/10'}`}>
+                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${autoFolder ? 'left-5' : 'left-1'}`} />
+                    </div>
                 </button>
             </div>
 

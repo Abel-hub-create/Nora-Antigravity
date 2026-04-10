@@ -271,7 +271,7 @@ const FolderDetail = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="hover-lift bg-surface rounded-2xl border border-white/5 p-4 flex items-center gap-3"
+              className="bg-surface rounded-2xl border border-white/5 p-4 flex items-center gap-3 transition-colors hover:border-white/10"
             >
               <Link
                 to={`/study/${synthese.id}`}

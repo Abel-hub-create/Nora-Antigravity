@@ -805,7 +805,8 @@
       "captureBtn": "Take a photo",
       "galleryBtn": "From gallery",
       "cameraTitle": "Test photo",
-      "cameraTip": "Tap to capture"
+      "cameraTip": "Tap to capture",
+      "generatingAudio": "Generating voice message..."
     }
   },
   "exercises": {

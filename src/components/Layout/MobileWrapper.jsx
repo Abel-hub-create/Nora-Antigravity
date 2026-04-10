@@ -115,21 +115,6 @@ const MobileWrapper = ({ children }) => {
                 {/* Notifications */}
                 <NotificationStack />
 
-                {/* Bouton Assistant flottant (haut droite, toutes pages) */}
-                <div className="fixed top-4 right-4 z-40">
-                    <Link
-                        to="/assistant"
-                        className={clsx(
-                            "flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all shadow-lg",
-                            location.pathname === '/assistant'
-                                ? "bg-primary text-white shadow-primary/30"
-                                : "bg-surface border border-white/10 text-text-muted hover:text-primary hover:border-primary/30 shadow-black/20"
-                        )}
-                    >
-                        <Bot size={16} />
-                        <span className="hidden sm:inline">{t('nav.assistant')}</span>
-                    </Link>
-                </div>
 
                 {/* Content */}
                 <main className="pb-24 md:pb-6">

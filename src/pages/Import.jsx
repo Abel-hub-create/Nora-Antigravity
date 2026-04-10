@@ -17,8 +17,8 @@ const SUBJECTS = [
     { id: 'biology', icon: '🧬' },
     { id: 'history', icon: '🏛️' },
     { id: 'geography', icon: '🌍' },
-    { id: 'english', icon: '🇬🇧' },
-    { id: 'dutch', icon: '🇳🇱' }
+    { id: 'english', icon: '📖' },
+    { id: 'dutch', icon: '🌷' }
 ];
 
 const Import = () => {

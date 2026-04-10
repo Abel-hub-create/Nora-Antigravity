@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import useActiveTimer from '../hooks/useActiveTimer';
 import * as syntheseService from '../services/syntheseService';
 import VoiceDictation from '../components/Import/VoiceDictation';
+import { formatMath } from '../utils/formatMath';
 
 const StudyFlashcards = () => {
     const { t } = useTranslation();
@@ -219,7 +220,7 @@ const StudyFlashcards = () => {
                                 >
                                     <span className="text-sm text-primary font-bold uppercase tracking-wider mb-3">{t('flashcards.question')}</span>
                                     <p className="text-lg font-medium text-text-main leading-relaxed mb-4">
-                                        {cards[currentCardIndex].front}
+                                        {formatMath(cards[currentCardIndex].front)}
                                     </p>
 
                                     {/* Zone de réponse écrite */}
@@ -285,7 +286,7 @@ const StudyFlashcards = () => {
                                     <div className={userAnswers[currentCardIndex] ? '' : 'flex-1 flex flex-col items-center justify-center text-center'}>
                                         <span className="text-sm text-primary font-bold uppercase tracking-wider mb-2 block">{t('flashcards.correctAnswer')}</span>
                                         <p className={`text-text-main leading-relaxed ${userAnswers[currentCardIndex] ? 'text-base' : 'text-lg text-center'}`}>
-                                            {cards[currentCardIndex].back}
+                                            {formatMath(cards[currentCardIndex].back)}
                                         </p>
                                     </div>
                                 </div>

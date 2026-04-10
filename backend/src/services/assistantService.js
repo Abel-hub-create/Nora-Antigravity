@@ -5,6 +5,9 @@
  * - Chat général (GPT-4o-mini)
  * - Monk Mode : analyse des lacunes + génération d'exercices personnalisés
  * - /correct : correction commentée des réponses de l'étudiant
+ * - /ana : analyse d'interro par photo
+ *
+ * Multilingue : fr, en, es, zh
  */
 
 import OpenAI from 'openai';
@@ -12,31 +15,63 @@ import OpenAI from 'openai';
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const MODEL = 'gpt-4o-mini';
 
-const SUBJECT_NAMES_FR = {
-  mathematics: 'Mathématiques',
-  french:      'Français',
-  physics:     'Physique',
-  chemistry:   'Chimie',
-  biology:     'Biologie',
-  history:     'Histoire',
-  geography:   'Géographie',
-  english:     'Anglais',
-  dutch:       'Néerlandais'
+// ─── Noms des matières par langue ─────────────────────────────────────────────
+
+const SUBJECT_NAMES = {
+  fr: {
+    mathematics: 'Mathématiques', french: 'Français', physics: 'Physique',
+    chemistry: 'Chimie', biology: 'Biologie', history: 'Histoire',
+    geography: 'Géographie', english: 'Anglais', dutch: 'Néerlandais'
+  },
+  en: {
+    mathematics: 'Mathematics', french: 'French', physics: 'Physics',
+    chemistry: 'Chemistry', biology: 'Biology', history: 'History',
+    geography: 'Geography', english: 'English', dutch: 'Dutch'
+  }
 };
+
+const LANG_INSTRUCTIONS = {
+  fr: 'Réponds en français.',
+  en: 'Respond in English.'
+};
+
+const SYSTEM_PROMPT = `You are Aron, an intelligent, calm and supportive educational assistant.
+You help students understand their courses, revise and improve.
+Always respond concisely, clearly and encouragingly.
+IMPORTANT: Always respond in the exact same language the user writes in. If they write in French, respond in French. If they write in English, respond in English.`;
+
+const NO_DATA_MESSAGES = {
+  fr: (subject) => `Aucune donnée de quiz trouvée en ${subject}. Les exercices seront généraux.`,
+  en: (subject) => `No quiz data found for ${subject}. Exercises will be general.`
+};
+
+function getSubjectName(subject, lang) {
+  const map = SUBJECT_NAMES[lang] || SUBJECT_NAMES.fr;
+  return map[subject] || subject;
+}
+
+function getLangInstruction(lang) {
+  return LANG_INSTRUCTIONS[lang] || LANG_INSTRUCTIONS.fr;
+}
+
+// ─── Détection de langue du contenu ──────────────────────────────────────────
+
+function detectContentLang(text) {
+  if (!text) return null;
+  const frenchWords = /\b(le|la|les|de|du|des|un|une|est|sont|dans|pour|avec|sur|par|que|qui|ce|cette|ces|nous|vous|ils|elles|mais|ou|et|donc|car|avoir|etre|faire|dit|peut|plus|tout|comme|bien|aussi|entre|deux|tres|sans|fait|encore|leurs|notre|votre|meme|quand|apres|avant|depuis|sous|chez|vers)\b/gi;
+  const englishWords = /\b(the|a|an|is|are|was|were|be|been|have|has|had|do|does|did|will|would|could|should|may|might|must|can|this|that|these|those|it|its|they|them|their|we|our|you|your|he|she|him|her|his|with|for|from|into|about|after|before|between|through|during|without|because|since|until|while|where|when|which|who|what|how|but|and|or|not|only|also|just|very|really|quite|more|most|some|any|few|all|each|every)\b/gi;
+  const fr = (text.match(frenchWords) || []).length;
+  const en = (text.match(englishWords) || []).length;
+  return en > fr ? 'en' : 'fr';
+}
 
 // ─── Chat général ─────────────────────────────────────────────────────────────
 
-export async function chat(messages) {
+export async function chat(messages, lang = 'fr') {
   const response = await openai.chat.completions.create({
     model: MODEL,
     messages: [
-      {
-        role: 'system',
-        content: `Tu es NORA, un assistant pédagogique intelligent, calme et bienveillant.
-Tu aides les étudiants à comprendre leurs cours, à réviser et à progresser.
-Réponds toujours de façon concise, claire et encourageante.
-Tu communiques en français par défaut sauf si l'étudiant t'écrit dans une autre langue.`
-      },
+      { role: 'system', content: SYSTEM_PROMPT },
       ...messages
     ],
     max_tokens: 1000,
@@ -47,19 +82,20 @@ Tu communiques en français par défaut sauf si l'étudiant t'écrit dans une au
 
 // ─── Monk Mode — Analyse des lacunes ─────────────────────────────────────────
 
-export async function analyzeDifficulties({ subject, quizAnswers, synthesesTitles }) {
-  const subjectName = SUBJECT_NAMES_FR[subject] || subject;
+export async function analyzeDifficulties({ subject, quizAnswers, synthesesTitles, lang = 'fr' }) {
+  const subjectName = getSubjectName(subject, lang);
+  const langInstruction = getLangInstruction(lang);
 
   if (!quizAnswers || quizAnswers.length === 0) {
+    const noDataMsg = NO_DATA_MESSAGES[lang] || NO_DATA_MESSAGES.fr;
     return {
       hasSufficientData: false,
-      summary: `Aucune donnée de quiz trouvée en ${subjectName}. Les exercices seront généraux.`,
+      summary: noDataMsg(subjectName),
       weakTopics: [],
       strongTopics: []
     };
   }
 
-  // Calcul du taux de réussite par question
   const questionStats = {};
   for (const answer of quizAnswers) {
     const key = answer.question_id;
@@ -76,35 +112,54 @@ export async function analyzeDifficulties({ subject, quizAnswers, synthesesTitle
   }
 
   const questions = Object.values(questionStats);
+  const sortedByDifficulty = [...questions].sort((a, b) => (a.correct / a.total) - (b.correct / b.total));
   const weakQuestions = questions.filter(q => q.total > 0 && (q.correct / q.total) < 0.6);
   const strongQuestions = questions.filter(q => q.total > 0 && (q.correct / q.total) >= 0.8);
 
-  // Demander à GPT d'identifier les thèmes faibles depuis les questions ratées
-  const weakTexts = weakQuestions.slice(0, 15).map(q =>
-    `- "${q.question}" (${q.correct}/${q.total} correct, synthèse: ${q.synthese})`
+  // Build a detailed picture: all questions sorted by success rate
+  const allQuestionsDetail = sortedByDifficulty.slice(0, 20).map(q => {
+    const rate = Math.round((q.correct / q.total) * 100);
+    return `- [${rate}% success] "${q.question}" (${q.correct}/${q.total} correct) — chapter: "${q.synthese}"`;
+  }).join('\n');
+
+  const strongTexts = strongQuestions.slice(0, 5).map(q =>
+    `- "${q.question}" (${q.correct}/${q.total} correct)`
   ).join('\n');
 
-  const prompt = `Tu es un expert pédagogique. Analyse ces questions de quiz en ${subjectName} que l'étudiant a eu du mal à répondre correctement.
+  const prompt = `LANGUAGE RULE (mandatory): ${langInstruction} Your entire response must be in this language.
 
-Questions difficiles pour l'étudiant :
-${weakTexts || 'Aucune question clairement faible détectée.'}
+You are a rigorous pedagogical expert in ${subjectName}. Your goal is to produce a precise, actionable analysis of a student's quiz performance to guide highly targeted exercise creation.
 
-Total de réponses analysées : ${quizAnswers.length}
-Synthèses analysées : ${[...new Set(synthesesTitles)].join(', ')}
+--- FULL QUIZ PERFORMANCE (sorted by difficulty, lowest success first) ---
+${allQuestionsDetail || 'No data.'}
 
-Identifie les 3-5 thèmes ou concepts principaux où l'étudiant a des lacunes.
-Réponds UNIQUEMENT en JSON valide :
+--- STRONG AREAS (≥80% success) ---
+${strongTexts || 'None identified.'}
+
+--- CONTEXT ---
+Total quiz answers: ${quizAnswers.length}
+Chapters/summaries covered: ${[...new Set(synthesesTitles)].join(', ')}
+
+--- YOUR TASK ---
+1. Identify 3-5 SPECIFIC weak areas — be precise (e.g. not just "conjugation" but "conjugation of irregular verbs in passé simple" or "subject-verb agreement when subject is inverted")
+2. Identify recurring ERROR PATTERNS — what systematic mistakes does the student make? (e.g. "confuses passé composé and imparfait in narrative contexts", "incorrect formula application when two variables are unknown")
+3. Note which prerequisite concepts seem missing based on the errors
+4. Note genuine strengths to build on
+
+${langInstruction}
+Respond ONLY in valid JSON:
 {
-  "weakTopics": ["thème 1", "thème 2", ...],
-  "strongTopics": ["thème fort 1", ...],
-  "summary": "Résumé court en 2-3 phrases des lacunes détectées"
+  "weakTopics": ["specific weak area 1", "specific weak area 2", ...],
+  "errorPatterns": ["recurring error pattern 1", "recurring error pattern 2", ...],
+  "strongTopics": ["strong area 1", ...],
+  "summary": "2-3 sentence student learning profile: what they struggle with, what specific mistakes they make, and what they do well"
 }`;
 
   const response = await openai.chat.completions.create({
     model: MODEL,
     messages: [{ role: 'user', content: prompt }],
     response_format: { type: 'json_object' },
-    max_tokens: 500,
+    max_tokens: 800,
     temperature: 0.3
   });
 
@@ -113,6 +168,7 @@ Réponds UNIQUEMENT en JSON valide :
     hasSufficientData: true,
     summary: result.summary || '',
     weakTopics: result.weakTopics || [],
+    errorPatterns: result.errorPatterns || [],
     strongTopics: result.strongTopics || [],
     totalAnswers: quizAnswers.length,
     weakQuestionsCount: weakQuestions.length
@@ -124,67 +180,125 @@ Réponds UNIQUEMENT en JSON valide :
 export async function generateExercises({
   subject,
   weakTopics,
+  errorPatterns,
+  analysisSummary,
   specificDifficulties,
-  counts  // { qcm: 0-5, open: 0-10, practical: 0-10 }
+  counts,
+  difficulty = 'medium',
+  lang = 'fr'
 }) {
-  const subjectName = SUBJECT_NAMES_FR[subject] || subject;
+  const subjectName = getSubjectName(subject, lang);
+  const langInstruction = getLangInstruction(lang);
 
-  const topicsContext = [
-    ...(weakTopics || []),
-    ...(specificDifficulties ? [specificDifficulties] : [])
-  ].join(', ') || `notions générales en ${subjectName}`;
+  const difficultyProfile = {
+    easy: {
+      desc: 'easy — foundational level',
+      instruction: `- Questions test RECOGNITION and basic recall only (definitions, simple identification, direct application of a single rule)
+- MCQ options: one obviously correct answer, distractors are clearly different
+- Open questions: short answers, one concept at a time
+- Practical: guided step-by-step with explicit data given, only one unknown
+- No multi-step reasoning, no edge cases`
+    },
+    medium: {
+      desc: 'medium — intermediate level',
+      instruction: `- Questions test UNDERSTANDING and standard application (applying a rule in a typical context, comparing two concepts)
+- MCQ options: plausible distractors that reflect common mistakes
+- Open questions: structured paragraph response, connect 2-3 concepts
+- Practical: 2-3 calculation steps, some data interpretation required
+- Include one edge case or variation per exercise`
+    },
+    hard: {
+      desc: 'hard — advanced level',
+      instruction: `- Questions test ANALYSIS, SYNTHESIS and complex application (multi-step reasoning, edge cases, unexpected contexts)
+- MCQ options: all options plausible, requires deep understanding to distinguish
+- Open questions: argumentation, critical thinking, multi-concept synthesis
+- Practical: multi-step problems, require setting up the method before calculating, complex data
+- Each exercise must force the student to confront their specific error pattern directly`
+    }
+  }[difficulty] || {};
 
   const sections = [];
-  if (counts.qcm > 0) sections.push(`${counts.qcm} QCM (questions à choix multiples, 4 options A/B/C/D)`);
-  if (counts.open > 0) sections.push(`${counts.open} questions ouvertes (réponse rédigée)`);
-  if (counts.practical > 0) sections.push(`${counts.practical} exercices pratiques (calculs, rédaction, manipulation de concepts)`);
+  if (counts.qcm > 0) sections.push(`${counts.qcm} MCQ (type: "qcm", 4 options A/B/C/D)`);
+  if (counts.open > 0) sections.push(`${counts.open} open questions (type: "open")`);
+  if (counts.practical > 0) sections.push(`${counts.practical} practical exercises (type: "practical")`);
 
-  const prompt = `Tu es un professeur expert en ${subjectName}. Crée des exercices ciblés sur les lacunes suivantes de l'étudiant : ${topicsContext}.
+  const typeRules = [];
+  if (counts.qcm === 0) typeRules.push('NO "qcm" items');
+  if (counts.open === 0) typeRules.push('NO "open" items');
+  if (counts.practical === 0) typeRules.push('NO "practical" items');
 
-Génère exactement :
+  const totalCount = (counts.qcm || 0) + (counts.open || 0) + (counts.practical || 0);
+
+  const studentProfile = [
+    analysisSummary ? `Student profile: ${analysisSummary}` : '',
+    (weakTopics || []).length > 0 ? `Identified weak areas: ${weakTopics.join(' | ')}` : '',
+    (errorPatterns || []).length > 0 ? `Recurring error patterns: ${errorPatterns.join(' | ')}` : '',
+    specificDifficulties ? `⚠️ STUDENT-REPORTED DIFFICULTIES (highest priority): ${specificDifficulties}` : ''
+  ].filter(Boolean).join('\n');
+
+  const prompt = `LANGUAGE RULE (mandatory): ${langInstruction} Every single word of your response — questions, options, answers, titles — MUST be in this language exclusively. Never mix languages.
+
+You are an expert teacher in ${subjectName} specialized in targeted remediation.
+
+--- STUDENT PROFILE ---
+${studentProfile || `General ${subjectName} exercises requested.`}
+
+--- DIFFICULTY: ${difficultyProfile.desc} ---
+${difficultyProfile.instruction}
+
+--- GENERATE EXACTLY ---
 ${sections.join('\n')}
+Total: ${totalCount} items
 
-Les exercices doivent être directement liés aux lacunes identifiées et progressivement difficiles.
+ABSOLUTE RULES:
+- Every single exercise must directly target a specific weak area or error pattern from the student profile above
+- If student-reported difficulties are listed, at least half the exercises must focus on them
+- Each exercise must be designed to expose and correct the exact type of mistake the student makes — not just cover the topic broadly
+- The question wording and the distractors/expected answers must be crafted to reveal understanding gaps
+${typeRules.map(r => `- ${r}`).join('\n')}
+MATH NOTATION: Always use unicode characters directly: x² (not x^2), H₂O (not H_2O), × ÷ ± ≥ ≤ ≠ ≈ √ ∞ π α β γ δ λ μ σ
+${langInstruction}
 
-Réponds UNIQUEMENT en JSON valide avec cette structure :
+Respond ONLY in valid JSON:
 {
-  "title": "Titre du set d'exercices (court, ex: 'Entraînement Mathématiques - Dérivées & Intégrales')",
+  "title": "Short descriptive title (e.g. '${subjectName} — Targeted Practice')",
   "items": [
     {
       "type": "qcm",
-      "question": "Énoncé de la question",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "question": "...",
+      "options": ["A text", "B text", "C text", "D text"],
       "correct_answer": 0,
-      "expected_answer": "Explication de la bonne réponse"
+      "expected_answer": "Why this answer is correct and why the others are wrong"
     },
     {
       "type": "open",
-      "question": "Énoncé de la question ouverte",
+      "question": "...",
       "options": null,
       "correct_answer": null,
-      "expected_answer": "Éléments de réponse attendus pour la correction"
+      "expected_answer": "Key elements expected in a complete answer"
     },
     {
       "type": "practical",
-      "question": "Énoncé de l'exercice pratique avec toutes les données nécessaires",
+      "question": "Complete exercise with all data provided...",
       "options": null,
       "correct_answer": null,
-      "expected_answer": "Solution complète étape par étape"
+      "expected_answer": "Full step-by-step solution with each step explained"
     }
   ]
-}`;
+}
+
+Only include items of the types listed above. No extra items.`;
 
   const response = await openai.chat.completions.create({
     model: MODEL,
     messages: [{ role: 'user', content: prompt }],
     response_format: { type: 'json_object' },
-    max_tokens: 4000,
+    max_tokens: 5000,
     temperature: 0.7
   });
 
   const result = JSON.parse(response.choices[0].message.content);
 
-  // Validation et nettoyage
   const items = (result.items || []).map((item, i) => ({
     type: ['qcm', 'open', 'practical'].includes(item.type) ? item.type : 'open',
     position: i,
@@ -195,30 +309,32 @@ Réponds UNIQUEMENT en JSON valide avec cette structure :
     user_answer: null
   }));
 
-  return { title: result.title || `Exercices ${subjectName}`, items };
+  return { title: result.title || `${subjectName} Exercises`, items };
 }
 
 // ─── /ana — Analyse d'interro par OCR ────────────────────────────────────────
 
-export async function analyzeExamDifficulties({ examText, subject }) {
-  const subjectName = SUBJECT_NAMES_FR[subject] || subject;
+export async function analyzeExamDifficulties({ examText, subject, lang = 'fr' }) {
+  const subjectName = getSubjectName(subject, lang);
+  const langInstruction = getLangInstruction(lang);
 
-  const prompt = `Tu es un expert pédagogique. Un étudiant t'envoie le texte de son interro ou devoir corrigé en ${subjectName}.
+  const prompt = `You are a pedagogical expert. A student sends you the text of their graded test or assignment in ${subjectName}.
 
-Texte du contrôle :
+Test text:
 """
 ${examText.substring(0, 3000)}
 """
 
-Analyse ce contrôle et identifie :
-- Les thèmes et notions qui semblent difficiles pour l'étudiant (questions ratées ou concepts complexes testés)
-- Les compétences évaluées dans ce contrôle
+Analyze this test and identify:
+- The themes and concepts that seem difficult for the student (missed questions or complex concepts tested)
+- The skills evaluated in this test
 
-Réponds UNIQUEMENT en JSON valide :
+${langInstruction}
+Respond ONLY in valid JSON:
 {
-  "weakTopics": ["thème 1", "thème 2", "thème 3"],
+  "weakTopics": ["topic 1", "topic 2", "topic 3"],
   "strongTopics": [],
-  "summary": "Résumé court en 2-3 phrases des points à travailler d'après ce contrôle"
+  "summary": "Short 2-3 sentence summary of points to work on based on this test"
 }`;
 
   const response = await openai.chat.completions.create({
@@ -238,47 +354,147 @@ Réponds UNIQUEMENT en JSON valide :
   };
 }
 
+// ─── /ana — Note de feedback personnalisée ───────────────────────────────────
+
+export async function generateAnaFeedback({ weakTopics = [], strongTopics = [], summary = '', examText = '', subject, lang = 'fr' }) {
+  const subjectName = getSubjectName(subject, lang);
+
+  // Détecter la note dans le texte du contrôle
+  const gradeMatch = examText.match(/(\d+(?:[.,]\d+)?)\s*[/\/]\s*(\d+)/);
+  const gradeInfo = gradeMatch ? `${gradeMatch[1]}/${gradeMatch[2]}` : null;
+
+  const weakCount = weakTopics.length;
+  const maxTokens = weakCount <= 2 ? 600 : weakCount <= 4 ? 1000 : 1500;
+
+  // Langue du message
+  const langMap = { fr: 'français', en: 'anglais', es: 'espagnol', zh: 'chinois mandarin' };
+  const outputLang = langMap[lang] || 'français';
+
+  const prompt = `Tu es un coach scolaire sympa, direct et vraiment utile. Tu parles comme un pote qui s'y connaît, pas comme un prof chiant.
+
+TEXTE EXACT DU CONTRÔLE (source unique — ne mentionne JAMAIS un concept absent de ce texte) :
+"""
+${examText.substring(0, 3000)}
+"""
+
+Points faibles identifiés dans CE contrôle : ${weakTopics.join(', ') || 'aucun'}
+Points forts identifiés dans CE contrôle : ${strongTopics.join(', ') || 'aucun'}
+${gradeInfo ? `Note obtenue : ${gradeInfo}` : ''}
+
+MISSION : Rédige un message vocal personnalisé en ${outputLang} pour aider cet élève à progresser.
+
+RÈGLES ABSOLUES :
+1. NE CITE JAMAIS un concept, une notion ou un terme qui n'est pas explicitement dans le texte du contrôle ci-dessus — même si tu le connais en ${subjectName}
+2. Commence DIRECTEMENT par le fond, zero phrase d'intro ou de présentation
+3. Ton : décontracté, direct, bienveillant — comme un grand frère/grande sœur calé(e) en ${subjectName}. Expressions naturelles autorisées ("ok donc", "voilà le truc", "en gros", "clairement")
+4. Pour chaque point faible : donne un conseil CONCRET et ACTIONNABLE (pas "révise bien ça"). Dis exactement QUOI faire : quelle méthode, quel réflexe, comment s'entraîner
+5. Une ou deux métaphores courtes si elles aident vraiment à comprendre, pas plus
+6. Si la note est basse : sois encourageant SANS mentir ni minimiser les difficultés
+7. Longueur adaptée : suffisamment long pour être vraiment utile, pas de remplissage
+8. Aucun formatage markdown (pas de **, #, -)
+
+Écris uniquement le texte du message. Rien d'autre.`;
+
+  const response = await openai.chat.completions.create({
+    model: MODEL,
+    messages: [{ role: 'user', content: prompt }],
+    max_tokens: maxTokens,
+    temperature: 0.85
+  });
+
+  return response.choices[0].message.content.trim();
+}
+
+// ─── TTS — Synthèse vocale ────────────────────────────────────────────────────
+
+export async function generateTTS(text) {
+  const mp3 = await openai.audio.speech.create({
+    model: 'tts-1-hd',
+    voice: 'fable',
+    input: text.substring(0, 4096),
+    speed: 1.15
+  });
+  const buffer = Buffer.from(await mp3.arrayBuffer());
+  return buffer.toString('base64');
+}
+
 // ─── /correct — Correction commentée ─────────────────────────────────────────
 
-export async function correctExercises({ subject, items }) {
-  const subjectName = SUBJECT_NAMES_FR[subject] || subject;
+export async function correctSingleItem({ subject, question, userAnswer, expectedAnswer, type, lang = 'fr' }) {
+  const subjectName = getSubjectName(subject, lang);
+  const langInstruction = getLangInstruction(lang);
+  const typeLabel = type === 'open' ? 'Open question' : 'Practical exercise';
+
+  const prompt = `LANGUAGE RULE (mandatory): ${langInstruction} All feedback and tips MUST be written in this language exclusively.
+
+You are a supportive teacher in ${subjectName}. Evaluate this student's answer.
+
+Type: ${typeLabel}
+Question: ${question}
+Expected answer: ${expectedAnswer || 'N/A'}
+Student's answer: ${userAnswer}
+
+Evaluate and respond ONLY in valid JSON:
+{
+  "isCorrect": true or false,
+  "isPartial": true or false,
+  "feedback": "if WRONG or PARTIAL — explain precisely WHY: what was misunderstood, what the correct reasoning is (2-4 sentences). If CORRECT — confirm what is right in 1-2 sentences.",
+  "tip": "one concrete actionable tip to help the student improve or not repeat this mistake"
+}`;
+
+  const response = await openai.chat.completions.create({
+    model: MODEL,
+    messages: [{ role: 'user', content: prompt }],
+    response_format: { type: 'json_object' },
+    max_tokens: 400,
+    temperature: 0.4
+  });
+
+  return JSON.parse(response.choices[0].message.content);
+}
+
+export async function correctExercises({ subject, items, lang = 'fr' }) {
+  const subjectName = getSubjectName(subject, lang);
+  const langInstruction = getLangInstruction(lang);
 
   const exercisesText = items.map((item, i) => {
     const num = i + 1;
-    const typeLabel = item.type === 'qcm' ? 'QCM' : item.type === 'open' ? 'Question ouverte' : 'Exercice pratique';
-    let text = `--- Exercice ${num} (${typeLabel}) ---\n`;
-    text += `Question : ${item.question}\n`;
+    const typeLabel = item.type === 'qcm' ? 'MCQ' : item.type === 'open' ? 'Open question' : 'Practical exercise';
+    let text = `--- Exercise ${num} (${typeLabel}) ---\n`;
+    text += `Question: ${item.question}\n`;
     if (item.type === 'qcm' && item.options) {
-      text += `Options : ${item.options.map((o, idx) => `${String.fromCharCode(65+idx)}) ${o}`).join(' | ')}\n`;
-      text += `Réponse attendue : ${String.fromCharCode(65 + (item.correct_answer ?? 0))}\n`;
+      text += `Options: ${item.options.map((o, idx) => `${String.fromCharCode(65+idx)}) ${o}`).join(' | ')}\n`;
+      text += `Expected answer: ${String.fromCharCode(65 + (item.correct_answer ?? 0))}\n`;
     } else {
-      text += `Réponse attendue : ${item.expected_answer || 'N/A'}\n`;
+      text += `Expected answer: ${item.expected_answer || 'N/A'}\n`;
     }
-    text += `Réponse de l'étudiant : ${item.user_answer || '(pas de réponse)'}\n`;
+    text += `Student's answer: ${item.user_answer || '(no answer)'}\n`;
     return text;
   }).join('\n');
 
-  const prompt = `Tu es un professeur bienveillant en ${subjectName}. Corrige les exercices suivants et donne un feedback personnalisé et encourageant pour chaque réponse.
+  const prompt = `LANGUAGE RULE (mandatory): ${langInstruction} All feedback, comments and tips MUST be written in this language exclusively.
+
+You are a supportive teacher in ${subjectName}. Grade the following exercises and give personalized, encouraging feedback for each answer.
 
 ${exercisesText}
 
-Pour chaque exercice, donne :
-- Si la réponse est correcte, partiellement correcte ou incorrecte
-- Un commentaire pédagogique précis (ce qui est bien, ce qui manque, comment s'améliorer)
-- Un conseil pour progresser sur ce point
+For each exercise:
+- Evaluate if the answer is correct, partially correct, or incorrect
+- "feedback": if WRONG or PARTIAL — explain precisely WHY it is wrong: what concept was misunderstood, what the correct reasoning is, and what the student should have written. Be clear and educational, 2-4 sentences. If CORRECT — confirm what is right and why in 1-2 sentences.
+- "tip": a concrete, actionable advice to help the student not make this mistake again (1-2 sentences)
 
-Réponds UNIQUEMENT en JSON valide :
+${langInstruction}
+Respond ONLY in valid JSON:
 {
   "corrections": [
     {
       "exerciseIndex": 0,
       "isCorrect": true,
       "isPartial": false,
-      "feedback": "Commentaire détaillé",
-      "tip": "Conseil pour progresser"
+      "feedback": "Explanation of why the answer is right or wrong",
+      "tip": "Concrete tip to remember or improve"
     }
-  ],
-  "globalFeedback": "Bilan global encourageant en 2-3 phrases"
+  ]
 }`;
 
   const response = await openai.chat.completions.create({

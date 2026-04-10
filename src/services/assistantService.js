@@ -20,9 +20,9 @@ export const analyzeSubject = async (subject) => {
   return response;
 };
 
-export const generateExercises = async ({ subject, weakTopics, specificDifficulties, counts }) => {
+export const generateExercises = async ({ subject, weakTopics, errorPatterns, analysisSummary, specificDifficulties, counts, difficulty, source, feedbackNote }) => {
   const response = await api.post('/assistant/monk-mode/generate', {
-    subject, weakTopics, specificDifficulties, counts
+    subject, weakTopics, errorPatterns, analysisSummary, specificDifficulties, counts, difficulty, source, feedbackNote
   });
   return response;
 };
@@ -32,7 +32,17 @@ export const correctExercises = async (exerciseSetId) => {
   return response.correction;
 };
 
+export const correctItem = async (exerciseSetId, itemId) => {
+  const response = await api.post('/assistant/correct-item', { exerciseSetId, itemId });
+  return response; // { isCorrect, isPartial, feedback, tip }
+};
+
 export const analyzeExam = async (imageBase64, subject) => {
-  const response = await api.post('/assistant/ana/analyze', { image: imageBase64, subject });
-  return response; // { analysis, examText }
+  const response = await api.post('/assistant/ana/analyze', { image: imageBase64, subject }, { timeout: 90000 });
+  return response; // { analysis, examText, feedbackNote }
+};
+
+export const tts = async (text) => {
+  const response = await api.post('/assistant/tts', { text }, { timeout: 30000 });
+  return response.audio; // base64 mp3
 };

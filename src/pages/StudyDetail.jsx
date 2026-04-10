@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import * as syntheseService from '../services/syntheseService';
 import useActiveTimer from '../hooks/useActiveTimer';
 import { useAuth } from '../features/auth/hooks/useAuth';
+import { formatMath } from '../utils/formatMath';
 
 const SECTION_EMOJIS = {
     définitions: '📖', definitions: '📖', vocabulaire: '📖', lexique: '📖',
@@ -43,6 +44,7 @@ const getSectionEmoji = (title) => {
 // Convertit le markdown en éléments React pour l'affichage
 const renderMarkdown = (text) => {
     if (!text) return null;
+    text = formatMath(text);
     const lines = text.split('\n');
     const elements = [];
     let i = 0;
@@ -176,8 +178,8 @@ const SUBJECT_ICONS = {
     biology: '🧬',
     history: '🏛️',
     geography: '🌍',
-    english: '🇬🇧',
-    dutch: '🇳🇱'
+    english: '📖',
+    dutch: '🌷'
 };
 
 // Nombre de caractères par page pour la pagination
@@ -255,9 +257,7 @@ const StudyDetail = () => {
         const date = new Date(dateString);
         const localeMap = {
             fr: 'fr-FR',
-            en: 'en-US',
-            es: 'es-ES',
-            zh: 'zh-CN'
+            en: 'en-US'
         };
         const locale = localeMap[i18n.language] || 'en-US';
         return date.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });

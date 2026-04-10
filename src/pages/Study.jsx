@@ -22,8 +22,8 @@ const SUBJECT_EMOJIS = {
     biology:     '🧬',
     history:     '🏛️',
     geography:   '🌍',
-    english:     '🇬🇧',
-    dutch:       '🇳🇱',
+    english:     '📖',
+    dutch:       '🌷',
 };
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -202,9 +202,7 @@ const Study = () => {
         const date = new Date(dateString);
         const localeMap = {
             fr: 'fr-FR',
-            en: 'en-US',
-            es: 'es-ES',
-            zh: 'zh-CN'
+            en: 'en-US'
         };
         const locale = localeMap[i18n.language] || 'en-US';
         return date.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
@@ -352,7 +350,7 @@ const Study = () => {
                                 /* Normal View */
                                 <div className="p-4">
                                     <div className="flex items-center gap-3">
-                                        {/* Badge matière / cercle de sélection */}
+                                        {/* Cercle de sélection - toujours visible */}
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -361,13 +359,16 @@ const Study = () => {
                                             className="shrink-0 transition-colors"
                                         >
                                             {selectedIds.has(synthese.id) ? (
-                                                <CheckCircle2 size={24} className="text-primary" />
+                                                <CheckCircle2 size={22} className="text-primary" />
                                             ) : (
-                                                <span className="text-xl leading-none select-none">
-                                                    {SUBJECT_EMOJIS[synthese.subject] ?? '📄'}
-                                                </span>
+                                                <Circle size={22} className="text-text-muted/40" />
                                             )}
                                         </button>
+
+                                        {/* Badge matière */}
+                                        <span className="text-xl leading-none select-none shrink-0">
+                                            {SUBJECT_EMOJIS[synthese.subject] ?? '📄'}
+                                        </span>
 
                                         {/* Contenu cliquable */}
                                         <div

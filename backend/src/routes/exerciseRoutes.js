@@ -45,6 +45,16 @@ router.patch('/items/:itemId/answer', async (req, res, next) => {
   }
 });
 
+// Supprimer tous les sets
+router.delete('/', async (req, res, next) => {
+  try {
+    await exerciseRepo.deleteAllByUser(req.user.id);
+    res.json({ message: 'Tous les exercices supprimés' });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Supprimer un set
 router.delete('/:id', async (req, res, next) => {
   try {

@@ -45,6 +45,14 @@ REGLES IMPORTANTES :
 - N'invente PAS de sections si le contenu n'existe pas
 - Adapte les titres de sections au contenu reel du cours
 - Si le cours ne correspond pas a ces sections, cree des sections logiques basees sur la structure du cours
+
+NOTATION MATHEMATIQUE (OBLIGATOIRE) :
+- Utilise TOUJOURS les caracteres unicode directement : x² (pas x^2), H₂O (pas H_2O)
+- Superscripts : ⁰¹²³⁴⁵⁶⁷⁸⁹ⁿ  |  Subscripts : ₀₁₂₃₄₅₆₇₈₉ₙ
+- Symboles : × (multiplication), ÷ (division), ± (plus-ou-moins), ≥ ≤ ≠ ≈
+- Racine carrée : √ (pas sqrt())  |  Infini : ∞  |  Pi : π
+- Fractions simples : ½ ⅓ ¼ ¾ (si standard), sinon écrire en clair
+- Lettres grecques : α β γ δ ε θ λ μ σ τ φ ψ ω
 `;
 }
 
@@ -119,14 +127,12 @@ Tu dois respecter une FIDELITE ABSOLUE au contenu du cours fourni :
  * @param {string|null} specificInstructions - Instructions specifiques de l'utilisateur
  * @param {string|null} subject - Matière sélectionnée par l'utilisateur (ex: 'mathematics')
  */
-const buildUserPrompt = (content, specificInstructions = null, subject = null) => {
-  // Detecter la langue du contenu
-  const detectedLang = detectLanguage(content);
-  const langInstruction = detectedLang === 'english'
-    ? 'The course content is in ENGLISH. You MUST generate ALL content (title, summary, flashcards, quiz) in ENGLISH. Do NOT translate to French.'
-    : 'Le contenu du cours est en FRANCAIS. Tu DOIS generer TOUT le contenu (titre, synthese, flashcards, quiz) en FRANCAIS. Ne traduis PAS en anglais.';
+const buildUserPrompt = (content, specificInstructions = null, subject = null, lang = 'fr') => {
+  const langInstruction = lang === 'en'
+    ? 'You MUST generate ALL content (title, summary, flashcards, quiz) in ENGLISH. Do NOT use French or any other language.'
+    : 'Tu DOIS generer TOUT le contenu (titre, synthese, flashcards, quiz) en FRANCAIS. Ne traduis PAS en anglais ou autre langue.';
 
-  console.log(`[ContentGen] Detected language: ${detectedLang}`);
+  console.log(`[ContentGen] UI language: ${lang}`);
 
   let prompt = `MANDATORY LANGUAGE RULE / REGLE DE LANGUE OBLIGATOIRE:
 ${langInstruction}
@@ -499,12 +505,12 @@ function parseAndValidateResponse(text) {
  * @param {string|null} subject - Matiere selectionnee par l'utilisateur (optionnel, ex: 'mathematics')
  * @returns {Promise<Object>} - { title, summary, flashcards, quizQuestions }
  */
-async function callOpenAI(trimmedContent, specificInstructions, subject) {
+async function callOpenAI(trimmedContent, specificInstructions, subject, lang = 'fr') {
   const response = await openai.chat.completions.create({
     model: MODEL,
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: buildUserPrompt(trimmedContent, specificInstructions, subject) }
+      { role: 'user', content: buildUserPrompt(trimmedContent, specificInstructions, subject, lang) }
     ],
     max_tokens: MAX_TOKENS,
     temperature: 0.7,
@@ -520,7 +526,7 @@ async function callOpenAI(trimmedContent, specificInstructions, subject) {
   return parseAndValidateResponse(rawContent);
 }
 
-export async function generateEducationalContent(content, specificInstructions = null, subject = null) {
+export async function generateEducationalContent(content, specificInstructions = null, subject = null, lang = 'fr') {
   if (!content || typeof content !== 'string') {
     throw new Error('Contenu invalide');
   }
@@ -539,7 +545,7 @@ export async function generateEducationalContent(content, specificInstructions =
 
   // Tentative 1
   try {
-    const result = await callOpenAI(trimmedContent, specificInstructions, subject);
+    const result = await callOpenAI(trimmedContent, specificInstructions, subject, lang);
     console.log(`[ContentGen] Succes en ${Date.now() - startTime}ms`);
     return result;
   } catch (firstError) {
@@ -556,7 +562,7 @@ export async function generateEducationalContent(content, specificInstructions =
     await new Promise(r => setTimeout(r, 3000));
 
     try {
-      const result = await callOpenAI(trimmedContent, specificInstructions, subject);
+      const result = await callOpenAI(trimmedContent, specificInstructions, subject, lang);
       console.log(`[ContentGen] Succes (retry) en ${Date.now() - startTime}ms`);
       return result;
     } catch (secondError) {

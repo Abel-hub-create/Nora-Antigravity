@@ -4,6 +4,8 @@ import { validate } from '../middlewares/validation.js';
 import * as validators from '../validators/syntheseValidators.js';
 import * as syntheseRepo from '../services/syntheseRepository.js';
 import { logQuizAnswer } from '../services/exerciseRepository.js';
+import { findOrCreateSubjectFolder, addSynthesesToFolder } from '../services/folderRepository.js';
+import * as userRepository from '../services/userRepository.js';
 
 const router = express.Router();
 
@@ -71,6 +73,21 @@ router.post('/', validate(validators.createSyntheseSchema), async (req, res, nex
 
     // Create associated quiz questions
     const createdQuizQuestions = await syntheseRepo.createQuizQuestions(synthese.id, quizQuestions);
+
+    // Auto-sort into subject folder if enabled
+    if (subject) {
+      try {
+        const userPrefs = await userRepository.findById(req.user.id);
+        if (userPrefs?.auto_folder) {
+          const lang = (req.headers['accept-language'] || 'fr').split(',')[0].split('-')[0];
+          const folderId = await findOrCreateSubjectFolder(req.user.id, subject, lang);
+          if (folderId) await addSynthesesToFolder(folderId, [synthese.id]);
+        }
+      } catch (e) {
+        console.error('[Synthese] Erreur auto-folder:', e);
+        // Non-blocking
+      }
+    }
 
     res.status(201).json({
       synthese: {

@@ -1,10 +1,57 @@
 import { query } from '../config/database.js';
 
+// Subject folders metadata
+export const SUBJECT_FOLDERS = [
+  { subject: 'mathematics', names: { fr: 'Mathématiques', en: 'Mathematics' }, color: '#6366f1' },
+  { subject: 'french',      names: { fr: 'Français',       en: 'French'      }, color: '#f43f5e' },
+  { subject: 'physics',     names: { fr: 'Physique',        en: 'Physics'     }, color: '#38bdf8' },
+  { subject: 'chemistry',   names: { fr: 'Chimie',          en: 'Chemistry'   }, color: '#10b981' },
+  { subject: 'biology',     names: { fr: 'Biologie',        en: 'Biology'     }, color: '#84cc16' },
+  { subject: 'history',     names: { fr: 'Histoire',        en: 'History'     }, color: '#f59e0b' },
+  { subject: 'geography',   names: { fr: 'Géographie',      en: 'Geography'   }, color: '#06b6d4' },
+  { subject: 'english',     names: { fr: 'Anglais',         en: 'English'     }, color: '#8b5cf6' },
+  { subject: 'dutch',       names: { fr: 'Néerlandais',     en: 'Dutch'       }, color: '#ec4899' },
+];
+
 // Folders CRUD
-export const create = async ({ userId, name, color = '#6366f1' }) => {
-  const sql = `INSERT INTO folders (user_id, name, color) VALUES (?, ?, ?)`;
-  const result = await query(sql, [userId, name, color]);
-  return { id: result.insertId, userId, name, color };
+export const create = async ({ userId, name, color = '#6366f1', subject = null }) => {
+  const sql = `INSERT INTO folders (user_id, name, color, subject) VALUES (?, ?, ?, ?)`;
+  const result = await query(sql, [userId, name, color, subject]);
+  return { id: result.insertId, userId, name, color, subject };
+};
+
+/**
+ * Create all 9 subject folders for a new user.
+ * lang: 'fr' | 'en' (defaults to 'fr')
+ */
+export const createSubjectFolders = async (userId, lang = 'fr') => {
+  const safeLang = ['fr', 'en'].includes(lang) ? lang : 'fr';
+  const values = SUBJECT_FOLDERS.map(f => [userId, f.names[safeLang], f.color, f.subject]);
+  await query(
+    `INSERT IGNORE INTO folders (user_id, name, color, subject) VALUES ?`,
+    [values]
+  );
+};
+
+/**
+ * Find the subject folder for a user. If it doesn't exist, create it.
+ */
+export const findOrCreateSubjectFolder = async (userId, subject, lang = 'fr') => {
+  const rows = await query(
+    `SELECT id FROM folders WHERE user_id = ? AND subject = ? LIMIT 1`,
+    [userId, subject]
+  );
+  if (rows[0]) return rows[0].id;
+
+  // Lazy creation
+  const meta = SUBJECT_FOLDERS.find(f => f.subject === subject);
+  if (!meta) return null;
+  const safeLang = ['fr', 'en'].includes(lang) ? lang : 'fr';
+  const result = await query(
+    `INSERT INTO folders (user_id, name, color, subject) VALUES (?, ?, ?, ?)`,
+    [userId, meta.names[safeLang], meta.color, subject]
+  );
+  return result.insertId;
 };
 
 export const findById = async (id, userId) => {

@@ -17,3 +17,7 @@ export const saveAnswer = async (itemId, answer) => {
 export const deleteExercise = async (id) => {
   await api.delete(`/exercises/${id}`);
 };
+
+export const deleteAllExercises = async () => {
+  await api.delete('/exercises');
+};

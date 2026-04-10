@@ -12,7 +12,8 @@ const TABLES = [
   'flashcards', 'quiz_questions', 'folders', 'folder_syntheses',
   'push_subscriptions', 'daily_progress', 'study_history',
   'revision_sessions', 'revision_completions', 'feedbacks', 'feedback_votes',
-  'quiz_answers', 'exercises', 'exercise_items', 'chat_messages'
+  'quiz_answers', 'exercises', 'exercise_items', 'chat_messages',
+  'admins', 'announcements', 'daily_usage'
 ];
 
 // Validate prefix contains only safe characters and ends with underscore

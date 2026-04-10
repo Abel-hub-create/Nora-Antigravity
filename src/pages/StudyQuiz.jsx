@@ -4,6 +4,7 @@ import LiquidProgressBar from '../components/UI/LiquidProgressBar';
 import { ArrowLeft, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { formatMath } from '../utils/formatMath';
 import confetti from 'canvas-confetti';
 import useActiveTimer from '../hooks/useActiveTimer';
 import * as syntheseService from '../services/syntheseService';
@@ -199,7 +200,7 @@ const StudyQuiz = () => {
                 animate={{ opacity: 1, x: 0 }}
                 className="text-xl font-bold text-text-main mb-8 leading-relaxed shrink-0"
             >
-                {currentQ.question}
+                {formatMath(currentQ.question)}
             </motion.h2>
 
             <div className="flex-1 space-y-3">
@@ -228,7 +229,7 @@ const StudyQuiz = () => {
                             style={optionHeight ? { height: optionHeight } : {}}
                             className={`w-full p-4 rounded-2xl border text-left font-medium transition-all duration-200 flex justify-between items-center ${stateStyle}`}
                         >
-                            <span className="flex-1">{option}</span>
+                            <span className="flex-1">{formatMath(option)}</span>
                             {selectedOption !== null && index === currentQ.correct_answer && (
                                 <CheckCircle size={20} className="shrink-0 ml-2" />
                             )}

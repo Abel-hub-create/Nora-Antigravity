@@ -3,10 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Globe, ChevronDown } from 'lucide-react';
 
 const languages = [
-    { code: 'fr', label: 'Français', flag: '🇫🇷' },
-    { code: 'en', label: 'English', flag: '🇬🇧' },
-    { code: 'es', label: 'Español', flag: '🇪🇸' },
-    { code: 'zh', label: '中文', flag: '🇨🇳' }
+    { code: 'fr', label: 'Français', countryCode: 'fr' },
+    { code: 'en', label: 'English', countryCode: 'gb' }
 ];
 
 const AuthLanguageSelector = () => {
@@ -40,7 +38,7 @@ const AuthLanguageSelector = () => {
                 className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface/80 backdrop-blur-sm border border-white/10 text-text-main hover:bg-surface transition-colors"
             >
                 <Globe size={16} className="text-text-muted" />
-                <span className="text-sm">{currentLang.flag}</span>
+                <img src={`https://flagcdn.com/24x18/${currentLang.countryCode}.png`} alt={currentLang.code} width="24" height="18" className="rounded-sm" />
                 <ChevronDown size={14} className={`text-text-muted transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
@@ -56,7 +54,7 @@ const AuthLanguageSelector = () => {
                                     : 'text-text-main hover:bg-white/5'
                             }`}
                         >
-                            <span>{lang.flag}</span>
+                            <img src={`https://flagcdn.com/24x18/${lang.countryCode}.png`} alt={lang.code} width="24" height="18" className="rounded-sm" />
                             <span>{lang.label}</span>
                         </button>
                     ))}

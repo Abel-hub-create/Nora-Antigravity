@@ -805,7 +805,8 @@
       "captureBtn": "Prendre une photo",
       "galleryBtn": "Depuis la galerie",
       "cameraTitle": "Photo de l'interro",
-      "cameraTip": "Appuie pour capturer"
+      "cameraTip": "Appuie pour capturer",
+      "generatingAudio": "Message vocal en cours..."
     }
   },
   "exercises": {

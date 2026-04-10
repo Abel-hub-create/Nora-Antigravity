@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import MobileWrapper from './components/Layout/MobileWrapper';
 
 // Auth
@@ -34,6 +34,13 @@ import ExerciseDetail from './pages/ExerciseDetail';
 import { UserProvider } from './context/UserContext';
 import { RevisionProvider } from './context/RevisionContext';
 import { useTimeLight } from './hooks/useTimeLight';
+import { AdminAuthProvider } from './features/admin/context/AdminAuthContext';
+import AdminProtectedRoute from './features/admin/components/AdminProtectedRoute';
+import AdminLogin from './features/admin/pages/AdminLogin';
+import AdminDashboard from './features/admin/pages/AdminDashboard';
+import AdminUsers from './features/admin/pages/AdminUsers';
+import AdminUserDetail from './features/admin/pages/AdminUserDetail';
+import AdminAnnouncements from './features/admin/pages/AdminAnnouncements';
 
 function AppWithLight({ children }) {
   useTimeLight();
@@ -46,6 +53,21 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
+          {/* Admin Panel — completely isolated, no AuthProvider/UserProvider */}
+          <Route path="/admin/*" element={
+            <AdminAuthProvider>
+              <Routes>
+                <Route path="login" element={<AdminLogin />} />
+                <Route path="dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+                <Route path="users" element={<AdminProtectedRoute><AdminUsers /></AdminProtectedRoute>} />
+                <Route path="users/:id" element={<AdminProtectedRoute><AdminUserDetail /></AdminProtectedRoute>} />
+                <Route path="announcements" element={<AdminProtectedRoute><AdminAnnouncements /></AdminProtectedRoute>} />
+                <Route path="" element={<Navigate to="dashboard" replace />} />
+                <Route path="*" element={<Navigate to="dashboard" replace />} />
+              </Routes>
+            </AdminAuthProvider>
+          } />
+
           {/* Public Auth Routes - Always light theme */}
           <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
           <Route path="/register" element={<AuthLayout><Register /></AuthLayout>} />
