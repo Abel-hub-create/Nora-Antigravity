@@ -56,7 +56,12 @@
     "newImport": "Nouvel Import",
     "textOrVoice": "Prendre en photo",
     "feedback": "Bug & Suggestions",
-    "feedbackSubtitle": "Signale un bug"
+    "feedbackSubtitle": "Signale un bug",
+    "premiumBanner": {
+      "title": "Passe à Nora Premium ✨",
+      "subtitle": "GPT-4o · Exercices illimités · Thèmes exclusifs",
+      "cta": "Voir →"
+    }
   },
   "dailyProgress": {
     "title": "Objectifs du Jour",
@@ -406,7 +411,9 @@
     "dictateCourse": "Dicte ton cours et il sera synthétisé",
     "micDenied": "Accès au microphone refusé. Veuillez autoriser l'accès.",
     "micUnavailable": "Impossible d'accéder au microphone.",
-    "noAudioRecorded": "Aucun audio enregistré."
+    "noAudioRecorded": "Aucun audio enregistré.",
+    "startDictation": "Dicter",
+    "stopDictation": "Arrêter la dictée"
   },
   "photo": {
     "takePhoto": "Prendre une photo",
@@ -493,7 +500,8 @@
     "noFolders": "Aucun dossier",
     "createFolderHint": "Créez un dossier pour organiser vos synthèses",
     "settings": "Paramètres",
-    "xpToLevel": "{{xp}} XP vers le Niveau {{level}}"
+    "xpToLevel": "{{xp}} XP vers le Niveau {{level}}",
+    "upgradePremium": "Passer Premium"
   },
   "folders": {
     "create": "Créer un dossier",
@@ -586,7 +594,8 @@
     "summary": "Synthèse",
     "print": "Imprimer",
     "deleteConfirm": "Supprimer cette synthèse et tout son contenu ?",
-    "deleteSynthesis": "Supprimer cette synthèse"
+    "deleteSynthesis": "Supprimer cette synthèse",
+    "premiumLabel": "Premium"
   },
   "auth": {
     "login": "Se connecter",
@@ -807,7 +816,33 @@
       "cameraTitle": "Photo de l'interro",
       "cameraTip": "Appuie pour capturer",
       "generatingAudio": "Message vocal en cours..."
-    }
+    },
+    "sidebar": {
+      "title": "Conversations",
+      "newConversation": "Nouvelle conversation",
+      "empty": "Aucune conversation. Clique sur + pour commencer.",
+      "untitled": "Nouvelle conversation",
+      "clearContext": "tout effacer"
+    },
+    "context": {
+      "title": "Synthèses en contexte",
+      "active": "active",
+      "activePlural": "actives",
+      "empty": "Aucune synthèse disponible",
+      "hint": "Aron utilisera ces synthèses pour répondre à tes questions dans cette conversation.",
+      "addButton": "Ajouter des synthèses en contexte"
+    },
+    "commands": {
+      "helpTitle": "📋 **Commandes disponibles**",
+      "exs": "Lancer le mode exercices (Monk Mode)",
+      "ana": "Analyser un examen photo (Ana)",
+      "context": "Ajouter des synthèses comme contexte",
+      "clear": "Effacer le contexte actif",
+      "help": "Afficher les commandes disponibles"
+    },
+    "clearContextMsg": "🗑️ Contexte effacé. Je réponds maintenant sans synthèses spécifiques.",
+    "conversationLimit": "Limite de conversations atteinte. Supprime une conversation pour en créer une nouvelle.",
+    "messageTooLong": "Message trop long"
   },
   "exercises": {
     "title": "Mes exercices",
@@ -844,6 +879,104 @@
     "print": "Imprimer",
     "globalFeedback": "🌟 Bilan global",
     "correctBtn": "Corriger mes exercices ({{answered}}/{{total}})",
-    "correcting": "Correction en cours..."
+    "correcting": "Correction en cours...",
+    "personalizedAnalysis": "Analyse personnalisée",
+    "audioUnavailable": "Audio indisponible",
+    "audioLoading": "Chargement...",
+    "listen": "Écouter",
+    "transcript": "Transcription"
+  },
+  "pricing": {
+    "title": "Abonnements",
+    "paymentSuccess": "Paiement effectué avec succès ! Votre plan a été mis à jour.",
+    "perMonth": "/mois",
+    "connectionError": "Erreur de connexion",
+    "checkoutError": "Erreur lors de la création du paiement",
+    "free": {
+      "name": "Gratuit",
+      "description": "Découvrez Nora",
+      "price": "0€",
+      "currentPlan": "Plan actuel",
+      "downgrade": "Passer au gratuit"
+    },
+    "premium": {
+      "name": "Premium",
+      "popular": "POPULAIRE",
+      "description": "L'expérience complète",
+      "currentPlan": "✨ Plan actuel",
+      "subscribe": "S'abonner"
+    },
+    "school": {
+      "name": "École",
+      "description": "Pour les établissements",
+      "perStudentPerMonth": " × nbre d'élèves /mois",
+      "currentPlan": "🏫 Plan actuel",
+      "contact": "Nous contacter"
+    },
+    "promo": {
+      "title": "Code promo",
+      "placeholder": "Entrez votre code",
+      "apply": "Appliquer",
+      "discountPercent": "Réduction de {{value}}% appliquée !",
+      "discountFixed": "Réduction de {{value}}€ appliquée !"
+    },
+    "schoolContact": {
+      "title": "Contact école",
+      "schoolName": "Nom de l'école *",
+      "contactEmail": "Email de contact *",
+      "contactName": "Nom du contact",
+      "studentCount": "Nombre d'élèves",
+      "message": "Message",
+      "submit": "Envoyer la demande",
+      "successTitle": "Demande envoyée !",
+      "successText": "Nous vous recontacterons rapidement."
+    },
+    "features": {
+      "aiSpeed": "Vitesse IA",
+      "aiModel": "Modèle IA",
+      "syntheses": "Synthèses",
+      "chatPerDay": "Chat Aron / jour",
+      "analysesPerDay": "Analyses / jour",
+      "exercisesPerDay": "Exercices / jour",
+      "dailyGoals": "Objectifs quotidiens",
+      "folders": "Dossiers",
+      "flashcardsQuiz": "Flashcards & Quiz",
+      "slow": "Lente",
+      "fast": "Rapide",
+      "basic": "Basique"
+    }
+  },
+  "premiumGate": {
+    "perk1": "Modèle IA GPT-4o haute qualité",
+    "perk2": "Conversations Aron illimitées",
+    "perk3": "Thèmes exclusifs personnalisés",
+    "perk4": "Synthèse vocale (TTS)",
+    "perk5": "Exercices avancés illimités",
+    "defaultDescription": "Disponible uniquement avec Nora Premium",
+    "cta": "✨ Découvrir Premium",
+    "dismiss": "Continuer avec le plan gratuit",
+    "features": {
+      "tts": "Synthèse vocale",
+      "ttsDesc": "Écoutez le feedback de votre analyse en audio. Disponible avec Nora Premium.",
+      "autoFolder": "Dossiers automatiques",
+      "autoFolderDesc": "Triez automatiquement vos synthèses dans des dossiers par matière. Disponible avec Nora Premium.",
+      "dailyGoals": "Objectifs quotidiens",
+      "dailyGoalsDesc": "Définissez des objectifs d'étude personnalisés chaque jour. Disponible avec Nora Premium.",
+      "flashcards": "Flashcards",
+      "flashcardsDesc": "Révisez vos synthèses avec des flashcards interactives. Disponible avec Nora Premium.",
+      "quiz": "Quiz",
+      "quizDesc": "Testez vos connaissances avec des quiz générés automatiquement. Disponible avec Nora Premium.",
+      "folders": "Dossiers",
+      "foldersDesc": "Organisez vos synthèses dans des dossiers personnalisés. Disponible avec Nora Premium.",
+      "monkMode": "Mode Exercices (Monk Mode)",
+      "monkModeDesc": "Génère des exercices personnalisés à partir de tes synthèses. Disponible avec Nora Premium.",
+      "anaMode": "Mode Ana (Analyse examen)",
+      "anaModeDesc": "Analyse une photo d'examen et génère des exercices ciblés. Disponible avec Nora Premium.",
+      "themes": "Thèmes exclusifs",
+      "themesDesc": "Les thèmes Midnight, Forest et Aurora sont réservés aux abonnés Premium."
+    }
+  },
+  "themeSelector": {
+    "premiumHint": "Abonnez-vous pour débloquer"
   }
 }

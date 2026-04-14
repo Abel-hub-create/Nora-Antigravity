@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, User, CreditCard, Bell, LogOut, Plus, Trash2, AlertTriangle, Check, Trophy, Loader2, Camera, X, UserX, Volume2, FolderOpen } from 'lucide-react';
+import { ArrowLeft, User, CreditCard, Bell, LogOut, Plus, Trash2, AlertTriangle, Check, Trophy, Loader2, Camera, X, UserX, Volume2, FolderOpen, Crown, Zap } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useUser, ACTIVITY_TYPES } from '../context/UserContext';
 import { useAuth } from '../features/auth/hooks/useAuth';
 import * as notificationService from '../services/notificationService';
+import { PremiumGate, usePremiumGate } from '../components/UI/PremiumGate';
 import LanguageSelector from '../components/Settings/LanguageSelector';
 import ThemeSelector from '../components/Settings/ThemeSelector';
 
@@ -22,6 +23,7 @@ const Settings = () => {
         addNotification
     } = useUser();
     const navigate = useNavigate();
+    const { gateProps, showGate } = usePremiumGate();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [showWarningModal, setShowWarningModal] = useState(false);
     const [pendingChange, setPendingChange] = useState(null);
@@ -45,6 +47,10 @@ const Settings = () => {
     // Auto-folder state
     const [autoFolder, setAutoFolder] = useState(user?.auto_folder !== false);
     const handleAutoFolderToggle = async () => {
+        if (user?.plan_limits?.has_folders === 0) {
+            showGate(t('premiumGate.features.autoFolder'), t('premiumGate.features.autoFolderDesc'));
+            return;
+        }
         const newVal = !autoFolder;
         setAutoFolder(newVal);
         try {
@@ -213,7 +219,7 @@ const Settings = () => {
             title: t('settings.account'),
             items: [
                 { icon: User, label: t('settings.editProfile'), value: user?.name || t('common.user'), onClick: openProfileModal },
-                { icon: CreditCard, label: t('settings.subscription'), value: t('settings.freePlan') },
+                { icon: CreditCard, label: t('settings.subscription'), value: user?.plan_type === 'premium' ? '✨ Premium' : user?.plan_type === 'school' ? '🏫 École' : t('settings.freePlan'), onClick: () => navigate('/pricing') },
             ]
         }
     ];
@@ -460,7 +466,13 @@ const Settings = () => {
                         <>
                             {!showAddGoal ? (
                                 <button
-                                    onClick={() => setShowAddGoal(true)}
+                                    onClick={() => {
+                                        if (user?.plan_limits?.has_daily_goals === 0) {
+                                            showGate(t('premiumGate.features.dailyGoals'), t('premiumGate.features.dailyGoalsDesc'));
+                                            return;
+                                        }
+                                        setShowAddGoal(true);
+                                    }}
                                     className="w-full p-3 rounded-xl border-2 border-dashed border-white/10 text-text-muted hover:border-primary/50 hover:text-primary transition-colors flex items-center justify-center gap-2"
                                 >
                                     <Plus size={18} />
@@ -882,6 +894,7 @@ const Settings = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
+            <PremiumGate {...gateProps} />
         </div>
     );
 };

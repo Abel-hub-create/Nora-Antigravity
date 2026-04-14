@@ -3,6 +3,7 @@ import { authenticate } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validation.js';
 import * as validators from '../validators/folderValidators.js';
 import * as folderRepo from '../services/folderRepository.js';
+import { requireFeature } from '../middlewares/quotaMiddleware.js';
 
 const router = express.Router();
 
@@ -20,7 +21,7 @@ router.get('/', async (req, res, next) => {
 });
 
 // Create new folder
-router.post('/', validate(validators.createFolderSchema), async (req, res, next) => {
+router.post('/', requireFeature('has_folders'), validate(validators.createFolderSchema), async (req, res, next) => {
   try {
     const { name, color } = req.body;
     const folder = await folderRepo.create({

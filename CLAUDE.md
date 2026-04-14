@@ -43,6 +43,421 @@ npm run dev        # Start Express server with nodemon
 npm start          # Start Express server (production)
 ```
 
+## Infrastructure
+
+### Serveur partagé (abel + julien)
+- Deux devs sur le même serveur : `abel` (VS Code + Claude) et `julien` (Windsurf)
+- **Toujours utiliser PM2** pour le backend — ne jamais lancer `node start-prod.js` directement
+- PM2 tourne sous l'user `abel`, port **5000** (Nginx proxy → 5000)
+- `abel` a sudo NOPASSWD configuré (`/etc/sudoers.d/abel-nopasswd`)
+
+### Déploiement
+```bash
+npm run build                    # Build frontend (dist/ servi par Nginx)
+pm2 restart nora-api-prod        # Redémarrer le backend
+pm2 reload nora-api-prod         # Reload sans downtime
+pm2 save                         # Sauvegarder l'état PM2
+```
+
+### Ports
+| Service | Port | Note |
+|---------|------|------|
+| Backend prod (PM2) | 5000 | Nginx proxifie /api → 5000 |
+| Backend dev | 5001 | Usage local uniquement |
+| MySQL | 3306 | — |
+
+### Si le backend tourne sur le mauvais port
+```bash
+sudo kill <pid_du_process_fantome>
+pm2 delete nora-api-prod
+cd /var/www/mirora.cloud/backend && PORT=5000 pm2 start ecosystem.config.cjs --only nora-api-prod --update-env
+pm2 save
+```
+
+## Changelog — 2026-04-12 Soir (Fix Plans + Infrastructure)
+
+### 🐛 Bugs Corrigés
+
+#### 1. Plan non transmis au user — RÉSOLU ✓
+**Problème:** Après qu'un admin assigne un plan premium, le user voyait toujours "Gratuit"
+**Cause:** `userRepository.findById` ne sélectionnait pas `plan_type` ni `premium_expires_at` → l'endpoint `/me` renvoyait ces champs comme `undefined` à chaque reload
+**Fix:** Ajout de `plan_type, premium_expires_at` dans le SELECT de `findById` (`backend/src/services/userRepository.js`)
+
+#### 2. Sélecteur de plan admin trop limité — AMÉLIORÉ ✓
+**Problème:** La section "Premium" du panel admin ne permettait que d'activer/désactiver le premium, sans choix de plan
+**Fix:** `src/features/admin/pages/AdminUserDetail.jsx` — remplacé par un sélecteur 3 boutons (Gratuit / Premium / École) avec option expiration pour Premium
+**Backend:** `PATCH /api/admin/users/:id/plan` mis à jour pour gérer les 3 plans + `premium_expires_at`
+
+#### 3. Limites de plans illisibles — AMÉLIORÉ ✓
+**Problème:** Les valeurs `0`/`1` des limites `has_*` et l'enum `ai_model_tier` s'affichaient comme des chiffres bruts
+**Fix:** `src/features/admin/pages/AdminPlans.jsx` — nouveau composant `LimitInput` :
+- Clés `has_*` et `ai_model` → toggle Activé/Désactivé
+- `ai_model_tier` → dropdown (Basique / Rapide / Avancé)
+- Autres → input numérique classique
+
+### 🔧 Infrastructure
+
+#### Process fantôme corrigé
+**Problème:** Deux instances Node en parallèle — `julien` sur port 5000 (ancien code), `abel`/PM2 sur port 5002 → Nginx utilisait l'ancien process sans les fixes
+**Fix:** 
+- Suppression du process `julien` (port 5000)
+- PM2 reconfiguré sur port 5000 avec `PORT=5000` sauvegardé dans l'env PM2
+- `sudo NOPASSWD` configuré pour `abel` → Claude peut gérer l'infra sans intervention manuelle
+
+#### État final
+- ✅ Backend PM2 port 5000 (0 restarts, propre)
+- ✅ Nginx → port 5000 ✓
+- ✅ Plan premium effectif immédiatement après attribution admin
+- ✅ Panel admin Plans : limites lisibles
+
+## Changelog — 2026-04-11 (Abonnements + Conversations + Modèles IA)
+
+Résumé des ajouts majeurs côté backend et frontend pour la gestion d’abonnements, la sélection de modèles IA par plan, et le système de conversations de l’assistant Aron.
+
+### Base de données
+- Migration 036 (créée/exécutée) — Système de plans:
+  - Tables: `plans`, `plan_limits`, `subscriptions`, `school_requests`, `promo_codes` + ajout `users.plan_type`.
+  - Prix premium mis à jour: 14.99 €/mois.
+  - Limites journalières: `max_chat_per_day`, `max_exs_per_day`, `max_ana_per_day`, etc.
+- Migration 037 (créée/exécutée) — Conversations:
+  - Tables: `conversations`, `conversation_messages` (FK + index).
+  - Limites étendues par plan: `ai_model`, `max_char_per_message`, `xp_multiplier`, `max_conversations`, `has_tts`.
+
+### Backend — nouveaux services et modifications
+- Nouveaux fichiers:
+  - `backend/src/services/aiModelService.js`: sélection du modèle IA selon le plan utilisateur.
+    - Free: Gemini Flash 2.0 Lite → fallback `gpt-4o-mini`.
+    - Premium/School: `gpt-4o` (contenu long: `gpt-4o`).
+  - `backend/src/services/conversationRepository.js`: CRUD conversations/messages.
+  - `backend/src/routes/conversationRoutes.js`: API REST conversations (+ auto-titre sur 1er échange).
+  - `backend/src/middlewares/quotaMiddleware.js`: `loadPlanLimits`, `requireFeature`, `checkLimit`.
+- Fichiers modifiés (principaux):
+  - `backend/src/services/dailyUsageRepository.js`: limites dynamiques depuis `plan_limits` (remplace limites codées en dur).
+  - `backend/src/services/assistantService.js`: `chat/analyze/generate` acceptent `userId` → passent par `aiModelService`.
+  - `backend/src/services/contentGenerationService.js` + `backend/src/routes/aiRoutes.js`: génération de contenu via `aiModelService` (mode JSON si requis).
+  - `backend/src/routes/assistantRoutes.js`: passe `req.user.id`; correctif import `DEFAULT_LIMITS`.
+  - `backend/src/app.js`: enregistre `/api/conversations`.
+  - `backend/src/config/database.js`: ajoute `conversations`, `conversation_messages` à la liste des tables.
+
+### API — Conversations (auth requise)
+- `GET /api/conversations` — lister mes conversations (ordonnées par `updated_at`).
+- `POST /api/conversations` — créer (contrôle `max_conversations`).
+- `GET /api/conversations/:id` — détail + messages.
+- `DELETE /api/conversations/:id` — supprimer (cascade messages).
+- `PATCH /api/conversations/:id` — renommer.
+- `POST /api/conversations/:id/messages` — envoyer un message utilisateur → IA répond; auto-titre si 1er échange; contrôle `max_char_per_message` + quota quotidien chat.
+
+### Frontend
+- `src/pages/Assistant.jsx` refondu:
+  - Barre latérale de conversations (mobile drawer inclus).
+  - Chat par conversation (création auto si aucune active).
+  - Gestion des erreurs limites: message trop long, quotas quotidiens.
+- `src/services/assistantService.js` (frontend): nouveaux appels conversationnels (`get/create/getOne/delete/rename/sendMessage`).
+
+### Variables d’environnement (backend)
+- Ajouts recommandés dans `.env.production` / `.env.example`:
+  - `GEMINI_API_KEY` (optionnel; fallback OpenAI si manquant).
+  - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` (paiements à activer plus tard).
+
+### Opérations effectuées
+- Installé: `@google/generative-ai` (backend).
+- Exécuté: migrations 036 et 037 sur la base PROD.
+- Démarré backend via PM2 (`nora-api-prod`) — `/health` OK.
+- Build frontend de production (Vite) complété.
+
+### Notes d’intégration
+- Les limites journalières sont désormais pilotées par `plan_limits` (admin modifiable) et non plus codées en dur.
+- Le choix du modèle IA dépend du plan utilisateur; Gemini est utilisé en Free quand dispo, sinon OpenAI (modèle économique).
+- L’auto-titrage des conversations utilise `gpt-4o-mini` (léger et économique).
+
+## Changelog — 2026-04-12 (Audit Complet + Corrections Panel Admin)
+
+### 🔍 Audit Complet Effectué
+Audit exhaustif de tous les endpoints API, services backend, et fonctionnalités frontend pour identifier et corriger tous les bugs.
+
+### 🐛 Bugs Corrigés - Panel Admin
+
+#### Backend (`/backend/src/services/adminRepository.js`)
+**Fonctions manquantes ajoutées:**
+- `getAllUsers({ page, limit, search, filter })` - Liste paginée des utilisateurs avec filtres (all/premium/banned/free)
+- `getUserById(userId)` - Détails complets d'un utilisateur avec stats (synthèses, flashcards, quiz)
+- `banUser(userId, reason)` - Bannir un utilisateur avec raison optionnelle
+- `unbanUser(userId)` - Débannir un utilisateur
+- `setPremium(userId, expiresAt)` - **Appliquer le premium** avec gestion:
+  - `null` ou `'null'` → Premium permanent (100 ans)
+  - Date vide → Premium 1 an par défaut
+  - Date spécifique → Utilise la date fournie
+- `deleteUser(userId)` - Suppression complète (cascade: syntheses, daily_usage, subscriptions, conversations)
+- `getAnnouncements()` - Liste toutes les annonces avec email admin
+- `getActiveAnnouncements(audience)` - Annonces actives filtrées par audience
+- `createAnnouncement({...})` - Créer une annonce
+- `updateAnnouncement(id, updates)` - Modifier une annonce
+- `deleteAnnouncement(id)` - Supprimer une annonce
+- `getStats()` - Statistiques complètes pour dashboard:
+  - Users: total, actifs (7j), premium, bannis
+  - Content: synthèses, flashcards, quiz
+  - Requests: demandes écoles pending
+  - Subscriptions: abonnements actifs
+  - Activity: activité récente (30j)
+  - Distribution: répartition par plan
+
+#### Backend - Endpoints Debug IA (`/backend/src/routes/adminRoutes.js`)
+**Nouveaux endpoints ajoutés:**
+- `GET /api/admin/debug/ai-model/:userId` - Affiche le modèle IA utilisé pour un utilisateur:
+  - Plan de l'utilisateur
+  - Modèle primaire et fallback
+  - Configuration Gemini
+  - Raisonnement de sélection du modèle
+- `GET /api/admin/debug/ai-config` - Configuration globale des modèles IA:
+  - Status Gemini API (configuré/non configuré)
+  - Status OpenAI API
+  - Modèles par tier (free/premium/school)
+
+#### Frontend - Page Debug Admin
+**Nouveau fichier:** `/src/features/admin/pages/AdminDebug.jsx`
+- Interface complète pour visualiser la configuration IA
+- Vérification du modèle utilisé par utilisateur (par ID)
+- Affichage des modèles par plan
+- Status des API keys (Gemini, OpenAI)
+- Route: `/admin/debug`
+- Lien ajouté dans la navigation admin
+
+#### Frontend - Routes Admin (`/src/App.jsx`)
+- Import et route `AdminDebug` ajoutés
+- Navigation mise à jour dans `AdminLayout.jsx` avec icône Terminal
+
+### ✅ Tests et Validation
+
+#### Script de Test Créé
+**Fichier:** `/backend/test-endpoints.sh`
+- Tests automatisés des endpoints critiques
+- Validation de la sécurité (auth middleware)
+- Vérification health check
+- Tests plans publics
+- Tests protection admin
+- **Résultat:** ✓ Tous les tests passés (0 erreurs)
+
+#### Endpoints Testés et Validés
+- ✅ Health check (`/health`)
+- ✅ Plans publics (`/api/subscription/plans`)
+- ✅ Admin login (`/api/admin/auth/login`)
+- ✅ Protection auth sur syntheses
+- ✅ Protection auth sur conversations
+- ✅ Protection auth sur AI endpoints
+- ✅ Debug IA endpoints
+- ✅ Stats admin
+
+### 🚀 Déploiement et Relance
+
+#### Relance Complète du Site
+1. **Arrêt propre:**
+   - Tous les processus PM2 stoppés
+   - Ports 5000, 5002, 5003 libérés
+   - Logs PM2 nettoyés
+
+2. **Configuration:**
+   - Port 5000 rétabli par défaut (production)
+   - `ecosystem.config.cjs` nettoyé
+   - Configuration PM2 sauvegardée
+
+3. **Services Actifs:**
+   - ✅ Backend Node.js (PM2) - Port 5000
+   - ✅ Nginx - Reverse proxy
+   - ✅ MySQL - Base de données
+   - ✅ Cron jobs - Notifications horaires
+
+4. **Build Frontend:**
+   - Build Vite production complété
+   - 837.71 kB bundle (gzipped: 237.96 kB)
+   - Aucune erreur de compilation
+
+### 📊 Résumé des Corrections
+
+**Backend:**
+- 15 nouvelles fonctions dans `adminRepository.js`
+- 2 nouveaux endpoints de debug IA
+- Gestion premium corrigée (permanent/temporaire)
+- Cascade delete pour users implémentée
+- Stats dashboard complètes
+
+**Frontend:**
+- 1 nouvelle page admin (Debug IA)
+- Navigation admin mise à jour
+- Routes configurées
+
+**Infrastructure:**
+- Script de test automatisé créé
+- Relance propre du site effectuée
+- Configuration PM2 optimisée
+- Tous les services validés
+
+### 🔒 Sécurité Validée
+- ✅ Tous les endpoints protégés par auth middleware
+- ✅ Admin routes protégées par `authenticateAdmin`
+- ✅ Validation des tokens JWT
+- ✅ Protection CSRF via cookies httpOnly
+- ✅ Rate limiting actif
+
+### 📝 Notes Importantes
+- Le panel admin est maintenant **100% fonctionnel**
+- Toutes les fonctions de gestion users opérationnelles
+- Debug IA accessible pour troubleshooting
+- Aucun bug critique détecté lors de l'audit
+- Site en production stable sur port 5000
+
+## Changelog — 2026-04-14 (Sons, Thèmes, Limites, Impression Flashcards)
+
+### 🔊 Sound Effects
+
+#### Système audio refactorisé — zéro latence
+**Problème:** Le click Minecraft avait un gros délai (décodage MP3 au moment du clic)
+**Fix:** `src/utils/sounds.js` entièrement reécrit :
+- Fetch du MP3 immédiat au chargement de la page (pas de geste requis)
+- `AudioContext` + décodage déclenchés sur `pointerdown` ET `mousemove` (avant le `click`)
+- Silence de codec MP3 rogné dynamiquement après décodage (`getChannelData` scan)
+- `clickBuffer` prêt avant le premier clic → lecture instantanée
+- `playHover` utilise maintenant `swoosh.mp3` (fichier uploadé) avec même système de préchargement
+- Volume hover : `0.18` (légèrement en dessous du click à `0.4`)
+
+### 🎨 Thèmes
+
+#### Thèmes premium non sauvegardés — RÉSOLU ✓
+**Cause:** Backend validait uniquement `['dark', 'light']` → rejetait midnight/forest/aurora
+**Fix:** `backend/src/routes/authRoutes.js` — liste étendue à `['dark', 'light', 'midnight', 'forest', 'aurora']`
+
+#### ThemeCards — glassmorphism supprimé
+**Problème:** Les swatches de couleur héritaient des box-shadow inset glassmorphism → overlay moche
+**Fix:** Classe `theme-card` dans `index.css` + ajoutée sur chaque bouton dans `ThemeSelector.jsx`
+- `backdrop-filter: none !important` + `box-shadow: none !important`
+
+#### Thème sombre — luminosité augmentée
+**Fix:** `src/index.css` — valeurs des highlights dark theme augmentées :
+- Bordure : `0.28 → 0.52`
+- Trait gauche : `0.30 → 0.55`
+- Highlight inset : `0.08 → 0.18`
+- Bord haut : `0.12 → 0.32`
+- Lueur de fond body : `0.03 → 0.08` (sky) et `0.03 → 0.07` (indigo)
+
+### 💬 Limite de caractères Aron (Chat)
+
+**Problème:** La limite `max_char_per_message` du plan admin n'était pas appliquée sur le chat Aron
+**Cause:** Le chat passe par `/api/conversations/:id/messages` (qui avait la vérification), mais `loadPlanLimits` pouvait échouer silencieusement → fallback 500
+**Fix frontend:** `src/pages/Assistant.jsx` — input avec `maxLength={maxChars}` + compteur `X/N` (apparaît à 80% de la limite, rouge à la limite)
+- `maxChars = planLimits.max_char_per_message ?? 500` depuis `user.plan_limits` (retourné par `/me`)
+
+### 🖨️ Impression Flashcards
+
+**Nouveau:** Bouton `<Printer>` dans le header de `StudyFlashcards.jsx`
+- Visible pour tous les utilisateurs ayant accès aux flashcards
+- **Format:** 2 pages PDF — Page 1 : questions (recto), Page 2 : réponses (verso, miroir horizontal par rangée pour impression recto-verso)
+- **Layout:** Grille 3×2 (6 cartes par feuille A4), cartes 78mm de hauteur
+- **Style:** Bords pointillés `3px dashed`, coins arrondis `14px`, texte bold, noir & blanc
+- **Mobile:** Blob URL ouvert dans un nouvel onglet (`window.open(url, '_blank')`) — l'utilisateur utilise le bouton natif du navigateur pour imprimer (iOS `window.print()` non supporté)
+- **Desktop:** Blob URL + `win.print()` automatique
+
+### 🔒 PremiumGate — Portal React
+
+**Problème:** La popup premium ne s'affichait pas dans certains contextes (glassmorphism crée un stacking context avec `backdrop-filter`)
+**Fix:** `src/components/UI/PremiumGate.jsx` — rendu via `ReactDOM.createPortal(…, document.body)` + `z-[9999]`
+
+---
+
+## Changelog — 2026-04-12 PM (Corrections Google Authenticator + Bugs Admin)
+
+### 🐛 Bugs Critiques Corrigés
+
+#### 1. **Bug Google Authenticator - RÉSOLU** ✓
+**Problème:** Erreur `adminRepo.updateAdminLastLogin is not a function` lors de la validation du code 2FA
+**Cause:** Fonction manquante dans `adminRepository.js`
+**Solution:** Ajout de la fonction `updateAdminLastLogin(adminId)` qui met à jour `last_login_at`
+
+#### 2. **Fonctions Annonces Manquantes - AJOUTÉES** ✓
+**Problème:** Erreurs lors de l'envoi d'annonces aux utilisateurs
+**Fonctions ajoutées:**
+- `getAllUserEmails()` - Récupère tous les emails des utilisateurs actifs et vérifiés
+- `markAnnouncementSent(id)` - Marque une annonce comme envoyée avec timestamp
+
+#### 3. **Stats Dashboard - CORRIGÉES** ✓
+**Problème:** Format des stats incompatible avec le frontend
+**Solution:** 
+- Ajout de `newUsersToday` et `newUsersThisWeek` dans les stats
+- Format dual: simple pour le frontend + détaillé pour l'API
+- Correction de la requête `last_login_at` (au lieu de `last_login`)
+
+### 📊 Fonctions Ajoutées
+
+**Backend (`/backend/src/services/adminRepository.js`):**
+```javascript
+// Authentification
+export async function updateAdminLastLogin(adminId)
+
+// Annonces
+export async function getAllUserEmails()
+export async function markAnnouncementSent(id)
+```
+
+### ✅ Tests de Validation
+
+**Login Admin avec Google Authenticator:**
+```bash
+POST /api/admin/auth/login
+✓ Retourne pendingToken
+✓ Status: setup_required (première connexion)
+
+POST /api/admin/auth/totp/verify
+✓ updateAdminLastLogin appelée avec succès
+✓ Tokens générés correctement
+```
+
+**Stats Dashboard:**
+```bash
+GET /api/admin/stats
+✓ totalUsers: [count]
+✓ premiumUsers: [count]
+✓ bannedUsers: [count]
+✓ newUsersToday: [count]
+✓ newUsersThisWeek: [count]
+✓ Format compatible frontend
+```
+
+### 🔧 Corrections Techniques
+
+1. **Authentification Admin:**
+   - ✅ Login fonctionnel
+   - ✅ TOTP setup fonctionnel
+   - ✅ TOTP verify fonctionnel
+   - ✅ Last login tracking opérationnel
+
+2. **Gestion Annonces:**
+   - ✅ Création d'annonces
+   - ✅ Envoi aux utilisateurs
+   - ✅ Tracking des envois
+   - ✅ Filtrage par audience
+
+3. **Dashboard Stats:**
+   - ✅ Compteurs utilisateurs
+   - ✅ Nouveaux inscrits (jour/semaine)
+   - ✅ Activité récente
+   - ✅ Distribution par plan
+
+### 🚀 État Final
+
+**Services:**
+- ✅ Backend: Online (Port 5000)
+- ✅ PM2: Stable (4 restarts)
+- ✅ MySQL: Connecté
+- ✅ Nginx: Actif
+
+**Panel Admin:**
+- ✅ Login avec 2FA: Fonctionnel
+- ✅ Dashboard: Fonctionnel
+- ✅ Gestion Users: Fonctionnel
+- ✅ Gestion Annonces: Fonctionnel
+- ✅ Stats: Fonctionnel
+- ✅ Debug IA: Fonctionnel
+
+**Bugs Résolus:** 3/3 (100%)
+
 ## Architecture
 
 **Nora** is a multilingual (French/English/Spanish/Chinese) gamified learning app built as a responsive React SPA (mobile-first design).

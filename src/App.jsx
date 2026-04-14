@@ -41,6 +41,13 @@ import AdminDashboard from './features/admin/pages/AdminDashboard';
 import AdminUsers from './features/admin/pages/AdminUsers';
 import AdminUserDetail from './features/admin/pages/AdminUserDetail';
 import AdminAnnouncements from './features/admin/pages/AdminAnnouncements';
+import AdminPlans from './features/admin/pages/AdminPlans';
+import AdminSchoolRequests from './features/admin/pages/AdminSchoolRequests';
+import AdminPromoCodes from './features/admin/pages/AdminPromoCodes';
+import AdminDebug from './features/admin/pages/AdminDebug';
+import AdminConversations from './features/admin/pages/AdminConversations';
+import AdminSystemPrompts from './features/admin/pages/AdminSystemPrompts';
+import Pricing from './pages/Pricing';
 
 function AppWithLight({ children }) {
   useTimeLight();
@@ -61,7 +68,13 @@ function App() {
                 <Route path="dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
                 <Route path="users" element={<AdminProtectedRoute><AdminUsers /></AdminProtectedRoute>} />
                 <Route path="users/:id" element={<AdminProtectedRoute><AdminUserDetail /></AdminProtectedRoute>} />
+                <Route path="plans" element={<AdminProtectedRoute><AdminPlans /></AdminProtectedRoute>} />
+                <Route path="school-requests" element={<AdminProtectedRoute><AdminSchoolRequests /></AdminProtectedRoute>} />
+                <Route path="promo-codes" element={<AdminProtectedRoute><AdminPromoCodes /></AdminProtectedRoute>} />
                 <Route path="announcements" element={<AdminProtectedRoute><AdminAnnouncements /></AdminProtectedRoute>} />
+                <Route path="conversations" element={<AdminProtectedRoute><AdminConversations /></AdminProtectedRoute>} />
+                <Route path="system-prompts" element={<AdminProtectedRoute><AdminSystemPrompts /></AdminProtectedRoute>} />
+                <Route path="debug" element={<AdminProtectedRoute><AdminDebug /></AdminProtectedRoute>} />
                 <Route path="" element={<Navigate to="dashboard" replace />} />
                 <Route path="*" element={<Navigate to="dashboard" replace />} />
               </Routes>
@@ -95,6 +108,7 @@ function App() {
                       <Route path="/profile" element={<Profile />} />
                       <Route path="/folders/:id" element={<FolderDetail />} />
                       <Route path="/settings" element={<Settings />} />
+                      <Route path="/pricing" element={<Pricing />} />
                       <Route path="/collection" element={<Collection />} />
                       <Route path="/process" element={<Process />} />
                       <Route path="/feedback" element={<Feedback />} />

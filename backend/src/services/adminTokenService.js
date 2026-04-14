@@ -1,39 +1,40 @@
 import jwt from 'jsonwebtoken';
-import { adminConfig } from '../config/adminConfig.js';
 
-export const generateAdminAccessToken = (adminId) => {
-  if (!adminConfig.jwtSecret) throw new Error('ADMIN_JWT_SECRET not configured');
-  return jwt.sign({ adminId, role: 'admin' }, adminConfig.jwtSecret, {
-    expiresIn: adminConfig.accessExpiresIn
-  });
-};
+const ADMIN_ACCESS_SECRET = process.env.ADMIN_JWT_SECRET || 'admin-secret-change-in-prod';
+const ADMIN_REFRESH_SECRET = process.env.ADMIN_JWT_REFRESH_SECRET || 'admin-refresh-secret-change-in-prod';
 
-export const generateAdminRefreshToken = (adminId) => {
-  if (!adminConfig.jwtRefreshSecret) throw new Error('ADMIN_JWT_REFRESH_SECRET not configured');
-  return jwt.sign({ adminId, role: 'admin' }, adminConfig.jwtRefreshSecret, {
-    expiresIn: adminConfig.refreshExpiresIn
-  });
-};
+export function generateAdminAccessToken(adminId, email) {
+  return jwt.sign(
+    { adminId, email, role: 'admin' },
+    ADMIN_ACCESS_SECRET,
+    { expiresIn: '15m' }
+  );
+}
 
-export const verifyAdminAccessToken = (token) => {
-  if (!adminConfig.jwtSecret) throw new Error('ADMIN_JWT_SECRET not configured');
-  return jwt.verify(token, adminConfig.jwtSecret);
-};
+export function generateAdminRefreshToken(adminId, email) {
+  return jwt.sign(
+    { adminId, email, role: 'admin' },
+    ADMIN_REFRESH_SECRET,
+    { expiresIn: '7d' }
+  );
+}
 
-export const verifyAdminRefreshToken = (token) => {
-  if (!adminConfig.jwtRefreshSecret) throw new Error('ADMIN_JWT_REFRESH_SECRET not configured');
-  return jwt.verify(token, adminConfig.jwtRefreshSecret);
-};
+export function verifyAdminAccessToken(token) {
+  return jwt.verify(token, ADMIN_ACCESS_SECRET);
+}
 
-// Pending token — short-lived (10 min), used between password check and TOTP verification
-export const generatePendingToken = (adminId) => {
-  if (!adminConfig.jwtSecret) throw new Error('ADMIN_JWT_SECRET not configured');
-  return jwt.sign({ adminId, role: 'admin_pre_auth' }, adminConfig.jwtSecret, { expiresIn: '10m' });
-};
+export function verifyAdminRefreshToken(token) {
+  return jwt.verify(token, ADMIN_REFRESH_SECRET);
+}
 
-export const verifyPendingToken = (token) => {
-  if (!adminConfig.jwtSecret) throw new Error('ADMIN_JWT_SECRET not configured');
-  const payload = jwt.verify(token, adminConfig.jwtSecret);
-  if (payload.role !== 'admin_pre_auth') throw new Error('Invalid token type');
-  return payload;
-};
+export function generatePendingToken(adminId, email) {
+  return jwt.sign(
+    { adminId, email, role: 'pending' },
+    ADMIN_ACCESS_SECRET,
+    { expiresIn: '10m' }
+  );
+}
+
+export function verifyPendingToken(token) {
+  return jwt.verify(token, ADMIN_ACCESS_SECRET);
+}

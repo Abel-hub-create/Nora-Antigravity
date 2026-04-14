@@ -1,17 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, RotateCw, ChevronRight, ChevronLeft, Loader2, PenLine, X } from 'lucide-react';
+import { ArrowLeft, RotateCw, ChevronRight, ChevronLeft, Loader2, PenLine, X, Printer } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import useActiveTimer from '../hooks/useActiveTimer';
 import * as syntheseService from '../services/syntheseService';
 import VoiceDictation from '../components/Import/VoiceDictation';
 import { formatMath } from '../utils/formatMath';
+import { useAuth } from '../features/auth/hooks/useAuth';
 
 const StudyFlashcards = () => {
     const { t } = useTranslation();
     useActiveTimer('flashcards');
     const { id } = useParams();
+    const { user } = useAuth();
+    const canPrint = true;
     const [cards, setCards] = useState([]);
     const [syntheseTitle, setSyntheseTitle] = useState('');
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -121,6 +124,184 @@ const StudyFlashcards = () => {
         else handlePrev();
     };
 
+    const handlePrint = () => {
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const COLS = 3;
+        const ROWS = 2;
+        const PER_PAGE = COLS * ROWS;
+
+        // Découpe les cartes en pages de 6
+        const chunks = [];
+        for (let i = 0; i < cards.length; i += PER_PAGE) {
+            chunks.push(cards.slice(i, i + PER_PAGE));
+        }
+
+        const renderCard = (card, idx, side, isEmpty) => {
+            if (isEmpty) return `<div class="card empty"></div>`;
+            const num = idx + 1;
+            const label = side === 'recto' ? 'Question' : 'Réponse';
+            const content = side === 'recto' ? formatMath(card.front) : formatMath(card.back);
+            return `
+            <div class="card ${side}">
+                <span class="card-label">${label}</span>
+                <span class="card-num">${num}</span>
+                <div class="card-content">${content}</div>
+                <span class="card-title">${syntheseTitle}</span>
+            </div>`;
+        };
+
+        const sheets = chunks.flatMap((chunk, pageIdx) => {
+            // Pad à 6 si nécessaire
+            const padded = [...chunk];
+            while (padded.length < PER_PAGE) padded.push(null);
+
+            // Recto : ordre normal
+            const rectoCards = padded.map((card, i) =>
+                renderCard(card, pageIdx * PER_PAGE + i, 'recto', card === null)
+            ).join('');
+
+            // Verso : miroir horizontal par rangée (pour impression recto-verso)
+            const versoCards = [];
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = COLS - 1; col >= 0; col--) {
+                    const i = row * COLS + col;
+                    const card = padded[i];
+                    versoCards.push(renderCard(card, pageIdx * PER_PAGE + i, 'verso', card === null));
+                }
+            }
+
+            return [
+                `<div class="sheet">${rectoCards}</div>`,
+                `<div class="sheet">${versoCards.join('')}</div>`,
+            ];
+        });
+
+        const htmlContent = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Flashcards — ${syntheseTitle}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    @page { size: A4 portrait; margin: 8mm; }
+
+    body { background: #fff; font-family: Georgia, 'Times New Roman', serif; }
+
+    .sheet {
+      width: 194mm;
+      height: 281mm;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(2, 78mm);
+      gap: 6mm;
+      align-content: center;
+      page-break-after: always;
+    }
+
+    .card {
+      border: 3px dashed #555;
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card.empty {
+      border-color: #ddd;
+    }
+
+    .card-label {
+      position: absolute;
+      top: 10px;
+      left: 14px;
+      font-size: 7pt;
+      font-family: Arial, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #bbb;
+      font-weight: 700;
+    }
+
+    .card-num {
+      position: absolute;
+      top: 10px;
+      right: 14px;
+      font-size: 7.5pt;
+      font-family: Arial, sans-serif;
+      color: #ccc;
+      font-weight: 600;
+    }
+
+    .card-title {
+      position: absolute;
+      bottom: 9px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 7pt;
+      font-family: Arial, sans-serif;
+      color: #ccc;
+      letter-spacing: 0.04em;
+    }
+
+    .card-content {
+      font-size: 11pt;
+      line-height: 1.5;
+      text-align: center;
+      color: #111;
+      font-weight: bold;
+    }
+
+    .recto .card-content {
+      font-size: 12pt;
+    }
+
+    .verso .card-content {
+      font-size: 11pt;
+    }
+
+    /* Petit trait décoratif sous le contenu */
+    .card-content::after {
+      content: '';
+      display: block;
+      width: 32px;
+      height: 1.5px;
+      background: #ccc;
+      margin: 12px auto 0;
+    }
+
+    @media print {
+      .sheet { page-break-after: always; }
+    }
+  </style>
+</head>
+<body>
+  ${sheets.join('\n')}
+  <script>window.onload = () => { if (!/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) { window.focus(); window.print(); } }<\/script>
+</body>
+</html>`;
+        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+
+        if (isMobile) {
+            // Mobile : ouvre dans un nouvel onglet, l'utilisateur utilise le bouton natif du navigateur pour imprimer
+            const newTab = window.open(url, '_blank');
+            if (!newTab) window.location.href = url;
+        } else {
+            // Desktop : ouvre et déclenche l'impression automatiquement
+            const win = window.open(url, '_blank');
+            if (win) win.onload = () => { win.focus(); win.print(); };
+        }
+
+        setTimeout(() => URL.revokeObjectURL(url), 15000);
+    };
+
     if (isLoading) {
         return (
             <div className="min-h-full bg-background flex items-center justify-center">
@@ -183,6 +364,15 @@ const StudyFlashcards = () => {
                     <h1 className="text-lg font-bold text-text-main truncate">{syntheseTitle}</h1>
                     <p className="text-xs text-text-muted">{t('flashcards.title')}</p>
                 </div>
+                {canPrint && cards.length > 0 && (
+                    <button
+                        onClick={handlePrint}
+                        className="p-2 text-text-muted hover:text-text-main transition-colors"
+                        title="Imprimer les flashcards"
+                    >
+                        <Printer size={20} />
+                    </button>
+                )}
             </header>
 
             <div className="flex-1 flex flex-col items-center justify-center relative">

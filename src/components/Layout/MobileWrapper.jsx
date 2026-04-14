@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { Home, GraduationCap, PlusCircle, User, Gift, Settings, Bot } from 'lucide-react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { Home, GraduationCap, PlusCircle, User, Gift, Settings, Bot, Crown } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import NotificationStack from '../UI/NotificationStack';
@@ -55,15 +55,24 @@ const MobileWrapper = ({ children }) => {
     // Show onboarding modal for new users
     const showOnboarding = user && !user.onboarding_completed;
 
-    const navItems = [
-        { icon: Home, labelKey: 'nav.home', path: '/' },
-        { icon: GraduationCap, labelKey: 'nav.study', path: '/study' },
-        { icon: Gift, labelKey: 'nav.collection', path: '/collection' },
-        { icon: PlusCircle, labelKey: 'nav.import', path: '/import' },
-        { icon: User, labelKey: 'nav.profile', path: '/profile' },
-        { icon: Settings, labelKey: 'nav.settings', path: '/settings' },
-        { icon: Bot, labelKey: 'nav.assistant', path: '/assistant' },
+    const allNavItems = [
+        { icon: Home,          labelKey: 'nav.home',      path: '/' },
+        { icon: GraduationCap, labelKey: 'nav.study',     path: '/study' },
+        { icon: Gift,          labelKey: 'nav.collection',path: '/collection' },
+        { icon: PlusCircle,    labelKey: 'nav.import',    path: '/import' },
+        { icon: Bot,           labelKey: 'nav.assistant', path: '/assistant' },
+        { icon: User,          labelKey: 'nav.profile',   path: '/profile' },
+        { icon: Settings,      labelKey: 'nav.settings',  path: '/settings' },
     ];
+    const bottomNavItems = [
+        { icon: Home,          labelKey: 'nav.home',      path: '/' },
+        { icon: GraduationCap, labelKey: 'nav.study',     path: '/study' },
+        { icon: PlusCircle,    labelKey: 'nav.import',    path: '/import' },
+        { icon: Bot,           labelKey: 'nav.assistant', path: '/assistant' },
+        { icon: User,          labelKey: 'nav.profile',   path: '/profile' },
+        { icon: Settings,      labelKey: 'nav.settings',  path: '/settings' },
+    ];
+    const isPremium = user?.plan_type && user.plan_type !== 'free';
 
     return (
         <div className="min-h-screen bg-background font-sans text-text-main">
@@ -72,15 +81,24 @@ const MobileWrapper = ({ children }) => {
 
             {/* Sidebar Navigation - Desktop only */}
             <nav className="hidden md:flex flex-col w-64 bg-surface/50 border-r border-white/5 p-4 fixed h-full z-40">
-                {/* Logo */}
-                <div className="mb-8 px-2">
-                    <h1 className="text-2xl font-bold text-primary">Nora</h1>
-                    <p className="text-xs text-text-muted mt-1">{t('nav.tagline')}</p>
+                {/* Logo + plan badge */}
+                <div className="mb-8 px-2 flex items-center gap-3">
+                    <img src="/noralogo.png" alt="Nora" className="w-12 h-12 object-contain shrink-0" />
+                    <div>
+                        <h1 className="text-2xl font-bold text-primary">Nora</h1>
+                        <p className="text-xs text-text-muted mt-1">{t('nav.tagline')}</p>
+                        {isPremium && (
+                            <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30">
+                                <Crown size={11} className="text-amber-400" />
+                                <span className="text-[10px] font-semibold text-amber-400 capitalize">{user.plan_type}</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Nav Items */}
                 <div className="flex flex-col gap-2">
-                    {navItems.map((item) => {
+                    {allNavItems.map((item) => {
                         const isActive = location.pathname === item.path;
                         return (
                             <a
@@ -117,15 +135,21 @@ const MobileWrapper = ({ children }) => {
 
 
                 {/* Content */}
-                <main className="pb-24 md:pb-6">
-                    <div className="max-w-3xl mx-auto">
+                {location.pathname === '/assistant' ? (
+                    <main className="flex flex-col" style={{height: 'calc(100dvh - env(safe-area-inset-bottom, 0px))', paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))'}}>
                         {children}
-                    </div>
-                </main>
+                    </main>
+                ) : (
+                    <main className="md:pb-6" style={{paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))'}}>
+                        <div className="max-w-3xl mx-auto">
+                            {children}
+                        </div>
+                    </main>
+                )}
 
                 {/* Bottom Navigation - Mobile only */}
-                <nav className="md:hidden fixed bottom-0 left-0 right-0 h-20 bg-surface/95 backdrop-blur-md border-t border-white/5 flex justify-around items-center px-2 pb-2 z-50">
-                    {navItems.map((item) => {
+                <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur-md border-t border-white/5 flex justify-around items-center px-1 z-50" style={{height:'64px', paddingBottom:'env(safe-area-inset-bottom)'}}>
+                    {bottomNavItems.map((item) => {
                         const isActive = location.pathname === item.path;
                         return (
                             <a
@@ -140,13 +164,13 @@ const MobileWrapper = ({ children }) => {
                                         navigate(item.path);
                                     }
                                 }}
-                                className="flex flex-col items-center justify-center w-16 h-full gap-1 group cursor-pointer hover-lift"
+                                className="flex flex-col items-center justify-center flex-1 h-full gap-0.5 group cursor-pointer"
                             >
                                 <div className={clsx(
                                     "p-1.5 rounded-xl transition-all duration-300",
                                     isActive ? "bg-primary/20 text-primary" : "text-text-muted group-hover:text-text-main"
                                 )}>
-                                    <item.icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+                                    <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
                                 </div>
                                 <span className={clsx(
                                     "text-[10px] font-medium transition-colors",

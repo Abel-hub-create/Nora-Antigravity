@@ -92,7 +92,7 @@ export default function Exercises() {
           <h1 className="text-xl font-bold text-text-main">{t('exercises.title')}</h1>
           <p className="text-xs text-text-muted mt-0.5">{t('exercises.quota', { total, limit })}</p>
         </div>
-        <div className="flex items-center gap-2 mr-16">
+        <div className="flex items-center gap-2">
           {exercises.length > 0 && (
             <button
               onClick={() => setConfirmDeleteAll(true)}

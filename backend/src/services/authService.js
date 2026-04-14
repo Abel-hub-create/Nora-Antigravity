@@ -9,10 +9,15 @@ export const register = async ({ email, password, name, language = 'fr' }) => {
   // Check if user exists
   const existingUser = await userRepository.findByEmail(email);
   if (existingUser) {
-    const error = new Error('EMAIL_ALREADY_USED');
-    error.statusCode = 409;
-    error.code = existingUser.is_verified ? 'EMAIL_ALREADY_VERIFIED' : 'EMAIL_NOT_VERIFIED';
-    throw error;
+    if (existingUser.is_verified) {
+      const error = new Error('EMAIL_ALREADY_USED');
+      error.statusCode = 409;
+      error.code = 'EMAIL_ALREADY_VERIFIED';
+      throw error;
+    } else {
+      // Unverified account — delete it so the user can re-register cleanly
+      await userRepository.deleteAccount(existingUser.id);
+    }
   }
 
   // Hash password
@@ -55,6 +60,14 @@ export const login = async ({ email, password }) => {
   // Find user
   const user = await userRepository.findByEmail(email);
   if (!user) {
+    const error = new Error('INVALID_CREDENTIALS');
+    error.statusCode = 401;
+    error.code = 'INVALID_CREDENTIALS';
+    throw error;
+  }
+
+  // Google/Apple accounts have no password — can't login with email+password
+  if (!user.password) {
     const error = new Error('INVALID_CREDENTIALS');
     error.statusCode = 401;
     error.code = 'INVALID_CREDENTIALS';

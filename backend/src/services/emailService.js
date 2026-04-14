@@ -133,7 +133,7 @@ const generateEmailTemplate = (content, footer) => `
           <!-- Logo -->
           <tr>
             <td align="center" style="padding-bottom: 30px;">
-              <img src="${FRONTEND_URL}/nora-logo.png" alt="Nora" width="80" height="80" style="border-radius: 16px;">
+              <img src="${FRONTEND_URL}/noralogo.png" alt="Nora" width="80" height="80" style="border-radius: 16px;">
             </td>
           </tr>
 

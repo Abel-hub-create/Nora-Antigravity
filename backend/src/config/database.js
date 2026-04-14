@@ -13,7 +13,8 @@ const TABLES = [
   'push_subscriptions', 'daily_progress', 'study_history',
   'revision_sessions', 'revision_completions', 'feedbacks', 'feedback_votes',
   'quiz_answers', 'exercises', 'exercise_items', 'chat_messages',
-  'admins', 'announcements', 'daily_usage'
+  'admins', 'announcements', 'daily_usage', 'plans', 'plan_limits', 'subscriptions', 'school_requests', 'promo_codes',
+  'conversations', 'conversation_messages'
 ];
 
 // Validate prefix contains only safe characters and ends with underscore

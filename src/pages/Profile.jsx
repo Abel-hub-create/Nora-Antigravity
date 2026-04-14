@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import LiquidProgressBar from '../components/UI/LiquidProgressBar';
-import { Settings, Folder, Star, ChevronRight, Plus, Loader2 } from 'lucide-react';
+import { Settings, Folder, Star, ChevronRight, Plus, Loader2, Crown, Zap } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import * as folderService from '../services/folderService';
@@ -11,12 +11,16 @@ import CreateFolderModal from '../components/Folders/CreateFolderModal';
 import { useAuth } from '../features/auth/hooks/useAuth';
 import { useUser } from '../context/UserContext';
 import AnimatedNumber from '../components/UI/AnimatedNumber';
+import { PremiumGate, usePremiumGate } from '../components/UI/PremiumGate';
 
 const Profile = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { user: authUser } = useAuth();
+    const isPremium = authUser?.plan_type && authUser.plan_type !== 'free';
     const { user: userData } = useUser();
+    const { gateProps, showGate } = usePremiumGate();
+    const hasFolders = authUser?.plan_limits?.has_folders !== 0;
 
     // Combiner les données auth (nom, avatar) et user context (level, xp)
     const user = {
@@ -99,6 +103,17 @@ const Profile = () => {
                             <Star size={14} className="fill-current" />
                             {t('profile.level')} <AnimatedNumber value={user.level} duration={800} />
                         </div>
+                        {isPremium ? (
+                            <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30">
+                                <Crown size={10} className="text-amber-400" />
+                                <span className="text-[10px] font-semibold text-amber-400 capitalize">{authUser.plan_type}</span>
+                            </div>
+                        ) : (
+                            <Link to="/pricing" className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors">
+                                <Zap size={10} className="text-primary" />
+                                <span className="text-[10px] font-semibold text-primary">{t('profile.upgradePremium')}</span>
+                            </Link>
+                        )}
                     </div>
                     <div className="ml-auto bg-black/30 px-3 py-1 rounded-full border border-white/10 flex items-center gap-2">
                         <span className="text-lg">🥚</span>
@@ -138,7 +153,7 @@ const Profile = () => {
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-bold text-text-main">{t('profile.folders')}</h3>
                     <button
-                        onClick={() => setShowCreateModal(true)}
+                        onClick={() => hasFolders ? setShowCreateModal(true) : showGate(t('premiumGate.features.folders'), t('premiumGate.features.foldersDesc'))}
                         className="flex items-center gap-1 text-xs text-primary font-medium"
                     >
                         <Plus size={16} />
@@ -178,6 +193,7 @@ const Profile = () => {
                 onSubmit={handleCreateFolder}
                 isLoading={isCreating}
             />
+            <PremiumGate {...gateProps} />
         </div>
     );
 };

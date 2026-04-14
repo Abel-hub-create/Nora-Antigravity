@@ -1,239 +1,354 @@
 import { query } from '../config/database.js';
 
-// ─── Admin accounts ───────────────────────────────────────────────────────────
-
-export const findAdminByEmail = async (email) => {
-  const rows = await query(`SELECT * FROM admins WHERE email = ? LIMIT 1`, [email]);
+export async function findAdminByEmail(email) {
+  const rows = await query(
+    `SELECT * FROM admins WHERE email = ? LIMIT 1`,
+    [email]
+  );
   return rows[0] || null;
-};
+}
 
-export const findAdminById = async (id) => {
-  const rows = await query(`SELECT id, email, last_login_at, created_at FROM admins WHERE id = ? LIMIT 1`, [id]);
+export async function findAdminById(id) {
+  const rows = await query(
+    `SELECT * FROM admins WHERE id = ? LIMIT 1`,
+    [id]
+  );
   return rows[0] || null;
-};
+}
 
-export const updateAdminLastLogin = async (adminId) => {
-  await query(`UPDATE admins SET last_login_at = NOW() WHERE id = ?`, [adminId]);
-};
+export async function createAdmin(email, passwordHash, totpSecret = null) {
+  const result = await query(
+    `INSERT INTO admins (email, password_hash, totp_secret) VALUES (?, ?, ?)`,
+    [email, passwordHash, totpSecret]
+  );
+  return result.insertId;
+}
 
-export const saveTotpSecret = async (adminId, secret) => {
-  await query(`UPDATE admins SET totp_secret = ? WHERE id = ?`, [secret, adminId]);
-};
+export async function updateAdminTotpSecret(adminId, totpSecret) {
+  await query(
+    `UPDATE admins SET totp_secret = ? WHERE id = ?`,
+    [totpSecret, adminId]
+  );
+}
 
-export const enableTotp = async (adminId) => {
-  await query(`UPDATE admins SET totp_enabled = 1 WHERE id = ?`, [adminId]);
-};
+export async function enableTotp(adminId) {
+  await query(
+    `UPDATE admins SET totp_enabled = 1 WHERE id = ?`,
+    [adminId]
+  );
+}
 
-// ─── Global stats ─────────────────────────────────────────────────────────────
+export async function updateAdminPassword(adminId, passwordHash) {
+  await query(
+    `UPDATE admins SET password_hash = ? WHERE id = ?`,
+    [passwordHash, adminId]
+  );
+}
 
-export const getStats = async () => {
-  const [[users], [syntheses], [banned], [premium], [newToday], [newWeek]] = await Promise.all([
-    query(`SELECT COUNT(*) as total FROM users WHERE is_active = 1`),
-    query(`SELECT COUNT(*) as total FROM syntheses WHERE is_archived = 0`),
-    query(`SELECT COUNT(*) as total FROM users WHERE is_banned = 1`),
-    query(`SELECT COUNT(*) as total FROM users WHERE premium_expires_at > NOW()`),
-    query(`SELECT COUNT(*) as total FROM users WHERE DATE(created_at) = CURDATE()`),
-    query(`SELECT COUNT(*) as total FROM users WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)`),
-  ]);
-  return {
-    totalUsers: Number(users.total),
-    totalSyntheses: Number(syntheses.total),
-    bannedUsers: Number(banned.total),
-    premiumUsers: Number(premium.total),
-    newUsersToday: Number(newToday.total),
-    newUsersThisWeek: Number(newWeek.total),
-  };
-};
+export async function updateAdminLastLogin(adminId) {
+  await query(
+    `UPDATE admins SET last_login_at = NOW() WHERE id = ?`,
+    [adminId]
+  );
+}
 
-// ─── User management ──────────────────────────────────────────────────────────
+export async function storeRefreshToken(adminId, tokenHash, expiresAt) {
+  await query(
+    `INSERT INTO admin_refresh_tokens (admin_id, token_hash, expires_at) VALUES (?, ?, ?)`,
+    [adminId, tokenHash, expiresAt]
+  );
+}
 
-export const getAllUsers = async ({ page = 1, limit = 50, search = '', filter = 'all' }) => {
+export async function findRefreshToken(tokenHash) {
+  const rows = await query(
+    `SELECT * FROM admin_refresh_tokens WHERE token_hash = ? AND expires_at > NOW() LIMIT 1`,
+    [tokenHash]
+  );
+  return rows[0] || null;
+}
+
+export async function deleteRefreshToken(tokenHash) {
+  await query(
+    `DELETE FROM admin_refresh_tokens WHERE token_hash = ?`,
+    [tokenHash]
+  );
+}
+
+export async function deleteExpiredTokens() {
+  await query(`DELETE FROM admin_refresh_tokens WHERE expires_at <= NOW()`);
+}
+
+// ─── User Management ─────────────────────────────────────────────────────────
+
+export async function getAllUsers({ page = 1, limit = 50, search = '', filter = 'all' }) {
   const offset = (page - 1) * limit;
+  let whereClause = '';
   const params = [];
-  let where = 'WHERE u.is_active = 1';
 
   if (search) {
-    where += ` AND (u.email LIKE ? OR u.name LIKE ?)`;
+    whereClause = 'WHERE (u.email LIKE ? OR u.name LIKE ?)';
     params.push(`%${search}%`, `%${search}%`);
   }
-  if (filter === 'banned') where += ' AND u.is_banned = 1';
-  if (filter === 'premium') where += ' AND u.premium_expires_at > NOW()';
-  if (filter === 'free') where += ' AND (u.premium_expires_at IS NULL OR u.premium_expires_at <= NOW())';
 
-  const countRows = await query(
-    `SELECT COUNT(*) as total FROM users u ${where}`,
-    params
-  );
-  const total = Number(countRows[0].total);
+  if (filter === 'premium') {
+    whereClause += (whereClause ? ' AND ' : 'WHERE ') + 'u.plan_type != "free"';
+  } else if (filter === 'banned') {
+    whereClause += (whereClause ? ' AND ' : 'WHERE ') + 'u.is_banned = 1';
+  } else if (filter === 'free') {
+    whereClause += (whereClause ? ' AND ' : 'WHERE ') + 'u.plan_type = "free"';
+  }
 
-  const users = await query(
-    `SELECT u.id, u.email, u.name, u.level, u.exp, u.is_banned, u.banned_reason,
-            u.premium_expires_at, u.created_at, u.last_login_at,
-            COUNT(DISTINCT s.id) as syntheses_count
-     FROM users u
-     LEFT JOIN syntheses s ON s.user_id = u.id AND s.is_archived = 0
-     ${where}
-     GROUP BY u.id
-     ORDER BY u.created_at DESC
-     LIMIT ? OFFSET ?`,
-    [...params, limit, offset]
-  );
+  const countQuery = `SELECT COUNT(*) as total FROM users u ${whereClause}`;
+  const dataQuery = `
+    SELECT u.*, 
+           (SELECT COUNT(*) FROM syntheses WHERE user_id = u.id) as syntheses_count
+    FROM users u
+    ${whereClause}
+    ORDER BY u.created_at DESC
+    LIMIT ? OFFSET ?
+  `;
 
-  return { users, total, page, totalPages: Math.ceil(total / limit) };
-};
+  const [countResult, users] = await Promise.all([
+    query(countQuery, params),
+    query(dataQuery, [...params, limit, offset])
+  ]);
 
-export const getUserById = async (id) => {
+  const total = countResult[0].total;
+  return {
+    users,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit)
+  };
+}
+
+export async function getUserById(userId) {
   const rows = await query(
-    `SELECT u.*, COUNT(DISTINCT s.id) as syntheses_count
+    `SELECT u.*, 
+            (SELECT COUNT(*) FROM syntheses WHERE user_id = u.id) as syntheses_count,
+            (SELECT COUNT(*) FROM flashcards f JOIN syntheses s ON f.synthese_id = s.id WHERE s.user_id = u.id) as flashcards_count,
+            (SELECT COUNT(*) FROM quiz_questions q JOIN syntheses s ON q.synthese_id = s.id WHERE s.user_id = u.id) as quiz_count
      FROM users u
-     LEFT JOIN syntheses s ON s.user_id = u.id AND s.is_archived = 0
      WHERE u.id = ?
-     GROUP BY u.id`,
-    [id]
+     LIMIT 1`,
+    [userId]
   );
-  if (!rows[0]) return null;
-  const user = rows[0];
-  // Remove sensitive fields
-  delete user.password;
-  const syntheses = await query(
-    `SELECT id, title, subject, created_at FROM syntheses WHERE user_id = ? AND is_archived = 0 ORDER BY created_at DESC LIMIT 10`,
-    [id]
-  );
-  return { ...user, recentSyntheses: syntheses };
-};
+  return rows[0] || null;
+}
 
-export const banUser = async (userId, reason = null) => {
+export async function updateUserBanStatus(userId, isBanned, banReason = null) {
+  await query(
+    `UPDATE users SET is_banned = ?, ban_reason = ? WHERE id = ?`,
+    [isBanned ? 1 : 0, banReason, userId]
+  );
+}
+
+export async function updateUserPlan(userId, planType) {
+  await query(
+    `UPDATE users SET plan_type = ? WHERE id = ?`,
+    [planType, userId]
+  );
+}
+
+export async function banUser(userId, reason = null) {
   await query(
     `UPDATE users SET is_banned = 1, banned_reason = ?, banned_at = NOW() WHERE id = ?`,
     [reason, userId]
   );
-  // Invalidate all refresh tokens
-  await query(`DELETE FROM refresh_tokens WHERE user_id = ?`, [userId]);
-};
+}
 
-export const unbanUser = async (userId) => {
+export async function unbanUser(userId) {
   await query(
     `UPDATE users SET is_banned = 0, banned_reason = NULL, banned_at = NULL WHERE id = ?`,
     [userId]
   );
-};
+}
 
-export const setPremium = async (userId, expiresAt) => {
+export async function setPremium(userId, expiresAt = null) {
+  // If expiresAt is explicitly null, set premium permanent (far future date)
+  // If expiresAt is undefined or empty string, set premium for 1 year
+  // If expiresAt is a valid date, use it
+  
+  let finalDate = expiresAt;
+  
+  if (expiresAt === null || expiresAt === 'null') {
+    // Premium permanent - max TIMESTAMP value (MySQL TIMESTAMP max is 2038-01-19)
+    finalDate = new Date('2037-12-31 23:59:59');
+  } else if (!expiresAt || expiresAt === '') {
+    // Default: 1 year premium
+    finalDate = new Date();
+    finalDate.setFullYear(finalDate.getFullYear() + 1);
+  }
+  
   await query(
-    `UPDATE users SET premium_expires_at = ? WHERE id = ?`,
-    [expiresAt || null, userId]
+    `UPDATE users SET plan_type = 'premium', premium_expires_at = ? WHERE id = ?`,
+    [finalDate, userId]
   );
-};
+}
 
-export const deleteUser = async (userId) => {
-  // Cascade: delete all user data in dependency order
-  await query(`DELETE FROM refresh_tokens WHERE user_id = ?`, [userId]);
-  await query(`DELETE FROM password_resets WHERE user_id = ?`, [userId]);
-  await query(`DELETE FROM push_subscriptions WHERE user_id = ?`, [userId]);
-  await query(`DELETE FROM chat_messages WHERE user_id = ?`, [userId]);
+export async function deleteUser(userId) {
+  // Delete user and all related data
+  await query(`DELETE FROM syntheses WHERE user_id = ?`, [userId]);
   await query(`DELETE FROM daily_usage WHERE user_id = ?`, [userId]);
-  await query(`DELETE FROM daily_progress WHERE user_id = ?`, [userId]);
-  await query(`DELETE FROM study_history WHERE user_id = ?`, [userId]);
-  await query(`DELETE FROM quiz_answers WHERE user_id = ?`, [userId]);
-
-  // Exercise items depend on exercises
-  const exerciseIds = await query(`SELECT id FROM exercises WHERE user_id = ?`, [userId]);
-  if (exerciseIds.length) {
-    const ids = exerciseIds.map(r => r.id);
-    await query(`DELETE FROM exercise_items WHERE exercise_set_id IN (?)`, [ids]);
-  }
-  await query(`DELETE FROM exercises WHERE user_id = ?`, [userId]);
-
-  // Revision completions depend on revision sessions
-  const revisionIds = await query(`SELECT id FROM revision_sessions WHERE user_id = ?`, [userId]);
-  if (revisionIds.length) {
-    const ids = revisionIds.map(r => r.id);
-    await query(`DELETE FROM revision_completions WHERE session_id IN (?)`, [ids]);
-  }
-  await query(`DELETE FROM revision_sessions WHERE user_id = ?`, [userId]);
-
-  // Feedback votes depend on feedbacks
-  const feedbackIds = await query(`SELECT id FROM feedbacks WHERE user_id = ?`, [userId]);
-  if (feedbackIds.length) {
-    const ids = feedbackIds.map(r => r.id);
-    await query(`DELETE FROM feedback_votes WHERE feedback_id IN (?)`, [ids]);
-  }
-  await query(`DELETE FROM feedbacks WHERE user_id = ?`, [userId]);
-  // Also delete votes this user cast on others' feedbacks
-  await query(`DELETE FROM feedback_votes WHERE user_id = ?`, [userId]);
-
-  // Folders and syntheses
-  await query(`DELETE FROM folders WHERE user_id = ?`, [userId]);
-  const syntheseIds = await query(`SELECT id FROM syntheses WHERE user_id = ?`, [userId]);
-  if (syntheseIds.length) {
-    const ids = syntheseIds.map(r => r.id);
-    await query(`DELETE FROM flashcards WHERE synthese_id IN (?)`, [ids]);
-    await query(`DELETE FROM quiz_questions WHERE synthese_id IN (?)`, [ids]);
-    await query(`DELETE FROM folder_syntheses WHERE synthese_id IN (?)`, [ids]);
-    await query(`DELETE FROM syntheses WHERE user_id = ?`, [userId]);
-  }
-
+  await query(`DELETE FROM subscriptions WHERE user_id = ?`, [userId]);
+  await query(`DELETE FROM conversations WHERE user_id = ?`, [userId]);
   await query(`DELETE FROM users WHERE id = ?`, [userId]);
-};
+}
 
-// ─── Announcements ────────────────────────────────────────────────────────────
+// ─── Announcements ───────────────────────────────────────────────────────────
 
-export const getAnnouncements = async () => {
-  return await query(`SELECT * FROM announcements ORDER BY created_at DESC`);
-};
-
-export const getActiveAnnouncements = async (audience = 'free') => {
+export async function getAnnouncements() {
   return await query(
-    `SELECT id, title, body, type FROM announcements
-     WHERE is_active = 1
-       AND (starts_at IS NULL OR starts_at <= NOW())
-       AND (ends_at IS NULL OR ends_at > NOW())
-       AND (target_audience = 'all' OR target_audience = ?)
+    `SELECT a.*, ad.email as admin_email 
+     FROM announcements a 
+     LEFT JOIN admins ad ON a.created_by_admin_id = ad.id 
+     ORDER BY a.created_at DESC`
+  );
+}
+
+export async function getActiveAnnouncements(audience = 'free') {
+  return await query(
+    `SELECT * FROM announcements 
+     WHERE is_active = 1 
+     AND (target_audience = ? OR target_audience = 'all')
+     AND (starts_at IS NULL OR starts_at <= NOW())
+     AND (ends_at IS NULL OR ends_at >= NOW())
      ORDER BY created_at DESC`,
     [audience]
   );
-};
+}
 
-export const createAnnouncement = async ({ title, body, type, target_audience, is_active, starts_at, ends_at, adminId }) => {
+export async function createAnnouncement({ title, body, type = 'info', target_audience = 'all', is_active = 1, starts_at = null, ends_at = null, adminId }) {
   const result = await query(
-    `INSERT INTO announcements (title, body, type, target_audience, is_active, starts_at, ends_at, created_by_admin_id)
+    `INSERT INTO announcements (title, body, type, target_audience, is_active, starts_at, ends_at, created_by_admin_id) 
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [title, body, type || 'info', target_audience || 'all', is_active ?? 1, starts_at || null, ends_at || null, adminId]
+    [title, body, type, target_audience, is_active, starts_at, ends_at, adminId]
   );
+  
   const rows = await query(`SELECT * FROM announcements WHERE id = ?`, [result.insertId]);
   return rows[0];
-};
+}
 
-export const updateAnnouncement = async (id, { title, body, type, target_audience, is_active, starts_at, ends_at }) => {
-  await query(
-    `UPDATE announcements SET
-       title = COALESCE(?, title),
-       body = COALESCE(?, body),
-       type = COALESCE(?, type),
-       target_audience = COALESCE(?, target_audience),
-       is_active = CASE WHEN ? IS NOT NULL THEN ? ELSE is_active END,
-       starts_at = ?,
-       ends_at = ?,
-       updated_at = NOW()
-     WHERE id = ?`,
-    [title, body, type, target_audience,
-     is_active !== undefined ? 1 : null, is_active ? 1 : 0,
-     starts_at || null, ends_at || null, id]
-  );
+export async function updateAnnouncement(id, updates) {
+  const fields = [];
+  const values = [];
+  
+  const allowedFields = ['title', 'body', 'type', 'target_audience', 'is_active', 'starts_at', 'ends_at'];
+  for (const field of allowedFields) {
+    if (updates[field] !== undefined) {
+      fields.push(`${field} = ?`);
+      values.push(updates[field]);
+    }
+  }
+  
+  if (fields.length === 0) {
+    const rows = await query(`SELECT * FROM announcements WHERE id = ?`, [id]);
+    return rows[0];
+  }
+  
+  values.push(id);
+  await query(`UPDATE announcements SET ${fields.join(', ')} WHERE id = ?`, values);
+  
   const rows = await query(`SELECT * FROM announcements WHERE id = ?`, [id]);
   return rows[0];
-};
+}
 
-export const deleteAnnouncement = async (id) => {
+export async function deleteAnnouncement(id) {
   await query(`DELETE FROM announcements WHERE id = ?`, [id]);
-};
+}
 
-export const markAnnouncementSent = async (id) => {
-  await query(`UPDATE announcements SET sent_at = NOW() WHERE id = ?`, [id]);
-};
-
-export const getAllUserEmails = async () => {
+export async function getAllUserEmails() {
   return await query(
-    `SELECT email, name, language FROM users WHERE is_active = 1 AND is_banned = 0 AND is_verified = 1`
+    `SELECT id, email, name FROM users WHERE is_banned = 0 AND is_verified = 1`
   );
-};
+}
+
+export async function markAnnouncementSent(id) {
+  await query(
+    `UPDATE announcements SET sent_at = NOW() WHERE id = ?`,
+    [id]
+  );
+}
+
+// ─── Stats ───────────────────────────────────────────────────────────────────
+
+export async function getStats() {
+  const [
+    totalUsers,
+    activeUsers,
+    premiumUsers,
+    bannedUsers,
+    totalSyntheses,
+    totalFlashcards,
+    totalQuizzes,
+    schoolRequests,
+    subscriptions,
+    newUsersToday,
+    newUsersThisWeek
+  ] = await Promise.all([
+    query(`SELECT COUNT(*) as count FROM users`),
+    query(`SELECT COUNT(*) as count FROM users WHERE last_login_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)`),
+    query(`SELECT COUNT(*) as count FROM users WHERE plan_type != 'free'`),
+    query(`SELECT COUNT(*) as count FROM users WHERE is_banned = 1`),
+    query(`SELECT COUNT(*) as count FROM syntheses`),
+    query(`SELECT COUNT(*) as count FROM flashcards`),
+    query(`SELECT COUNT(*) as count FROM quiz_questions`),
+    query(`SELECT COUNT(*) as count FROM school_requests WHERE status = 'pending'`),
+    query(`SELECT COUNT(*) as count FROM subscriptions WHERE status = 'active'`),
+    query(`SELECT COUNT(*) as count FROM users WHERE DATE(created_at) = CURDATE()`),
+    query(`SELECT COUNT(*) as count FROM users WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)`)
+  ]);
+
+  // Recent activity (last 30 days)
+  const recentActivity = await query(`
+    SELECT DATE(created_at) as date, COUNT(*) as count
+    FROM syntheses
+    WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+    GROUP BY DATE(created_at)
+    ORDER BY date DESC
+    LIMIT 30
+  `);
+
+  // Plan distribution
+  const planDistribution = await query(`
+    SELECT plan_type, COUNT(*) as count
+    FROM users
+    GROUP BY plan_type
+  `);
+
+  return {
+    // Format attendu par le frontend
+    totalUsers: totalUsers[0].count,
+    activeUsers: activeUsers[0].count,
+    premiumUsers: premiumUsers[0].count,
+    bannedUsers: bannedUsers[0].count,
+    totalSyntheses: totalSyntheses[0].count,
+    totalFlashcards: totalFlashcards[0].count,
+    totalQuizzes: totalQuizzes[0].count,
+    newUsersToday: newUsersToday[0].count,
+    newUsersThisWeek: newUsersThisWeek[0].count,
+    // Format détaillé pour API
+    users: {
+      total: totalUsers[0].count,
+      active: activeUsers[0].count,
+      premium: premiumUsers[0].count,
+      banned: bannedUsers[0].count,
+      newToday: newUsersToday[0].count,
+      newThisWeek: newUsersThisWeek[0].count
+    },
+    content: {
+      syntheses: totalSyntheses[0].count,
+      flashcards: totalFlashcards[0].count,
+      quizzes: totalQuizzes[0].count
+    },
+    requests: {
+      schoolRequests: schoolRequests[0].count
+    },
+    subscriptions: {
+      active: subscriptions[0].count
+    },
+    recentActivity,
+    planDistribution
+  };
+}

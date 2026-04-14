@@ -56,7 +56,12 @@
     "newImport": "New Import",
     "textOrVoice": "Take a photo",
     "feedback": "Feedback & Ideas",
-    "feedbackSubtitle": "Share your thoughts"
+    "feedbackSubtitle": "Share your thoughts",
+    "premiumBanner": {
+      "title": "Upgrade to Nora Premium ✨",
+      "subtitle": "GPT-4o · Unlimited exercises · Exclusive themes",
+      "cta": "See →"
+    }
   },
   "dailyProgress": {
     "title": "Daily Goals",
@@ -406,8 +411,11 @@
     "dictateCourse": "Dictate your course and it will be summarized",
     "micDenied": "Microphone access denied. Please allow access.",
     "micUnavailable": "Unable to access microphone.",
-    "noAudioRecorded": "No audio recorded."
+    "noAudioRecorded": "No audio recorded.",
+    "startDictation": "Dictate",
+    "stopDictation": "Stop dictation"
   },
+
   "photo": {
     "takePhoto": "Take a photo",
     "fromGallery": "From gallery",
@@ -493,7 +501,8 @@
     "noFolders": "No folders",
     "createFolderHint": "Create a folder to organize your summaries",
     "settings": "Settings",
-    "xpToLevel": "{{xp}} XP to Level {{level}}"
+    "xpToLevel": "{{xp}} XP to Level {{level}}",
+    "upgradePremium": "Go Premium"
   },
   "folders": {
     "create": "Create folder",
@@ -586,7 +595,8 @@
     "summary": "Summary",
     "print": "Print",
     "deleteConfirm": "Delete this summary and all its content?",
-    "deleteSynthesis": "Delete this summary"
+    "deleteSynthesis": "Delete this summary",
+    "premiumLabel": "Premium"
   },
   "auth": {
     "login": "Log in",
@@ -807,7 +817,33 @@
       "cameraTitle": "Test photo",
       "cameraTip": "Tap to capture",
       "generatingAudio": "Generating voice message..."
-    }
+    },
+    "sidebar": {
+      "title": "Conversations",
+      "newConversation": "New conversation",
+      "empty": "No conversations yet. Click + to start.",
+      "untitled": "New conversation",
+      "clearContext": "clear all"
+    },
+    "context": {
+      "title": "Summaries in context",
+      "active": "active",
+      "activePlural": "active",
+      "empty": "No summaries available",
+      "hint": "Aron will use these summaries to answer your questions in this conversation.",
+      "addButton": "Add summaries to context"
+    },
+    "commands": {
+      "helpTitle": "📋 **Available commands**",
+      "exs": "Launch exercise mode (Monk Mode)",
+      "ana": "Analyse a photo exam (Ana)",
+      "context": "Add summaries as context",
+      "clear": "Clear active context",
+      "help": "Show available commands"
+    },
+    "clearContextMsg": "🗑️ Context cleared. I'm now responding without specific summaries.",
+    "conversationLimit": "Conversation limit reached. Delete a conversation to create a new one.",
+    "messageTooLong": "Message too long"
   },
   "exercises": {
     "title": "My exercises",
@@ -844,6 +880,104 @@
     "print": "Print",
     "globalFeedback": "🌟 Overall feedback",
     "correctBtn": "Grade my exercises ({{answered}}/{{total}})",
-    "correcting": "Grading in progress..."
+    "correcting": "Grading in progress...",
+    "personalizedAnalysis": "Personalised analysis",
+    "audioUnavailable": "Audio unavailable",
+    "audioLoading": "Loading...",
+    "listen": "Listen",
+    "transcript": "Transcript"
+  },
+  "pricing": {
+    "title": "Plans",
+    "paymentSuccess": "Payment successful! Your plan has been updated.",
+    "perMonth": "/month",
+    "connectionError": "Connection error",
+    "checkoutError": "Error creating payment",
+    "free": {
+      "name": "Free",
+      "description": "Discover Nora",
+      "price": "€0",
+      "currentPlan": "Current plan",
+      "downgrade": "Switch to free"
+    },
+    "premium": {
+      "name": "Premium",
+      "popular": "POPULAR",
+      "description": "The full experience",
+      "currentPlan": "✨ Current plan",
+      "subscribe": "Subscribe"
+    },
+    "school": {
+      "name": "School",
+      "description": "For institutions",
+      "perStudentPerMonth": " × number of students /month",
+      "currentPlan": "🏫 Current plan",
+      "contact": "Contact us"
+    },
+    "promo": {
+      "title": "Promo code",
+      "placeholder": "Enter your code",
+      "apply": "Apply",
+      "discountPercent": "{{value}}% discount applied!",
+      "discountFixed": "€{{value}} discount applied!"
+    },
+    "schoolContact": {
+      "title": "School contact",
+      "schoolName": "School name *",
+      "contactEmail": "Contact email *",
+      "contactName": "Contact name",
+      "studentCount": "Number of students",
+      "message": "Message",
+      "submit": "Send request",
+      "successTitle": "Request sent!",
+      "successText": "We'll get back to you shortly."
+    },
+    "features": {
+      "aiSpeed": "AI speed",
+      "aiModel": "AI model",
+      "syntheses": "Summaries",
+      "chatPerDay": "Aron chat / day",
+      "analysesPerDay": "Analyses / day",
+      "exercisesPerDay": "Exercises / day",
+      "dailyGoals": "Daily goals",
+      "folders": "Folders",
+      "flashcardsQuiz": "Flashcards & Quiz",
+      "slow": "Slow",
+      "fast": "Fast",
+      "basic": "Basic"
+    }
+  },
+  "premiumGate": {
+    "perk1": "High-quality GPT-4o AI model",
+    "perk2": "Unlimited Aron conversations",
+    "perk3": "Exclusive personalised themes",
+    "perk4": "Text-to-speech (TTS)",
+    "perk5": "Unlimited advanced exercises",
+    "defaultDescription": "Available with Nora Premium only",
+    "cta": "✨ Discover Premium",
+    "dismiss": "Continue with the free plan",
+    "features": {
+      "tts": "Text-to-speech",
+      "ttsDesc": "Listen to your analysis feedback as audio. Available with Nora Premium.",
+      "autoFolder": "Auto folders",
+      "autoFolderDesc": "Automatically sort your summaries into subject folders. Available with Nora Premium.",
+      "dailyGoals": "Daily goals",
+      "dailyGoalsDesc": "Set personalised daily study goals. Available with Nora Premium.",
+      "flashcards": "Flashcards",
+      "flashcardsDesc": "Review your summaries with interactive flashcards. Available with Nora Premium.",
+      "quiz": "Quiz",
+      "quizDesc": "Test your knowledge with auto-generated quizzes. Available with Nora Premium.",
+      "folders": "Folders",
+      "foldersDesc": "Organise your summaries into personalised folders. Available with Nora Premium.",
+      "monkMode": "Exercise Mode (Monk Mode)",
+      "monkModeDesc": "Generate personalised exercises from your summaries. Available with Nora Premium.",
+      "anaMode": "Ana Mode (Exam Analysis)",
+      "anaModeDesc": "Analyse an exam photo and generate targeted exercises. Available with Nora Premium.",
+      "themes": "Exclusive Themes",
+      "themesDesc": "Midnight, Forest and Aurora themes are reserved for Premium subscribers."
+    }
+  },
+  "themeSelector": {
+    "premiumHint": "Subscribe to unlock"
   }
 }

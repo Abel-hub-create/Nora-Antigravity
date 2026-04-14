@@ -20,9 +20,9 @@ export const findByGoogleId = async (googleId) => {
 };
 
 export const createGoogleUser = async ({ googleId, email, name, picture }) => {
-  // Google users are auto-verified and use light theme by default
-  const sql = `INSERT INTO users (google_id, email, name, avatar, theme, language, is_verified, onboarding_completed)
-               VALUES (?, ?, ?, ?, 'light', 'fr', TRUE, FALSE)`;
+  // Google users are auto-verified and use light theme by default, auto_folder OFF (free plan)
+  const sql = `INSERT INTO users (google_id, email, name, avatar, theme, language, auto_folder, is_verified, onboarding_completed)
+               VALUES (?, ?, ?, ?, 'light', 'fr', 0, TRUE, FALSE)`;
   const result = await query(sql, [googleId, email, name, picture]);
   return { id: result.insertId, email, name, avatar: picture };
 };
@@ -40,8 +40,8 @@ export const findByAppleId = async (appleId) => {
 };
 
 export const createAppleUser = async ({ appleId, email, name }) => {
-  const sql = `INSERT INTO users (apple_id, email, name, theme, language, is_verified, onboarding_completed)
-               VALUES (?, ?, ?, 'light', 'fr', TRUE, FALSE)`;
+  const sql = `INSERT INTO users (apple_id, email, name, theme, language, auto_folder, is_verified, onboarding_completed)
+               VALUES (?, ?, ?, 'light', 'fr', 0, TRUE, FALSE)`;
   const result = await query(sql, [appleId, email || null, name || null]);
   return { id: result.insertId, email, name };
 };
@@ -52,7 +52,7 @@ export const linkAppleAccount = async (userId, appleId) => {
 };
 
 export const findById = async (id) => {
-  const sql = `SELECT id, email, name, avatar, theme, language, auto_folder, onboarding_completed, level, exp, next_level_exp, streak, eggs, collection, created_at, is_banned, banned_reason
+  const sql = `SELECT id, email, name, avatar, theme, language, auto_folder, onboarding_completed, level, exp, next_level_exp, streak, eggs, collection, created_at, is_banned, banned_reason, plan_type, premium_expires_at
                FROM users WHERE id = ? AND is_active = 1`;
   const users = await query(sql, [id]);
   return users[0] || null;
@@ -152,10 +152,10 @@ export const markPasswordResetUsed = async (token) => {
 
 // Email verification management
 export const createWithVerificationToken = async ({ email, password, name, language = 'fr', verificationToken, verificationExpires }) => {
-  // Default preferences for new accounts: light theme, user's selected language
+  // Default preferences for new accounts: light theme, user's selected language, auto_folder OFF (free plan)
   const userLanguage = ['fr', 'en', 'es', 'zh'].includes(language) ? language : 'fr';
-  const sql = `INSERT INTO users (email, password, name, theme, language, is_verified, verification_token, verification_token_expires)
-               VALUES (?, ?, ?, 'light', ?, FALSE, ?, ?)`;
+  const sql = `INSERT INTO users (email, password, name, theme, language, auto_folder, is_verified, verification_token, verification_token_expires)
+               VALUES (?, ?, ?, 'light', ?, 0, FALSE, ?, ?)`;
   const result = await query(sql, [email, password, name, userLanguage, verificationToken, verificationExpires]);
   return { id: result.insertId, email, name, theme: 'light', language: userLanguage };
 };

@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Mic, MicOff } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 const VoiceDictation = ({ onTranscript, disabled = false }) => {
+    const { t } = useTranslation();
     const [isListening, setIsListening] = useState(false);
     const [isSupported, setIsSupported] = useState(true);
     const recognitionRef = useRef(null);
@@ -103,7 +105,7 @@ const VoiceDictation = ({ onTranscript, disabled = false }) => {
                     ? 'bg-error text-white'
                     : 'bg-primary/20 text-primary hover:bg-primary/30'
             } disabled:opacity-50`}
-            title={isListening ? 'Arrêter la dictée' : 'Dicter'}
+            title={isListening ? t('voice.stopDictation') : t('voice.startDictation')}
         >
             <div className="relative">
                 {isListening && (

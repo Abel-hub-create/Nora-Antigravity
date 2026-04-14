@@ -6,6 +6,7 @@ import * as hashService from '../services/hashService.js';
 import * as adminTokenService from '../services/adminTokenService.js';
 import * as adminRepo from '../services/adminRepository.js';
 import * as emailService from '../services/emailService.js';
+import * as planRepo from '../services/planRepository.js';
 import { authenticateAdmin } from '../middlewares/adminAuth.js';
 import { adminConfig } from '../config/adminConfig.js';
 
@@ -90,7 +91,7 @@ router.post('/auth/totp/qrcode', express.json(), async (req, res, next) => {
 
     // Generate a new secret and save it (not yet enabled)
     const secret = generateSecret();
-    await adminRepo.saveTotpSecret(payload.adminId, secret);
+    await adminRepo.updateAdminTotpSecret(payload.adminId, secret);
 
     const otpauthUri = `otpauth://totp/Mirora%20Admin:${encodeURIComponent(admin.email)}?secret=${secret}&issuer=Mirora%20Admin`;
     const qrCodeDataUrl = await QRCode.toDataURL(otpauthUri);
@@ -352,6 +353,300 @@ router.get('/announcements/active', async (req, res, next) => {
     const audience = req.query.audience || 'free';
     const announcements = await adminRepo.getActiveAnnouncements(audience);
     res.json({ announcements });
+  } catch (error) { next(error); }
+});
+
+// ─── Plans Management ────────────────────────────────────────────────────────
+
+router.get('/plans', authenticateAdmin, async (req, res, next) => {
+  try {
+    const plans = await planRepo.getAllPlans();
+    res.json({ plans });
+  } catch (error) { next(error); }
+});
+
+router.patch('/plans/:id', authenticateAdmin, express.json(), async (req, res, next) => {
+  try {
+    const plan = await planRepo.updatePlan(parseInt(req.params.id), req.body);
+    res.json({ plan });
+  } catch (error) { next(error); }
+});
+
+router.put('/plans/:id/limits', authenticateAdmin, express.json(), async (req, res, next) => {
+  try {
+    const planId = parseInt(req.params.id);
+    const { limits } = req.body; // [{ limit_key, limit_value, label }]
+    if (!Array.isArray(limits)) return res.status(400).json({ error: 'limits array required' });
+    for (const l of limits) {
+      await planRepo.updatePlanLimit(planId, l.limit_key, l.limit_value, l.label);
+    }
+    const plan = await planRepo.getPlanById(planId);
+    res.json({ plan });
+  } catch (error) { next(error); }
+});
+
+router.delete('/plans/:planId/limits/:key', authenticateAdmin, async (req, res, next) => {
+  try {
+    await planRepo.deletePlanLimit(parseInt(req.params.planId), req.params.key);
+    res.status(204).end();
+  } catch (error) { next(error); }
+});
+
+// ─── School Requests ─────────────────────────────────────────────────────────
+
+router.get('/school-requests', authenticateAdmin, async (req, res, next) => {
+  try {
+    const { page = 1, limit = 50, status = 'all' } = req.query;
+    const result = await planRepo.getSchoolRequests({ page: parseInt(page), limit: parseInt(limit), status });
+    res.json(result);
+  } catch (error) { next(error); }
+});
+
+router.patch('/school-requests/:id', authenticateAdmin, express.json(), async (req, res, next) => {
+  try {
+    await planRepo.updateSchoolRequest(parseInt(req.params.id), req.body);
+    res.json({ message: 'Updated' });
+  } catch (error) { next(error); }
+});
+
+router.delete('/school-requests/:id', authenticateAdmin, async (req, res, next) => {
+  try {
+    await planRepo.deleteSchoolRequest(parseInt(req.params.id));
+    res.status(204).end();
+  } catch (error) { next(error); }
+});
+
+// ─── Promo Codes ─────────────────────────────────────────────────────────────
+
+router.get('/promo-codes', authenticateAdmin, async (req, res, next) => {
+  try {
+    const codes = await planRepo.getPromoCodes();
+    res.json({ codes });
+  } catch (error) { next(error); }
+});
+
+router.post('/promo-codes', authenticateAdmin, express.json(), async (req, res, next) => {
+  try {
+    const { code, discount_type, discount_value, max_uses, valid_from, valid_until, applicable_plans, stripe_coupon_id } = req.body;
+    if (!code || !discount_type || discount_value == null) {
+      return res.status(400).json({ error: 'code, discount_type, discount_value required' });
+    }
+    const id = await planRepo.createPromoCode({ code, discount_type, discount_value, max_uses, valid_from, valid_until, applicable_plans, stripe_coupon_id });
+    const promo = await planRepo.getPromoCodeById(id);
+    res.status(201).json({ promo });
+  } catch (error) { next(error); }
+});
+
+router.patch('/promo-codes/:id', authenticateAdmin, express.json(), async (req, res, next) => {
+  try {
+    await planRepo.updatePromoCode(parseInt(req.params.id), req.body);
+    const promo = await planRepo.getPromoCodeById(parseInt(req.params.id));
+    res.json({ promo });
+  } catch (error) { next(error); }
+});
+
+router.delete('/promo-codes/:id', authenticateAdmin, async (req, res, next) => {
+  try {
+    await planRepo.deletePromoCode(parseInt(req.params.id));
+    res.status(204).end();
+  } catch (error) { next(error); }
+});
+
+// ─── Admin: Set user plan manually ───────────────────────────────────────────
+
+router.patch('/users/:id/plan', authenticateAdmin, express.json(), async (req, res, next) => {
+  try {
+    const { plan_type, expires_at } = req.body;
+    if (!plan_type) return res.status(400).json({ error: 'plan_type required' });
+    if (!['free', 'premium', 'school'].includes(plan_type)) {
+      return res.status(400).json({ error: 'plan_type must be free, premium or school' });
+    }
+
+    if (plan_type === 'premium') {
+      // Use setPremium to handle both plan_type and premium_expires_at
+      await adminRepo.setPremium(parseInt(req.params.id), expires_at !== undefined ? expires_at : null);
+    } else {
+      // For free/school: update plan_type and clear premium_expires_at
+      await planRepo.setUserPlan(parseInt(req.params.id), plan_type);
+      const { query } = await import('../config/database.js');
+      await query(`UPDATE users SET premium_expires_at = NULL WHERE id = ?`, [parseInt(req.params.id)]);
+    }
+
+    res.json({ message: 'Plan updated' });
+  } catch (error) { next(error); }
+});
+
+// ─── Debug: Get AI Model Info for a user ─────────────────────────────────────
+
+router.get('/debug/ai-model/:userId', authenticateAdmin, async (req, res, next) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    if (!userId) return res.status(400).json({ error: 'Invalid userId' });
+    
+    // Get user info
+    const user = await adminRepo.getUserById(userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    
+    // Get plan limits for the user
+    const limits = await planRepo.getUserPlanLimits(userId);
+    
+    // Determine which model would be used
+    const planType = user.plan_type || 'free';
+    const aiModelKey = limits?.ai_model ?? 0;
+    const aiModelTier = limits?.ai_model_tier ?? 0;
+    
+    // Model mapping based on plan
+    let modelInfo = {
+      plan: planType,
+      userId: userId,
+      userEmail: user.email,
+      aiModelKey,
+      aiModelTier,
+      models: {}
+    };
+    
+    if (planType === 'free') {
+      modelInfo.models = {
+        primary: 'Gemini 2.5 Flash',
+        fallback: 'GPT-4o-mini',
+        reasoning: 'Free plan uses Gemini first (cheaper), falls back to GPT-4o-mini if unavailable'
+      };
+    } else if (planType === 'premium' || planType === 'school') {
+      modelInfo.models = {
+        primary: 'GPT-4o',
+        fallback: 'GPT-4o-mini',
+        reasoning: 'Premium/School plan uses GPT-4o for best quality'
+      };
+    }
+    
+    // Check if Gemini API key is configured
+    const geminiConfigured = !!process.env.GEMINI_API_KEY;
+    modelInfo.geminiConfigured = geminiConfigured;
+    
+    res.json(modelInfo);
+  } catch (error) { next(error); }
+});
+
+// ─── Debug: Get current admin AI Model config ───────────────────────────────
+
+router.get('/debug/ai-config', authenticateAdmin, async (req, res, next) => {
+  try {
+    const config = {
+      gemini: {
+        configured: !!process.env.GEMINI_API_KEY,
+        model: 'gemini-2.5-flash'
+      },
+      openai: {
+        configured: !!process.env.OPENAI_API_KEY,
+        models: ['gpt-4o', 'gpt-4o-mini']
+      },
+      modelTiers: {
+        free: { primary: 'Gemini 2.5 Flash', fallback: 'GPT-4o-mini' },
+        premium: { primary: 'GPT-4o', fallback: 'GPT-4o-mini' },
+        school: { primary: 'GPT-4o', fallback: 'GPT-4o-mini' }
+      }
+    };
+    res.json(config);
+  } catch (error) { next(error); }
+});
+
+// ─── Admin: View user conversations ─────────────────────────────────────────
+
+router.get('/conversations', authenticateAdmin, async (req, res, next) => {
+  try {
+    const { page = 1, limit = 50, search = '', userId } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const params = [];
+    let where = '';
+
+    if (userId) {
+      where = 'WHERE c.user_id = ?';
+      params.push(parseInt(userId));
+    } else if (search) {
+      where = 'WHERE (u.email LIKE ? OR u.name LIKE ? OR c.title LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
+
+    const { query: dbQuery } = await import('../config/database.js');
+
+    const [total, conversations] = await Promise.all([
+      dbQuery(`SELECT COUNT(*) as count FROM conversations c LEFT JOIN users u ON c.user_id = u.id ${where}`, params),
+      dbQuery(
+        `SELECT c.id, c.title, c.created_at, c.updated_at,
+                u.id as user_id, u.email as user_email, u.name as user_name, u.plan_type,
+                (SELECT COUNT(*) FROM conversation_messages WHERE conversation_id = c.id) as message_count
+         FROM conversations c
+         LEFT JOIN users u ON c.user_id = u.id
+         ${where}
+         ORDER BY c.updated_at DESC
+         LIMIT ? OFFSET ?`,
+        [...params, parseInt(limit), offset]
+      )
+    ]);
+
+    res.json({ conversations, total: total[0].count, page: parseInt(page), limit: parseInt(limit) });
+  } catch (error) { next(error); }
+});
+
+router.get('/conversations/:id', authenticateAdmin, async (req, res, next) => {
+  try {
+    const { query: dbQuery } = await import('../config/database.js');
+    const [conv] = await dbQuery(
+      `SELECT c.*, u.email as user_email, u.name as user_name
+       FROM conversations c LEFT JOIN users u ON c.user_id = u.id
+       WHERE c.id = ? LIMIT 1`,
+      [parseInt(req.params.id)]
+    );
+    if (!conv) return res.status(404).json({ error: 'Not found' });
+
+    const messages = await dbQuery(
+      `SELECT * FROM conversation_messages WHERE conversation_id = ? ORDER BY created_at ASC`,
+      [conv.id]
+    );
+    res.json({ conversation: conv, messages });
+  } catch (error) { next(error); }
+});
+
+router.delete('/conversations/:id', authenticateAdmin, async (req, res, next) => {
+  try {
+    const { query: dbQuery } = await import('../config/database.js');
+    await dbQuery(`DELETE FROM conversation_messages WHERE conversation_id = ?`, [parseInt(req.params.id)]);
+    await dbQuery(`DELETE FROM conversations WHERE id = ?`, [parseInt(req.params.id)]);
+    res.status(204).end();
+  } catch (error) { next(error); }
+});
+
+// ─── Admin: System Prompts Management ────────────────────────────────────────
+
+router.get('/system-prompts', authenticateAdmin, async (req, res, next) => {
+  try {
+    const { query: dbQuery } = await import('../config/database.js');
+    const prompts = await dbQuery(`SELECT * FROM system_prompts ORDER BY name ASC`);
+    res.json({ prompts });
+  } catch (error) { next(error); }
+});
+
+router.put('/system-prompts/:name', authenticateAdmin, express.json(), async (req, res, next) => {
+  try {
+    const { content, description } = req.body;
+    if (!content) return res.status(400).json({ error: 'content required' });
+    const { query: dbQuery } = await import('../config/database.js');
+    await dbQuery(
+      `INSERT INTO system_prompts (name, content, description, updated_at)
+       VALUES (?, ?, ?, NOW())
+       ON DUPLICATE KEY UPDATE content = ?, description = ?, updated_at = NOW()`,
+      [req.params.name, content, description || null, content, description || null]
+    );
+    const [prompt] = await dbQuery(`SELECT * FROM system_prompts WHERE name = ?`, [req.params.name]);
+    res.json({ prompt });
+  } catch (error) { next(error); }
+});
+
+router.post('/system-prompts/reset/:name', authenticateAdmin, async (req, res, next) => {
+  try {
+    const { query: dbQuery } = await import('../config/database.js');
+    await dbQuery(`DELETE FROM system_prompts WHERE name = ?`, [req.params.name]);
+    res.json({ message: 'Reset to default' });
   } catch (error) { next(error); }
 });
 

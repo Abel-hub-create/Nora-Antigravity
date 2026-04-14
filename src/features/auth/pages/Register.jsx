@@ -129,7 +129,7 @@ const Register = () => {
         {/* Logo & Header */}
         <div className="text-center mb-8">
           <motion.img
-            src="/nora-logo.png"
+            src="/noralogo.png"
             alt="Nora"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}

@@ -1,82 +1,90 @@
 let audioCtx = null;
+let clickBuffer = null;
+let hoverBuffer = null;
+let rawClickAb = null;
+let rawHoverAb = null;
 
-const getCtx = () => {
-    if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    return audioCtx;
+// Fetch des deux fichiers immédiatement
+if (typeof window !== 'undefined') {
+    fetch('/sounds/minecraftclic.mp3')
+        .then(r => r.arrayBuffer())
+        .then(ab => { rawClickAb = ab; if (audioCtx) _decodeClick(); })
+        .catch(() => {});
+
+    fetch('/sounds/swoosh.mp3')
+        .then(r => r.arrayBuffer())
+        .then(ab => { rawHoverAb = ab; if (audioCtx) _decodeHover(); })
+        .catch(() => {});
+}
+
+const _trimAndStore = (ab, setter) => {
+    audioCtx.decodeAudioData(ab, buf => {
+        const ch = buf.getChannelData(0);
+        let start = 0;
+        while (start < ch.length && Math.abs(ch[start]) < 0.005) start++;
+        start = Math.max(0, start - Math.floor(buf.sampleRate * 0.002));
+        const trimmed = audioCtx.createBuffer(buf.numberOfChannels, buf.length - start, buf.sampleRate);
+        for (let c = 0; c < buf.numberOfChannels; c++) {
+            trimmed.getChannelData(c).set(buf.getChannelData(c).subarray(start));
+        }
+        setter(trimmed);
+    }, () => {});
 };
 
-// Minecraft UI click — double pop rapide comme le vrai son
+const _decodeClick = () => {
+    if (!audioCtx || !rawClickAb || clickBuffer) return;
+    const ab = rawClickAb; rawClickAb = null;
+    _trimAndStore(ab, buf => { clickBuffer = buf; });
+};
+
+const _decodeHover = () => {
+    if (!audioCtx || !rawHoverAb || hoverBuffer) return;
+    const ab = rawHoverAb; rawHoverAb = null;
+    _trimAndStore(ab, buf => { hoverBuffer = buf; });
+};
+
+// Débloque sur pointerdown ET mousemove — hover decode avant tout clic
+if (typeof document !== 'undefined') {
+    const unlock = () => {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (rawClickAb) _decodeClick();
+            if (rawHoverAb) _decodeHover();
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        document.removeEventListener('pointerdown', unlock, true);
+        document.removeEventListener('mousemove', unlock, true);
+    };
+    document.addEventListener('pointerdown', unlock, true);
+    document.addEventListener('mousemove', unlock, { once: true, capture: true });
+}
+
 export const playClick = () => {
     try {
-        const ctx = getCtx();
-        const now = ctx.currentTime;
-
-        // Premier pop
-        const osc1 = ctx.createOscillator();
-        const gain1 = ctx.createGain();
-        osc1.type = 'square';
-        osc1.frequency.setValueAtTime(820, now);
-        osc1.frequency.exponentialRampToValueAtTime(180, now + 0.035);
-        gain1.gain.setValueAtTime(0.028, now);
-        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
-        osc1.connect(gain1);
-        gain1.connect(ctx.destination);
-        osc1.start(now);
-        osc1.stop(now + 0.035);
-
-        // Deuxième pop léger (écho immédiat)
-        const osc2 = ctx.createOscillator();
-        const gain2 = ctx.createGain();
-        osc2.type = 'square';
-        osc2.frequency.setValueAtTime(500, now + 0.025);
-        osc2.frequency.exponentialRampToValueAtTime(120, now + 0.055);
-        gain2.gain.setValueAtTime(0.012, now + 0.025);
-        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
-        osc2.connect(gain2);
-        gain2.connect(ctx.destination);
-        osc2.start(now + 0.025);
-        osc2.stop(now + 0.055);
+        if (!audioCtx || !clickBuffer) return;
+        const src = audioCtx.createBufferSource();
+        src.buffer = clickBuffer;
+        const gain = audioCtx.createGain();
+        gain.gain.value = 0.4;
+        src.connect(gain);
+        gain.connect(audioCtx.destination);
+        src.start(audioCtx.currentTime);
     } catch (_) {}
 };
 
-// Hover swoosh — très léger, uniquement sur éléments qui s'agrandissent
 let lastHover = 0;
 export const playHover = () => {
     const now = Date.now();
-    if (now - lastHover < 100) return; // throttle
+    if (now - lastHover < 100) return;
     lastHover = now;
-
     try {
-        const ctx = getCtx();
-        const t = ctx.currentTime;
-
-        // Bruit filtré qui monte rapidement
-        const bufLen = Math.floor(ctx.sampleRate * 0.07);
-        const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
-        const data = buf.getChannelData(0);
-        for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
-
-        const src = ctx.createBufferSource();
-        src.buffer = buf;
-
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(1200, t);
-        filter.frequency.exponentialRampToValueAtTime(3500, t + 0.04);
-        filter.Q.value = 2;
-
-        const gain = ctx.createGain();
-        gain.gain.setValueAtTime(0.001, t);
-        gain.gain.linearRampToValueAtTime(0.022, t + 0.025);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
-
-        src.connect(filter);
-        filter.connect(gain);
-        gain.connect(ctx.destination);
-
-        src.start(t);
+        if (!audioCtx || !hoverBuffer) return;
+        const src = audioCtx.createBufferSource();
+        src.buffer = hoverBuffer;
+        const gain = audioCtx.createGain();
+        gain.gain.value = 0.18;
+        src.connect(gain);
+        gain.connect(audioCtx.destination);
+        src.start(audioCtx.currentTime);
     } catch (_) {}
 };

@@ -4,7 +4,28 @@ import { chat, analyzeDifficulties, generateExercises, correctExercises, correct
 import { extractTextFromImage } from '../services/openaiService.js';
 import * as exerciseRepo from '../services/exerciseRepository.js';
 import { query } from '../config/database.js';
-import { checkAndIncrement, LIMITS } from '../services/dailyUsageRepository.js';
+import { checkAndIncrement, DEFAULT_LIMITS } from '../services/dailyUsageRepository.js';
+import { requireFeature } from '../middlewares/quotaMiddleware.js';
+import { getUserPlanLimits } from '../services/planRepository.js';
+
+// Feature gate: allow if has_quiz=1 OR max_exs_per_day > 0
+const requireQuizAccess = async (req, res, next) => {
+  try {
+    const { limits } = await getUserPlanLimits(req.user.id);
+    req.planLimits = limits;
+    const allowed = limits.has_quiz || (limits.max_exs_per_day ?? 0) > 0;
+    if (!allowed) {
+      return res.status(403).json({
+        error: 'FEATURE_LOCKED',
+        feature: 'has_quiz',
+        message: 'Cette fonctionnalité nécessite un abonnement supérieur'
+      });
+    }
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
 
 const router = express.Router();
 router.use(authenticate);
@@ -19,6 +40,18 @@ router.post('/chat', async (req, res, next) => {
     }
 
     const lang = (req.headers['accept-language'] || 'fr').split(',')[0].split('-')[0];
+
+    // Check max_char_per_message from plan limits
+    const { limits: planLimits } = await getUserPlanLimits(req.user.id);
+    const maxChars = planLimits?.max_char_per_message ?? 500;
+    const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+    if (lastUserMsg && lastUserMsg.content.length > maxChars) {
+      return res.status(400).json({
+        error: 'MESSAGE_TOO_LONG',
+        maxChars,
+        currentChars: lastUserMsg.content.length
+      });
+    }
 
     // Check daily chat limit
     const chatUsage = await checkAndIncrement(req.user.id, 'chat');
@@ -39,7 +72,7 @@ router.post('/chat', async (req, res, next) => {
       );
     }
 
-    const response = await chat(messages, lang);
+    const response = await chat(messages, lang, req.user.id);
 
     await query(
       `INSERT INTO chat_messages (user_id, role, content) VALUES (?, 'assistant', ?)`,
@@ -84,7 +117,7 @@ router.get('/subjects', async (req, res, next) => {
 
 // ─── Monk Mode — Analyse ─────────────────────────────────────────────────────
 
-router.post('/monk-mode/analyze', async (req, res, next) => {
+router.post('/monk-mode/analyze', requireQuizAccess, async (req, res, next) => {
   try {
     const { subject } = req.body;
     if (!subject) return res.status(400).json({ error: 'subject requis' });
@@ -100,7 +133,8 @@ router.post('/monk-mode/analyze', async (req, res, next) => {
       subject,
       quizAnswers,
       synthesesTitles: syntheses.map(s => s.title),
-      lang
+      lang,
+      userId: req.user.id
     });
 
     res.json({
@@ -115,7 +149,7 @@ router.post('/monk-mode/analyze', async (req, res, next) => {
 
 // ─── Monk Mode — Génération d'exercices ──────────────────────────────────────
 
-router.post('/monk-mode/generate', async (req, res, next) => {
+router.post('/monk-mode/generate', requireQuizAccess, async (req, res, next) => {
   try {
     const { subject, weakTopics, errorPatterns, analysisSummary, specificDifficulties, counts, difficulty, source, feedbackNote } = req.body;
 
@@ -164,7 +198,8 @@ router.post('/monk-mode/generate', async (req, res, next) => {
       specificDifficulties,
       counts: safeCounts,
       difficulty: safeDifficulty,
-      lang
+      lang,
+      userId: req.user.id
     });
 
     // Sauvegarder en DB
@@ -313,13 +348,34 @@ router.post('/ana/analyze', async (req, res, next) => {
 
 // ─── TTS — Synthèse vocale ────────────────────────────────────────────────────
 
-router.post('/tts', express.json({ limit: '10kb' }), async (req, res, next) => {
+router.post('/tts', requireFeature('has_tts'), express.json({ limit: '10kb' }), async (req, res, next) => {
   try {
-    const { text } = req.body;
+    const { text, exerciseId } = req.body;
     if (!text || text.trim().length < 5) {
       return res.status(400).json({ error: 'text requis' });
     }
+
+    // Serve from cache if exerciseId provided
+    if (exerciseId) {
+      const rows = await query(
+        'SELECT feedback_audio FROM exercises WHERE id = ? AND user_id = ?',
+        [exerciseId, req.user.id]
+      );
+      if (rows[0]?.feedback_audio) {
+        return res.json({ audio: rows[0].feedback_audio, cached: true });
+      }
+    }
+
     const audioBase64 = await generateTTS(text);
+
+    // Store in cache
+    if (exerciseId) {
+      await query(
+        'UPDATE exercises SET feedback_audio = ? WHERE id = ? AND user_id = ?',
+        [audioBase64, exerciseId, req.user.id]
+      );
+    }
+
     res.json({ audio: audioBase64 });
   } catch (error) {
     next(error);

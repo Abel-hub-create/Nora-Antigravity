@@ -6,6 +6,7 @@ import * as syntheseRepo from '../services/syntheseRepository.js';
 import { logQuizAnswer } from '../services/exerciseRepository.js';
 import { findOrCreateSubjectFolder, addSynthesesToFolder } from '../services/folderRepository.js';
 import * as userRepository from '../services/userRepository.js';
+import { getUserPlanLimits } from '../services/planRepository.js';
 
 const router = express.Router();
 
@@ -48,9 +49,11 @@ router.post('/', validate(validators.createSyntheseSchema), async (req, res, nex
   try {
     const { title, originalContent, summaryContent, sourceType, subject, flashcards, quizQuestions, specificInstructions } = req.body;
 
-    // Check max syntheses limit (40)
+    // Check max syntheses limit from user's plan
     const currentCount = await syntheseRepo.countByUser(req.user.id);
-    if (currentCount >= 40) {
+    const { limits } = await getUserPlanLimits(req.user.id);
+    const maxSyntheses = limits.max_syntheses ?? 3;
+    if (currentCount >= maxSyntheses) {
       const error = new Error('SYNTHESES_LIMIT_REACHED');
       error.statusCode = 403;
       error.code = 'SYNTHESES_LIMIT_REACHED';

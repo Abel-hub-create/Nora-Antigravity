@@ -14,6 +14,8 @@ import feedbackRoutes from './routes/feedbackRoutes.js';
 import assistantRoutes from './routes/assistantRoutes.js';
 import exerciseRoutes from './routes/exerciseRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import subscriptionRoutes from './routes/subscriptionRoutes.js';
+import conversationRoutes from './routes/conversationRoutes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
 dotenv.config();
@@ -48,6 +50,8 @@ app.use('/api/feedback', feedbackRoutes);
 app.use('/api/assistant', assistantRoutes);
 app.use('/api/exercises', exerciseRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/conversations', conversationRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

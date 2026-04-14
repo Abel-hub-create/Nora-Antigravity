@@ -7,6 +7,7 @@
 
 import OpenAI from 'openai';
 import { getSubjectPrompt } from './subjectPrompts.js';
+import { chatCompletion } from './aiModelService.js';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -505,28 +506,40 @@ function parseAndValidateResponse(text) {
  * @param {string|null} subject - Matiere selectionnee par l'utilisateur (optionnel, ex: 'mathematics')
  * @returns {Promise<Object>} - { title, summary, flashcards, quizQuestions }
  */
-async function callOpenAI(trimmedContent, specificInstructions, subject, lang = 'fr') {
-  const response = await openai.chat.completions.create({
-    model: MODEL,
-    messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: buildUserPrompt(trimmedContent, specificInstructions, subject, lang) }
-    ],
-    max_tokens: MAX_TOKENS,
-    temperature: 0.7,
-    response_format: { type: 'json_object' }
-  });
+async function callOpenAI(trimmedContent, specificInstructions, subject, lang = 'fr', userId = null) {
+  const messages = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'user', content: buildUserPrompt(trimmedContent, specificInstructions, subject, lang) }
+  ];
 
-  const rawContent = response.choices[0]?.message?.content;
+  let rawContent;
+  if (userId) {
+    rawContent = await chatCompletion(userId, {
+      messages,
+      maxTokens: MAX_TOKENS,
+      temperature: 0.7,
+      jsonMode: true,
+      purpose: 'content'
+    });
+  } else {
+    const response = await openai.chat.completions.create({
+      model: MODEL,
+      messages,
+      max_tokens: MAX_TOKENS,
+      temperature: 0.7,
+      response_format: { type: 'json_object' }
+    });
+    rawContent = response.choices[0]?.message?.content;
+    const tokens = response.usage?.total_tokens || 'N/A';
+    console.log(`[ContentGen] Reponse reçue (${tokens} tokens)`);
+  }
+
   if (!rawContent) throw new Error('Reponse vide de l\'API');
-
-  const tokens = response.usage?.total_tokens || 'N/A';
-  console.log(`[ContentGen] Reponse reçue (${tokens} tokens)`);
 
   return parseAndValidateResponse(rawContent);
 }
 
-export async function generateEducationalContent(content, specificInstructions = null, subject = null, lang = 'fr') {
+export async function generateEducationalContent(content, specificInstructions = null, subject = null, lang = 'fr', userId = null) {
   if (!content || typeof content !== 'string') {
     throw new Error('Contenu invalide');
   }
@@ -545,7 +558,7 @@ export async function generateEducationalContent(content, specificInstructions =
 
   // Tentative 1
   try {
-    const result = await callOpenAI(trimmedContent, specificInstructions, subject, lang);
+    const result = await callOpenAI(trimmedContent, specificInstructions, subject, lang, userId);
     console.log(`[ContentGen] Succes en ${Date.now() - startTime}ms`);
     return result;
   } catch (firstError) {
@@ -562,7 +575,7 @@ export async function generateEducationalContent(content, specificInstructions =
     await new Promise(r => setTimeout(r, 3000));
 
     try {
-      const result = await callOpenAI(trimmedContent, specificInstructions, subject, lang);
+      const result = await callOpenAI(trimmedContent, specificInstructions, subject, lang, userId);
       console.log(`[ContentGen] Succes (retry) en ${Date.now() - startTime}ms`);
       return result;
     } catch (secondError) {

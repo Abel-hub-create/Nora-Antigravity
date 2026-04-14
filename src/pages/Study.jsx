@@ -27,10 +27,12 @@ const SUBJECT_EMOJIS = {
 };
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../features/auth/hooks/useAuth';
 import * as syntheseService from '../services/syntheseService';
 
 const Study = () => {
     const { t, i18n } = useTranslation();
+    const { user } = useAuth();
     const navigate = useNavigate();
     const [syntheses, setSyntheses] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -219,7 +221,7 @@ const Study = () => {
                             {syntheses.length === 1
                                 ? t('study.count', { count: syntheses.length })
                                 : t('study.countPlural', { count: syntheses.length })}
-                            {' '}<span className="text-text-muted/70">({t('study.maxSyntheses', { max: 40 })})</span>
+                            {' '}<span className="text-text-muted/70">({t('study.maxSyntheses', { max: user?.plan_limits?.max_syntheses ?? 3 })})</span>
                         </p>
                     </div>
 

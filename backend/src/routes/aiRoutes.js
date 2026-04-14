@@ -12,6 +12,7 @@ import { generateEducationalContent } from '../services/contentGenerationService
 import { verifyContentSubject } from '../services/contentVerificationService.js';
 import { authenticate } from '../middlewares/auth.js';
 import { aiVerificationLimiter } from '../middlewares/rateLimiter.js';
+import { getUserPlanLimits } from '../services/planRepository.js';
 
 const router = express.Router();
 
@@ -154,7 +155,22 @@ router.post('/generate-content', authenticate, express.json({ limit: '10mb' }), 
   try {
     const { content, specificInstructions, subject } = req.body;
     const lang = (req.headers['accept-language'] || 'fr').split(',')[0].split('-')[0];
-    const result = await generateEducationalContent(content, specificInstructions, subject, lang);
+
+    // Check max_prompt_chars from user's plan
+    if (content && req.user?.id) {
+      const { limits } = await getUserPlanLimits(req.user.id);
+      const maxChars = limits.max_prompt_chars;
+      if (maxChars && content.length > maxChars) {
+        return res.status(403).json({
+          error: `Contenu trop long (${content.length} caractères). Votre plan autorise ${maxChars} caractères maximum.`,
+          code: 'PROMPT_TOO_LONG',
+          limit: maxChars,
+          current: content.length
+        });
+      }
+    }
+
+    const result = await generateEducationalContent(content, specificInstructions, subject, lang, req.user?.id);
     res.json(result);
   } catch (error) {
     console.error('Erreur generation contenu:', error);

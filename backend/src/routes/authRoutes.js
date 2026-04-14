@@ -215,9 +215,14 @@ router.post('/refresh', async (req, res, next) => {
   }
 });
 
-// Get current user
+// Get current user (with plan limits)
 router.get('/me', authenticate, async (req, res) => {
-  res.json({ user: req.user });
+  try {
+    const { limits } = await import('../services/planRepository.js').then(m => m.getUserPlanLimits(req.user.id));
+    res.json({ user: { ...req.user, plan_limits: limits } });
+  } catch {
+    res.json({ user: req.user });
+  }
 });
 
 // Forgot password
@@ -311,7 +316,7 @@ router.patch('/preferences', authenticate, async (req, res, next) => {
     const { theme, language, auto_folder } = req.body;
 
     // Validate theme
-    if (theme && !['dark', 'light'].includes(theme)) {
+    if (theme && !['dark', 'light', 'midnight', 'forest', 'aurora'].includes(theme)) {
       return res.status(400).json({ error: 'Theme invalide' });
     }
 

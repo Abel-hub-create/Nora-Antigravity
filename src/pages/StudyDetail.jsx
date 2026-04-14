@@ -7,6 +7,7 @@ import * as syntheseService from '../services/syntheseService';
 import useActiveTimer from '../hooks/useActiveTimer';
 import { useAuth } from '../features/auth/hooks/useAuth';
 import { formatMath } from '../utils/formatMath';
+import { PremiumGate, usePremiumGate } from '../components/UI/PremiumGate';
 
 const SECTION_EMOJIS = {
     définitions: '📖', definitions: '📖', vocabulaire: '📖', lexique: '📖',
@@ -188,6 +189,7 @@ const CHARS_PER_PAGE = 2000;
 const StudyDetail = () => {
     const { t, i18n } = useTranslation();
     const { user } = useAuth();
+    const { gateProps, showGate } = usePremiumGate();
     // Track time spent reading the summary
     useActiveTimer('summary');
     const { id } = useParams();
@@ -410,31 +412,51 @@ const StudyDetail = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="grid grid-cols-2 gap-3 mb-6"
             >
-                <Link
-                    to={`/study/${id}/flashcards`}
-                    className="bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 rounded-2xl p-4 flex flex-col items-center gap-2 active:scale-95 transition-transform"
-                >
-                    <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
-                        <Layers className="text-primary" size={24} />
+                {user?.plan_limits?.has_flashcards !== 0 ? (
+                    <Link
+                        to={`/study/${id}/flashcards`}
+                        className="bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 rounded-2xl p-4 flex flex-col items-center gap-2 active:scale-95 transition-transform"
+                    >
+                        <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
+                            <Layers className="text-primary" size={24} />
+                        </div>
+                        <span className="font-medium text-text-main">{t('study.flashcardsButton')}</span>
+                        <span className="text-xs text-text-muted">
+                            {synthese.flashcards?.length || 0} {t('common.cards')}
+                        </span>
+                    </Link>
+                ) : (
+                    <div className="bg-surface border border-white/5 rounded-2xl p-4 flex flex-col items-center gap-2 opacity-50 cursor-pointer" onClick={() => showGate(t('premiumGate.features.flashcards'), t('premiumGate.features.flashcardsDesc'))}>
+                        <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center">
+                            <Layers className="text-text-muted" size={24} />
+                        </div>
+                        <span className="font-medium text-text-muted">{t('study.flashcardsButton')}</span>
+                        <span className="text-xs text-text-muted">{t('studyDetail.premiumLabel')}</span>
                     </div>
-                    <span className="font-medium text-text-main">{t('study.flashcardsButton')}</span>
-                    <span className="text-xs text-text-muted">
-                        {synthese.flashcards?.length || 0} {t('common.cards')}
-                    </span>
-                </Link>
+                )}
 
-                <Link
-                    to={`/study/${id}/quiz`}
-                    className="bg-gradient-to-br from-secondary/20 to-secondary/5 border border-secondary/20 rounded-2xl p-4 flex flex-col items-center gap-2 active:scale-95 transition-transform"
-                >
-                    <div className="w-12 h-12 bg-secondary/20 rounded-xl flex items-center justify-center">
-                        <Brain className="text-secondary" size={24} />
+                {user?.plan_limits?.has_quiz !== 0 ? (
+                    <Link
+                        to={`/study/${id}/quiz`}
+                        className="bg-gradient-to-br from-secondary/20 to-secondary/5 border border-secondary/20 rounded-2xl p-4 flex flex-col items-center gap-2 active:scale-95 transition-transform"
+                    >
+                        <div className="w-12 h-12 bg-secondary/20 rounded-xl flex items-center justify-center">
+                            <Brain className="text-secondary" size={24} />
+                        </div>
+                        <span className="font-medium text-text-main">{t('study.quizButton')}</span>
+                        <span className="text-xs text-text-muted">
+                            {synthese.quizQuestions?.length || 0} {t('common.questions')}
+                        </span>
+                    </Link>
+                ) : (
+                    <div className="bg-surface border border-white/5 rounded-2xl p-4 flex flex-col items-center gap-2 opacity-50 cursor-pointer" onClick={() => showGate(t('premiumGate.features.quiz'), t('premiumGate.features.quizDesc'))}>
+                        <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center">
+                            <Brain className="text-text-muted" size={24} />
+                        </div>
+                        <span className="font-medium text-text-muted">{t('study.quizButton')}</span>
+                        <span className="text-xs text-text-muted">{t('studyDetail.premiumLabel')}</span>
                     </div>
-                    <span className="font-medium text-text-main">{t('study.quizButton')}</span>
-                    <span className="text-xs text-text-muted">
-                        {synthese.quizQuestions?.length || 0} {t('common.questions')}
-                    </span>
-                </Link>
+                )}
             </motion.div>
 
             {/* Summary Content */}
@@ -550,6 +572,7 @@ const StudyDetail = () => {
                     </button>
                 )}
             </motion.div>
+            <PremiumGate {...gateProps} />
         </div>
     );
 };

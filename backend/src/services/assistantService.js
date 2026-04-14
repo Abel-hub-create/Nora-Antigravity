@@ -11,9 +11,20 @@
  */
 
 import OpenAI from 'openai';
+import { chatCompletion } from './aiModelService.js';
+import { query } from '../config/database.js';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const MODEL = 'gpt-4o-mini';
+
+async function getSystemPromptFromDB(name, fallback) {
+  try {
+    const rows = await query(`SELECT content FROM system_prompts WHERE name = ? LIMIT 1`, [name]);
+    return rows[0]?.content || fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 // ─── Noms des matières par langue ─────────────────────────────────────────────
 
@@ -67,11 +78,23 @@ function detectContentLang(text) {
 
 // ─── Chat général ─────────────────────────────────────────────────────────────
 
-export async function chat(messages, lang = 'fr') {
+export async function chat(messages, lang = 'fr', userId = null) {
+  const systemPrompt = await getSystemPromptFromDB('aron_main', SYSTEM_PROMPT);
+  // If userId provided, use plan-aware model selection
+  if (userId) {
+    return chatCompletion(userId, {
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...messages
+      ],
+      purpose: 'chat'
+    });
+  }
+  // Fallback to direct OpenAI call
   const response = await openai.chat.completions.create({
     model: MODEL,
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: systemPrompt },
       ...messages
     ],
     max_tokens: 1000,
@@ -82,7 +105,7 @@ export async function chat(messages, lang = 'fr') {
 
 // ─── Monk Mode — Analyse des lacunes ─────────────────────────────────────────
 
-export async function analyzeDifficulties({ subject, quizAnswers, synthesesTitles, lang = 'fr' }) {
+export async function analyzeDifficulties({ subject, quizAnswers, synthesesTitles, lang = 'fr', userId = null }) {
   const subjectName = getSubjectName(subject, lang);
   const langInstruction = getLangInstruction(lang);
 
@@ -155,15 +178,41 @@ Respond ONLY in valid JSON:
   "summary": "2-3 sentence student learning profile: what they struggle with, what specific mistakes they make, and what they do well"
 }`;
 
-  const response = await openai.chat.completions.create({
-    model: MODEL,
-    messages: [{ role: 'user', content: prompt }],
-    response_format: { type: 'json_object' },
-    max_tokens: 800,
-    temperature: 0.3
-  });
+  const callAnalysis = async () => {
+    if (userId) {
+      return chatCompletion(userId, {
+        messages: [{ role: 'user', content: prompt }],
+        maxTokens: 2000,
+        temperature: 0.3,
+        jsonMode: true,
+        purpose: 'chat'
+      });
+    } else {
+      const response = await openai.chat.completions.create({
+        model: MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' },
+        max_tokens: 2000,
+        temperature: 0.3
+      });
+      return response.choices[0].message.content;
+    }
+  };
 
-  const result = JSON.parse(response.choices[0].message.content);
+  let rawContent;
+  try {
+    rawContent = await callAnalysis();
+    JSON.parse(rawContent); // validate
+  } catch (firstErr) {
+    console.warn('[analyzeDifficulties] First attempt failed, retrying...', firstErr.message);
+    try {
+      rawContent = await callAnalysis();
+    } catch (retryErr) {
+      throw retryErr;
+    }
+  }
+
+  const result = JSON.parse(rawContent);
   return {
     hasSufficientData: true,
     summary: result.summary || '',
@@ -185,7 +234,8 @@ export async function generateExercises({
   specificDifficulties,
   counts,
   difficulty = 'medium',
-  lang = 'fr'
+  lang = 'fr',
+  userId = null
 }) {
   const subjectName = getSubjectName(subject, lang);
   const langInstruction = getLangInstruction(lang);
@@ -289,15 +339,37 @@ Respond ONLY in valid JSON:
 
 Only include items of the types listed above. No extra items.`;
 
-  const response = await openai.chat.completions.create({
-    model: MODEL,
-    messages: [{ role: 'user', content: prompt }],
-    response_format: { type: 'json_object' },
-    max_tokens: 5000,
-    temperature: 0.7
-  });
+  const callGenerate = async () => {
+    if (userId) {
+      return chatCompletion(userId, {
+        messages: [{ role: 'user', content: prompt }],
+        maxTokens: 10000,
+        temperature: 0.7,
+        jsonMode: true,
+        purpose: 'chat'
+      });
+    } else {
+      const response = await openai.chat.completions.create({
+        model: MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' },
+        max_tokens: 10000,
+        temperature: 0.7
+      });
+      return response.choices[0].message.content;
+    }
+  };
 
-  const result = JSON.parse(response.choices[0].message.content);
+  let rawContent;
+  try {
+    rawContent = await callGenerate();
+    JSON.parse(rawContent); // validate
+  } catch (firstErr) {
+    console.warn('[generateExercises] First attempt failed, retrying...', firstErr.message);
+    rawContent = await callGenerate();
+  }
+
+  const result = JSON.parse(rawContent);
 
   const items = (result.items || []).map((item, i) => ({
     type: ['qcm', 'open', 'practical'].includes(item.type) ? item.type : 'open',
@@ -405,16 +477,37 @@ RÈGLES ABSOLUES :
   return response.choices[0].message.content.trim();
 }
 
-// ─── TTS — Synthèse vocale ────────────────────────────────────────────────────
+// ─── TTS — Synthèse vocale (ElevenLabs) ──────────────────────────────────────
+
+const ELEVENLABS_VOICE_ID = 'pNInz6obpgDQGcFmaJgB'; // Adam — deep male, multilingual
 
 export async function generateTTS(text) {
-  const mp3 = await openai.audio.speech.create({
-    model: 'tts-1-hd',
-    voice: 'fable',
-    input: text.substring(0, 4096),
-    speed: 1.15
-  });
-  const buffer = Buffer.from(await mp3.arrayBuffer());
+  const response = await fetch(
+    `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`,
+    {
+      method: 'POST',
+      headers: {
+        'xi-api-key': process.env.ELEVENLABS_API_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: text.substring(0, 5000),
+        model_id: 'eleven_flash_v2_5',
+        voice_settings: {
+          stability: 0.45,
+          similarity_boost: 0.80,
+          style: 0.2,
+          use_speaker_boost: true,
+          speed: 1.2,
+        },
+      }),
+    }
+  );
+  if (!response.ok) {
+    const errBody = await response.text();
+    throw new Error(`ElevenLabs TTS error: ${response.status} — ${errBody}`);
+  }
+  const buffer = Buffer.from(await response.arrayBuffer());
   return buffer.toString('base64');
 }
 

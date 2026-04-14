@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import DailyProgress from '../components/Home/DailyProgress';
 import QuickActionCard from '../components/Home/QuickActionCard';
-import { Plus, BookOpen, Sparkles, MessageSquare } from 'lucide-react';
+import { Plus, BookOpen, Sparkles, MessageSquare, Crown } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
+import { useAuth } from '../features/auth/hooks/useAuth';
 
 const Home = () => {
     const { t } = useTranslation();
     const { user } = useUser();
+    const { user: authUser } = useAuth();
+    const isPremium = authUser?.plan_type && authUser.plan_type !== 'free';
     const tagline = t('home.tagline');
     const [displayed, setDisplayed] = useState('');
     const [cursorVisible, setCursorVisible] = useState(true);
@@ -37,6 +41,20 @@ const Home = () => {
                     {cursorVisible && <span className="animate-pulse opacity-60">|</span>}
                 </p>
             </header>
+
+            {/* Premium Banner (free users only) */}
+            {!isPremium && (
+                <Link to="/pricing" className="block bg-gradient-to-r from-amber-500/15 to-orange-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-center gap-3 hover:from-amber-500/20 hover:to-orange-500/15 transition-colors">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/25">
+                        <Crown size={18} className="text-white" />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-sm font-bold text-amber-300">{t('home.premiumBanner.title')}</p>
+                        <p className="text-xs text-amber-300/70 truncate">{t('home.premiumBanner.subtitle')}</p>
+                    </div>
+                    <span className="ml-auto text-xs font-semibold text-amber-400 shrink-0">{t('home.premiumBanner.cta')}</span>
+                </Link>
+            )}
 
             {/* Daily Progress */}
             <DailyProgress />

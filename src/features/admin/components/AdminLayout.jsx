@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Megaphone, LogOut, Menu, X, Shield } from 'lucide-react';
+import { LayoutDashboard, Users, Megaphone, LogOut, Menu, X, Shield, CreditCard, School, Ticket, Terminal, MessageSquare, Sliders } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext.jsx';
 
 const NAV = [
   { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/admin/users', icon: Users, label: 'Utilisateurs' },
+  { to: '/admin/plans', icon: CreditCard, label: 'Plans' },
+  { to: '/admin/school-requests', icon: School, label: 'Écoles' },
+  { to: '/admin/promo-codes', icon: Ticket, label: 'Codes promo' },
   { to: '/admin/announcements', icon: Megaphone, label: 'Annonces' },
+  { to: '/admin/conversations', icon: MessageSquare, label: 'Conversations' },
+  { to: '/admin/system-prompts', icon: Sliders, label: 'System Prompts' },
+  { to: '/admin/debug', icon: Terminal, label: 'Debug IA' },
 ];
 
 export default function AdminLayout({ children }) {

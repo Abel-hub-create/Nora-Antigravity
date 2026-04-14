@@ -41,6 +41,23 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
+  // Refresh user data when tab becomes visible (picks up plan changes from admin)
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        try {
+          const currentUser = await authService.getCurrentUser();
+          setUser(currentUser);
+        } catch {
+          // Silently ignore ��� don't log out the user on a failed refresh
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   const login = useCallback(async (credentials) => {
     try {
       setError(null);

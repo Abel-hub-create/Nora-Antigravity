@@ -58,6 +58,42 @@
     --color-text-muted: #6b7d96;
   }
 
+  /* Midnight theme (premium) — bleu marine profond */
+  [data-theme="midnight"] {
+    --color-background: #050818;
+    --color-surface: rgba(15, 25, 60, 0.38);
+    --color-primary: #818cf8;
+    --color-primary-dark: #6366f1;
+    --color-secondary: #38bdf8;
+    --color-accent: #c084fc;
+    --color-text-main: #e2e8ff;
+    --color-text-muted: #6b7fa8;
+  }
+
+  /* Forest theme (premium) — vert forêt profond */
+  [data-theme="forest"] {
+    --color-background: #030e08;
+    --color-surface: rgba(8, 30, 18, 0.40);
+    --color-primary: #34d399;
+    --color-primary-dark: #10b981;
+    --color-secondary: #a3e635;
+    --color-accent: #fb923c;
+    --color-text-main: #ecfdf5;
+    --color-text-muted: #5a7a65;
+  }
+
+  /* Aurora theme (premium) — violet/aurore */
+  [data-theme="aurora"] {
+    --color-background: #07030e;
+    --color-surface: rgba(25, 10, 45, 0.42);
+    --color-primary: #c084fc;
+    --color-primary-dark: #a855f7;
+    --color-secondary: #f472b6;
+    --color-accent: #38bdf8;
+    --color-text-main: #fdf4ff;
+    --color-text-muted: #7a5a96;
+  }
+
   /* ── Valeurs par défaut des CSS vars de lumière (remplacées par useTimeLight) ── */
   :root {
     --glass-inset-x:        0px;
@@ -72,8 +108,23 @@
   [data-theme="dark"] body {
     background-image:
       radial-gradient(ellipse at var(--glass-bg-x) var(--glass-bg-y),
-        rgba(56, 189, 248, 0.03) 0%, transparent 55%),
-      radial-gradient(ellipse at 80% 82%, rgba(99, 102, 241, 0.03) 0%, transparent 55%);
+        rgba(56, 189, 248, 0.08) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 82%, rgba(99, 102, 241, 0.07) 0%, transparent 55%);
+  }
+  [data-theme="midnight"] body {
+    background-image:
+      radial-gradient(ellipse at 40% 10%, rgba(99, 102, 241, 0.06) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(56, 189, 248, 0.04) 0%, transparent 55%);
+  }
+  [data-theme="forest"] body {
+    background-image:
+      radial-gradient(ellipse at 40% 10%, rgba(52, 211, 153, 0.06) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(163, 230, 53, 0.03) 0%, transparent 55%);
+  }
+  [data-theme="aurora"] body {
+    background-image:
+      radial-gradient(ellipse at 40% 10%, rgba(192, 132, 252, 0.07) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(244, 114, 182, 0.04) 0%, transparent 55%);
   }
   [data-theme="light"] body {
     background-image:
@@ -97,6 +148,13 @@
   /* Désactiver complètement l'effet verre (caméra, vidéo, etc.) */
   .no-glass,
   .no-glass * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+  }
+
+  /* ThemeCard — swatches de couleur, pas de glassmorphism */
+  .theme-card {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     box-shadow: none !important;
@@ -142,11 +200,11 @@
   [data-theme="dark"] .rounded-2xl,
   [data-theme="dark"] .rounded-3xl {
     box-shadow:
-      0 0 0 1.5px rgba(255, 255, 255, var(--glass-border-alpha, 0.28)),
-      inset 2px 0 0 rgba(255, 255, 255, 0.30),
-      inset var(--glass-inset-x, 0px) var(--glass-inset-y, -2px) 22px rgba(255, 255, 255, var(--glass-highlight-alpha, 0.08)),
-      inset 0 1px 0 rgba(255, 255, 255, 0.12),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.60),
+      0 0 0 1.5px rgba(255, 255, 255, var(--glass-border-alpha, 0.52)),
+      inset 2px 0 0 rgba(255, 255, 255, 0.55),
+      inset var(--glass-inset-x, 0px) var(--glass-inset-y, -2px) 28px rgba(255, 255, 255, var(--glass-highlight-alpha, 0.18)),
+      inset 0 1px 0 rgba(255, 255, 255, 0.32),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.40),
       0 16px 48px rgba(0, 0, 0, 0.85);
   }
 
@@ -437,4 +495,69 @@ button:not(:disabled):not(.no-hover):hover {
 button:not(:disabled):not(.no-hover):active {
   transform: scale(0.97) !important;
   transition-duration: 0.08s !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   MOBILE — Optimisations téléphone
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Supprimer le highlight bleu au tap sur mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Smooth scroll natif partout */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Safe area pour les téléphones avec encoche/barre de navigation */
+body {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Prevent overscroll bounce (iOS) */
+body {
+  overscroll-behavior-y: none;
+}
+
+/* Inputs & textareas : fond cohérent sur iOS (évite le style natif) */
+input, textarea, select {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Empêcher le zoom sur focus input iOS (font-size min 16px) */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="number"],
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Scrollbar invisible sur mobile */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar { width: 0; height: 0; }
+}
+
+/* Cards + boutons : padding safe sur les bords sur très petits écrans */
+@media (max-width: 380px) {
+  .p-6 { padding: 1rem; }
+  .p-5 { padding: 0.875rem; }
+}
+
+/* Thèmes premium — glow texte adapté */
+[data-theme="midnight"] .text-primary {
+  text-shadow: 0 0 5px rgba(129, 140, 248, 0.22), 0 0 12px rgba(129, 140, 248, 0.08);
+}
+[data-theme="forest"] .text-primary {
+  text-shadow: 0 0 5px rgba(52, 211, 153, 0.22), 0 0 12px rgba(52, 211, 153, 0.08);
+}
+[data-theme="aurora"] .text-primary {
+  text-shadow: 0 0 5px rgba(192, 132, 252, 0.22), 0 0 12px rgba(192, 132, 252, 0.08);
 }

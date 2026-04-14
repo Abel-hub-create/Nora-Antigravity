@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Ban, Crown, Trash2, CheckCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Ban, Crown, Trash2, CheckCircle, Loader2, GraduationCap, User } from 'lucide-react';
 import { adminApi } from '../services/adminApiClient.js';
 import AdminLayout from '../components/AdminLayout.jsx';
 
@@ -27,8 +27,9 @@ export default function AdminUserDetail() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState('');
   const [confirm, setConfirm] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState('free');
   const [premiumDate, setPremiumDate] = useState('');
-  const [premiumForever, setPremiumForever] = useState(false);
+  const [premiumForever, setPremiumForever] = useState(true);
   const [toast, setToast] = useState('');
   const [banReason, setBanReason] = useState('');
   const [showBanInput, setShowBanInput] = useState(false);
@@ -36,14 +37,24 @@ export default function AdminUserDetail() {
   useEffect(() => {
     adminApi.get(`/users/${id}`).then(data => {
       setUser(data.user);
-      if (data.user.premium_expires_at)
-        setPremiumDate(new Date(data.user.premium_expires_at).toISOString().split('T')[0]);
+      const plan = data.user.plan_type || 'free';
+      setSelectedPlan(plan);
+      if (data.user.premium_expires_at) {
+        const expDate = new Date(data.user.premium_expires_at);
+        // If expires far in the future (>2 years), treat as permanent
+        const twoYearsFromNow = new Date();
+        twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2);
+        if (expDate > twoYearsFromNow) {
+          setPremiumForever(true);
+        } else {
+          setPremiumForever(false);
+          setPremiumDate(expDate.toISOString().split('T')[0]);
+        }
+      }
     }).finally(() => setLoading(false));
   }, [id]);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
-
-  const isPremium = user?.premium_expires_at && new Date(user.premium_expires_at) > new Date();
 
   const handleBan = async () => {
     setActionLoading('ban');
@@ -72,13 +83,17 @@ export default function AdminUserDetail() {
     } finally { setActionLoading(''); setConfirm(null); }
   };
 
-  const handleSetPremium = async () => {
-    setActionLoading('premium');
+  const handleSetPlan = async () => {
+    setActionLoading('plan');
     try {
-      const expires_at = premiumForever ? null : (premiumDate ? new Date(premiumDate).toISOString() : null);
-      await adminApi.patch(`/users/${id}/premium`, { expires_at });
-      setUser(u => ({ ...u, premium_expires_at: expires_at }));
-      showToast(expires_at === null && premiumForever ? 'Premium permanent activé' : expires_at ? 'Premium mis à jour' : 'Premium supprimé');
+      const body = { plan_type: selectedPlan };
+      if (selectedPlan === 'premium') {
+        body.expires_at = premiumForever ? null : (premiumDate ? new Date(premiumDate).toISOString() : null);
+      }
+      await adminApi.patch(`/users/${id}/plan`, body);
+      setUser(u => ({ ...u, plan_type: selectedPlan }));
+      const labels = { free: 'Gratuit', premium: 'Premium', school: 'École' };
+      showToast(`Plan mis à jour → ${labels[selectedPlan]}`);
     } finally { setActionLoading(''); }
   };
 
@@ -112,10 +127,13 @@ export default function AdminUserDetail() {
                 <p className="text-gray-500 text-sm mt-1">{user.email}</p>
               </div>
               <div className="flex gap-2">
-                {user.is_banned ? (
+                {user.is_banned && (
                   <span className="text-xs bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-1 rounded-full">Banni</span>
-                ) : isPremium ? (
-                  <span className="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-1 rounded-full">Premium</span>
+                )}
+                {user.plan_type === 'premium' ? (
+                  <span className="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-1 rounded-full">✨ Premium</span>
+                ) : user.plan_type === 'school' ? (
+                  <span className="text-xs bg-violet-500/10 text-violet-400 border border-violet-500/20 px-2 py-1 rounded-full">🏫 École</span>
                 ) : (
                   <span className="text-xs text-gray-600 border border-gray-700 px-2 py-1 rounded-full">Gratuit</span>
                 )}
@@ -160,25 +178,55 @@ export default function AdminUserDetail() {
 
         {/* Actions */}
         <div className="space-y-4">
-          {/* Premium */}
+          {/* Plan */}
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
             <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <Crown size={14} /> Premium
+              <Crown size={14} /> Plan
             </h2>
-            <label className="flex items-center gap-2 text-sm text-gray-300 mb-3 cursor-pointer">
-              <input type="checkbox" checked={premiumForever} onChange={e => setPremiumForever(e.target.checked)}
-                className="accent-amber-400" />
-              Permanent (sans expiration)
-            </label>
-            {!premiumForever && (
-              <input type="date" value={premiumDate} onChange={e => setPremiumDate(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white mb-3 focus:outline-none focus:border-amber-400"
-              />
+
+            {/* Plan selector */}
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              {[
+                { value: 'free', label: 'Gratuit', icon: <User size={13} />, color: 'gray' },
+                { value: 'premium', label: 'Premium', icon: <Crown size={13} />, color: 'amber' },
+                { value: 'school', label: 'École', icon: <GraduationCap size={13} />, color: 'violet' },
+              ].map(({ value, label, icon, color }) => {
+                const active = selectedPlan === value;
+                const styles = {
+                  gray: active ? 'bg-gray-700 border-gray-500 text-white' : 'bg-gray-800/50 border-gray-700 text-gray-500 hover:text-gray-300',
+                  amber: active ? 'bg-amber-500/20 border-amber-500 text-amber-400' : 'bg-gray-800/50 border-gray-700 text-gray-500 hover:text-amber-400/70',
+                  violet: active ? 'bg-violet-500/20 border-violet-500 text-violet-400' : 'bg-gray-800/50 border-gray-700 text-gray-500 hover:text-violet-400/70',
+                }[color];
+                return (
+                  <button key={value} onClick={() => setSelectedPlan(value)}
+                    className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border text-xs font-medium transition-all ${styles}`}>
+                    {icon}
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Expiration (only for premium) */}
+            {selectedPlan === 'premium' && (
+              <div className="mb-4 space-y-2">
+                <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+                  <input type="checkbox" checked={premiumForever} onChange={e => setPremiumForever(e.target.checked)}
+                    className="accent-amber-400" />
+                  Permanent (sans expiration)
+                </label>
+                {!premiumForever && (
+                  <input type="date" value={premiumDate} onChange={e => setPremiumDate(e.target.value)}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400"
+                  />
+                )}
+              </div>
             )}
-            <button onClick={handleSetPremium} disabled={actionLoading === 'premium'}
-              className="w-full bg-amber-500/20 border border-amber-500/30 hover:bg-amber-500/30 text-amber-400 text-sm font-medium py-2 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
-              {actionLoading === 'premium' ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
-              Appliquer
+
+            <button onClick={handleSetPlan} disabled={actionLoading === 'plan'}
+              className="w-full bg-sky-500/20 border border-sky-500/30 hover:bg-sky-500/30 text-sky-400 text-sm font-medium py-2 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
+              {actionLoading === 'plan' ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+              Appliquer le plan
             </button>
           </div>
 

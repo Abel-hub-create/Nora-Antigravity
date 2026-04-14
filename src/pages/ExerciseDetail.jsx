@@ -7,6 +7,8 @@ import * as exerciseSvc from '../services/exerciseService';
 import { correctItem, tts } from '../services/assistantService';
 import { formatMath } from '../utils/formatMath';
 import LiquidProgressBar from '../components/UI/LiquidProgressBar';
+import { useAuth } from '../features/auth/hooks/useAuth';
+import { PremiumGate, usePremiumGate } from '../components/UI/PremiumGate';
 
 const SUBJECT_EMOJIS = {
   mathematics: '📐', french: '📚', physics: '⚡', chemistry: '🧪',
@@ -142,12 +144,16 @@ export default function ExerciseDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  const { user: authUser } = useAuth();
+  const { gateProps, showGate } = usePremiumGate();
+  const canUseTts = authUser?.plan_limits?.has_tts !== 0;
   const [exercise, setExercise] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [collapsedSections, setCollapsedSections] = useState({});
   const [feedbackOpen, setFeedbackOpen] = useState(true);
   const [ttsAudioUrl, setTtsAudioUrl] = useState(null);
   const [ttsLoading, setTtsLoading] = useState(false);
+  const [ttsError, setTtsError] = useState(false);
   const [transcriptOpen, setTranscriptOpen] = useState(false);
 
   useEffect(() => {
@@ -159,6 +165,15 @@ export default function ExerciseDetail() {
       setIsLoading(true);
       const data = await exerciseSvc.getExercise(id);
       setExercise(data);
+      if (data?.feedback_audio) {
+        setTtsAudioUrl(`data:audio/mpeg;base64,${data.feedback_audio}`);
+      } else if (data?.feedback_note && authUser?.plan_limits?.has_tts !== 0) {
+        setTtsLoading(true);
+        tts(data.feedback_note, data.id)
+          .then(base64 => setTtsAudioUrl(`data:audio/mpeg;base64,${base64}`))
+          .catch(() => setTtsError(true))
+          .finally(() => setTtsLoading(false));
+      }
     } catch {
       navigate('/exercises');
     } finally {
@@ -167,13 +182,13 @@ export default function ExerciseDetail() {
   };
 
   const handleListenFeedback = async () => {
-    if (ttsAudioUrl || ttsLoading || !exercise?.feedback_note) return;
+    if (ttsAudioUrl || ttsLoading || ttsError || !exercise?.feedback_note) return;
     setTtsLoading(true);
     try {
-      const base64 = await tts(exercise.feedback_note);
+      const base64 = await tts(exercise.feedback_note, exercise.id);
       setTtsAudioUrl(`data:audio/mpeg;base64,${base64}`);
     } catch {
-      // silently fail
+      setTtsError(true);
     } finally {
       setTtsLoading(false);
     }
@@ -369,7 +384,7 @@ export default function ExerciseDetail() {
             >
               <div className="flex items-center gap-2">
                 <span className="text-lg">📋</span>
-                <span className="font-semibold text-text-main text-sm">Analyse personnalisée</span>
+                <span className="font-semibold text-text-main text-sm">{t('exerciseDetail.personalizedAnalysis')}</span>
               </div>
               {feedbackOpen ? <ChevronUp size={16} className="text-text-muted" /> : <ChevronDown size={16} className="text-text-muted" />}
             </button>
@@ -387,15 +402,17 @@ export default function ExerciseDetail() {
                     <div className="flex items-center gap-3">
                       {ttsAudioUrl ? (
                         <audio controls src={ttsAudioUrl} className="h-8 flex-1" style={{ accentColor: '#38bdf8' }} />
+                      ) : ttsError ? (
+                        <span className="text-xs text-text-muted opacity-60">{t('exerciseDetail.audioUnavailable')}</span>
                       ) : (
                         <button
-                          onClick={handleListenFeedback}
+                          onClick={() => canUseTts ? handleListenFeedback() : showGate(t('premiumGate.features.tts'), t('premiumGate.features.ttsDesc'))}
                           disabled={ttsLoading}
                           className="flex items-center gap-2 px-3 py-1.5 bg-primary/15 border border-primary/30 rounded-xl text-xs text-primary font-medium hover:bg-primary/25 transition-colors disabled:opacity-50"
                         >
                           {ttsLoading
-                            ? <><Loader2 size={12} className="animate-spin" /> Chargement...</>
-                            : <><Volume2 size={13} /> Écouter</>
+                            ? <><Loader2 size={12} className="animate-spin" /> {t('exerciseDetail.audioLoading')}</>
+                            : <><Volume2 size={13} /> {t('exerciseDetail.listen')}</>
                           }
                         </button>
                       )}
@@ -404,7 +421,7 @@ export default function ExerciseDetail() {
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-xl text-xs text-text-muted hover:text-text-main transition-colors"
                       >
                         {transcriptOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                        Transcription
+                        {t('exerciseDetail.transcript')}
                       </button>
                     </div>
                     {/* Transcript — hidden behind toggle */}
@@ -488,6 +505,7 @@ export default function ExerciseDetail() {
         })}
       </div>
 
+      <PremiumGate {...gateProps} />
     </div>
   );
 }

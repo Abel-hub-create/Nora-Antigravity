@@ -1,9 +1,18 @@
 import { query } from '../config/database.js';
+import { getUserPlanLimits } from './planRepository.js';
 
-export const LIMITS = {
-  chat: 15,
-  exs: 5,
-  ana: 5
+// Default fallback limits (used if plan limits not found)
+export const DEFAULT_LIMITS = {
+  chat: 3,
+  exs: 3,
+  ana: 3
+};
+
+// Map usage type to plan_limits key
+const LIMIT_KEY_MAP = {
+  chat: 'max_chat_per_day',
+  exs: 'max_exs_per_day',
+  ana: 'max_ana_per_day'
 };
 
 /**
@@ -23,7 +32,17 @@ export async function getUsageToday(userId) {
  * Returns { allowed: boolean, current: number, limit: number }
  */
 export async function checkAndIncrement(userId, type) {
-  const limit = LIMITS[type];
+  // Get dynamic limit from user's plan
+  let limit = DEFAULT_LIMITS[type];
+  try {
+    const { limits } = await getUserPlanLimits(userId);
+    const planKey = LIMIT_KEY_MAP[type];
+    if (planKey && limits[planKey] !== undefined) {
+      limit = limits[planKey];
+    }
+  } catch (err) {
+    console.warn('[DailyUsage] Failed to get plan limits, using defaults:', err.message);
+  }
   if (!limit) throw new Error(`Unknown usage type: ${type}`);
 
   const col = `${type}_count`;
