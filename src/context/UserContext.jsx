@@ -1,63 +1,55 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../features/auth/hooks/useAuth';
 import * as notificationService from '../services/notificationService';
+import * as gamificationService from '../services/gamificationService';
 
 const UserContext = createContext();
 
 export const useUser = () => useContext(UserContext);
 
-// Available activity types for goals
-// NOTE: labelKey is used with t() function for translation
+// Types d'activité disponibles pour les objectifs
 export const ACTIVITY_TYPES = {
-    summary: { label: 'Synthèse', labelKey: 'activities.summary', key: 'summaryTime' },
-    quiz: { label: 'Quiz', labelKey: 'activities.quiz', key: 'quizTime' },
+    summary:    { label: 'Synthèse',   labelKey: 'activities.summary',    key: 'summaryTime' },
+    quiz:       { label: 'Quiz',       labelKey: 'activities.quiz',       key: 'quizTime' },
     flashcards: { label: 'Flashcards', labelKey: 'activities.flashcards', key: 'flashcardsTime' }
 };
 
-// XP Thresholds for daily study time rewards
+// Seuils XP par défaut (temps + XP) — les montants d'XP sont overridés par xp_config si dispo
 export const XP_THRESHOLDS = {
     flashcards: { timeMinutes: 10, xp: 40 },
-    quiz: { timeMinutes: 20, xp: 70 },
-    summary: { timeMinutes: 30, xp: 100 }
+    quiz:       { timeMinutes: 20, xp: 70 },
+    summary:    { timeMinutes: 30, xp: 100 }
+};
+export const ALL_BONUS_XP = 100;
+export const DAILY_GOALS_BONUS_XP = 50; // remplacé par xp_config.daily_goals_all_bonus
+
+/** Seuil d'XP pour passer au niveau suivant (nouvelle formule fixe) */
+export const getXpThreshold = (level) => {
+    if (level <= 3) return 500;
+    if (level <= 9) return 1000;
+    return 1200;
 };
 
-// Bonus XP when all thresholds are reached
-export const ALL_BONUS_XP = 100;
-
-// Daily goals completion bonus
-export const DAILY_GOALS_BONUS_XP = 10;
-
-// Helper to get today's date string
 const getTodayString = () => new Date().toDateString();
 
-// Default daily stats
 const getDefaultDailyStats = () => ({
     date: getTodayString(),
     quizTime: 0,
     flashcardsTime: 0,
     summaryTime: 0,
-    xpAwarded: {
-        quiz: false,
-        flashcards: false,
-        summary: false,
-        allBonus: false
-    }
+    xpAwarded: { quiz: false, flashcards: false, summary: false, allBonus: false }
 });
 
-// Default daily goals - empty by default for new users
 const getDefaultDailyGoals = () => [];
 
-// Calculate total study time from daily stats (in seconds)
-const getTotalStudyTime = (stats) => {
-    return (stats.quizTime || 0) + (stats.flashcardsTime || 0) + (stats.summaryTime || 0);
-};
+const getTotalStudyTime = (stats) =>
+    (stats.quizTime || 0) + (stats.flashcardsTime || 0) + (stats.summaryTime || 0);
 
 export const UserProvider = ({ children }) => {
     const { t } = useTranslation();
     const { user: authUser, syncUserData } = useAuth();
 
-    // Track if initial data has been loaded from backend
     const [isDataLoaded, setIsDataLoaded] = useState(false);
 
     const [user, setUser] = useState({
@@ -66,16 +58,17 @@ export const UserProvider = ({ children }) => {
         name: authUser?.name ?? null,
         level: authUser?.level ?? 1,
         exp: authUser?.exp ?? 0,
-        nextLevelExp: authUser?.next_level_exp ?? 1000,
-        streak: authUser?.streak ?? 0,
-        eggs: authUser?.eggs ?? 0,
-        collection: authUser?.collection ?? []
+        nextLevelExp: authUser?.next_level_exp ?? getXpThreshold(authUser?.level ?? 1),
+        winstreak: authUser?.winstreak ?? 1,
+        coins: authUser?.coins ?? 0,
     });
 
-    // Track the current user ID to detect user changes
+    // Sacs en attente de révélation
+    const [pendingBags, setPendingBags] = useState([]);
+
     const currentUserIdRef = useRef(authUser?.id ?? null);
 
-    // Sync with auth user when authUser changes (data from DB)
+    // Sync avec authUser (données fraîches du backend)
     useEffect(() => {
         if (authUser) {
             setUser({
@@ -84,89 +77,78 @@ export const UserProvider = ({ children }) => {
                 name: authUser.name,
                 level: authUser.level ?? 1,
                 exp: authUser.exp ?? 0,
-                nextLevelExp: authUser.next_level_exp ?? 1000,
-                streak: authUser.streak ?? 0,
-                eggs: authUser.eggs ?? 0,
-                collection: authUser.collection ?? []
+                nextLevelExp: authUser.next_level_exp ?? getXpThreshold(authUser.level ?? 1),
+                winstreak: authUser.winstreak ?? 1,
+                coins: authUser.coins ?? 0,
             });
         }
     }, [authUser]);
 
-    // Daily Stats State - Initialize with defaults, loaded from backend
     const [dailyStats, setDailyStats] = useState(getDefaultDailyStats);
-
-    // Daily Goals State - Initialize with defaults, loaded from backend
     const [dailyGoals, setDailyGoalsState] = useState(getDefaultDailyGoals);
-
-    // Track if daily goals reward has been claimed today
     const [dailyGoalsRewardClaimed, setDailyGoalsRewardClaimed] = useState(false);
-
-    // Study history - stores total study time per day for average calculation
     const [studyHistory, setStudyHistory] = useState([]);
-
-    // Track if this is the first load for this user (vs page refresh)
     const isFirstLoadRef = useRef(true);
 
-    // Load data from backend when user changes OR on initial mount
+    // Chargement des données depuis le backend
     useEffect(() => {
         const newUserId = authUser?.id ?? null;
         const previousUserId = currentUserIdRef.current;
         const userChanged = newUserId !== previousUserId;
         const needsInitialLoad = !isDataLoaded && newUserId;
 
-        console.log(`[NORA] useEffect - userId: ${newUserId}, prev: ${previousUserId}, isDataLoaded: ${isDataLoaded}, needsLoad: ${userChanged || needsInitialLoad}`);
-
-        // Load if user changed OR if data not loaded yet (initial mount/refresh)
         if (userChanged || needsInitialLoad) {
-            console.log(`[NORA] Loading data - reason: ${userChanged ? 'user changed' : 'initial load'}`);
             currentUserIdRef.current = newUserId;
 
             if (newUserId) {
-                // Load all data from backend (DB is the only source of truth)
                 const loadData = async (retryCount = 0) => {
                     try {
-                        const backendData = await notificationService.getDailyProgress();
-                        console.log('[NORA] Loaded data from backend:', backendData);
+                        const [backendData] = await Promise.all([
+                            notificationService.getDailyProgress(),
+                        ]);
 
-                        // Use backend data for dailyStats (or defaults if not today)
                         if (backendData.dailyStats) {
                             setDailyStats(backendData.dailyStats);
                         } else {
                             setDailyStats(getDefaultDailyStats());
                         }
 
-                        // Use backend data for dailyGoals
                         if (backendData.dailyGoals && backendData.dailyGoals.length > 0) {
-                            console.log('[NORA] Setting goals from backend:', backendData.dailyGoals);
                             setDailyGoalsState(backendData.dailyGoals);
                         } else {
-                            // Only set defaults for new users with no data
-                            console.log('[NORA] No goals in backend, using defaults');
                             setDailyGoalsState(getDefaultDailyGoals());
                         }
 
-                        // Set reward claimed status
                         setDailyGoalsRewardClaimed(backendData.dailyGoalsRewardClaimed || false);
 
-                        // Set study history
                         if (backendData.studyHistory && backendData.studyHistory.length > 0) {
                             setStudyHistory(backendData.studyHistory);
                         } else {
                             setStudyHistory([]);
                         }
 
+                        // Charger les sacs en attente
+                        try {
+                            const { bags } = await gamificationService.getPendingBags();
+                            if (bags && bags.length > 0) setPendingBags(bags);
+                        } catch {
+                            // Silencieux — ne bloque pas l'init
+                        }
+
+                        // Winstreak (fuseau horaire du navigateur)
+                        try {
+                            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+                            await gamificationService.checkWinstreak(tz);
+                        } catch {
+                            // Silencieux
+                        }
+
                         setIsDataLoaded(true);
                     } catch (error) {
-                        console.error('[NORA] Failed to load data from backend:', error);
-
-                        // Retry up to 2 times with exponential backoff
                         if (retryCount < 2) {
-                            console.log(`[NORA] Retrying load (attempt ${retryCount + 2})...`);
                             setTimeout(() => loadData(retryCount + 1), 1000 * (retryCount + 1));
                             return;
                         }
-
-                        // After retries failed, use defaults
                         setDailyStats(getDefaultDailyStats());
                         setDailyGoalsState(getDefaultDailyGoals());
                         setDailyGoalsRewardClaimed(false);
@@ -174,10 +156,8 @@ export const UserProvider = ({ children }) => {
                         setIsDataLoaded(true);
                     }
                 };
-
                 loadData();
             } else {
-                // No user, reset to defaults
                 setDailyStats(getDefaultDailyStats());
                 setDailyGoalsState(getDefaultDailyGoals());
                 setDailyGoalsRewardClaimed(false);
@@ -187,93 +167,58 @@ export const UserProvider = ({ children }) => {
         }
     }, [authUser?.id, isDataLoaded]);
 
-    // Notifications state for goal completions and XP gains
+    // Notifications
     const [notifications, setNotifications] = useState([]);
     const notificationIdRef = useRef(0);
 
-    // Add notification helper
     const addNotification = useCallback((message, type = 'success') => {
         const id = ++notificationIdRef.current;
         setNotifications(prev => [...prev, { id, message, type }]);
-        // Auto-remove after 4 seconds
         setTimeout(() => {
             setNotifications(prev => prev.filter(n => n.id !== id));
         }, 4000);
     }, []);
 
-    // Remove a specific notification
     const removeNotification = useCallback((id) => {
         setNotifications(prev => prev.filter(n => n.id !== id));
     }, []);
 
-    // Sync daily progress to backend immediately
+    // Sync daily progress vers le backend
     const syncDailyProgressToBackend = useCallback(async (goals, stats, rewardClaimed) => {
-        if (!authUser?.id) {
-            console.log('[NORA] Cannot sync: no user ID');
-            return false;
-        }
-
+        if (!authUser?.id) return false;
         const progressPercentage = goals.length > 0
             ? Math.round((goals.filter(g => g.completed).length / goals.length) * 100)
             : 0;
-
-        console.log('[NORA] Syncing to backend:', { goals, progressPercentage, rewardClaimed });
-
         try {
-            await notificationService.syncDailyProgress(
-                goals,
-                progressPercentage,
-                rewardClaimed,
-                stats
-            );
-            console.log('[NORA] Sync SUCCESS - goals saved to database');
+            await notificationService.syncDailyProgress(goals, progressPercentage, rewardClaimed, stats);
             return true;
-        } catch (error) {
-            console.error('[NORA] Sync FAILED:', error);
+        } catch {
             return false;
         }
     }, [authUser?.id]);
 
-    // Debounced sync for automatic updates (study time changes)
+    // Debounce sync
     useEffect(() => {
         if (!authUser?.id || !isDataLoaded) return;
-
         const progressPercentage = dailyGoals.length > 0
             ? Math.round((dailyGoals.filter(g => g.completed).length / dailyGoals.length) * 100)
             : 0;
-
         const syncTimer = setTimeout(async () => {
             try {
-                await notificationService.syncDailyProgress(
-                    dailyGoals,
-                    progressPercentage,
-                    dailyGoalsRewardClaimed,
-                    dailyStats
-                );
-            } catch (error) {
-                console.debug('Failed to sync daily progress:', error);
-            }
+                await notificationService.syncDailyProgress(dailyGoals, progressPercentage, dailyGoalsRewardClaimed, dailyStats);
+            } catch { /* silencieux */ }
         }, 2000);
-
         return () => clearTimeout(syncTimer);
     }, [authUser?.id, dailyGoals, dailyGoalsRewardClaimed, dailyStats, isDataLoaded]);
 
-    // Check for day change - robust implementation with interval
+    // Détection changement de jour
     const checkAndResetForNewDay = useCallback(() => {
         const today = getTodayString();
-
         if (dailyStats.date !== today) {
-            console.log('[NORA] New day detected, resetting daily stats');
-
-            // Save yesterday's study time to history before resetting
             const totalSeconds = getTotalStudyTime(dailyStats);
             if (totalSeconds > 0) {
-                // Save to backend
                 const yesterdayDate = new Date(dailyStats.date).toISOString().split('T')[0];
-                notificationService.saveStudyHistory(yesterdayDate, totalSeconds).catch(err => {
-                    console.debug('Failed to save study history to backend:', err);
-                });
-
+                notificationService.saveStudyHistory(yesterdayDate, totalSeconds).catch(() => {});
                 setStudyHistory(prev => {
                     const existingIndex = prev.findIndex(h => h.date === dailyStats.date);
                     if (existingIndex >= 0) {
@@ -281,54 +226,41 @@ export const UserProvider = ({ children }) => {
                         updated[existingIndex] = { date: dailyStats.date, totalSeconds };
                         return updated;
                     }
-                    const newHistory = [...prev, { date: dailyStats.date, totalSeconds }];
-                    return newHistory.slice(-30);
+                    return [...prev, { date: dailyStats.date, totalSeconds }].slice(-30);
                 });
             }
-
-            // Reset daily stats
             const newStats = getDefaultDailyStats();
             setDailyStats(newStats);
-
-            // Reset daily goals completion status
             const resetGoals = dailyGoals.map(g => ({ ...g, completed: false }));
             setDailyGoalsState(resetGoals);
-
-            // Reset daily goals reward claimed status
             setDailyGoalsRewardClaimed(false);
-
-            // Sync reset state to backend
             syncDailyProgressToBackend(resetGoals, newStats, false);
-
             return true;
         }
         return false;
     }, [dailyStats, dailyGoals, syncDailyProgressToBackend]);
 
-    // Check for day change on mount and set up interval
     useEffect(() => {
         if (!isDataLoaded) return;
-
         checkAndResetForNewDay();
-
-        const interval = setInterval(() => {
-            checkAndResetForNewDay();
-        }, 60000);
-
+        const interval = setInterval(checkAndResetForNewDay, 60000);
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'visible') {
                 checkAndResetForNewDay();
+                // Rafraîchir les sacs en cas de level-up en arrière-plan
+                gamificationService.getPendingBags()
+                    .then(({ bags }) => { if (bags?.length > 0) setPendingBags(bags); })
+                    .catch(() => {});
             }
         };
         document.addEventListener('visibilitychange', handleVisibilityChange);
-
         return () => {
             clearInterval(interval);
             document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
     }, [checkAndResetForNewDay, isDataLoaded]);
 
-    // Sync user data to backend
+    // Sync XP (minuteur) vers le backend
     const syncToBackend = useCallback(async (userData) => {
         if (syncUserData && authUser?.id) {
             try {
@@ -336,48 +268,118 @@ export const UserProvider = ({ children }) => {
                     level: userData.level,
                     exp: userData.exp,
                     next_level_exp: userData.nextLevelExp,
-                    streak: userData.streak,
-                    eggs: userData.eggs,
-                    collection: userData.collection
                 });
-            } catch (error) {
-                console.error('Failed to sync user data:', error);
-            }
+            } catch { /* silencieux */ }
         }
     }, [syncUserData, authUser?.id]);
 
+    /**
+     * addExp — XP local (minuteurs d'étude).
+     * Applique le multiplicateur de plan, utilise les nouveaux seuils.
+     * En cas de level-up : génère un sac côté serveur.
+     */
     const addExp = useCallback((amount, showNotification = false, notificationMessage = '') => {
-        setUser(prev => {
-            let newExp = prev.exp + amount;
-            let newLevel = prev.level;
-            let newEggs = prev.eggs;
-            let newNextLevelExp = prev.nextLevelExp;
+        const multiplier = Number(authUser?.plan_limits?.xp_multiplier) || 1;
+        const xpConfig = authUser?.xp_config || {};
 
-            while (newExp >= newNextLevelExp) {
-                newExp -= newNextLevelExp;
+        setUser(prev => {
+            const multipliedAmount = Math.round(amount * multiplier);
+            let newExp = prev.exp + multipliedAmount;
+            let newLevel = prev.level;
+            let levelUps = 0;
+
+            while (newExp >= getXpThreshold(newLevel)) {
+                newExp -= getXpThreshold(newLevel);
                 newLevel += 1;
-                newEggs += 1;
-                newNextLevelExp = Math.floor(newNextLevelExp * 1.2);
+                levelUps++;
             }
 
-            const newUser = {
-                ...prev,
-                level: newLevel,
-                exp: newExp,
-                eggs: newEggs,
-                nextLevelExp: newNextLevelExp
-            };
+            const newNextLevelExp = getXpThreshold(newLevel);
+            const newUser = { ...prev, level: newLevel, exp: newExp, nextLevelExp: newNextLevelExp };
 
-            // Sync to backend
+            // Générer des sacs côté serveur pour chaque level-up
+            if (levelUps > 0 && authUser?.id) {
+                for (let i = 0; i < levelUps; i++) {
+                    gamificationService.generateBag()
+                        .then(({ bag }) => {
+                            if (bag) setPendingBags(p => [...p, bag]);
+                        })
+                        .catch(() => {});
+                }
+            }
+
             syncToBackend(newUser);
-
             return newUser;
         });
 
         if (showNotification && notificationMessage) {
             addNotification(notificationMessage, 'xp');
         }
-    }, [syncToBackend, addNotification]);
+    }, [syncToBackend, addNotification, authUser?.plan_limits?.xp_multiplier, authUser?.xp_config, authUser?.id]);
+
+    /**
+     * awardXp — XP serveur (synthèse créée, exercice, vocal, objectifs, etc.)
+     * Le serveur applique le multiplicateur et la déduplication.
+     */
+    const awardXp = useCallback(async (reason, options = {}) => {
+        if (!authUser?.id) return null;
+        try {
+            const result = await gamificationService.awardXp(reason, options);
+            if (!result || result.xpAwarded === 0) return result;
+
+            // Mettre à jour le state local avec les valeurs du serveur
+            setUser(prev => ({
+                ...prev,
+                level: result.newLevel ?? prev.level,
+                exp: result.newExp ?? prev.exp,
+                nextLevelExp: getXpThreshold(result.newLevel ?? prev.level),
+            }));
+
+            // Notification XP
+            if (result.xpAwarded > 0) {
+                addNotification(
+                    t('notifications.xpGainedSimple', { amount: result.xpAwarded }),
+                    'xp'
+                );
+            }
+
+            // Ajouter les sacs générés à la file d'attente
+            if (result.coinBags && result.coinBags.length > 0) {
+                setPendingBags(prev => [...prev, ...result.coinBags]);
+            }
+
+            return result;
+        } catch (e) {
+            console.debug('[NORA] awardXp failed:', e?.response?.data?.error || e?.message);
+            return null;
+        }
+    }, [authUser?.id, addNotification, t]);
+
+    /**
+     * revealBag — révéler un sac de pièces (met à jour le solde + retire de la file)
+     */
+    const revealBag = useCallback(async (bagId) => {
+        try {
+            const result = await gamificationService.revealBag(bagId);
+            setUser(prev => ({ ...prev, coins: result.newBalance ?? prev.coins }));
+            setPendingBags(prev => prev.filter(b => b.id !== bagId));
+            return result;
+        } catch (e) {
+            console.error('[NORA] revealBag failed:', e?.message);
+            throw e;
+        }
+    }, []);
+
+    // Valeurs effectives des seuils XP (depuis xp_config si disponible) — memoïsé pour éviter les re-renders
+    const effectiveXpThresholds = useMemo(() => ({
+        flashcards: { timeMinutes: 10, xp: authUser?.xp_config?.flashcards_timer ?? XP_THRESHOLDS.flashcards.xp },
+        quiz:       { timeMinutes: 20, xp: authUser?.xp_config?.quiz_timer ?? XP_THRESHOLDS.quiz.xp },
+        summary:    { timeMinutes: 30, xp: authUser?.xp_config?.summary_timer ?? XP_THRESHOLDS.summary.xp }
+    }), [authUser?.xp_config]);
+    const effectiveAllBonusXp = useMemo(
+        () => authUser?.xp_config?.all_timer_bonus ?? ALL_BONUS_XP,
+        [authUser?.xp_config]
+    );
 
     const updateTime = useCallback((activityType, seconds) => {
         const today = getTodayString();
@@ -394,10 +396,9 @@ export const UserProvider = ({ children }) => {
 
         setDailyStats(prev => {
             const newStats = { ...prev };
-
-            if (activityType === 'quiz') newStats.quizTime += seconds;
+            if (activityType === 'quiz')       newStats.quizTime += seconds;
             if (activityType === 'flashcards') newStats.flashcardsTime += seconds;
-            if (activityType === 'summary') newStats.summaryTime += seconds;
+            if (activityType === 'summary')    newStats.summaryTime += seconds;
 
             updatedTimes = {
                 quizTime: newStats.quizTime,
@@ -405,9 +406,9 @@ export const UserProvider = ({ children }) => {
                 summaryTime: newStats.summaryTime
             };
 
-            // Check XP Thresholds and award XP
+            // Vérifier les seuils XP minuteurs
             const timeKey = `${activityType}Time`;
-            const threshold = XP_THRESHOLDS[activityType];
+            const threshold = effectiveXpThresholds[activityType];
 
             if (threshold && !newStats.xpAwarded[activityType]) {
                 const timeInSeconds = newStats[timeKey];
@@ -423,34 +424,33 @@ export const UserProvider = ({ children }) => {
                 }
             }
 
-            // Check All Bonus
+            // Bonus toutes activités
             if (!newStats.xpAwarded.allBonus &&
                 newStats.xpAwarded.flashcards &&
                 newStats.xpAwarded.quiz &&
                 newStats.xpAwarded.summary) {
                 newStats.xpAwarded.allBonus = true;
                 setTimeout(() => {
-                    addExp(ALL_BONUS_XP, true, t('notifications.dailyBonusComplete', { amount: ALL_BONUS_XP }));
+                    addExp(effectiveAllBonusXp, true, t('notifications.dailyBonusComplete', { amount: effectiveAllBonusXp }));
                 }, 100);
             }
 
             return newStats;
         });
 
-        // Update Daily Goals Progress
+        // Mise à jour des objectifs quotidiens + XP par objectif
         setDailyGoalsState(prev => {
             const goalsToNotify = [];
+            const goalsToAwardXp = [];
 
             const updatedGoals = prev.map(goal => {
                 if (goal.completed) return goal;
-
                 const timeKey = ACTIVITY_TYPES[goal.type]?.key;
                 if (!timeKey) return goal;
-
                 const currentTime = updatedTimes[timeKey] || 0;
-
                 if (currentTime >= goal.targetMinutes * 60) {
                     goalsToNotify.push(goal.type);
+                    goalsToAwardXp.push(goal.id);
                     return { ...goal, completed: true };
                 }
                 return goal;
@@ -462,33 +462,37 @@ export const UserProvider = ({ children }) => {
                 setTimeout(() => addNotification(t('notifications.goalCompleted', { label }), 'goal'), 0);
             });
 
+            // Créditer +XP par objectif (serveur, avec déduplication)
+            goalsToAwardXp.forEach(goalId => {
+                setTimeout(() => {
+                    awardXp('goal_completed', { contextId: String(goalId) }).catch(() => {});
+                }, 0);
+            });
+
             return updatedGoals;
         });
-    }, [dailyStats, checkAndResetForNewDay, addExp, addNotification, t]);
+    }, [dailyStats, checkAndResetForNewDay, addExp, awardXp, addNotification, t, effectiveXpThresholds, effectiveAllBonusXp]);
 
-    // Check Daily Goals Completion Bonus (10 XP) - only once per day
+    // Bonus tous objectifs complétés (server-side)
     useEffect(() => {
         if (dailyGoals.length > 0 &&
             dailyGoals.every(g => g.completed) &&
             !dailyGoalsRewardClaimed) {
             setDailyGoalsRewardClaimed(true);
-            addExp(DAILY_GOALS_BONUS_XP, true, t('notifications.allGoalsCompleted', { amount: DAILY_GOALS_BONUS_XP }));
+            awardXp('daily_goals_all_bonus').catch(() => {});
         }
-    }, [dailyGoals, dailyGoalsRewardClaimed, addExp, t]);
+    }, [dailyGoals, dailyGoalsRewardClaimed, awardXp]);
 
-    // Function to update daily goals with reset of progress
-    const updateDailyGoals = useCallback((newGoals, skipWarning = false) => {
+    const updateDailyGoals = useCallback((newGoals) => {
         const resetGoals = newGoals.map((goal, index) => ({
             ...goal,
             id: goal.id || index + 1,
             completed: false
         }));
         setDailyGoalsState(resetGoals);
-        // Sync immediately to backend
         syncDailyProgressToBackend(resetGoals, dailyStats, dailyGoalsRewardClaimed);
     }, [syncDailyProgressToBackend, dailyStats, dailyGoalsRewardClaimed]);
 
-    // Add a new goal — garde le statut des goals existants
     const addDailyGoal = useCallback((type, targetMinutes) => {
         setDailyGoalsState(prev => {
             if (prev.some(g => g.type === type)) {
@@ -502,105 +506,69 @@ export const UserProvider = ({ children }) => {
         });
     }, [addNotification, t, syncDailyProgressToBackend, dailyStats, dailyGoalsRewardClaimed]);
 
-    // Remove a goal — re-évalue le statut completed depuis dailyStats réels
     const removeDailyGoal = useCallback((goalId) => {
         setDailyGoalsState(prev => {
             const newGoals = prev.filter(g => g.id !== goalId).map(g => {
                 const timeKey = ACTIVITY_TYPES[g.type]?.key;
                 const currentSeconds = timeKey ? (dailyStats[timeKey] || 0) : 0;
-                const isCompleted = currentSeconds >= g.targetMinutes * 60;
-                return { ...g, completed: isCompleted };
+                return { ...g, completed: currentSeconds >= g.targetMinutes * 60 };
             });
             syncDailyProgressToBackend(newGoals, dailyStats, dailyGoalsRewardClaimed);
             return newGoals;
         });
     }, [syncDailyProgressToBackend, dailyStats, dailyGoalsRewardClaimed]);
 
-    // Update a specific goal's target time — re-évalue uniquement ce goal
     const updateGoalTarget = useCallback((goalId, newTargetMinutes) => {
         setDailyGoalsState(prev => {
             const updatedGoals = prev.map(g => {
-                if (g.id !== goalId) return g; // autres goals inchangés
+                if (g.id !== goalId) return g;
                 const timeKey = ACTIVITY_TYPES[g.type]?.key;
                 const currentSeconds = timeKey ? (dailyStats[timeKey] || 0) : 0;
-                const isStillCompleted = currentSeconds >= newTargetMinutes * 60;
-                return { ...g, targetMinutes: newTargetMinutes, completed: isStillCompleted };
+                return { ...g, targetMinutes: newTargetMinutes, completed: currentSeconds >= newTargetMinutes * 60 };
             });
             syncDailyProgressToBackend(updatedGoals, dailyStats, dailyGoalsRewardClaimed);
             return updatedGoals;
         });
     }, [syncDailyProgressToBackend, dailyStats, dailyGoalsRewardClaimed]);
 
-    // Calculate daily progress percentage based on completed goals
     const dailyProgressPercentage = dailyGoals.length > 0
         ? Math.round((dailyGoals.filter(g => g.completed).length / dailyGoals.length) * 100)
         : 0;
 
-    // Get formatted study times (in minutes)
     const getStudyTimeMinutes = useCallback((activityType) => {
         const timeKey = ACTIVITY_TYPES[activityType]?.key;
         if (!timeKey) return 0;
         return Math.floor(dailyStats[timeKey] / 60);
     }, [dailyStats]);
 
-    // Get XP progress for an activity type (percentage to threshold)
     const getXpProgress = useCallback((activityType) => {
-        const threshold = XP_THRESHOLDS[activityType];
+        const threshold = effectiveXpThresholds[activityType];
         if (!threshold) return 0;
-
         const timeKey = ACTIVITY_TYPES[activityType]?.key;
         if (!timeKey) return 0;
-
         const currentMinutes = dailyStats[timeKey] / 60;
         return Math.min(100, (currentMinutes / threshold.timeMinutes) * 100);
-    }, [dailyStats]);
+    }, [dailyStats, effectiveXpThresholds]);
 
-    // Get average daily study time in minutes (includes today)
     const getAverageDailyStudyTime = useCallback(() => {
         const todaySeconds = getTotalStudyTime(dailyStats);
-
-        if (studyHistory.length === 0 && todaySeconds === 0) {
-            return 0;
-        }
-
+        if (studyHistory.length === 0 && todaySeconds === 0) return 0;
         const historyTotal = studyHistory.reduce((sum, day) => sum + day.totalSeconds, 0);
         const totalDays = studyHistory.length + (todaySeconds > 0 ? 1 : 0);
-
         if (totalDays === 0) return 0;
-
-        const averageSeconds = (historyTotal + todaySeconds) / totalDays;
-        return Math.round(averageSeconds / 60);
+        return Math.round((historyTotal + todaySeconds) / totalDays / 60);
     }, [dailyStats, studyHistory]);
 
-    const unlockCreature = useCallback((creatureId) => {
-        setUser(prev => {
-            if (!prev.collection.includes(creatureId)) {
-                const newUser = { ...prev, collection: [...prev.collection, creatureId] };
-                syncToBackend(newUser);
-                return newUser;
-            }
-            return prev;
-        });
-    }, [syncToBackend]);
-
-    const useEgg = useCallback(() => {
-        if (user.eggs > 0) {
-            setUser(prev => {
-                const newUser = { ...prev, eggs: prev.eggs - 1 };
-                syncToBackend(newUser);
-                return newUser;
-            });
-            return true;
-        }
-        return false;
-    }, [user.eggs, syncToBackend]);
+    const hasPendingBag = pendingBags.length > 0;
 
     return (
         <UserContext.Provider value={{
             user,
+            pendingBags,
+            hasPendingBag,
             addExp,
-            unlockCreature,
-            useEgg,
+            awardXp,
+            revealBag,
             dailyStats,
             dailyGoals,
             dailyProgressPercentage,

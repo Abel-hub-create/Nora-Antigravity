@@ -52,7 +52,9 @@ export const linkAppleAccount = async (userId, appleId) => {
 };
 
 export const findById = async (id) => {
-  const sql = `SELECT id, email, name, avatar, theme, language, auto_folder, onboarding_completed, level, exp, next_level_exp, streak, eggs, collection, created_at, is_banned, banned_reason, plan_type, premium_expires_at
+  const sql = `SELECT id, email, name, avatar, theme, language, auto_folder, onboarding_completed,
+               level, exp, next_level_exp, winstreak, coins, last_activity_date, timezone,
+               created_at, is_banned, banned_reason, plan_type, premium_expires_at
                FROM users WHERE id = ? AND is_active = 1`;
   const users = await query(sql, [id]);
   return users[0] || null;
@@ -98,17 +100,26 @@ export const updateLastLogin = async (userId) => {
   await query(sql, [userId]);
 };
 
-export const updateUserData = async (userId, { level, exp, next_level_exp, streak, eggs, collection }) => {
+// IMPORTANT: coins et winstreak sont gérés exclusivement côté serveur — ne pas les inclure ici
+export const updateUserData = async (userId, { level, exp, next_level_exp }) => {
   const sql = `UPDATE users SET
     level = COALESCE(?, level),
     exp = COALESCE(?, exp),
     next_level_exp = COALESCE(?, next_level_exp),
-    streak = COALESCE(?, streak),
-    eggs = COALESCE(?, eggs),
-    collection = COALESCE(?, collection),
     updated_at = NOW()
     WHERE id = ?`;
-  await query(sql, [level, exp, next_level_exp, streak, eggs, JSON.stringify(collection), userId]);
+  await query(sql, [level, exp, next_level_exp, userId]);
+};
+
+export const updateTimezone = async (userId, timezone) => {
+  if (!timezone) return;
+  try {
+    // Valider que le fuseau est accepté par Intl
+    new Intl.DateTimeFormat('en-CA', { timeZone: timezone });
+    await query(`UPDATE users SET timezone = ? WHERE id = ?`, [timezone, userId]);
+  } catch {
+    // Fuseau invalide — on ignore silencieusement
+  }
 };
 
 // Refresh token management

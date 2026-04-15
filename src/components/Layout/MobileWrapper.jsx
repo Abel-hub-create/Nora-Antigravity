@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
-import { Home, GraduationCap, PlusCircle, User, Gift, Settings, Bot, Crown } from 'lucide-react';
+import { Home, GraduationCap, PlusCircle, User, ShoppingBag, Settings, Bot, Crown } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import NotificationStack from '../UI/NotificationStack';
 import OnboardingModal from '../Onboarding/OnboardingModal';
+import CoinBagModal from '../Gamification/CoinBagModal';
 import { useRevision } from '../../context/RevisionContext';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 import { playClick, playHover } from '../../utils/sounds';
@@ -58,7 +59,7 @@ const MobileWrapper = ({ children }) => {
     const allNavItems = [
         { icon: Home,          labelKey: 'nav.home',      path: '/' },
         { icon: GraduationCap, labelKey: 'nav.study',     path: '/study' },
-        { icon: Gift,          labelKey: 'nav.collection',path: '/collection' },
+        { icon: ShoppingBag,   labelKey: 'nav.shop',      path: '/shop' },
         { icon: PlusCircle,    labelKey: 'nav.import',    path: '/import' },
         { icon: Bot,           labelKey: 'nav.assistant', path: '/assistant' },
         { icon: User,          labelKey: 'nav.profile',   path: '/profile' },
@@ -67,10 +68,10 @@ const MobileWrapper = ({ children }) => {
     const bottomNavItems = [
         { icon: Home,          labelKey: 'nav.home',      path: '/' },
         { icon: GraduationCap, labelKey: 'nav.study',     path: '/study' },
+        { icon: ShoppingBag,   labelKey: 'nav.shop',      path: '/shop' },
         { icon: PlusCircle,    labelKey: 'nav.import',    path: '/import' },
         { icon: Bot,           labelKey: 'nav.assistant', path: '/assistant' },
         { icon: User,          labelKey: 'nav.profile',   path: '/profile' },
-        { icon: Settings,      labelKey: 'nav.settings',  path: '/settings' },
     ];
     const isPremium = user?.plan_type && user.plan_type !== 'free';
 
@@ -78,6 +79,8 @@ const MobileWrapper = ({ children }) => {
         <div className="min-h-screen bg-background font-sans text-text-main">
             {/* Onboarding Modal for new users */}
             {showOnboarding && <OnboardingModal />}
+            {/* Sac de pièces — bloque la navigation jusqu'à révélation */}
+            <CoinBagModal />
 
             {/* Sidebar Navigation - Desktop only */}
             <nav className="hidden md:flex flex-col w-64 bg-surface/50 border-r border-white/5 p-4 fixed h-full z-40">

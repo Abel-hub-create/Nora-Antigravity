@@ -305,6 +305,83 @@ Audit exhaustif de tous les endpoints API, services backend, et fonctionnalités
 - Aucun bug critique détecté lors de l'audit
 - Site en production stable sur port 5000
 
+## Changelog — 2026-04-15 (Nouveau Système de Gamification)
+
+### Suppression du système œufs/créatures
+- Colonnes `eggs` et `collection` supprimées de la table `users`
+- Pages `Collection.jsx` et `EggAnimation.jsx` remplacées (collection → boutique)
+- `creatures.js` obsolète (ne plus utiliser)
+
+### Nouveau schéma DB (migrations 039 + 040)
+- `users` : `streak` renommé → `winstreak`, + `coins INT DEFAULT 0`, `last_activity_date DATE`, `timezone VARCHAR(100)`
+- `next_level_exp` recalculé selon seuils fixes : niveaux 1–3 = 500 XP, 4–9 = 1000 XP, 10+ = 1200 XP
+- Nouvelles tables : `xp_events` (déduplication), `pending_coin_bags`, `coin_transactions`, `shop_daily_cards`, `xp_config`
+
+### Système XP
+- **Architecture hybride** : XP events (synthèse, objectifs, vocal, winstreak…) → serveur via `POST /api/xp/award`; XP minuteurs (flashcards/quiz/synthèse lue) → reste frontend dans UserContext
+- `xpService.js` : applique `xp_multiplier` depuis `plan_limits`, déduplication via `xp_events`, level-up avec seuils fixes, génère des sacs côté serveur
+- `xp_config` table : tous les montants XP configurables depuis le panel admin (`/admin/xp-config`)
+- `xp_multiplier` en prod actuellement **x2 pour Premium/École** (configurable dans Plans)
+- **IMPORTANT** : `POST /api/auth/sync` n'accepte plus `eggs`, `collection`, `streak` — seulement `level`, `exp`, `next_level_exp`
+
+### Sources d'XP (valeurs de base, avant multiplicateur)
+| Source | Montant | Mode dédup |
+|--------|---------|------------|
+| Création synthèse | 30 XP | Par synthèse par jour |
+| Objectif quotidien complété | 10 XP | Par objectif par jour |
+| Tous les objectifs du jour | 50 XP | Une fois par jour |
+| Premier exercice créé | 30 XP | Une fois par jour |
+| Vocal Aron écouté | 20 XP | Par vocal par jour |
+| Winstreak maintenue | 20 XP | Une fois par jour |
+| Achat Premium/École | 1000 XP | Une fois à vie |
+| Flashcards 10 min | 40 XP | Timer frontend |
+| Quiz 20 min | 70 XP | Timer frontend |
+| Synthèse lue 30 min | 100 XP | Timer frontend |
+| Bonus tous timers | 100 XP | Timer frontend |
+
+### Winstreak
+- Calcul serveur au login via `winstreakService.js` avec fuseau horaire du navigateur (Intl API)
+- Reset à 1 si jour sauté (pas de mécanisme de grâce)
+- +20 XP par jour de série maintenue (serveur, multiplié par xp_multiplier)
+- Affiché : header Accueil (🔥 + nombre) + carte Profil
+
+### Sac de pièces (level-up)
+- Tirage côté serveur uniquement dans `coinBagService.js` (anti-triche)
+- Taux free : 69% → 10 🪙, 30% → 20 🪙, 1% → 50 🪙
+- Taux premium/école : 69% → 20 🪙, 50% → 40 🪙, 30% → 60 🪙, 1% → 150 🪙
+- `CoinBagModal` : overlay bloquant (z-9999, portal body), queue de sacs, confetti
+- Level-up via minuteur (frontend) → `POST /api/bags/generate` pour créer le sac
+- Level-up via event serveur → sac inclus dans la réponse de `POST /api/xp/award`
+
+### Boutique (`/shop`)
+- Remplace l'onglet Collection dans la nav (desktop + mobile)
+- 3 sections : packs de cartes (placeholder), cartes du jour (placeholder), offres IAP (Stripe, bientôt)
+- Quick action "Voir la boutique" remplace "Voir la collection" sur l'accueil
+
+### Affichage pièces
+- Header Accueil : 🪙 + `AnimatedNumber` (pill glassmorphism, haut droit)
+- Carte Profil : pill pièces + pill winstreak (remplace l'ancien pill œuf)
+- `/me` retourne `coins`, `winstreak`, `xp_config` dans l'objet user
+
+### Panel Admin
+- **Config XP** : `/admin/xp-config` — modifier les montants de base de chaque source XP
+- **Attribuer XP** : section dans la fiche utilisateur, avec montant libre + note optionnelle
+- `POST /api/admin/users/:id/grant-xp` → `reason: 'admin_grant'`, sans déduplication, sans multiplicateur
+
+### Nouveaux endpoints API
+```
+POST /api/xp/award           — créditer XP (frontend)
+POST /api/xp/winstreak       — vérifier/mettre à jour la winstreak
+GET  /api/bags/pending        — sacs non révélés
+POST /api/bags/generate       — générer sac (level-up minuteur)
+POST /api/bags/:id/reveal     — révéler un sac
+GET  /api/admin/xp-config     — lister config XP (admin)
+PATCH /api/admin/xp-config/:r — modifier un montant XP (admin)
+POST /api/admin/users/:id/grant-xp — attribution manuelle XP (admin)
+```
+
+---
+
 ## Changelog — 2026-04-14 (Sons, Thèmes, Limites, Impression Flashcards)
 
 ### 🔊 Sound Effects
@@ -474,17 +551,20 @@ GET /api/admin/stats
 ### Core Architecture
 
 **State Management**: Uses React Context (`UserContext`) as the single source of truth for:
-- User profile (level, XP, streak, eggs, creature collection)
+- User profile (level, XP, coins, winstreak)
 - Daily stats tracking (time spent per activity type)
 - Daily goals with XP reward system
-- Data synced to backend via `syncUserData()` on every change
+- Pending coin bags (hasPendingBag déclenche CoinBagModal)
+- Data synced to backend via `syncUserData()` (level/exp/next_level_exp uniquement — coins/winstreak gérés serveur)
 - **Important**: Uses `??` (nullish coalescing) instead of `||` to handle `0` values correctly
 
-**Gamification System**:
-- XP thresholds per activity type (flashcards: 10min/40XP, quiz: 20min/70XP, summary: 30min/100XP)
-- Level-up grants eggs for creature collection
-- Creatures have rarity tiers (rare → mythic → secret) with weighted random selection
-- **Creature IDs are strings** (e.g., 'r1', 'm1', 'l1') not numbers - stored as JSON array in DB
+**Gamification System** (nouveau — avril 2026):
+- Seuils fixes : niveaux 1–3 = 500 XP, 4–9 = 1000 XP, 10+ = 1200 XP (`getXpThreshold(level)` exporté depuis UserContext)
+- Level-up → sac de pièces généré côté serveur (`coinBagService.js`)
+- XP events (synthèse, objectifs, vocal…) via `POST /api/xp/award` (serveur, avec déduplication + multiplicateur)
+- XP minuteurs (10/20/30 min) restent côté frontend dans `addExp()`, multipliés par `xp_multiplier`
+- Montants XP configurables depuis panel admin → `xp_config` table → `GET /api/auth/me` → `authUser.xp_config`
+- Winstreak calculée serveur au login avec fuseau horaire user
 
 **Time Tracking**: `useActiveTimer` hook tracks active time per activity, pausing when tab loses focus.
 
@@ -496,13 +576,17 @@ The home page is the main dashboard showing daily progress and quick actions.
 - Greeting: "Bonjour, [prenom]" - uses first word of user's name
 - Tagline: *"Un prix pensé pour ceux qui étudient, pas pour les gros budgets."* (italic, in quotes)
 
+### Header (haut droite)
+- Pill 🔥 winstreak + `AnimatedNumber` (série)
+- Pill 🪙 pièces + `AnimatedNumber` (solde)
+
 ### Quick Actions
 Three action cards for fast navigation:
 
 | Action | Subtitle | Destination |
 |--------|----------|-------------|
 | Voir mes syntheses | Toutes mes etudes | `/study` |
-| Voir la collection | Mes creatures | `/collection` |
+| Voir la boutique | Récompenses et offres | `/shop` |
 | Nouvel Import | Texte ou Vocal | `/import` |
 
 ### Components

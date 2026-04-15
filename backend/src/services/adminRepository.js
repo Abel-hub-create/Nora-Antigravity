@@ -188,11 +188,15 @@ export async function setPremium(userId, expiresAt = null) {
 }
 
 export async function deleteUser(userId) {
-  // Delete user and all related data
+  // Delete user and all related data (gamification tables incluses)
   await query(`DELETE FROM syntheses WHERE user_id = ?`, [userId]);
   await query(`DELETE FROM daily_usage WHERE user_id = ?`, [userId]);
   await query(`DELETE FROM subscriptions WHERE user_id = ?`, [userId]);
   await query(`DELETE FROM conversations WHERE user_id = ?`, [userId]);
+  await query(`DELETE FROM xp_events WHERE user_id = ?`, [userId]);
+  await query(`DELETE FROM pending_coin_bags WHERE user_id = ?`, [userId]);
+  await query(`DELETE FROM coin_transactions WHERE user_id = ?`, [userId]);
+  await query(`DELETE FROM shop_daily_cards WHERE user_id = ?`, [userId]);
   await query(`DELETE FROM users WHERE id = ?`, [userId]);
 }
 

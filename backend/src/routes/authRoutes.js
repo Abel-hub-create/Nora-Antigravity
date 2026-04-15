@@ -8,6 +8,9 @@ import { validate } from '../middlewares/validation.js';
 import { authenticate } from '../middlewares/auth.js';
 import { loginLimiter, registerLimiter, forgotPasswordLimiter } from '../middlewares/rateLimiter.js';
 import * as validators from '../validators/authValidators.js';
+import { getUserPlanLimits } from '../services/planRepository.js';
+import { getXpConfigMap } from '../services/xpConfigService.js';
+import { checkAndUpdateWinstreak } from '../services/winstreakService.js';
 
 const router = express.Router();
 
@@ -47,6 +50,11 @@ router.post('/login', loginLimiter, validate(validators.loginSchema), async (req
       sameSite: 'strict',
       maxAge: cookieMaxAge
     });
+
+    // Winstreak + timezone (fire-and-forget, ne bloque pas le login)
+    const timezone = req.body?.timezone || 'UTC';
+    userRepository.updateTimezone(user.id, timezone).catch(() => {});
+    checkAndUpdateWinstreak(user.id, timezone).catch(() => {});
 
     res.json({ user, accessToken });
   } catch (error) {
@@ -115,6 +123,9 @@ router.post('/google', loginLimiter, async (req, res, next) => {
     // 6. Get full user data
     const fullUser = await userRepository.findById(user.id);
 
+    // Winstreak (fire-and-forget)
+    checkAndUpdateWinstreak(fullUser.id, fullUser.timezone || 'UTC').catch(() => {});
+
     res.json({ user: fullUser, accessToken });
   } catch (error) {
     console.error('[Auth Google] Error:', error);
@@ -180,6 +191,9 @@ router.post('/apple', loginLimiter, async (req, res, next) => {
     // 6. Get full user data
     const fullUser = await userRepository.findById(user.id);
 
+    // Winstreak (fire-and-forget)
+    checkAndUpdateWinstreak(fullUser.id, fullUser.timezone || 'UTC').catch(() => {});
+
     res.json({ user: fullUser, accessToken });
   } catch (error) {
     console.error('[Auth Apple] Error:', error);
@@ -215,11 +229,14 @@ router.post('/refresh', async (req, res, next) => {
   }
 });
 
-// Get current user (with plan limits)
+// Get current user (avec plan_limits + xp_config + pending_bags)
 router.get('/me', authenticate, async (req, res) => {
   try {
-    const { limits } = await import('../services/planRepository.js').then(m => m.getUserPlanLimits(req.user.id));
-    res.json({ user: { ...req.user, plan_limits: limits } });
+    const [planData, xpConfig] = await Promise.all([
+      getUserPlanLimits(req.user.id),
+      getXpConfigMap(),
+    ]);
+    res.json({ user: { ...req.user, plan_limits: planData.limits, xp_config: xpConfig } });
   } catch {
     res.json({ user: req.user });
   }

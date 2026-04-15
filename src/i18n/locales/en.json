@@ -34,6 +34,7 @@
     "home": "Home",
     "study": "Summaries",
     "collection": "Collection",
+    "shop": "Shop",
     "import": "Import",
     "profile": "Profile",
     "settings": "Settings",
@@ -53,6 +54,8 @@
     "allStudies": "All my summaries",
     "viewCollection": "View collection",
     "myCreatures": "My creatures",
+    "viewShop": "View shop",
+    "shopSubtitle": "Rewards and offers",
     "newImport": "New Import",
     "textOrVoice": "Take a photo",
     "feedback": "Feedback & Ideas",
@@ -669,7 +672,9 @@
     "goalCompleted": "Goal \"{{label}}\" completed!",
     "allGoalsCompleted": "+{{amount}} XP - All goals completed!",
     "xpGained": "+{{amount}} XP - {{label}} ({{time}}min)",
-    "dailyBonusComplete": "+{{amount}} XP - Daily bonus complete!"
+    "xpGainedSimple": "+{{amount}} XP",
+    "dailyBonusComplete": "+{{amount}} XP - Daily bonus complete!",
+    "winstreakBonus": "+{{amount}} XP - Streak active! 🔥"
   },
   "onboarding": {
     "step1": {

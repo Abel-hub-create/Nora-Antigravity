@@ -34,6 +34,7 @@
     "home": "Accueil",
     "study": "Synthèses",
     "collection": "Collection",
+    "shop": "Boutique",
     "import": "Importer",
     "profile": "Profil",
     "settings": "Paramètres",
@@ -53,6 +54,8 @@
     "allStudies": "Toutes mes synthèses",
     "viewCollection": "Voir la collection",
     "myCreatures": "Mes créatures",
+    "viewShop": "Voir la boutique",
+    "shopSubtitle": "Récompenses et offres",
     "newImport": "Nouvel Import",
     "textOrVoice": "Prendre en photo",
     "feedback": "Bug & Suggestions",
@@ -668,7 +671,9 @@
     "goalCompleted": "Objectif \"{{label}}\" complété !",
     "allGoalsCompleted": "+{{amount}} XP - Tous les objectifs complétés !",
     "xpGained": "+{{amount}} XP - {{label}} ({{time}}min)",
-    "dailyBonusComplete": "+{{amount}} XP - Bonus journalier complet !"
+    "xpGainedSimple": "+{{amount}} XP",
+    "dailyBonusComplete": "+{{amount}} XP - Bonus journalier complet !",
+    "winstreakBonus": "+{{amount}} XP - Série maintenue ! 🔥"
   },
   "onboarding": {
     "step1": {

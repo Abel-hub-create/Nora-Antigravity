@@ -24,6 +24,7 @@ import StudyRevision from './pages/StudyRevision';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Collection from './pages/Collection';
+import Shop from './pages/Shop';
 import Process from './pages/Process';
 import FolderDetail from './pages/FolderDetail';
 import Feedback from './pages/Feedback';
@@ -45,6 +46,7 @@ import AdminPlans from './features/admin/pages/AdminPlans';
 import AdminSchoolRequests from './features/admin/pages/AdminSchoolRequests';
 import AdminPromoCodes from './features/admin/pages/AdminPromoCodes';
 import AdminDebug from './features/admin/pages/AdminDebug';
+import AdminXpConfig from './features/admin/pages/AdminXpConfig';
 import AdminConversations from './features/admin/pages/AdminConversations';
 import AdminSystemPrompts from './features/admin/pages/AdminSystemPrompts';
 import Pricing from './pages/Pricing';
@@ -75,6 +77,7 @@ function App() {
                 <Route path="conversations" element={<AdminProtectedRoute><AdminConversations /></AdminProtectedRoute>} />
                 <Route path="system-prompts" element={<AdminProtectedRoute><AdminSystemPrompts /></AdminProtectedRoute>} />
                 <Route path="debug" element={<AdminProtectedRoute><AdminDebug /></AdminProtectedRoute>} />
+                <Route path="xp-config" element={<AdminProtectedRoute><AdminXpConfig /></AdminProtectedRoute>} />
                 <Route path="" element={<Navigate to="dashboard" replace />} />
                 <Route path="*" element={<Navigate to="dashboard" replace />} />
               </Routes>
@@ -110,6 +113,7 @@ function App() {
                       <Route path="/settings" element={<Settings />} />
                       <Route path="/pricing" element={<Pricing />} />
                       <Route path="/collection" element={<Collection />} />
+                      <Route path="/shop" element={<Shop />} />
                       <Route path="/process" element={<Process />} />
                       <Route path="/feedback" element={<Feedback />} />
                       <Route path="/assistant" element={<Assistant />} />

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Ban, Crown, Trash2, CheckCircle, Loader2, GraduationCap, User } from 'lucide-react';
+import { ArrowLeft, Ban, Crown, Trash2, CheckCircle, Loader2, GraduationCap, User, Zap } from 'lucide-react';
 import { adminApi } from '../services/adminApiClient.js';
 import AdminLayout from '../components/AdminLayout.jsx';
 
@@ -33,6 +33,9 @@ export default function AdminUserDetail() {
   const [toast, setToast] = useState('');
   const [banReason, setBanReason] = useState('');
   const [showBanInput, setShowBanInput] = useState(false);
+  const [xpAmount, setXpAmount] = useState('');
+  const [xpNote, setXpNote] = useState('');
+  const [showGrantXp, setShowGrantXp] = useState(false);
 
   useEffect(() => {
     adminApi.get(`/users/${id}`).then(data => {
@@ -81,6 +84,20 @@ export default function AdminUserDetail() {
       await adminApi.delete(`/users/${id}`);
       navigate('/admin/users', { replace: true });
     } finally { setActionLoading(''); setConfirm(null); }
+  };
+
+  const handleGrantXp = async () => {
+    const amount = parseInt(xpAmount, 10);
+    if (!amount || amount <= 0) return;
+    setActionLoading('xp');
+    try {
+      const result = await adminApi.post(`/users/${id}/grant-xp`, { amount, note: xpNote || null });
+      showToast(`+${result.xpAwarded} XP attribués ! (Niveau ${result.newLevel})`);
+      setUser(u => ({ ...u, level: result.newLevel, exp: result.newExp }));
+      setXpAmount(''); setXpNote(''); setShowGrantXp(false);
+    } catch (e) {
+      showToast('Erreur lors de l\'attribution XP');
+    } finally { setActionLoading(''); }
   };
 
   const handleSetPlan = async () => {
@@ -228,6 +245,41 @@ export default function AdminUserDetail() {
               {actionLoading === 'plan' ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
               Appliquer le plan
             </button>
+          </div>
+
+          {/* Attribuer XP */}
+          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5 space-y-3">
+            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+              <Zap size={14} className="text-yellow-400" /> Attribuer des XP
+            </h2>
+            {showGrantXp ? (
+              <div className="space-y-2">
+                <input
+                  type="number" min="1" max="100000" value={xpAmount}
+                  onChange={e => setXpAmount(e.target.value)}
+                  placeholder="Montant XP (ex: 500)"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-yellow-400"
+                />
+                <input
+                  type="text" value={xpNote}
+                  onChange={e => setXpNote(e.target.value)}
+                  placeholder="Note (optionnel)"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-yellow-400"
+                />
+                <div className="flex gap-2">
+                  <button onClick={() => setShowGrantXp(false)} className="flex-1 py-2 rounded-xl bg-gray-800 text-gray-400 text-sm">Annuler</button>
+                  <button onClick={handleGrantXp} disabled={actionLoading === 'xp' || !xpAmount}
+                    className="flex-1 py-2 rounded-xl bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 text-sm disabled:opacity-50 flex items-center justify-center gap-1">
+                    {actionLoading === 'xp' ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />} Attribuer
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => setShowGrantXp(true)}
+                className="w-full flex items-center gap-2 justify-center bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20 text-yellow-400 text-sm py-2 rounded-xl transition-colors">
+                <Zap size={14} /> Donner des XP manuellement
+              </button>
+            )}
           </div>
 
           {/* Danger zone */}

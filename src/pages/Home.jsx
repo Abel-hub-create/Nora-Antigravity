@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import DailyProgress from '../components/Home/DailyProgress';
 import QuickActionCard from '../components/Home/QuickActionCard';
-import { Plus, BookOpen, Sparkles, MessageSquare, Crown } from 'lucide-react';
+import { Plus, BookOpen, ShoppingBag, MessageSquare, Crown, Coins } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import { useAuth } from '../features/auth/hooks/useAuth';
+import AnimatedNumber from '../components/UI/AnimatedNumber';
 
 const Home = () => {
     const { t } = useTranslation();
@@ -34,12 +35,25 @@ const Home = () => {
     return (
         <div className="p-6 pt-8 pb-24 space-y-6">
             {/* Header */}
-            <header className="mb-6">
-                <h1 className="text-2xl font-bold text-text-main">{t('home.greeting', { name: user.name?.split(' ')[0] || t('common.user') })}</h1>
-                <p className="text-text-muted italic">
-                    {displayed}
-                    {cursorVisible && <span className="animate-pulse opacity-60">|</span>}
-                </p>
+            <header className="mb-6 flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                    <h1 className="text-2xl font-bold text-text-main">{t('home.greeting', { name: user.name?.split(' ')[0] || t('common.user') })}</h1>
+                    <p className="text-text-muted italic">
+                        {displayed}
+                        {cursorVisible && <span className="animate-pulse opacity-60">|</span>}
+                    </p>
+                </div>
+                {/* Winstreak + Pièces */}
+                <div className="flex items-center gap-2 shrink-0 mt-1 pr-1">
+                    <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-surface/80 border border-white/10 rounded-full">
+                        <span className="text-base leading-none">🔥</span>
+                        <AnimatedNumber value={user.winstreak ?? 1} duration={600} className="text-sm font-bold text-text-main" />
+                    </div>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-surface/80 border border-amber-500/20 rounded-full">
+                        <span className="text-sm leading-none">🪙</span>
+                        <AnimatedNumber value={user.coins ?? 0} duration={600} className="text-sm font-bold text-amber-300" />
+                    </div>
+                </div>
             </header>
 
             {/* Premium Banner (free users only) */}
@@ -71,10 +85,10 @@ const Home = () => {
                 />
 
                 <QuickActionCard
-                    title={t('home.viewCollection')}
-                    subtitle={t('home.myCreatures')}
-                    icon={Sparkles}
-                    to="/collection"
+                    title={t('home.viewShop')}
+                    subtitle={t('home.shopSubtitle')}
+                    icon={ShoppingBag}
+                    to="/shop"
                 />
 
                 <QuickActionCard

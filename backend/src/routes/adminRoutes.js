@@ -7,6 +7,8 @@ import * as adminTokenService from '../services/adminTokenService.js';
 import * as adminRepo from '../services/adminRepository.js';
 import * as emailService from '../services/emailService.js';
 import * as planRepo from '../services/planRepository.js';
+import { awardXp } from '../services/xpService.js';
+import { getAllXpConfig, updateXpConfig } from '../services/xpConfigService.js';
 import { authenticateAdmin } from '../middlewares/adminAuth.js';
 import { adminConfig } from '../config/adminConfig.js';
 
@@ -648,6 +650,47 @@ router.post('/system-prompts/reset/:name', authenticateAdmin, async (req, res, n
     await dbQuery(`DELETE FROM system_prompts WHERE name = ?`, [req.params.name]);
     res.json({ message: 'Reset to default' });
   } catch (error) { next(error); }
+});
+
+// ─── XP : attribuer manuellement des XP à un user ───────────────────────────
+
+router.post('/users/:id/grant-xp', authenticateAdmin, express.json(), async (req, res, next) => {
+  try {
+    const userId = parseInt(req.params.id, 10);
+    if (!userId || isNaN(userId)) return res.status(400).json({ error: 'ID utilisateur invalide' });
+    const { amount, note } = req.body;
+    const parsedAmount = parseInt(amount, 10);
+    if (!parsedAmount || parsedAmount <= 0 || parsedAmount > 100000) {
+      return res.status(400).json({ error: 'Montant invalide (entre 1 et 100 000)' });
+    }
+    const result = await awardXp(userId, 'admin_grant', {
+      amount: parsedAmount,
+      contextId: note ? String(note).slice(0, 255) : 'admin_panel'
+    });
+    res.json({ success: true, ...result });
+  } catch (e) { next(e); }
+});
+
+// ─── XP Config : configurer les montants d'XP par source ────────────────────
+
+router.get('/xp-config', authenticateAdmin, async (req, res, next) => {
+  try {
+    const config = await getAllXpConfig();
+    res.json({ config });
+  } catch (e) { next(e); }
+});
+
+router.patch('/xp-config/:reason', authenticateAdmin, express.json(), async (req, res, next) => {
+  try {
+    const { reason } = req.params;
+    const { base_amount } = req.body;
+    if (base_amount === undefined || base_amount === null || isNaN(Number(base_amount))) {
+      return res.status(400).json({ error: 'base_amount (nombre) requis' });
+    }
+    await updateXpConfig(reason, Number(base_amount));
+    const config = await getAllXpConfig();
+    res.json({ success: true, config });
+  } catch (e) { next(e); }
 });
 
 export default router;

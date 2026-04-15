@@ -11,7 +11,7 @@ const Process = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const { addNotification } = useUser();
+  const { addNotification, awardXp } = useUser();
 
   const STEPS = [
     { id: 'title', label: t('process.steps.title'), icon: Sparkles, description: t('process.steps.titleDesc') },
@@ -127,6 +127,9 @@ const Process = () => {
         } else {
           addNotification(t('process.summaryCreatedSuccess'), 'success');
         }
+
+        // +XP pour création de synthèse (déduplication serveur)
+        awardXp('synthesis_created', { contextId: String(synthese.id) }).catch(() => {});
 
         if (isMounted) {
           // Encore sur la page → animer le succès puis rediriger

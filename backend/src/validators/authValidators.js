@@ -40,13 +40,11 @@ export const resetPasswordSchema = z.object({
   })
 });
 
+// IMPORTANT: streak/eggs/collection retirés — désormais gérés côté serveur
 export const syncUserDataSchema = z.object({
   body: z.object({
-    level: z.number().optional(),
-    exp: z.number().optional(),
-    next_level_exp: z.number().optional(),
-    streak: z.number().optional(),
-    eggs: z.number().optional(),
-    collection: z.array(z.string()).optional()
+    level: z.number().int().positive().optional(),
+    exp: z.number().int().min(0).optional(),
+    next_level_exp: z.number().int().positive().optional(),
   })
 });

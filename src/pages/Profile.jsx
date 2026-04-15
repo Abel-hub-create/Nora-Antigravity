@@ -9,7 +9,7 @@ import * as syntheseService from '../services/syntheseService';
 import FolderCard from '../components/Folders/FolderCard';
 import CreateFolderModal from '../components/Folders/CreateFolderModal';
 import { useAuth } from '../features/auth/hooks/useAuth';
-import { useUser } from '../context/UserContext';
+import { useUser, getXpThreshold } from '../context/UserContext';
 import AnimatedNumber from '../components/UI/AnimatedNumber';
 import { PremiumGate, usePremiumGate } from '../components/UI/PremiumGate';
 
@@ -26,10 +26,11 @@ const Profile = () => {
     const user = {
         name: authUser?.name || t('common.user'),
         avatar: authUser?.avatar || null,
-        level: userData?.level || 1,
-        exp: userData?.exp || 0,
-        nextLevelExp: userData?.nextLevelExp || 1000,
-        eggs: userData?.eggs || 0
+        level: userData?.level ?? 1,
+        exp: userData?.exp ?? 0,
+        nextLevelExp: userData?.nextLevelExp ?? getXpThreshold(userData?.level ?? 1),
+        coins: userData?.coins ?? 0,
+        winstreak: userData?.winstreak ?? 1,
     };
 
     // Folders state
@@ -84,7 +85,7 @@ const Profile = () => {
             </header>
 
             {/* User Info Card */}
-            <Link to="/collection" className="block bg-surface rounded-3xl p-6 mb-8 border border-white/5 relative overflow-hidden group">
+            <div className="block bg-surface rounded-3xl p-6 mb-8 border border-white/5 relative overflow-hidden">
                 <div className="flex items-center gap-4 mb-6 relative z-10">
                     <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary p-[2px]">
                         <div className="w-full h-full rounded-full bg-surface flex items-center justify-center overflow-hidden">
@@ -115,9 +116,17 @@ const Profile = () => {
                             </Link>
                         )}
                     </div>
-                    <div className="ml-auto bg-black/30 px-3 py-1 rounded-full border border-white/10 flex items-center gap-2">
-                        <span className="text-lg">🥚</span>
-                        <AnimatedNumber value={user.eggs} duration={800} className="text-sm font-bold text-text-main" />
+                    <div className="ml-auto flex flex-col items-end gap-1.5">
+                        {/* Pièces */}
+                        <div className="bg-black/30 px-3 py-1 rounded-full border border-amber-500/20 flex items-center gap-1.5">
+                            <span className="text-sm">🪙</span>
+                            <AnimatedNumber value={user.coins} duration={800} className="text-sm font-bold text-amber-300" />
+                        </div>
+                        {/* Winstreak */}
+                        <div className="bg-black/30 px-3 py-1 rounded-full border border-orange-500/20 flex items-center gap-1.5">
+                            <span className="text-sm">🔥</span>
+                            <AnimatedNumber value={user.winstreak} duration={600} className="text-sm font-bold text-orange-300" />
+                        </div>
                     </div>
                 </div>
                 {/* EXP Bar */}
@@ -138,7 +147,7 @@ const Profile = () => {
 
                 {/* Background Decoration */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-            </Link>
+            </div>
 
             {/* Stats Row */}
             <div className="grid grid-cols-1 gap-4 mb-8">
