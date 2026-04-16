@@ -5,10 +5,12 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../features/auth/hooks/useAuth';
 import * as feedbackService from '../services/feedbackService';
+import UserProfileModal, { useUserProfileModal } from '../components/UI/UserProfileModal';
 
 const Feedback = () => {
     const { t } = useTranslation();
     const { user } = useAuth();
+    const { openUserId, openProfile, closeProfile } = useUserProfileModal();
 
     // State
     const [activeTab, setActiveTab] = useState('reviews'); // 'reviews' or 'suggestions'
@@ -162,14 +164,17 @@ const Feedback = () => {
 
                 {/* Author info */}
                 <div className="flex items-center gap-2 mb-3">
-                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-                        <span className="text-xs font-bold text-primary">
-                            {item.author_name?.charAt(0)?.toUpperCase() || '?'}
-                        </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
+                    <button
+                        onClick={() => openProfile(item.user_id)}
+                        className="flex items-center gap-2 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
+                    >
+                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                            <span className="text-xs font-bold text-primary">
+                                {item.author_name?.charAt(0)?.toUpperCase() || '?'}
+                            </span>
+                        </div>
                         <p className="text-xs text-text-main truncate">{item.author_name}</p>
-                    </div>
+                    </button>
                     <span className="text-xs text-text-muted shrink-0">
                         {formatRelativeTime(item.created_at)}
                     </span>
@@ -383,6 +388,10 @@ const Feedback = () => {
                         )}
                     </div>
                 </div>
+            )}
+            {/* Modal profil cliquable — portal, rendu dans document.body */}
+            {openUserId && (
+                <UserProfileModal userId={openUserId} onClose={closeProfile} />
             )}
         </div>
     );

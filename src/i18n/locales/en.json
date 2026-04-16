@@ -39,6 +39,7 @@
     "profile": "Profile",
     "settings": "Settings",
     "assistant": "Assistant",
+    "leaderboard": "Leaderboard",
     "tagline": "Learn effortlessly"
   },
   "activities": {
@@ -984,5 +985,61 @@
   },
   "themeSelector": {
     "premiumHint": "Subscribe to unlock"
+  },
+  "shop": {
+    "title": "Shop",
+    "subtitle": "Spend your coins",
+    "soon": "Coming Soon",
+    "popular": "Popular",
+    "stripeNotice": "Stripe payments — coming soon",
+    "aronMessage": "Welcome to my shop! The best items are coming soon. 🎁",
+    "cardPacks": "Card Packs",
+    "dailyCards": "Daily Cards",
+    "dailyRotation": "Daily rotation",
+    "offers": "Offers",
+    "card": "Card #{{slot}}",
+    "basicPack": "Basic Pack",
+    "basicPackDesc": "3 random cards",
+    "rarePack": "Rare Pack",
+    "rarePackDesc": "3 cards, increased chances",
+    "legendPack": "Legendary Pack",
+    "legendPackDesc": "3 guaranteed premium cards",
+    "coinsLabel": "{{coins}} coins"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "Top 50 of the season",
+    "rank": "Rank",
+    "player": "Player",
+    "level": "Level",
+    "noSeason": "No active season",
+    "noSeasonDesc": "The administrator has not configured a season yet.",
+    "empty": "No players ranked yet.",
+    "you": "You",
+    "seasonLabel": "{{name}}",
+    "endsIn": "Ends in {{time}}",
+    "resetSoon": "Reset imminent!"
+  },
+  "season": {
+    "timeRemaining": "{{days}}d {{hours}}h remaining",
+    "timeRemainingFull": "Current season · {{days}}d {{hours}}h remaining",
+    "noActiveSeason": "No active season",
+    "ended": "Season ended"
+  },
+  "badges": {
+    "title": "Badges",
+    "noBadges": "No badges yet",
+    "noBadgesDesc": "Reach the top 50 at the end of a season to earn a badge!",
+    "earned": "Earned during {{season}}"
+  },
+  "userProfile": {
+    "level": "Level {{level}}",
+    "subscription": {
+      "free": "Free",
+      "premium": "Premium",
+      "school": "School"
+    },
+    "winstreak": "{{count}}-day streak",
+    "viewProfile": "View profile"
   }
 }

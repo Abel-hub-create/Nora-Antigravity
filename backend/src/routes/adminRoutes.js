@@ -7,6 +7,7 @@ import * as adminTokenService from '../services/adminTokenService.js';
 import * as adminRepo from '../services/adminRepository.js';
 import * as emailService from '../services/emailService.js';
 import * as planRepo from '../services/planRepository.js';
+import * as seasonRepo from '../services/seasonRepository.js';
 import { awardXp } from '../services/xpService.js';
 import { getAllXpConfig, updateXpConfig } from '../services/xpConfigService.js';
 import { authenticateAdmin } from '../middlewares/adminAuth.js';
@@ -690,6 +691,60 @@ router.patch('/xp-config/:reason', authenticateAdmin, express.json(), async (req
     await updateXpConfig(reason, Number(base_amount));
     const config = await getAllXpConfig();
     res.json({ success: true, config });
+  } catch (e) { next(e); }
+});
+
+// ─── Saisons ─────────────────────────────────────────────────────────────────
+
+router.get('/seasons', authenticateAdmin, async (req, res, next) => {
+  try {
+    const seasons = await seasonRepo.getAllSeasons();
+    res.json({ seasons });
+  } catch (e) { next(e); }
+});
+
+router.post('/seasons', authenticateAdmin, express.json(), async (req, res, next) => {
+  try {
+    const { number, name, starts_at, set_active } = req.body;
+    if (!number || !name || !starts_at) {
+      return res.status(400).json({ error: 'number, name et starts_at sont requis' });
+    }
+    const season = await seasonRepo.createSeason({ number: parseInt(number, 10), name, starts_at });
+    if (set_active) {
+      await seasonRepo.setActiveSeason(season.id);
+      season.is_active = 1;
+    }
+    res.status(201).json({ season });
+  } catch (e) {
+    if (e.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ error: 'Ce numéro de saison existe déjà' });
+    }
+    next(e);
+  }
+});
+
+router.patch('/seasons/:id', authenticateAdmin, express.json(), async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const { name, starts_at } = req.body;
+    const season = await seasonRepo.updateSeason(id, { name, starts_at });
+    res.json({ season });
+  } catch (e) { next(e); }
+});
+
+router.patch('/seasons/:id/activate', authenticateAdmin, async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    await seasonRepo.setActiveSeason(id);
+    res.json({ success: true });
+  } catch (e) { next(e); }
+});
+
+router.delete('/seasons/:id', authenticateAdmin, async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    await seasonRepo.deleteSeason(id);
+    res.json({ success: true });
   } catch (e) { next(e); }
 });
 

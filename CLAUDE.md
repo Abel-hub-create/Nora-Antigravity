@@ -305,6 +305,59 @@ Audit exhaustif de tous les endpoints API, services backend, et fonctionnalités
 - Aucun bug critique détecté lors de l'audit
 - Site en production stable sur port 5000
 
+## Changelog — 2026-04-16 (Saisons, Classement, Badges, i18n Boutique, Profils cliquables)
+
+### Nouvelles features
+
+#### Système de saisons
+- Table `seasons` : `number`, `name`, `is_active`, `starts_at`, `ends_at` (starts_at + 30j auto), `reset_executed`
+- Cron toutes les minutes (`seasonCron.js`) : quand `ends_at` est dépassé → reset atomique
+- Reset : snapshot top 50 → badges + rankings, puis `level=1, exp=0, next_level_exp=500` pour tous les users actifs. Coins et récompenses conservés.
+- Admin panel → `/admin/seasons` : créer (numéro, nom, date+heure de début), modifier, activer, supprimer
+
+#### Classement (Leaderboard)
+- Nouvel onglet nav (6e) : icône Trophy, route `/leaderboard`
+- Top 50 users triés par `level DESC, exp DESC`
+- Countdown saison affiché (jours + heures restantes)
+- Click sur un joueur → modal profil (`UserProfileModal`)
+
+#### Badges
+- Table `user_badges` : attribués au reset (top 50), format `#16 - S1`
+- Affichés sur : onglet Profil (section dédiée), modal profil cliquable
+
+#### Horloge saison sur le Profil
+- Section compacte affichant le nom de la saison + temps restant (`JJ jours HH heures restantes`)
+- Lien vers le classement via icône Trophy
+
+#### Profils cliquables (`UserProfileModal`)
+- Modal portal (z-9999) : avatar, nom, niveau, plan, winstreak, badges
+- Disponible partout : Leaderboard, Bugs & Suggestions
+- Son propre nom → redirige vers `/profile`
+- Endpoint : `GET /api/auth/users/:id/public`
+
+#### Traductions boutique
+- `Shop.jsx` entièrement traduit via i18n (plus aucun texte hardcodé)
+- Nouvelles clés dans `fr.json` + `en.json` : `shop.*`, `leaderboard.*`, `season.*`, `badges.*`, `userProfile.*`, `nav.leaderboard`
+- Avatar d'Aron dans le message de bienvenue boutique : `/aronsbg.png`
+
+### Nouveaux fichiers
+| Fichier | Rôle |
+|---|---|
+| `backend/src/services/seasonRepository.js` | CRUD saisons, leaderboard, badges, reset atomique |
+| `backend/src/routes/seasonRoutes.js` | `/api/seasons/active`, `/leaderboard`, `/badges/:userId` |
+| `backend/src/cron/seasonCron.js` | Cron toutes les minutes → reset auto |
+| `backend/src/database/migrations/041_seasons_and_badges.sql` | Tables seasons, season_rankings, user_badges |
+| `src/pages/Leaderboard.jsx` | Page classement |
+| `src/components/UI/UserProfileModal.jsx` | Modal profil cliquable (portal) + hook `useUserProfileModal` |
+| `src/features/admin/pages/AdminSeasons.jsx` | Page admin gestion saisons |
+
+### Notes importantes
+- **Format datetime MySQL** : toujours convertir les ISO strings en `YYYY-MM-DD HH:MM:SS` via `toMysqlDatetime()` avant INSERT/UPDATE dans `seasonRepository.js`
+- **Reset saison** : `reset_executed = 1` protège contre les doubles resets (idempotent)
+- **Tables à prefix** : `seasons`, `season_rankings`, `user_badges` ajoutés à `database.js`
+
+---
+
 ## Changelog — 2026-04-15 (Nouveau Système de Gamification)
 
 ### Suppression du système œufs/créatures

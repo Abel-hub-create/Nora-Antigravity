@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Megaphone, LogOut, Menu, X, Shield, CreditCard, School, Ticket, Terminal, MessageSquare, Sliders, Zap } from 'lucide-react';
+import { LayoutDashboard, Users, Megaphone, LogOut, Menu, X, Shield, CreditCard, School, Ticket, Terminal, MessageSquare, Sliders, Zap, Trophy } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext.jsx';
 
 const NAV = [
@@ -8,6 +8,7 @@ const NAV = [
   { to: '/admin/users', icon: Users, label: 'Utilisateurs' },
   { to: '/admin/plans', icon: CreditCard, label: 'Plans' },
   { to: '/admin/xp-config', icon: Zap, label: 'Config XP' },
+  { to: '/admin/seasons', icon: Trophy, label: 'Saisons' },
   { to: '/admin/school-requests', icon: School, label: 'Écoles' },
   { to: '/admin/promo-codes', icon: Ticket, label: 'Codes promo' },
   { to: '/admin/announcements', icon: Megaphone, label: 'Annonces' },

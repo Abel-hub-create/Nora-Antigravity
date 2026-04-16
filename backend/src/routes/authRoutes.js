@@ -11,6 +11,7 @@ import * as validators from '../validators/authValidators.js';
 import { getUserPlanLimits } from '../services/planRepository.js';
 import { getXpConfigMap } from '../services/xpConfigService.js';
 import { checkAndUpdateWinstreak } from '../services/winstreakService.js';
+import { getUserBadges } from '../services/seasonRepository.js';
 
 const router = express.Router();
 
@@ -397,6 +398,33 @@ router.post('/resend-verification', forgotPasswordLimiter, async (req, res, next
     } else {
       next(error);
     }
+  }
+});
+
+// GET /api/auth/users/:id/public — profil public d'un utilisateur (pour modal cliquable)
+router.get('/users/:id/public', authenticate, async (req, res, next) => {
+  try {
+    const userId = parseInt(req.params.id, 10);
+    if (isNaN(userId)) return res.status(400).json({ error: 'Invalid user ID' });
+
+    const user = await userRepository.findById(userId);
+    if (!user || user.is_banned) return res.status(404).json({ error: 'User not found' });
+
+    const badges = await getUserBadges(userId);
+
+    res.json({
+      user: {
+        id: user.id,
+        name: user.name,
+        avatar: user.avatar,
+        level: user.level,
+        plan_type: user.plan_type,
+        winstreak: user.winstreak,
+      },
+      badges,
+    });
+  } catch (err) {
+    next(err);
   }
 });
 

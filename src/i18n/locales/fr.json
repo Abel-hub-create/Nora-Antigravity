@@ -39,6 +39,7 @@
     "profile": "Profil",
     "settings": "Paramètres",
     "assistant": "Assistant",
+    "leaderboard": "Classement",
     "tagline": "Apprendre sans effort"
   },
   "activities": {
@@ -983,5 +984,61 @@
   },
   "themeSelector": {
     "premiumHint": "Abonnez-vous pour débloquer"
+  },
+  "shop": {
+    "title": "Boutique",
+    "subtitle": "Dépense tes pièces",
+    "soon": "Bientôt",
+    "popular": "Populaire",
+    "stripeNotice": "Paiements Stripe — disponibles prochainement",
+    "aronMessage": "Bienvenue dans ma boutique ! Les meilleurs articles arrivent bientôt. 🎁",
+    "cardPacks": "Packs de cartes",
+    "dailyCards": "Cartes du jour",
+    "dailyRotation": "Rotation quotidienne",
+    "offers": "Offres",
+    "card": "Carte #{{slot}}",
+    "basicPack": "Pack Basique",
+    "basicPackDesc": "3 cartes aléatoires",
+    "rarePack": "Pack Rare",
+    "rarePackDesc": "3 cartes, chances augmentées",
+    "legendPack": "Pack Légendaire",
+    "legendPackDesc": "3 cartes premium garanties",
+    "coinsLabel": "{{coins}} pièces"
+  },
+  "leaderboard": {
+    "title": "Classement",
+    "subtitle": "Top 50 de la saison",
+    "rank": "Rang",
+    "player": "Joueur",
+    "level": "Niveau",
+    "noSeason": "Aucune saison active",
+    "noSeasonDesc": "L'administrateur n'a pas encore configuré de saison.",
+    "empty": "Aucun joueur classé pour le moment.",
+    "you": "Vous",
+    "seasonLabel": "{{name}}",
+    "endsIn": "Se termine dans {{time}}",
+    "resetSoon": "Réinitialisation imminente !"
+  },
+  "season": {
+    "timeRemaining": "{{days}}j {{hours}}h restantes",
+    "timeRemainingFull": "Saison en cours · {{days}}j {{hours}}h restantes",
+    "noActiveSeason": "Aucune saison active",
+    "ended": "Saison terminée"
+  },
+  "badges": {
+    "title": "Badges",
+    "noBadges": "Aucun badge pour l'instant",
+    "noBadgesDesc": "Atteins le top 50 en fin de saison pour obtenir un badge !",
+    "earned": "Obtenu lors de la {{season}}"
+  },
+  "userProfile": {
+    "level": "Niveau {{level}}",
+    "subscription": {
+      "free": "Gratuit",
+      "premium": "Premium",
+      "school": "École"
+    },
+    "winstreak": "Série de {{count}} jours",
+    "viewProfile": "Voir le profil"
   }
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import LiquidProgressBar from '../components/UI/LiquidProgressBar';
-import { Settings, Folder, Star, ChevronRight, Plus, Loader2, Crown, Zap } from 'lucide-react';
+import { Settings, Folder, Star, ChevronRight, Plus, Loader2, Crown, Zap, Trophy, Timer } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import * as folderService from '../services/folderService';
@@ -12,6 +12,7 @@ import { useAuth } from '../features/auth/hooks/useAuth';
 import { useUser, getXpThreshold } from '../context/UserContext';
 import AnimatedNumber from '../components/UI/AnimatedNumber';
 import { PremiumGate, usePremiumGate } from '../components/UI/PremiumGate';
+import api from '../lib/api';
 
 const Profile = () => {
     const { t } = useTranslation();
@@ -22,7 +23,6 @@ const Profile = () => {
     const { gateProps, showGate } = usePremiumGate();
     const hasFolders = authUser?.plan_limits?.has_folders !== 0;
 
-    // Combiner les données auth (nom, avatar) et user context (level, xp)
     const user = {
         name: authUser?.name || t('common.user'),
         avatar: authUser?.avatar || null,
@@ -33,15 +33,17 @@ const Profile = () => {
         winstreak: userData?.winstreak ?? 1,
     };
 
-    // Folders state
     const [folders, setFolders] = useState([]);
     const [isLoadingFolders, setIsLoadingFolders] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
-
     const [synthesesCount, setSynthesesCount] = useState(0);
 
-    // Fetch folders and syntheses count on mount
+    // Saison & badges
+    const [season, setSeason] = useState(null);
+    const [badges, setBadges] = useState([]);
+    const [timeLeft, setTimeLeft] = useState(null);
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -60,10 +62,38 @@ const Profile = () => {
             }
         };
 
-        fetchData();
-    }, []);
+        const fetchSeasonData = async () => {
+            try {
+                const [seasonData, badgesData] = await Promise.all([
+                    api.get('/seasons/active'),
+                    authUser?.id ? api.get(`/seasons/badges/${authUser.id}`) : Promise.resolve({ badges: [] }),
+                ]);
+                setSeason(seasonData.season || null);
+                setBadges(badgesData.badges || []);
+            } catch (err) {
+                console.error('Error fetching season data:', err);
+            }
+        };
 
-    // Create folder handler
+        fetchData();
+        fetchSeasonData();
+    }, [authUser?.id]);
+
+    // Countdown saison
+    useEffect(() => {
+        if (!season?.ends_at) { setTimeLeft(null); return; }
+        const update = () => {
+            const diff = new Date(season.ends_at) - new Date();
+            if (diff <= 0) { setTimeLeft(null); return; }
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            setTimeLeft({ days, hours });
+        };
+        update();
+        const interval = setInterval(update, 60000);
+        return () => clearInterval(interval);
+    }, [season]);
+
     const handleCreateFolder = async ({ name, color }) => {
         setIsCreating(true);
         try {
@@ -85,7 +115,7 @@ const Profile = () => {
             </header>
 
             {/* User Info Card */}
-            <div className="block bg-surface rounded-3xl p-6 mb-8 border border-white/5 relative overflow-hidden">
+            <div className="block bg-surface rounded-3xl p-6 mb-4 border border-white/5 relative overflow-hidden">
                 <div className="flex items-center gap-4 mb-6 relative z-10">
                     <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary p-[2px]">
                         <div className="w-full h-full rounded-full bg-surface flex items-center justify-center overflow-hidden">
@@ -117,12 +147,10 @@ const Profile = () => {
                         )}
                     </div>
                     <div className="ml-auto flex flex-col items-end gap-1.5">
-                        {/* Pièces */}
                         <div className="bg-black/30 px-3 py-1 rounded-full border border-amber-500/20 flex items-center gap-1.5">
                             <span className="text-sm">🪙</span>
                             <AnimatedNumber value={user.coins} duration={800} className="text-sm font-bold text-amber-300" />
                         </div>
-                        {/* Winstreak */}
                         <div className="bg-black/30 px-3 py-1 rounded-full border border-orange-500/20 flex items-center gap-1.5">
                             <span className="text-sm">🔥</span>
                             <AnimatedNumber value={user.winstreak} duration={600} className="text-sm font-bold text-orange-300" />
@@ -144,10 +172,50 @@ const Profile = () => {
                         {t('profile.xpToLevel', { xp: user.nextLevelExp - user.exp, level: user.level + 1 })}
                     </p>
                 </div>
-
-                {/* Background Decoration */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
             </div>
+
+            {/* Horloge de saison */}
+            {season && (
+                <div className="bg-surface/50 border border-white/8 rounded-2xl p-3 mb-4 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                        <Timer size={15} className="text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-text-main truncate">{season.name}</p>
+                        {timeLeft !== null ? (
+                            <p className="text-xs text-text-muted mt-0.5">
+                                {t('season.timeRemaining', { days: timeLeft.days, hours: timeLeft.hours })}
+                            </p>
+                        ) : (
+                            <p className="text-xs text-text-muted mt-0.5">{t('season.ended')}</p>
+                        )}
+                    </div>
+                    <Link to="/leaderboard" className="shrink-0">
+                        <Trophy size={16} className="text-primary" />
+                    </Link>
+                </div>
+            )}
+
+            {/* Badges */}
+            {badges.length > 0 && (
+                <div className="bg-surface/50 border border-white/8 rounded-2xl p-4 mb-4">
+                    <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <Trophy size={13} className="text-primary" />
+                        {t('badges.title')}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                        {badges.map((badge) => (
+                            <span
+                                key={badge.id}
+                                className="px-3 py-1 bg-primary/15 border border-primary/30 rounded-full text-xs font-bold text-primary"
+                            >
+                                {badge.badge_text}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Stats Row */}
             <div className="grid grid-cols-1 gap-4 mb-8">
@@ -178,24 +246,17 @@ const Profile = () => {
                     <div className="text-center py-8">
                         <Folder size={40} className="mx-auto text-text-muted mb-3 opacity-50" />
                         <p className="text-text-muted text-sm">{t('profile.noFolders')}</p>
-                        <p className="text-text-muted text-xs mt-1">
-                            {t('profile.createFolderHint')}
-                        </p>
+                        <p className="text-text-muted text-xs mt-1">{t('profile.createFolderHint')}</p>
                     </div>
                 ) : (
                     <div className="space-y-3">
                         {folders.map((folder, index) => (
-                            <FolderCard
-                                key={folder.id}
-                                folder={folder}
-                                index={index}
-                            />
+                            <FolderCard key={folder.id} folder={folder} index={index} />
                         ))}
                     </div>
                 )}
             </div>
 
-            {/* Create Folder Modal */}
             <CreateFolderModal
                 isOpen={showCreateModal}
                 onClose={() => setShowCreateModal(false)}

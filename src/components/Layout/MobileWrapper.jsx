@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Home, GraduationCap, PlusCircle, User, ShoppingBag, Settings, Bot, Crown } from 'lucide-react';
+import { Home, GraduationCap, PlusCircle, User, ShoppingBag, Settings, Bot, Crown, Trophy } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
@@ -57,21 +57,22 @@ const MobileWrapper = ({ children }) => {
     const showOnboarding = user && !user.onboarding_completed;
 
     const allNavItems = [
-        { icon: Home,          labelKey: 'nav.home',      path: '/' },
-        { icon: GraduationCap, labelKey: 'nav.study',     path: '/study' },
-        { icon: ShoppingBag,   labelKey: 'nav.shop',      path: '/shop' },
-        { icon: PlusCircle,    labelKey: 'nav.import',    path: '/import' },
-        { icon: Bot,           labelKey: 'nav.assistant', path: '/assistant' },
-        { icon: User,          labelKey: 'nav.profile',   path: '/profile' },
-        { icon: Settings,      labelKey: 'nav.settings',  path: '/settings' },
+        { icon: Home,          labelKey: 'nav.home',        path: '/' },
+        { icon: GraduationCap, labelKey: 'nav.study',       path: '/study' },
+        { icon: ShoppingBag,   labelKey: 'nav.shop',        path: '/shop' },
+        { icon: Trophy,        labelKey: 'nav.leaderboard', path: '/leaderboard' },
+        { icon: PlusCircle,    labelKey: 'nav.import',      path: '/import' },
+        { icon: Bot,           labelKey: 'nav.assistant',   path: '/assistant' },
+        { icon: User,          labelKey: 'nav.profile',     path: '/profile' },
+        { icon: Settings,      labelKey: 'nav.settings',    path: '/settings' },
     ];
     const bottomNavItems = [
-        { icon: Home,          labelKey: 'nav.home',      path: '/' },
-        { icon: GraduationCap, labelKey: 'nav.study',     path: '/study' },
-        { icon: ShoppingBag,   labelKey: 'nav.shop',      path: '/shop' },
-        { icon: PlusCircle,    labelKey: 'nav.import',    path: '/import' },
-        { icon: Bot,           labelKey: 'nav.assistant', path: '/assistant' },
-        { icon: User,          labelKey: 'nav.profile',   path: '/profile' },
+        { icon: Home,          labelKey: 'nav.home',        path: '/' },
+        { icon: GraduationCap, labelKey: 'nav.study',       path: '/study' },
+        { icon: Trophy,        labelKey: 'nav.leaderboard', path: '/leaderboard' },
+        { icon: PlusCircle,    labelKey: 'nav.import',      path: '/import' },
+        { icon: Bot,           labelKey: 'nav.assistant',   path: '/assistant' },
+        { icon: User,          labelKey: 'nav.profile',     path: '/profile' },
     ];
     const isPremium = user?.plan_type && user.plan_type !== 'free';
 

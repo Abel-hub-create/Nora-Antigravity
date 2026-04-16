@@ -18,6 +18,7 @@ import subscriptionRoutes from './routes/subscriptionRoutes.js';
 import conversationRoutes from './routes/conversationRoutes.js';
 import xpRoutes from './routes/xpRoutes.js';
 import bagRoutes from './routes/bagRoutes.js';
+import seasonRoutes from './routes/seasonRoutes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
 dotenv.config();
@@ -56,6 +57,7 @@ app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/conversations', conversationRoutes);
 app.use('/api/xp', xpRoutes);
 app.use('/api/bags', bagRoutes);
+app.use('/api/seasons', seasonRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

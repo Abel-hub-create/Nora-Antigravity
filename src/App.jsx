@@ -50,6 +50,8 @@ import AdminXpConfig from './features/admin/pages/AdminXpConfig';
 import AdminConversations from './features/admin/pages/AdminConversations';
 import AdminSystemPrompts from './features/admin/pages/AdminSystemPrompts';
 import Pricing from './pages/Pricing';
+import Leaderboard from './pages/Leaderboard';
+import AdminSeasons from './features/admin/pages/AdminSeasons';
 
 function AppWithLight({ children }) {
   useTimeLight();
@@ -78,6 +80,7 @@ function App() {
                 <Route path="system-prompts" element={<AdminProtectedRoute><AdminSystemPrompts /></AdminProtectedRoute>} />
                 <Route path="debug" element={<AdminProtectedRoute><AdminDebug /></AdminProtectedRoute>} />
                 <Route path="xp-config" element={<AdminProtectedRoute><AdminXpConfig /></AdminProtectedRoute>} />
+                <Route path="seasons" element={<AdminProtectedRoute><AdminSeasons /></AdminProtectedRoute>} />
                 <Route path="" element={<Navigate to="dashboard" replace />} />
                 <Route path="*" element={<Navigate to="dashboard" replace />} />
               </Routes>
@@ -116,6 +119,7 @@ function App() {
                       <Route path="/shop" element={<Shop />} />
                       <Route path="/process" element={<Process />} />
                       <Route path="/feedback" element={<Feedback />} />
+                      <Route path="/leaderboard" element={<Leaderboard />} />
                       <Route path="/assistant" element={<Assistant />} />
                       <Route path="/exercises" element={<Exercises />} />
                       <Route path="/exercises/:id" element={<ExerciseDetail />} />

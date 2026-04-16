@@ -15,7 +15,8 @@ const TABLES = [
   'quiz_answers', 'exercises', 'exercise_items', 'chat_messages',
   'admins', 'announcements', 'daily_usage', 'plans', 'plan_limits', 'subscriptions', 'school_requests', 'promo_codes',
   'conversations', 'conversation_messages',
-  'xp_events', 'pending_coin_bags', 'coin_transactions', 'shop_daily_cards', 'xp_config'
+  'xp_events', 'pending_coin_bags', 'coin_transactions', 'shop_daily_cards', 'xp_config',
+  'seasons', 'season_rankings', 'user_badges'
 ];
 
 // Validate prefix contains only safe characters and ends with underscore
