@@ -30,30 +30,36 @@ function buildSubjectGuidelines(subject) {
   console.log(`[ContentGen] Utilisation des prompts specialises pour: ${subject}`);
 
   return `
-MATIERE SELECTIONNEE : ${subject.toUpperCase()}
+════════════════════════════════════════════════
+AGENT PÉDAGOGIQUE ACTIVÉ : ${subject.toUpperCase()}
+PRIORITÉ : ${subjectPrompt.emphasis}
+════════════════════════════════════════════════
 
-${subjectPrompt.guidelines}
+▌ RÈGLES POUR LA SYNTHÈSE (summary) :
+${subjectPrompt.summaryRules}
 
-SECTIONS RECOMMANDEES POUR CETTE MATIERE :
-${subjectPrompt.sections.map((section, idx) => `${idx + 1}. ${section}`).join('\n')}
+▌ RÈGLES POUR LES FLASHCARDS :
+${subjectPrompt.flashcardRules}
 
-ACCENT PARTICULIER : ${subjectPrompt.emphasis}
+▌ RÈGLES POUR LE QUIZ (quizQuestions) :
+${subjectPrompt.quizRules}
 
-REGLES IMPORTANTES :
-- Ces sections sont des RECOMMANDATIONS - n'inclus une section QUE si le contenu existe dans le cours
-- N'inclus une section "Definitions" QUE SI l'utilisateur l'a explicitement demande dans ses instructions
-- La derniere section doit etre "Tableaux et Donnees Structurees" SI des tableaux existent dans le cours
-- N'invente PAS de sections si le contenu n'existe pas
-- Adapte les titres de sections au contenu reel du cours
-- Si le cours ne correspond pas a ces sections, cree des sections logiques basees sur la structure du cours
+▌ SECTIONS RECOMMANDÉES POUR CETTE MATIÈRE :
+${subjectPrompt.sections.map((section, idx) => `  ${idx + 1}. ${section}`).join('\n')}
 
-NOTATION MATHEMATIQUE (OBLIGATOIRE) :
-- Utilise TOUJOURS les caracteres unicode directement : x² (pas x^2), H₂O (pas H_2O)
+▌ RÈGLES GÉNÉRALES DE STRUCTURE :
+- Ces sections sont des RECOMMANDATIONS — n'inclure une section QUE si le contenu existe dans le cours.
+- N'inclure une section "Définitions" QUE SI l'utilisateur l'a explicitement demandé dans ses instructions.
+- La dernière section doit être "Tableaux et Données Structurées" SI des tableaux existent dans le cours.
+- Ne jamais inventer de sections si le contenu n'existe pas.
+- Adapter les titres de sections au contenu réel du cours.
+
+▌ NOTATION MATHÉMATIQUE ET SCIENTIFIQUE (OBLIGATOIRE) :
+- Utiliser TOUJOURS les caractères unicode directement : x² (pas x^2), H₂O (pas H_2O)
 - Superscripts : ⁰¹²³⁴⁵⁶⁷⁸⁹ⁿ  |  Subscripts : ₀₁₂₃₄₅₆₇₈₉ₙ
-- Symboles : × (multiplication), ÷ (division), ± (plus-ou-moins), ≥ ≤ ≠ ≈
-- Racine carrée : √ (pas sqrt())  |  Infini : ∞  |  Pi : π
-- Fractions simples : ½ ⅓ ¼ ¾ (si standard), sinon écrire en clair
+- Symboles : × ÷ ± ≥ ≤ ≠ ≈ → ∞ π √
 - Lettres grecques : α β γ δ ε θ λ μ σ τ φ ψ ω
+════════════════════════════════════════════════
 `;
 }
 

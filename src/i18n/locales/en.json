@@ -1030,7 +1030,8 @@
     "title": "Badges",
     "noBadges": "No badges yet",
     "noBadgesDesc": "Reach the top 50 at the end of a season to earn a badge!",
-    "earned": "Earned during {{season}}"
+    "earned": "Earned during {{season}}",
+    "noBadgeActive": "No badge displayed"
   },
   "userProfile": {
     "level": "Level {{level}}",

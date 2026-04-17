@@ -1029,7 +1029,8 @@
     "title": "Badges",
     "noBadges": "Aucun badge pour l'instant",
     "noBadgesDesc": "Atteins le top 50 en fin de saison pour obtenir un badge !",
-    "earned": "Obtenu lors de la {{season}}"
+    "earned": "Obtenu lors de la {{season}}",
+    "noBadgeActive": "Aucun badge affiché"
   },
   "userProfile": {
     "level": "Niveau {{level}}",

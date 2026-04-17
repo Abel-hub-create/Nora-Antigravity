@@ -76,6 +76,56 @@ export const revealBag = async (userId, bagId) => {
   }
 };
 
+export const revealAllBags = async (userId) => {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const [bags] = await conn.query(
+      applyTablePrefix(`SELECT id, coins_amount FROM pending_coin_bags WHERE user_id = ? AND revealed_at IS NULL ORDER BY created_at ASC`),
+      [userId]
+    );
+    if (!bags.length) {
+      await conn.rollback();
+      return { totalCoins: 0, bagsRevealed: 0, newBalance: 0 };
+    }
+
+    const totalCoins = bags.reduce((sum, b) => sum + b.coins_amount, 0);
+    const ids = bags.map(b => b.id);
+
+    await conn.query(
+      applyTablePrefix(`UPDATE pending_coin_bags SET revealed_at = NOW() WHERE id IN (${ids.map(() => '?').join(',')})`),
+      ids
+    );
+    await conn.query(
+      applyTablePrefix(`UPDATE users SET coins = coins + ? WHERE id = ?`),
+      [totalCoins, userId]
+    );
+
+    const transactions = ids.map(id => [userId, bags.find(b => b.id === id).coins_amount, 'bag_reveal', String(id)]);
+    for (const t of transactions) {
+      await conn.query(
+        applyTablePrefix(`INSERT INTO coin_transactions (user_id, amount, reason, context_id) VALUES (?, ?, ?, ?)`),
+        t
+      );
+    }
+
+    const [userRows] = await conn.query(
+      applyTablePrefix(`SELECT coins FROM users WHERE id = ? LIMIT 1`),
+      [userId]
+    );
+    const newBalance = userRows[0]?.coins ?? 0;
+
+    await conn.commit();
+    return { totalCoins, bagsRevealed: bags.length, newBalance };
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
+};
+
 export const getPendingBags = async (userId) => {
   return await query(
     `SELECT id, coins_amount, plan_type_at_creation, created_at

@@ -401,6 +401,27 @@ router.post('/resend-verification', forgotPasswordLimiter, async (req, res, next
   }
 });
 
+// PATCH /api/auth/active-badge — choisir le badge affiché sur son profil
+router.patch('/active-badge', authenticate, async (req, res, next) => {
+  try {
+    const { badge_id } = req.body; // null pour retirer le badge
+    const userId = req.user.id;
+
+    if (badge_id !== null && badge_id !== undefined) {
+      // Vérifier que ce badge appartient bien à l'utilisateur
+      const { getUserBadges } = await import('../services/seasonRepository.js');
+      const badges = await getUserBadges(userId);
+      const owns = badges.some(b => b.id === parseInt(badge_id, 10));
+      if (!owns) return res.status(403).json({ error: 'Badge non trouvé' });
+    }
+
+    await userRepository.updateActiveBadge(userId, badge_id || null);
+    res.json({ success: true, active_badge_id: badge_id || null });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/auth/users/:id/public — profil public d'un utilisateur (pour modal cliquable)
 router.get('/users/:id/public', authenticate, async (req, res, next) => {
   try {
@@ -412,6 +433,8 @@ router.get('/users/:id/public', authenticate, async (req, res, next) => {
 
     const badges = await getUserBadges(userId);
 
+    const activeBadge = badges.find(b => b.id === user.active_badge_id) || null;
+
     res.json({
       user: {
         id: user.id,
@@ -420,8 +443,10 @@ router.get('/users/:id/public', authenticate, async (req, res, next) => {
         level: user.level,
         plan_type: user.plan_type,
         winstreak: user.winstreak,
+        active_badge_id: user.active_badge_id,
       },
       badges,
+      activeBadge,
     });
   } catch (err) {
     next(err);

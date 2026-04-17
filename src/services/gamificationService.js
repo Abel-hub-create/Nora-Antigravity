@@ -16,6 +16,10 @@ export const getPendingBags = () =>
 export const revealBag = (bagId) =>
   api.post(`/bags/${bagId}/reveal`, {});
 
+/** Révéler tous les sacs en attente d'un coup */
+export const revealAllBags = () =>
+  api.post('/bags/reveal-all', {});
+
 /** Générer un sac pour un level-up via minuteur (XP frontend) */
 export const generateBag = () =>
   api.post('/bags/generate', {});

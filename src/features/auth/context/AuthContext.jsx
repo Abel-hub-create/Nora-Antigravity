@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import * as authService from '../services/authService';
 import i18n from '../../../i18n';
+import api from '../../../lib/api';
 
 // Apply user preferences (theme and language)
 const applyUserPreferences = (user) => {
@@ -202,6 +203,12 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const updateActiveBadge = useCallback(async (badgeId) => {
+    const data = await api.patch('/auth/active-badge', { badge_id: badgeId });
+    setUser(prev => ({ ...prev, active_badge_id: data.active_badge_id }));
+    return data;
+  }, []);
+
   const deleteAccount = useCallback(async () => {
     try {
       setError(null);
@@ -264,6 +271,7 @@ export const AuthProvider = ({ children }) => {
     syncUserData,
     updateProfile,
     updatePreferences,
+    updateActiveBadge,
     deleteAccount,
     completeOnboarding
   };

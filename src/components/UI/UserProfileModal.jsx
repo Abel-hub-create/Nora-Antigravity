@@ -1,5 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom';
+
+const parseBadgeText = (text) => {
+  const parts = (text || '').split(' - ');
+  return { pos: parts[0] || '', season: parts[1] || '' };
+};
+
+const BadgeOnAvatar = ({ badge, size = 52 }) => {
+  const { pos, season } = parseBadgeText(badge?.badge_text);
+  const emboss = '0 1px 0 rgba(255,220,80,0.5), 0 -1px 1px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7), 1px 1px 2px rgba(0,0,0,0.8)';
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+      <img src="/badge-s1.png" alt="Badge" className="w-full h-full object-contain drop-shadow-lg" />
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style={{ paddingTop: '2px' }}>
+        <span className="font-black leading-none" style={{ fontSize: size * 0.24, color: '#FFE066', textShadow: emboss, letterSpacing: '-0.5px' }}>{pos}</span>
+        <span className="font-bold leading-none" style={{ fontSize: size * 0.17, color: '#FFD54F', textShadow: emboss, marginTop: '2px' }}>{season}</span>
+      </div>
+    </div>
+  );
+};
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Star, Crown, Flame, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -97,16 +116,24 @@ const UserProfileModal = ({ userId, onClose }) => {
                 <div className="px-6 pb-6">
                   {/* Avatar + Nom */}
                   <div className="flex flex-col items-center gap-3 mb-6">
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-secondary p-[2px]">
-                      <div className="w-full h-full rounded-full bg-surface flex items-center justify-center overflow-hidden">
-                        {profile.user.avatar ? (
-                          <img src={profile.user.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-3xl font-bold text-text-main">
-                            {profile.user.name?.charAt(0)?.toUpperCase() || 'U'}
-                          </span>
-                        )}
+                    <div className="relative" style={{ paddingBottom: profile.activeBadge ? '28px' : '0' }}>
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-secondary p-[2px]">
+                        <div className="w-full h-full rounded-full bg-surface flex items-center justify-center overflow-hidden">
+                          {profile.user.avatar ? (
+                            <img src={profile.user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-3xl font-bold text-text-main">
+                              {profile.user.name?.charAt(0)?.toUpperCase() || 'U'}
+                            </span>
+                          )}
+                        </div>
                       </div>
+                      {/* Badge centré en bas, dépasse de l'avatar */}
+                      {profile.activeBadge && (
+                        <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: 0 }}>
+                          <BadgeOnAvatar badge={profile.activeBadge} size={48} />
+                        </div>
+                      )}
                     </div>
                     <div className="text-center">
                       <h2 className="text-lg font-bold text-text-main">{profile.user.name}</h2>

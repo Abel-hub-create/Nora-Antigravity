@@ -12,18 +12,18 @@ export const register = async ({ email, password, name, language }) => {
 };
 
 export const login = async ({ email, password, rememberMe = false }) => {
-  const data = await api.post('/auth/login', { email, password, rememberMe });
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  const data = await api.post('/auth/login', { email, password, rememberMe, timezone });
 
-  // Save only the token (user data comes from DB on each load)
   localStorage.setItem('accessToken', data.accessToken);
 
   return data.user;
 };
 
 export const loginWithGoogle = async (credential) => {
-  const data = await api.post('/auth/google', { credential });
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  const data = await api.post('/auth/google', { credential, timezone });
 
-  // Save the access token
   localStorage.setItem('accessToken', data.accessToken);
 
   return data.user;

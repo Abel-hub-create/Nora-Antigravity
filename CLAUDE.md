@@ -74,6 +74,58 @@ cd /var/www/mirora.cloud/backend && PORT=5000 pm2 start ecosystem.config.cjs --o
 pm2 save
 ```
 
+## Changelog — 2026-04-17 (Agents pédagogiques, Winstreak fix, Sacs "tout récupérer", Radar lumineux)
+
+### 🤖 Agents pédagogiques par matière
+**Fichiers :** `backend/src/services/subjectPrompts.js`, `backend/src/services/contentGenerationService.js`
+
+Refonte complète du système de prompts par matière. Chaque matière dispose désormais de **trois blocs distincts** injectés séparément dans le prompt GPT :
+- `summaryRules` — ce que la synthèse doit conserver et comment la structurer
+- `flashcardRules` — types de cartes à privilégier, format face/dos, priorités
+- `quizRules` — types de questions, construction des distracteurs, erreurs à éviter
+
+`buildSubjectGuidelines()` dans `contentGenerationService.js` injecte les trois blocs avec des séparateurs visuels clairs (`▌ RÈGLES POUR LA SYNTHÈSE`, etc.) pour que GPT distingue les instructions par output.
+
+Règles clés par matière :
+- **Maths** : formule + conditions + exemple toujours ensemble ; quiz = calcul appliqué, jamais mémorisation pure
+- **Physique** : formule + unités SI + conditions de validité inséparables ; cartes sur constantes
+- **Chimie** : équations chimiques exactes avec états (s/l/g/aq), nomenclature complète nom+formule
+- **Biologie** : processus en étapes numérotées, termes latins/grecs intacts, structure→fonction liés
+- **Histoire** : date + causes + faits + conséquences = unité indivisible par événement
+- **Géographie** : aucun nom géographique omis, données avec unités et dates de référence
+- **Français** : citations intactes entre guillemets, distinction notions/texte, règle+exemple du cours
+- **Anglais** : exemples du cours jamais reformulés, listes vocabulaire intégrales
+- **Néerlandais** : article de/het systématique sur chaque carte, exceptions grammaticales complètes
+
+### 🐛 Bug winstreak bloqué — RÉSOLU ✓
+**Fichier :** `src/context/UserContext.jsx`
+
+**Problème :** La winstreak s'incrémentait bien en DB mais l'UI affichait toujours l'ancienne valeur jusqu'à la prochaine connexion complète.
+
+**Cause :** `checkWinstreak()` était appelé en fire-and-forget sans exploiter la réponse. Le state `user.winstreak` restait calé sur la valeur issue du dernier `/me`.
+
+**Fix :** Après `checkWinstreak`, utilisation de `wsResult.newStreak` pour patcher immédiatement le state React :
+```js
+const wsResult = await gamificationService.checkWinstreak(tz);
+if (wsResult?.newStreak) setUser(prev => ({ ...prev, winstreak: wsResult.newStreak }));
+```
+
+### 🎒 Sacs de pièces — bouton "Tout récupérer d'un coup"
+**Fichiers :** `backend/src/services/coinBagService.js`, `backend/src/routes/bagRoutes.js`, `src/services/gamificationService.js`, `src/context/UserContext.jsx`, `src/components/Gamification/CoinBagModal.jsx`
+
+Quand l'utilisateur a **plus de 2 sacs** en attente, un bouton "Tout récupérer d'un coup" apparaît.
+- **Backend :** `POST /api/bags/reveal-all` — révèle tous les sacs en une seule transaction SQL, cumule les pièces, insère les `coin_transactions` individuelles.
+- **Frontend :** `revealAllBags()` dans `gamificationService` + `UserContext`. Le modal affiche le total de pièces et le nombre de sacs ouverts, avec confetti amplifié (150 particules).
+
+### ✨ Radar de compétences plus lumineux
+**Fichier :** `src/components/Profile/SubjectRadar.jsx`
+
+- Filtre SVG `feGaussianBlur` sur le polygon de données → effet glow sur le contour
+- Bordure : opacité 100%, épaisseur 2px (était 1.5px à 95%)
+- Second polygon superposé `rgba(186,230,253,0.15)` pour lumière intérieure
+
+---
+
 ## Changelog — 2026-04-12 Soir (Fix Plans + Infrastructure)
 
 ### 🐛 Bugs Corrigés

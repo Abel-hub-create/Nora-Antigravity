@@ -1,7 +1,7 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import { authenticate } from '../middlewares/auth.js';
-import { getPendingBags, revealBag, generateBag } from '../services/coinBagService.js';
+import { getPendingBags, revealBag, revealAllBags, generateBag } from '../services/coinBagService.js';
 import { query } from '../config/database.js';
 
 const router = express.Router();
@@ -28,6 +28,14 @@ router.post('/generate', authenticate, generateLimiter, async (req, res, next) =
     const planType = users[0]?.plan_type || 'free';
     const bag = await generateBag(req.user.id, planType);
     res.json({ bag });
+  } catch (e) { next(e); }
+});
+
+// POST /api/bags/reveal-all — révéler tous les sacs en attente d'un coup
+router.post('/reveal-all', authenticate, async (req, res, next) => {
+  try {
+    const result = await revealAllBags(req.user.id);
+    res.json(result);
   } catch (e) { next(e); }
 });
 

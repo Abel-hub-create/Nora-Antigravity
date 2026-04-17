@@ -54,10 +54,14 @@ export const linkAppleAccount = async (userId, appleId) => {
 export const findById = async (id) => {
   const sql = `SELECT id, email, name, avatar, theme, language, auto_folder, onboarding_completed,
                level, exp, next_level_exp, winstreak, coins, last_activity_date, timezone,
-               created_at, is_banned, banned_reason, plan_type, premium_expires_at
+               created_at, is_banned, banned_reason, plan_type, premium_expires_at, active_badge_id
                FROM users WHERE id = ? AND is_active = 1`;
   const users = await query(sql, [id]);
   return users[0] || null;
+};
+
+export const updateActiveBadge = async (userId, badgeId) => {
+  await query('UPDATE users SET active_badge_id = ?, updated_at = NOW() WHERE id = ?', [badgeId, userId]);
 };
 
 export const updatePreferences = async (userId, { theme, language, auto_folder }) => {

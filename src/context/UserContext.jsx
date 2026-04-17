@@ -138,7 +138,10 @@ export const UserProvider = ({ children }) => {
                         // Winstreak (fuseau horaire du navigateur)
                         try {
                             const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-                            await gamificationService.checkWinstreak(tz);
+                            const wsResult = await gamificationService.checkWinstreak(tz);
+                            if (wsResult?.newStreak) {
+                                setUser(prev => ({ ...prev, winstreak: wsResult.newStreak }));
+                            }
                         } catch {
                             // Silencieux
                         }
@@ -370,6 +373,18 @@ export const UserProvider = ({ children }) => {
         }
     }, []);
 
+    const revealAllBags = useCallback(async () => {
+        try {
+            const result = await gamificationService.revealAllBags();
+            setUser(prev => ({ ...prev, coins: result.newBalance ?? prev.coins }));
+            setPendingBags([]);
+            return result;
+        } catch (e) {
+            console.error('[NORA] revealAllBags failed:', e?.message);
+            throw e;
+        }
+    }, []);
+
     // Valeurs effectives des seuils XP (depuis xp_config si disponible) — memoïsé pour éviter les re-renders
     const effectiveXpThresholds = useMemo(() => ({
         flashcards: { timeMinutes: 10, xp: authUser?.xp_config?.flashcards_timer ?? XP_THRESHOLDS.flashcards.xp },
@@ -569,6 +584,7 @@ export const UserProvider = ({ children }) => {
             addExp,
             awardXp,
             revealBag,
+            revealAllBags,
             dailyStats,
             dailyGoals,
             dailyProgressPercentage,
