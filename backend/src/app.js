@@ -20,6 +20,8 @@ import xpRoutes from './routes/xpRoutes.js';
 import bagRoutes from './routes/bagRoutes.js';
 import seasonRoutes from './routes/seasonRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
+import shareRoutes from './routes/shareRoutes.js';
+import planningRoutes from './routes/planningRoutes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
 dotenv.config();
@@ -60,6 +62,8 @@ app.use('/api/xp', xpRoutes);
 app.use('/api/bags', bagRoutes);
 app.use('/api/seasons', seasonRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/share', shareRoutes);
+app.use('/api/planning', planningRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

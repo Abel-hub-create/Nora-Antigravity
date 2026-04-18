@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, User, CreditCard, Bell, LogOut, Plus, Trash2, AlertTriangle, Check, Trophy, Loader2, Camera, X, UserX, Volume2, FolderOpen, Crown, Zap } from 'lucide-react';
+import { ArrowLeft, User, CreditCard, Bell, LogOut, Plus, Trash2, AlertTriangle, Check, Trophy, Loader2, Camera, X, UserX, Volume2, FolderOpen, Crown, Zap, Music, Upload } from 'lucide-react';
+import { useAudio } from '../context/AudioContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -43,6 +44,20 @@ const Settings = () => {
     const [soundsEnabled, setSoundsEnabled] = useState(
         localStorage.getItem('nora_sounds_enabled') !== 'false'
     );
+
+    // Music state
+    const {
+        musicEnabled, toggleMusic,
+        musicVolume, setMusicVolume,
+        sfxVolume, setSfxVolume,
+        currentTrackId, selectTrack,
+        allTracks, customTracks,
+        importTrack, deleteCustomTrack, renameTrack,
+    } = useAudio();
+    const musicFileRef = useRef(null);
+    const [importError, setImportError] = useState(null);
+    const [renamingTrackId, setRenamingTrackId] = useState(null);
+    const [renameValue, setRenameValue] = useState('');
 
     // Auto-folder state
     const [autoFolder, setAutoFolder] = useState(user?.auto_folder !== false);
@@ -131,6 +146,21 @@ const Settings = () => {
         const next = !soundsEnabled;
         setSoundsEnabled(next);
         localStorage.setItem('nora_sounds_enabled', next ? 'true' : 'false');
+    };
+
+    const isPremiumOrSchool = user?.plan_type === 'premium' || user?.plan_type === 'school';
+
+    const handleImportTrack = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = '';
+        setImportError(null);
+        if (!isPremiumOrSchool) {
+            setImportError('premium');
+            return;
+        }
+        const result = await importTrack(file);
+        if (result === 'limit') setImportError('limit');
     };
 
     // Handle notification schedule change
@@ -351,21 +381,184 @@ const Settings = () => {
             {/* Sounds Section */}
             <div className="mb-8">
                 <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">{t('settings.sounds')}</h3>
-                <button
-                    onClick={handleSoundsToggle}
-                    className="hover-lift no-hover w-full p-4 flex items-center justify-between bg-surface rounded-2xl border border-white/10"
-                >
-                        <div className="flex items-center gap-3">
-                            <Volume2 size={20} className="text-text-muted" />
-                            <div className="text-left">
-                                <span className="text-text-main block">{t('settings.soundEffects')}</span>
-                                <span className="text-xs text-text-muted">{t('settings.soundEffectsDesc')}</span>
+                <div className="space-y-3">
+                    {/* SFX */}
+                    <div className="bg-surface rounded-2xl border border-white/10 overflow-hidden">
+                        <button
+                            onClick={handleSoundsToggle}
+                            className="no-hover w-full p-4 flex items-center justify-between"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Volume2 size={20} className="text-text-muted" />
+                                <div className="text-left">
+                                    <span className="text-text-main block">{t('settings.soundEffects')}</span>
+                                    <span className="text-xs text-text-muted">{t('settings.soundEffectsDesc')}</span>
+                                </div>
                             </div>
-                        </div>
-                        <div className={`w-10 h-6 rounded-full relative transition-colors ${soundsEnabled ? 'bg-primary' : 'bg-white/10'}`}>
-                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${soundsEnabled ? 'left-5' : 'left-1'}`} />
-                        </div>
-                </button>
+                            <div className={`w-10 h-6 rounded-full relative transition-colors shrink-0 ${soundsEnabled ? 'bg-primary' : 'bg-white/10'}`}>
+                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${soundsEnabled ? 'left-5' : 'left-1'}`} />
+                            </div>
+                        </button>
+                        <AnimatePresence>
+                            {soundsEnabled && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden"
+                                >
+                                    <div className="px-4 pb-4 flex items-center gap-3">
+                                        <span className="text-xs text-text-muted w-16">{t('settings.sfxVolume')}</span>
+                                        <input
+                                            type="range" min="0" max="1" step="0.05"
+                                            value={sfxVolume}
+                                            onChange={e => setSfxVolume(parseFloat(e.target.value))}
+                                            className="flex-1 h-2 bg-black rounded-lg appearance-none cursor-pointer accent-primary"
+                                        />
+                                        <span className="text-xs text-text-muted w-8 text-right">{Math.round(sfxVolume * 100)}%</span>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+
+                    {/* Music */}
+                    <div className="bg-surface rounded-2xl border border-white/10 overflow-hidden">
+                        <button
+                            onClick={toggleMusic}
+                            className="no-hover w-full p-4 flex items-center justify-between"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Music size={20} className="text-text-muted" />
+                                <div className="text-left">
+                                    <span className="text-text-main block">{t('settings.music')}</span>
+                                    <span className="text-xs text-text-muted">{t('settings.musicDesc')}</span>
+                                </div>
+                            </div>
+                            <div className={`w-10 h-6 rounded-full relative transition-colors shrink-0 ${musicEnabled ? 'bg-primary' : 'bg-white/10'}`}>
+                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${musicEnabled ? 'left-5' : 'left-1'}`} />
+                            </div>
+                        </button>
+
+                        <AnimatePresence>
+                            {musicEnabled && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden"
+                                >
+                                    {/* Volume */}
+                                    <div className="px-4 pb-3 flex items-center gap-3">
+                                        <span className="text-xs text-text-muted w-16">{t('settings.musicVolume')}</span>
+                                        <input
+                                            type="range" min="0" max="1" step="0.05"
+                                            value={musicVolume}
+                                            onChange={e => setMusicVolume(parseFloat(e.target.value))}
+                                            className="flex-1 h-2 bg-black rounded-lg appearance-none cursor-pointer accent-primary"
+                                        />
+                                        <span className="text-xs text-text-muted w-8 text-right">{Math.round(musicVolume * 100)}%</span>
+                                    </div>
+
+                                    {/* Track list */}
+                                    <div className="px-4 pb-3">
+                                        <p className="text-xs text-text-muted mb-2">{t('settings.musicTracks')}</p>
+                                        <div className="space-y-1.5">
+                                            {allTracks.map(track => {
+                                                const displayName = track.displayName ?? (track.isDefault ? t(`settings.track${track.id.charAt(0).toUpperCase() + track.id.slice(1)}`) : track.name);
+                                                const isRenaming = renamingTrackId === track.id;
+                                                return (
+                                                <div key={track.id} className={`flex items-center gap-2 p-2.5 rounded-xl transition-colors ${
+                                                    currentTrackId === track.id
+                                                        ? 'bg-primary/15 border border-primary/30'
+                                                        : 'bg-white/5 border border-transparent'
+                                                }`}>
+                                                    <div
+                                                        className={`w-2 h-2 rounded-full shrink-0 cursor-pointer ${currentTrackId === track.id ? 'bg-primary' : 'bg-white/20'}`}
+                                                        onClick={() => { if (!isRenaming) selectTrack(track.id); }}
+                                                    />
+                                                    {isRenaming ? (
+                                                        <input
+                                                            autoFocus
+                                                            value={renameValue}
+                                                            onChange={e => setRenameValue(e.target.value)}
+                                                            onKeyDown={e => {
+                                                                if (e.key === 'Enter') { renameTrack(track.id, renameValue); setRenamingTrackId(null); }
+                                                                if (e.key === 'Escape') setRenamingTrackId(null);
+                                                            }}
+                                                            onBlur={() => { renameTrack(track.id, renameValue); setRenamingTrackId(null); }}
+                                                            className="flex-1 text-sm bg-black/30 border border-primary/40 rounded-lg px-2 py-0.5 text-text-main focus:outline-none"
+                                                        />
+                                                    ) : (
+                                                        <span
+                                                            className="text-sm text-text-main flex-1 cursor-pointer"
+                                                            onClick={() => selectTrack(track.id)}
+                                                            onDoubleClick={() => { setRenamingTrackId(track.id); setRenameValue(displayName); }}
+                                                        >
+                                                            {displayName}
+                                                        </span>
+                                                    )}
+                                                    <button
+                                                        onClick={e => { e.stopPropagation(); setRenamingTrackId(track.id); setRenameValue(displayName); }}
+                                                        className="p-1 rounded-lg hover:bg-white/10 text-text-muted hover:text-text-main transition-colors"
+                                                        title="Renommer"
+                                                    >
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                                    </button>
+                                                    {!track.isDefault && (
+                                                        <button
+                                                            onClick={e => { e.stopPropagation(); deleteCustomTrack(track.id); }}
+                                                            className="p-1 rounded-lg hover:bg-error/20 text-error/60 hover:text-error transition-colors"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* Import */}
+                                    <div className="px-4 pb-4">
+                                        <input
+                                            ref={musicFileRef}
+                                            type="file"
+                                            accept="audio/*"
+                                            onChange={handleImportTrack}
+                                            className="hidden"
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                if (!isPremiumOrSchool) {
+                                                    setImportError('premium');
+                                                    return;
+                                                }
+                                                if (customTracks.length >= 5) {
+                                                    setImportError('limit');
+                                                    return;
+                                                }
+                                                setImportError(null);
+                                                musicFileRef.current?.click();
+                                            }}
+                                            className="w-full py-2 rounded-xl border border-dashed border-white/15 text-text-muted hover:border-primary/40 hover:text-primary text-xs font-medium flex items-center justify-center gap-2 transition-colors"
+                                        >
+                                            <Upload size={14} />
+                                            {t('settings.importTrack')}
+                                            {!isPremiumOrSchool && <Crown size={12} className="text-amber-400" />}
+                                        </button>
+                                        {importError === 'premium' && (
+                                            <p className="text-[11px] text-amber-400 mt-1.5 text-center">{t('settings.importTrackPremium')}</p>
+                                        )}
+                                        {importError === 'limit' && (
+                                            <p className="text-[11px] text-error/70 mt-1.5 text-center">{t('settings.importTrackLimit')}</p>
+                                        )}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </div>
             </div>
 
             {/* Auto-folder Section */}
@@ -728,6 +921,22 @@ const Settings = () => {
                     <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4">{t('settings.notifications')}</h3>
                     <div className="space-y-2">
                         {/* Toggle */}
+                        {!isPremiumOrSchool ? (
+                            <div className="relative w-full p-4 flex items-center justify-between bg-surface border border-white/10 rounded-2xl opacity-60">
+                                <div className="flex items-center gap-3">
+                                    <Bell size={20} className="text-text-muted" />
+                                    <div className="text-left">
+                                        <span className="text-text-main block">{t('settings.dailyReminder')}</span>
+                                        <span className="text-xs text-amber-400 flex items-center gap-1">
+                                            <Crown size={11} /> Premium
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="w-10 h-6 rounded-full relative bg-white/10">
+                                    <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full" />
+                                </div>
+                            </div>
+                        ) : (
                         <button
                             onClick={handleNotificationToggle}
                             disabled={notificationsLoading || !notificationsSupported}
@@ -752,6 +961,7 @@ const Settings = () => {
                                 </div>
                             )}
                         </button>
+                        )}
 
                         {/* Schedule (shown when enabled) */}
                         {notificationsEnabled && notificationsSupported && (

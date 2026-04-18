@@ -147,6 +147,17 @@
     "sounds": "Sounds",
     "soundEffects": "Sound effects",
     "soundEffectsDesc": "Clicks and hover",
+    "sfxVolume": "Volume",
+    "music": "Background music",
+    "musicDesc": "Plays in the background while you study",
+    "musicVolume": "Volume",
+    "musicTracks": "Active track",
+    "trackOuterwild": "Outer Wild",
+    "trackNobatida": "No Batidao",
+    "importTrack": "Import a track",
+    "importTrackPremium": "Premium and School plans only",
+    "importTrackLimit": "5 tracks max — delete a track to add another",
+    "deleteTrack": "Delete",
     "autoFolder": "Organisation",
     "autoFolderToggle": "Auto-sort by subject",
     "autoFolderDesc": "New summaries are automatically added to their subject folder",
@@ -706,6 +717,15 @@
       "button": "Let's go!"
     },
     "step6": {
+      "title": "Share & Referral",
+      "message": "Two tools to share Nora with others.",
+      "shareTitle": "Share code",
+      "shareDesc": "Send any summary to another user using their code (visible on their profile).",
+      "referralTitle": "Referral link",
+      "referralDesc": "Share your unique link to invite new users. 1st sign-up = 1 week premium for you. They get 50 coins.",
+      "button": "Got it!"
+    },
+    "step7": {
       "title": "Meet Aron 🤖",
       "message": "Aron is your personal learning assistant. He analyses your results and generates tailored exercises using Monk Mode.",
       "monkTitle": "Monk Mode (/exs)",

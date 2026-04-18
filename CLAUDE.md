@@ -2637,3 +2637,42 @@ Système de comptage par user par jour via table `daily_usage` (reset automatiqu
 - **Open/Practical** : correction GPT au blur du champ (`correctItem(setId, itemId)`)
 - Endpoint : `POST /api/assistant/correct-item` — `correctSingleItem()` dans `assistantService.js` (max_tokens: 400)
 - Pas de bouton "Corriger" global — correction automatique item par item
+
+---
+
+## Système de Planning (planning.html)
+
+Site de planning accessible à `https://mirora.cloud/planning.html` — 9 Epics, 38+ sous-tâches couvrant toute l'app Nora.
+
+### Workflow obligatoire par sous-tâche
+`todo → inprogress → review → i18n → security → verify → docs → done`
+
+| Étape | Ce que Claude fait automatiquement |
+|-------|-----------------------------------|
+| **PR Review** | `curl` sur les endpoints, vérification des cas de bugs, lecture du code |
+| **Traductions** | `grep` fr.json + en.json pour vérifier que toutes les nouvelles clés existent dans les 2 langues |
+| **Security** | `npm audit`, vérif auth/injection sur les nouveaux endpoints |
+| **Vérification** | `npm run build`, grep console.log, `pm2 logs` |
+| **CLAUDE.md** | Évaluation de l'importance — si critique, entrée ajoutée ici automatiquement |
+
+**IMPORTANT** : Claude fait toutes ces étapes lui-même après chaque implémentation, sans que l'utilisateur ait à demander.
+
+### API Planning (backend)
+- `GET /api/planning/state` — lire l'état de toutes les sous-tâches
+- `PUT /api/planning/state` — écraser l'état complet
+- `PATCH /api/planning/subtask` — avancer une sous-tâche + écrire dans CLAUDE.md si `claudeMdEntry` fourni
+
+### Commande type pour avancer une sous-tâche
+```bash
+curl -X PATCH http://localhost:5000/api/planning/subtask \
+  -H "Content-Type: application/json" \
+  -d '{
+    "epicId": "E1",
+    "subtaskId": "1.1",
+    "updates": { "status": "done", "checkedTests": {"0":true,"1":true} },
+    "claudeMdEntry": "## Ma feature\nNotes importantes..."
+  }'
+```
+
+### État stocké dans
+`/var/www/mirora.cloud/planning-state.json` (lu par le site via fetch, fallback localStorage)

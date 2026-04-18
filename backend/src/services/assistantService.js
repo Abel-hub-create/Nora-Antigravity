@@ -492,13 +492,13 @@ export async function generateTTS(text) {
       },
       body: JSON.stringify({
         text: text.substring(0, 5000),
-        model_id: 'eleven_flash_v2_5',
+        model_id: 'eleven_multilingual_v2',
         voice_settings: {
-          stability: 0.45,
-          similarity_boost: 0.80,
-          style: 0.2,
+          stability: 0.55,
+          similarity_boost: 0.75,
+          style: 0.1,
           use_speaker_boost: true,
-          speed: 1.2,
+          speed: 1.1,
         },
       }),
     }

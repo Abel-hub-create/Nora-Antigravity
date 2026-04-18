@@ -34,6 +34,7 @@ import ExerciseDetail from './pages/ExerciseDetail';
 
 import { UserProvider } from './context/UserContext';
 import { RevisionProvider } from './context/RevisionContext';
+import { AudioProvider } from './context/AudioContext';
 import { useTimeLight } from './hooks/useTimeLight';
 import { AdminAuthProvider } from './features/admin/context/AdminAuthContext';
 import AdminProtectedRoute from './features/admin/components/AdminProtectedRoute';
@@ -102,6 +103,7 @@ function App() {
               <ProtectedRoute>
                 <UserProvider>
                   <RevisionProvider>
+                    <AudioProvider>
                     <MobileWrapper>
                     <Routes>
                       <Route path="/" element={<Home />} />
@@ -125,6 +127,7 @@ function App() {
                       <Route path="/exercises/:id" element={<ExerciseDetail />} />
                     </Routes>
                     </MobileWrapper>
+                    </AudioProvider>
                   </RevisionProvider>
                 </UserProvider>
               </ProtectedRoute>

@@ -65,7 +65,8 @@ export const playClick = () => {
         const src = audioCtx.createBufferSource();
         src.buffer = clickBuffer;
         const gain = audioCtx.createGain();
-        gain.gain.value = 0.4;
+        const sfxVol = typeof window.__nora_sfx_volume__ === 'number' ? window.__nora_sfx_volume__ : 0.5;
+        gain.gain.value = 0.8 * sfxVol;
         src.connect(gain);
         gain.connect(audioCtx.destination);
         src.start(audioCtx.currentTime);
@@ -82,7 +83,8 @@ export const playHover = () => {
         const src = audioCtx.createBufferSource();
         src.buffer = hoverBuffer;
         const gain = audioCtx.createGain();
-        gain.gain.value = 0.18;
+        const sfxVol = typeof window.__nora_sfx_volume__ === 'number' ? window.__nora_sfx_volume__ : 0.5;
+        gain.gain.value = 0.36 * sfxVol;
         src.connect(gain);
         gain.connect(audioCtx.destination);
         src.start(audioCtx.currentTime);

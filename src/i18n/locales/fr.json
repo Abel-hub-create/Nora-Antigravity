@@ -147,6 +147,17 @@
     "sounds": "Sons",
     "soundEffects": "Effets sonores",
     "soundEffectsDesc": "Clics et survol",
+    "sfxVolume": "Volume",
+    "music": "Musique de fond",
+    "musicDesc": "Joue en arrière-plan pendant que tu étudies",
+    "musicVolume": "Volume",
+    "musicTracks": "Piste active",
+    "trackOuterwild": "Outer Wild",
+    "trackNobatida": "No Batidao",
+    "importTrack": "Importer une piste",
+    "importTrackPremium": "Réservé aux plans Premium et École",
+    "importTrackLimit": "5 pistes max — supprime une piste pour en ajouter",
+    "deleteTrack": "Supprimer",
     "autoFolder": "Organisation",
     "autoFolderToggle": "Tri automatique par matière",
     "autoFolderDesc": "Les nouvelles synthèses rejoignent automatiquement leur dossier matière",
@@ -705,6 +716,15 @@
       "button": "C'est parti !"
     },
     "step6": {
+      "title": "Partage & Parrainage",
+      "message": "Deux outils pour partager Nora autour de toi.",
+      "shareTitle": "Code de partage",
+      "shareDesc": "Envoie n'importe quelle synthèse à un autre utilisateur en utilisant son code (visible dans son profil).",
+      "referralTitle": "Lien de parrainage",
+      "referralDesc": "Partage ton lien unique pour inviter de nouveaux utilisateurs. 1ère inscription = 1 semaine premium. Ils reçoivent 50 pièces.",
+      "button": "Compris !"
+    },
+    "step7": {
       "title": "Rencontre Aron 🤖",
       "message": "Aron est ton assistant pédagogique personnel. Il analyse tes résultats et génère des exercices sur-mesure grâce au Monk Mode.",
       "monkTitle": "Monk Mode (/exs)",
