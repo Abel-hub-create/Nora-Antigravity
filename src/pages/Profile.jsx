@@ -111,18 +111,14 @@ const Profile = () => {
         };
 
         const fetchSeasonData = async () => {
-            try {
-                const [seasonData, badgesData, statsData] = await Promise.all([
-                    api.get('/seasons/active'),
-                    authUser?.id ? api.get(`/seasons/badges/${authUser.id}`) : Promise.resolve({ badges: [] }),
-                    api.get('/stats/subjects'),
-                ]);
-                setSeason(seasonData.season || null);
-                setBadges(badgesData.badges || []);
-                setSubjectScores(statsData.scores || []);
-            } catch (err) {
-                console.error('Error fetching season data:', err);
-            }
+            const [seasonRes, badgesRes, statsRes] = await Promise.allSettled([
+                api.get('/seasons/active'),
+                authUser?.id ? api.get(`/seasons/badges/${authUser.id}`) : Promise.resolve({ badges: [] }),
+                api.get('/stats/subjects'),
+            ]);
+            if (seasonRes.status === 'fulfilled') setSeason(seasonRes.value.season || null);
+            if (badgesRes.status === 'fulfilled') setBadges(badgesRes.value.badges || []);
+            if (statsRes.status === 'fulfilled') setSubjectScores(statsRes.value.scores || []);
         };
 
         fetchData();

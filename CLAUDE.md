@@ -74,6 +74,32 @@ cd /var/www/mirora.cloud/backend && PORT=5000 pm2 start ecosystem.config.cjs --o
 pm2 save
 ```
 
+## Changelog — 2026-04-18 (Radar compétences enrichi + fix)
+
+### 📊 Radar de compétences — sources enrichies
+**Fichiers :** `backend/src/routes/statsRoutes.js`, `backend/src/services/exerciseRepository.js`, `backend/src/routes/assistantRoutes.js`, `backend/src/database/migrations/042_exercise_item_is_correct.sql`
+
+Le radar (`GET /api/stats/subjects`) utilise maintenant **3 sources** fusionnées par matière :
+
+1. **Quiz** (principal) : `quiz_answers` jointuré avec `syntheses.subject` → `correct / total × 100`
+2. **Exercices Aron** (`/exs` et `/ana`, nouveau) :
+   - QCM : comparaison directe `CAST(user_answer AS UNSIGNED) = correct_answer` en SQL
+   - Open/Pratique : colonne `is_correct` persistée en DB après correction GPT (`correct-item`)
+3. **Mastery score** (fallback) : moyenne des `mastery_score` des synthèses (ancien système révision)
+
+Fusion : si quiz ET exercices ont des données → pool unifié `(correct_quiz + correct_exo) / (total_quiz + total_exo) × 100`. Le champ `source` retourné vaut `"quiz"`, `"exo"`, `"quiz+exo"` ou `"mastery"`.
+
+**Migration 042 :** `ALTER TABLE exercise_items ADD COLUMN is_correct TINYINT NULL`
+
+### 🐛 Fix radar invisible avec peu de données
+**Fichiers :** `src/components/Profile/SubjectRadar.jsx`, `src/pages/Profile.jsx`
+
+**Bug 1 — Promise.all silencieux :** `/seasons/active` retournait une erreur → toute la `Promise.all` échouait → `subjectScores` jamais settée. **Fix :** `Promise.allSettled` — chaque requête échoue indépendamment.
+
+**Bug 2 — Polygon invisible (1 seule matière) :** avec 1 seul sujet actif, les 8 autres points se superposent au centre → polygon quasi-invisible. **Fix :** ajout de points lumineux colorés (`SUBJECT_COLORS[s]`) + trait d'axe coloré pour chaque matière avec score > 0. Le polygon se forme progressivement à mesure que de nouvelles matières ont des données.
+
+---
+
 ## Changelog — 2026-04-17 (Agents pédagogiques, Winstreak fix, Sacs "tout récupérer", Radar lumineux)
 
 ### 🤖 Agents pédagogiques par matière

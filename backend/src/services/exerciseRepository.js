@@ -76,7 +76,6 @@ export const createItems = async (exerciseSetId, items) => {
 };
 
 export const updateAnswer = async (itemId, userId, answer) => {
-  // Vérifie que l'item appartient bien à cet user
   const rows = await query(
     `SELECT ei.id FROM exercise_items ei
      JOIN exercises e ON e.id = ei.exercise_set_id
@@ -86,6 +85,13 @@ export const updateAnswer = async (itemId, userId, answer) => {
   if (!rows[0]) return null;
   await query(`UPDATE exercise_items SET user_answer = ? WHERE id = ?`, [answer, itemId]);
   return true;
+};
+
+export const saveItemCorrection = async (itemId, isCorrect) => {
+  await query(
+    `UPDATE exercise_items SET is_correct = ? WHERE id = ?`,
+    [isCorrect ? 1 : 0, itemId]
+  );
 };
 
 // ─── Quiz Answers ─────────────────────────────────────────────────────────────

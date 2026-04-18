@@ -101,6 +101,23 @@ export default function SubjectRadar({ scores = [] }) {
         );
       })}
 
+      {/* ── Axis highlights pour matières actives ── */}
+      {SUBJECTS.map((s, i) => {
+        const ratio = ratioMap[s] ?? 0;
+        if (ratio === 0) return null;
+        const tip = pt(i, ratio);
+        return (
+          <line
+            key={`hl-${i}`}
+            x1={CX} y1={CY}
+            x2={tip.x} y2={tip.y}
+            stroke={SUBJECT_COLORS[s]}
+            strokeWidth="1.5"
+            strokeOpacity="0.35"
+          />
+        );
+      })}
+
       {/* ── Data polygon ── */}
       <polygon
         points={polyPoints(dataRatios)}
@@ -116,6 +133,21 @@ export default function SubjectRadar({ scores = [] }) {
         fill="rgba(186,230,253,0.15)"
         stroke="none"
       />
+
+      {/* ── Points lumineux sur chaque axe actif ── */}
+      {SUBJECTS.map((s, i) => {
+        const ratio = ratioMap[s] ?? 0;
+        if (ratio === 0) return null;
+        const tip = pt(i, ratio);
+        return (
+          <g key={`dot-${i}`}>
+            {/* halo */}
+            <circle cx={tip.x} cy={tip.y} r="5" fill={SUBJECT_COLORS[s]} opacity="0.25" />
+            {/* point */}
+            <circle cx={tip.x} cy={tip.y} r="2.5" fill={SUBJECT_COLORS[s]} filter="url(#radar-glow)" />
+          </g>
+        );
+      })}
 
       {/* ── Labels ── */}
       {SUBJECTS.map((s, i) => {
@@ -137,7 +169,7 @@ export default function SubjectRadar({ scores = [] }) {
             dominantBaseline={baseline}
             fontSize="8"
             fontWeight={hasData ? '700' : '400'}
-            fill={hasData ? SUBJECT_COLORS[s] : 'rgba(100,116,139,0.6)'}
+            fill={SUBJECT_COLORS[s]}
           >
             {SHORT[s]}
           </text>

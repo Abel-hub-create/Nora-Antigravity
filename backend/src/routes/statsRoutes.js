@@ -30,16 +30,49 @@ router.get('/subjects', authenticate, async (req, res, next) => {
       GROUP BY subject
     `, [userId]);
 
+    // Source 3 : exercices Aron (/exs et /ana)
+    // QCM : comparaison directe user_answer vs correct_answer
+    // open/practical : colonne is_correct persistée après correction GPT
+    const exoRows = await query(`
+      SELECT e.subject,
+        COUNT(*) AS total,
+        SUM(
+          CASE
+            WHEN ei.type = 'qcm' AND CAST(ei.user_answer AS UNSIGNED) = ei.correct_answer THEN 1
+            WHEN ei.type IN ('open', 'practical') AND ei.is_correct = 1 THEN 1
+            ELSE 0
+          END
+        ) AS correct
+      FROM exercise_items ei
+      JOIN exercises e ON e.id = ei.exercise_set_id
+      WHERE e.user_id = ?
+        AND ei.user_answer IS NOT NULL AND ei.user_answer != ''
+        AND (
+          ei.type = 'qcm'
+          OR (ei.type IN ('open', 'practical') AND ei.is_correct IS NOT NULL)
+        )
+      GROUP BY e.subject
+    `, [userId]);
+
     const scores = SUBJECTS.map(subject => {
       const quiz    = quizRows.find(r => r.subject === subject);
       const mastery = masteryRows.find(r => r.subject === subject);
+      const exo     = exoRows.find(r => r.subject === subject);
+
+      const quizCorrect = quiz ? Number(quiz.correct) : 0;
+      const quizTotal   = quiz ? Number(quiz.total)   : 0;
+      const exoCorrect  = exo  ? Number(exo.correct)  : 0;
+      const exoTotal    = exo  ? Number(exo.total)    : 0;
+
+      const totalAnswers = quizTotal + exoTotal;
+      const totalCorrect = quizCorrect + exoCorrect;
 
       let score = 0;
       let source = 'none';
 
-      if (quiz && Number(quiz.total) > 0) {
-        score  = Math.round((Number(quiz.correct) / Number(quiz.total)) * 100);
-        source = 'quiz';
+      if (totalAnswers > 0) {
+        score  = Math.round((totalCorrect / totalAnswers) * 100);
+        source = quizTotal > 0 && exoTotal > 0 ? 'quiz+exo' : quizTotal > 0 ? 'quiz' : 'exo';
       } else if (mastery && mastery.avg_mastery !== null) {
         score  = Math.round(Number(mastery.avg_mastery));
         source = 'mastery';

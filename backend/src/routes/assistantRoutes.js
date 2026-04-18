@@ -249,6 +249,8 @@ router.post('/correct-item', express.json({ limit: '50kb' }), async (req, res, n
       lang
     });
 
+    await exerciseRepo.saveItemCorrection(item.id, result.isCorrect === true);
+
     res.json(result);
   } catch (error) {
     next(error);
