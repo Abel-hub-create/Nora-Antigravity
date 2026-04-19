@@ -353,11 +353,12 @@ router.post('/ana/analyze', async (req, res, next) => {
 router.post('/tts', requireFeature('has_tts'), express.json({ limit: '10kb' }), async (req, res, next) => {
   try {
     const { text, exerciseId } = req.body;
+    const lang = (req.headers['accept-language'] || 'fr').split(',')[0].split('-')[0];
     if (!text || text.trim().length < 5) {
       return res.status(400).json({ error: 'text requis' });
     }
 
-    // Serve from cache if exerciseId provided
+    // Serve from cache if exerciseId provided (cache is lang-agnostic — invalidate if lang changes)
     if (exerciseId) {
       const rows = await query(
         'SELECT feedback_audio FROM exercises WHERE id = ? AND user_id = ?',
@@ -368,7 +369,7 @@ router.post('/tts', requireFeature('has_tts'), express.json({ limit: '10kb' }), 
       }
     }
 
-    const audioBase64 = await generateTTS(text);
+    const audioBase64 = await generateTTS(text, lang);
 
     // Store in cache
     if (exerciseId) {

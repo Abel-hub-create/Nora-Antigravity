@@ -74,6 +74,54 @@ cd /var/www/mirora.cloud/backend && PORT=5000 pm2 start ecosystem.config.cjs --o
 pm2 save
 ```
 
+## Changelog — 2026-04-19 (i18n complet + voix bilingues Aron + saisons bilingues)
+
+### 🌍 i18n — Traductions manquantes corrigées
+
+**Clés ajoutées** dans `fr.json` + `en.json` :
+- `assistant.tagline` — "Boostons nos connaissances ensemble !" / "Let's boost our knowledge together!"
+- `profile.shareAndReferral`, `profile.shareCode`, `profile.referralLink`, `profile.referral`, `profile.referrals`, `profile.premiumWeeks`, `profile.coinsEarned`, `profile.referralDescPart1/2/3`
+- `leaderboard.seasonTitle` — "Saison {{number}}" / "Season {{number}}"
+- `folders.subjects.*` — 9 matières traduites (mathematics, french, physics…)
+
+**Composants corrigés** :
+- `Profile.jsx` — bloc partage/parrainage entièrement en i18n (plus aucun texte FR hardcodé)
+- `UserProfileModal.jsx` — "Code de partage" via `t('profile.shareCode')`
+- `ThemeSelector.jsx` — "Sombre"/"Clair" via `t('settings.darkTheme')`/`t('settings.lightTheme')` ; `useTranslation` ajouté dans `ThemeCard`
+- `Assistant.jsx` — tagline Aron affiché sous le nom
+- `FolderCard.jsx` — nom traduit dynamiquement via `folder.subject` (clé DB existante) ; si null → nom brut
+- `Leaderboard.jsx` + `Profile.jsx` — `season.name_en` affiché quand `i18n.language === 'en'`
+
+**Fix bug langue API** : `localStorage.setItem('i18nextLng', lang)` ajouté dans `LanguageSelector.jsx` et `AuthContext.jsx` partout où `i18n.changeLanguage()` est appelé → les headers `Accept-Language` des requêtes API sont désormais fiables.
+
+### 🎙️ Voix Aron bilingues (ElevenLabs)
+
+**Fichier** : `backend/src/services/assistantService.js`
+
+Deux voix configurées selon la langue de l'utilisateur :
+- **FR** : Adam (`pNInz6obpgDQGcFmaJgB`) — voix grave multilingue (inchangée)
+- **EN** : Harry (`SOYHLrjzK2X1ezoPC6cr`) — accent US
+
+La langue est lue depuis le header `Accept-Language` dans `assistantRoutes.js` (route `/tts`) et passée à `generateTTS(text, lang)`.
+
+**Clé API** : `ELEVENLABS_API_KEY` ajoutée dans `backend/.env`.
+
+### 🏆 Saisons bilingues (name_en)
+
+**Migration** : `043_seasons_name_en.sql` — `ALTER TABLE seasons ADD COLUMN name_en VARCHAR(100) NULL AFTER name`
+
+**Backend** : `seasonRepository.createSeason` + `updateSeason` acceptent `name_en`. Routes admin `POST/PATCH /api/admin/seasons` exposent le champ.
+
+**Admin panel** (`AdminSeasons.jsx`) : champ "Nom EN" (optionnel) ajouté au formulaire de création et d'édition. Le nom EN est affiché en gris à côté du nom FR dans la liste.
+
+**Frontend** : `Leaderboard.jsx` et `Profile.jsx` affichent `season.name_en` si `i18n.language === 'en'` et que le champ est renseigné, sinon `season.name`.
+
+### 🔒 DNSSEC
+
+DNS mirora.cloud géré par Cloudflare (NS : matteo + itzel.ns.cloudflare.com). Pour activer DNSSEC : Dashboard Cloudflare → DNS → Settings → activer → copier le record DS → coller chez le registrar.
+
+---
+
 ## Changelog — 2026-04-19 (Page de réservation + fixes thème clair)
 
 ### 📅 Page de réservation standalone (`/booking.html`)

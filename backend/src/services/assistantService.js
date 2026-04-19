@@ -479,11 +479,15 @@ RÈGLES ABSOLUES :
 
 // ─── TTS — Synthèse vocale (ElevenLabs) ──────────────────────────────────────
 
-const ELEVENLABS_VOICE_ID = 'pNInz6obpgDQGcFmaJgB'; // Adam — deep male, multilingual
+const ELEVENLABS_VOICES = {
+  fr: 'pNInz6obpgDQGcFmaJgB', // Adam — voix française
+  en: 'SOYHLrjzK2X1ezoPC6cr', // Harry — voix anglaise US
+};
 
-export async function generateTTS(text) {
+export async function generateTTS(text, lang = 'fr') {
+  const voiceId = ELEVENLABS_VOICES[lang] || ELEVENLABS_VOICES.fr;
   const response = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`,
+    `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
     {
       method: 'POST',
       headers: {

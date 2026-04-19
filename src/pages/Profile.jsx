@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactDOM from 'react-dom';
 import LiquidProgressBar from '../components/UI/LiquidProgressBar';
-import { Settings, Folder, Star, Plus, Loader2, Crown, Zap, Trophy, Timer, X } from 'lucide-react';
+import { Settings, Folder, Star, Plus, Loader2, Crown, Zap, Trophy, Timer, X, Copy, Check, Coins } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import * as folderService from '../services/folderService';
@@ -61,7 +61,7 @@ const BadgeOverlay = ({ badge, onClick, size = 56 }) => {
 };
 
 const Profile = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
     const { user: authUser } = useAuth();
     const isPremium = authUser?.plan_type && authUser.plan_type !== 'free';
@@ -92,6 +92,9 @@ const Profile = () => {
     const [badges, setBadges] = useState([]);
     const [timeLeft, setTimeLeft] = useState(null);
     const [subjectScores, setSubjectScores] = useState([]);
+    const [codeCopied, setCodeCopied] = useState(false);
+    const [refLinkCopied, setRefLinkCopied] = useState(false);
+    const [referralStats, setReferralStats] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -119,6 +122,9 @@ const Profile = () => {
             if (seasonRes.status === 'fulfilled') setSeason(seasonRes.value.season || null);
             if (badgesRes.status === 'fulfilled') setBadges(badgesRes.value.badges || []);
             if (statsRes.status === 'fulfilled') setSubjectScores(statsRes.value.scores || []);
+
+            const refRes = await api.get('/auth/referral/stats').catch(() => null);
+            if (refRes) setReferralStats(refRes);
         };
 
         fetchData();
@@ -216,7 +222,7 @@ const Profile = () => {
                                             <BadgeOverlay badge={badge} onClick={() => {}} size={44} />
                                             <div className="text-left">
                                                 <p className="text-sm font-bold text-primary">{badge.badge_text}</p>
-                                                <p className="text-xs text-text-muted">{t('badges.earned', { season: `Saison ${badge.season_number}` })}</p>
+                                                <p className="text-xs text-text-muted">{t('badges.earned', { season: t('leaderboard.seasonTitle', { number: badge.season_number }) })}</p>
                                             </div>
                                             {isActive && <span className="ml-auto text-xs text-primary font-bold">✓</span>}
                                         </button>
@@ -232,7 +238,7 @@ const Profile = () => {
     );
 
     return (
-        <div className="min-h-full bg-background p-6 pb-24">
+        <div className="min-h-full bg-background p-6 pb-24 overflow-x-hidden">
             {/* Header */}
             <header className="flex justify-between items-center mb-8">
                 <h1 className="text-2xl font-bold text-text-main">{t('profile.title')}</h1>
@@ -299,7 +305,7 @@ const Profile = () => {
                     {/* Pièces + winstreak */}
                     <div className="flex flex-col items-end gap-1.5 shrink-0">
                         <div className="bg-black/30 px-3 py-1 rounded-full border border-amber-500/20 flex items-center gap-1.5">
-                            <span className="text-sm">🪙</span>
+                            <Coins size={14} className="text-amber-400" />
                             <AnimatedNumber value={user.coins} duration={800} className="text-sm font-bold text-amber-300" />
                         </div>
                         <div className="bg-black/30 px-3 py-1 rounded-full border border-orange-500/20 flex items-center gap-1.5">
@@ -325,7 +331,7 @@ const Profile = () => {
                         <div className="flex items-center justify-center gap-1.5 mt-3">
                             <Timer size={11} className="text-primary opacity-70" />
                             <Link to="/leaderboard" className="text-[11px] text-text-muted hover:text-primary transition-colors">
-                                {season.name} · {t('season.timeRemaining', { days: timeLeft.days, hours: timeLeft.hours })}
+                                {(i18n.language === 'en' && season.name_en) ? season.name_en : season.name} · {t('season.timeRemaining', { days: timeLeft.days, hours: timeLeft.hours })}
                             </Link>
                         </div>
                     )}
@@ -334,6 +340,74 @@ const Profile = () => {
                 {/* Décoration fond */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
             </div>
+
+            {/* Partage & Parrainage */}
+            {authUser?.share_code && (
+                <div className="bg-surface/50 rounded-2xl border border-white/5 mb-4 p-4">
+                    <p className="text-[10px] text-text-muted uppercase tracking-wide font-semibold mb-3">{t('profile.shareAndReferral')}</p>
+
+                    {/* Code de partage */}
+                    <div className="flex items-center justify-between gap-3 mb-3">
+                        <div>
+                            <p className="text-[10px] text-text-muted mb-0.5">{t('profile.shareCode')}</p>
+                            <p className="text-sm font-bold text-primary font-mono">{authUser.share_code}</p>
+                        </div>
+                        <button
+                            onClick={() => {
+                                navigator.clipboard.writeText(authUser.share_code);
+                                setCodeCopied(true);
+                                setTimeout(() => setCodeCopied(false), 2000);
+                            }}
+                            className="no-hover p-2 rounded-xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-colors shrink-0"
+                        >
+                            {codeCopied ? <Check size={15} /> : <Copy size={15} />}
+                        </button>
+                    </div>
+
+                    {/* Lien de parrainage */}
+                    <div className="flex items-center gap-2 mb-3">
+                        <p className="flex-1 text-xs text-text-muted truncate font-mono bg-black/20 px-3 py-2 rounded-xl border border-white/8">
+                            mirora.cloud/register?ref={authUser.share_code}
+                        </p>
+                        <button
+                            onClick={() => {
+                                navigator.clipboard.writeText(`https://mirora.cloud/register?ref=${authUser.share_code}`);
+                                setRefLinkCopied(true);
+                                setTimeout(() => setRefLinkCopied(false), 2000);
+                            }}
+                            className="no-hover p-2 rounded-xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-colors shrink-0"
+                        >
+                            {refLinkCopied ? <Check size={15} /> : <Copy size={15} />}
+                        </button>
+                    </div>
+
+                    {/* Stats parrainage */}
+                    {referralStats && referralStats.total > 0 && (
+                        <div className="flex gap-3 mb-3">
+                            <div className="flex-1 bg-black/20 rounded-xl px-3 py-2 text-center">
+                                <p className="text-base font-bold text-text-main">{referralStats.total}</p>
+                                <p className="text-[10px] text-text-muted">{referralStats.total > 1 ? t('profile.referrals') : t('profile.referral')}</p>
+                            </div>
+                            {referralStats.premiumGiven > 0 && (
+                                <div className="flex-1 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2 text-center">
+                                    <p className="text-base font-bold text-amber-400">{referralStats.premiumGiven}</p>
+                                    <p className="text-[10px] text-amber-400/70">{t('profile.premiumWeeks')}</p>
+                                </div>
+                            )}
+                            {referralStats.coinsEarned > 0 && (
+                                <div className="flex-1 bg-black/20 rounded-xl px-3 py-2 text-center">
+                                    <p className="text-base font-bold text-amber-300 flex items-center justify-center gap-1"><Coins size={15} />{referralStats.coinsEarned}</p>
+                                    <p className="text-[10px] text-text-muted">{t('profile.coinsEarned')}</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <p className="text-[10px] text-text-muted leading-relaxed">
+                        {t('profile.referralDescPart1')} <span className="text-amber-400 font-semibold">1 {t('profile.premiumWeeks')}</span> {t('profile.referralDescPart2')} <span className="text-amber-300 font-semibold inline-flex items-center gap-0.5">20 <Coins size={10} /></span> {t('profile.referralDescPart3')} <span className="text-primary font-semibold inline-flex items-center gap-0.5">50 <Coins size={10} /></span>
+                    </p>
+                </div>
+            )}
 
             {/* Radar chart */}
             <div className="bg-surface/50 rounded-2xl border border-white/5 mb-8" style={{ height: '160px', width: '50%', padding: '8px' }}>

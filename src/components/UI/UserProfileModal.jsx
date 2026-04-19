@@ -20,7 +20,7 @@ const BadgeOnAvatar = ({ badge, size = 52 }) => {
   );
 };
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Star, Crown, Flame, Loader2 } from 'lucide-react';
+import { X, Star, Crown, Flame, Loader2, Copy, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../features/auth/hooks/useAuth';
@@ -33,6 +33,7 @@ const UserProfileModal = ({ userId, onClose }) => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
 
   const isOwnProfile = currentUser?.id === userId;
 
@@ -179,11 +180,31 @@ const UserProfileModal = ({ userId, onClose }) => {
                     </div>
                   )}
 
+                  {/* Code de partage */}
+                  {profile.user.share_code && (
+                    <div className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-2xl border border-white/8 bg-white/5 ${profile.badges?.length > 0 ? 'mt-4' : ''}`}>
+                      <div>
+                        <p className="text-[9px] text-text-muted uppercase tracking-wide font-semibold mb-0.5">{t('profile.shareCode')}</p>
+                        <p className="text-xs font-bold text-primary font-mono">{profile.user.share_code}</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(profile.user.share_code);
+                          setCodeCopied(true);
+                          setTimeout(() => setCodeCopied(false), 2000);
+                        }}
+                        className="no-hover p-1.5 rounded-xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-colors"
+                      >
+                        {codeCopied ? <Check size={13} /> : <Copy size={13} />}
+                      </button>
+                    </div>
+                  )}
+
                   {/* CTA si c'est son propre profil */}
                   {isOwnProfile && (
                     <button
                       onClick={handleOwnProfile}
-                      className="mt-5 w-full py-2.5 rounded-2xl bg-primary/15 border border-primary/30 text-primary text-sm font-semibold hover:bg-primary/25 transition-colors"
+                      className="mt-4 w-full py-2.5 rounded-2xl bg-primary/15 border border-primary/30 text-primary text-sm font-semibold hover:bg-primary/25 transition-colors"
                     >
                       {t('userProfile.viewProfile')}
                     </button>

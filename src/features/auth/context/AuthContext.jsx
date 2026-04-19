@@ -10,6 +10,7 @@ const applyUserPreferences = (user) => {
   document.documentElement.setAttribute('data-theme', user?.theme || systemTheme);
   if (user?.language) {
     i18n.changeLanguage(user.language);
+    localStorage.setItem('i18nextLng', user.language);
   }
 };
 
@@ -232,6 +233,7 @@ export const AuthProvider = ({ children }) => {
       }
       if (language) {
         i18n.changeLanguage(language);
+        localStorage.setItem('i18nextLng', language);
       }
       return updatedUser;
     } catch (err) {

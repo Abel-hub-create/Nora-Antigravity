@@ -934,6 +934,7 @@ export default function Assistant() {
             <p className="text-xs text-text-muted">
               {conversations.find(c => c.id === activeConvId)?.title || t('assistant.subtitle')}
             </p>
+            <p className="text-xs text-text-muted italic">{t('assistant.tagline')}</p>
           </div>
         </div>
 

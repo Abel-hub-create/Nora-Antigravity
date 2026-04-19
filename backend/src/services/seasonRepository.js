@@ -48,21 +48,22 @@ const toMysqlDatetime = (iso) => {
   return d.toISOString().slice(0, 19).replace('T', ' ');
 };
 
-export const createSeason = async ({ number, name, starts_at }) => {
+export const createSeason = async ({ number, name, name_en, starts_at }) => {
   const mysqlDate = toMysqlDatetime(starts_at);
   const result = await query(
-    `INSERT INTO seasons (number, name, starts_at, ends_at)
-     VALUES (?, ?, ?, DATE_ADD(?, INTERVAL 30 DAY))`,
-    [number, name, mysqlDate, mysqlDate]
+    `INSERT INTO seasons (number, name, name_en, starts_at, ends_at)
+     VALUES (?, ?, ?, ?, DATE_ADD(?, INTERVAL 30 DAY))`,
+    [number, name, name_en || null, mysqlDate, mysqlDate]
   );
   return getSeasonById(result.insertId);
 };
 
-export const updateSeason = async (id, { name, starts_at, is_active }) => {
+export const updateSeason = async (id, { name, name_en, starts_at, is_active }) => {
   const fields = [];
   const values = [];
 
   if (name !== undefined)     { fields.push('name = ?');       values.push(name); }
+  if (name_en !== undefined)  { fields.push('name_en = ?');    values.push(name_en || null); }
   if (starts_at !== undefined) {
     const mysqlDate = toMysqlDatetime(starts_at);
     fields.push('starts_at = ?');

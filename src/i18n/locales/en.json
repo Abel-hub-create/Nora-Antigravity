@@ -221,7 +221,8 @@
     "writeAnswer": "Write my answer",
     "yourAnswer": "Your answer",
     "correctAnswer": "Correct answer",
-    "writeAnswerPlaceholder": "Write your answer here..."
+    "writeAnswerPlaceholder": "Write your answer here...",
+    "editCard": "Edit card"
   },
   "quiz": {
     "title": "Quiz",
@@ -240,6 +241,9 @@
     "completed": "Quiz Completed!",
     "noQuestions": "No questions for this summary",
     "questionOf": "Question {{current}} of {{total}}",
+    "editQuestion": "Edit question",
+    "questionLabel": "Question",
+    "explanationLabel": "Explanation",
     "messages": {
       "zero": [
         "Go back to practice",
@@ -501,6 +505,17 @@
       "quizDesc": "Creating questions",
       "saving": "Saving",
       "savingDesc": "Saving"
+    },
+    "difficulty": {
+      "title": "Quiz difficulty level",
+      "subtitle": "Choose the difficulty of the generated questions",
+      "easy": "Easy",
+      "easyDesc": "Direct questions, clearly wrong distractors",
+      "medium": "Medium",
+      "mediumDesc": "Comprehension required, plausible distractors",
+      "hard": "Hard",
+      "hardDesc": "Analysis and deduction, subtle traps",
+      "confirm": "Generate quiz"
     }
   },
   "profile": {
@@ -517,7 +532,17 @@
     "createFolderHint": "Create a folder to organize your summaries",
     "settings": "Settings",
     "xpToLevel": "{{xp}} XP to Level {{level}}",
-    "upgradePremium": "Go Premium"
+    "upgradePremium": "Go Premium",
+    "shareAndReferral": "Share & Referral",
+    "shareCode": "Share code",
+    "referralLink": "Referral link",
+    "referral": "referral",
+    "referrals": "referrals",
+    "premiumWeeks": "premium week(s)",
+    "coinsEarned": "coins earned",
+    "referralDescPart1": "1st sign-up via your link →",
+    "referralDescPart2": "· Next ones →",
+    "referralDescPart3": "· They receive"
   },
   "folders": {
     "create": "Create folder",
@@ -542,7 +567,18 @@
     "createFolder": "Create folder",
     "createError": "Error creating folder",
     "noSynthesisFound": "No summary found",
-    "allSynthesesInFolder": "All your summaries are already in this folder"
+    "allSynthesesInFolder": "All your summaries are already in this folder",
+    "subjects": {
+      "mathematics": "Mathematics",
+      "french": "French",
+      "physics": "Physics",
+      "chemistry": "Chemistry",
+      "biology": "Biology",
+      "history": "History",
+      "geography": "Geography",
+      "english": "English",
+      "dutch": "Dutch"
+    }
   },
   "collection": {
     "title": "My Collection",
@@ -611,7 +647,8 @@
     "print": "Print",
     "deleteConfirm": "Delete this summary and all its content?",
     "deleteSynthesis": "Delete this summary",
-    "premiumLabel": "Premium"
+    "premiumLabel": "Premium",
+    "editContent": "Edit summary"
   },
   "auth": {
     "login": "Log in",
@@ -777,6 +814,7 @@
   "assistant": {
     "title": "Aron",
     "subtitle": "Learning assistant",
+    "tagline": "Let's boost our knowledge together!",
     "myExercises": "My exercises",
     "inputPlaceholder": "Send a message...",
     "commandsHint": "Type /exs for Monk Mode · /ana to analyse a test",
@@ -1037,6 +1075,7 @@
     "empty": "No players ranked yet.",
     "you": "You",
     "seasonLabel": "{{name}}",
+    "seasonTitle": "Season {{number}}",
     "endsIn": "Ends in {{time}}",
     "resetSoon": "Reset imminent!"
   },

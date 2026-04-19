@@ -705,11 +705,11 @@ router.get('/seasons', authenticateAdmin, async (req, res, next) => {
 
 router.post('/seasons', authenticateAdmin, express.json(), async (req, res, next) => {
   try {
-    const { number, name, starts_at, set_active } = req.body;
+    const { number, name, name_en, starts_at, set_active } = req.body;
     if (!number || !name || !starts_at) {
       return res.status(400).json({ error: 'number, name et starts_at sont requis' });
     }
-    const season = await seasonRepo.createSeason({ number: parseInt(number, 10), name, starts_at });
+    const season = await seasonRepo.createSeason({ number: parseInt(number, 10), name, name_en, starts_at });
     if (set_active) {
       await seasonRepo.setActiveSeason(season.id);
       season.is_active = 1;
@@ -726,8 +726,8 @@ router.post('/seasons', authenticateAdmin, express.json(), async (req, res, next
 router.patch('/seasons/:id', authenticateAdmin, express.json(), async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
-    const { name, starts_at } = req.body;
-    const season = await seasonRepo.updateSeason(id, { name, starts_at });
+    const { name, name_en, starts_at } = req.body;
+    const season = await seasonRepo.updateSeason(id, { name, name_en, starts_at });
     res.json({ season });
   } catch (e) { next(e); }
 });

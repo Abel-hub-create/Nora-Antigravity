@@ -14,7 +14,6 @@ const formatDate = (iso) => {
 const toLocalInput = (iso) => {
   if (!iso) return '';
   const d = new Date(iso);
-  // format: YYYY-MM-DDTHH:MM
   return d.toISOString().slice(0, 16);
 };
 
@@ -25,13 +24,11 @@ export default function AdminSeasons() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  // Formulaire création
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ number: '', name: '', starts_at: '', set_active: false });
+  const [form, setForm] = useState({ number: '', name: '', name_en: '', starts_at: '', set_active: false });
 
-  // Formulaire édition
   const [editId, setEditId] = useState(null);
-  const [editForm, setEditForm] = useState({ name: '', starts_at: '' });
+  const [editForm, setEditForm] = useState({ name: '', name_en: '', starts_at: '' });
 
   const load = async () => {
     try {
@@ -61,10 +58,11 @@ export default function AdminSeasons() {
       await adminApi.post('/seasons', {
         number: parseInt(form.number, 10),
         name: form.name,
+        name_en: form.name_en || null,
         starts_at: new Date(form.starts_at).toISOString(),
         set_active: form.set_active,
       });
-      setForm({ number: '', name: '', starts_at: '', set_active: false });
+      setForm({ number: '', name: '', name_en: '', starts_at: '', set_active: false });
       setShowCreate(false);
       await load();
       notify('Saison créée avec succès');
@@ -104,7 +102,7 @@ export default function AdminSeasons() {
 
   const startEdit = (season) => {
     setEditId(season.id);
-    setEditForm({ name: season.name, starts_at: toLocalInput(season.starts_at) });
+    setEditForm({ name: season.name, name_en: season.name_en || '', starts_at: toLocalInput(season.starts_at) });
   };
 
   const handleEdit = async (e) => {
@@ -114,6 +112,7 @@ export default function AdminSeasons() {
     try {
       await adminApi.patch(`/seasons/${editId}`, {
         name: editForm.name,
+        name_en: editForm.name_en || null,
         starts_at: new Date(editForm.starts_at).toISOString(),
       });
       setEditId(null);
@@ -164,6 +163,7 @@ export default function AdminSeasons() {
           <div className="bg-sky-500/10 border border-sky-500/30 rounded-2xl p-4">
             <p className="text-xs text-sky-400 font-semibold uppercase tracking-wider mb-1">Saison active</p>
             <p className="text-white font-bold">{activeSeason.name}</p>
+            {activeSeason.name_en && <p className="text-gray-400 text-xs mt-0.5">EN: {activeSeason.name_en}</p>}
             <p className="text-gray-400 text-xs mt-1">
               Du {formatDate(activeSeason.starts_at)} au {formatDate(activeSeason.ends_at)}
             </p>
@@ -186,15 +186,25 @@ export default function AdminSeasons() {
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-400 mb-1 block">Nom de la saison</label>
+                <label className="text-xs text-gray-400 mb-1 block">Nom FR <span className="text-red-400">*</span></label>
                 <input
                   type="text" required
                   value={form.name}
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  placeholder="Ex: Saison Été 2026"
+                  placeholder="Ex: Le début du commencement"
                   className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-sky-500"
                 />
               </div>
+            </div>
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">Nom EN <span className="text-gray-500">(optionnel)</span></label>
+              <input
+                type="text"
+                value={form.name_en}
+                onChange={e => setForm(f => ({ ...f, name_en: e.target.value }))}
+                placeholder="Ex: The Beginning of the Beginning"
+                className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-sky-500"
+              />
             </div>
             <div>
               <label className="text-xs text-gray-400 mb-1 block">Date et heure de début</label>
@@ -248,7 +258,7 @@ export default function AdminSeasons() {
                   <form onSubmit={handleEdit} className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-xs text-gray-400 mb-1 block">Nom</label>
+                        <label className="text-xs text-gray-400 mb-1 block">Nom FR</label>
                         <input
                           type="text" required
                           value={editForm.name}
@@ -257,14 +267,24 @@ export default function AdminSeasons() {
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-gray-400 mb-1 block">Date de début</label>
+                        <label className="text-xs text-gray-400 mb-1 block">Nom EN</label>
                         <input
-                          type="datetime-local" required
-                          value={editForm.starts_at}
-                          onChange={e => setEditForm(f => ({ ...f, starts_at: e.target.value }))}
+                          type="text"
+                          value={editForm.name_en}
+                          onChange={e => setEditForm(f => ({ ...f, name_en: e.target.value }))}
+                          placeholder="Ex: The Beginning of the Beginning"
                           className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-sky-500"
                         />
                       </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-400 mb-1 block">Date de début</label>
+                      <input
+                        type="datetime-local" required
+                        value={editForm.starts_at}
+                        onChange={e => setEditForm(f => ({ ...f, starts_at: e.target.value }))}
+                        className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-sky-500"
+                      />
                     </div>
                     <div className="flex gap-2">
                       <button type="submit" disabled={saving} className="px-3 py-1.5 bg-sky-500 text-white rounded-lg text-xs font-medium hover:bg-sky-600 disabled:opacity-50">
@@ -280,6 +300,7 @@ export default function AdminSeasons() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-white font-semibold">{season.name}</span>
+                        {season.name_en && <span className="text-gray-500 text-xs">/ {season.name_en}</span>}
                         {season.is_active && (
                           <span className="text-[10px] bg-sky-500/20 text-sky-400 border border-sky-500/30 px-2 py-0.5 rounded-full font-bold">ACTIVE</span>
                         )}

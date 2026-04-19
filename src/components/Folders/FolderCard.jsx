@@ -27,7 +27,7 @@ const FolderCard = ({ folder, index = 0 }) => {
       {/* Content */}
       <div className="flex-1 min-w-0">
         <h3 className="font-semibold text-text-main truncate">
-          {folder.name}
+          {folder.subject ? t(`folders.subjects.${folder.subject}`) : folder.name}
         </h3>
         <p className="text-xs text-text-muted mt-0.5">
           {t('folders.synthesesCount', { count: folder.syntheses_count || 0 })}

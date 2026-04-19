@@ -17,6 +17,7 @@ const LanguageSelector = () => {
         // Optimistic update - apply immediately for instant feedback
         setSelectedLang(langCode);
         i18n.changeLanguage(langCode);
+        localStorage.setItem('i18nextLng', langCode);
 
         // Then sync to backend in background
         try {
@@ -24,8 +25,10 @@ const LanguageSelector = () => {
         } catch (error) {
             console.error('Failed to update language:', error);
             // Revert on error
-            setSelectedLang(user?.language || 'fr');
-            i18n.changeLanguage(user?.language || 'fr');
+            const fallback = user?.language || 'fr';
+            setSelectedLang(fallback);
+            i18n.changeLanguage(fallback);
+            localStorage.setItem('i18nextLng', fallback);
         }
     };
 

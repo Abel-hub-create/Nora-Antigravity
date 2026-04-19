@@ -221,7 +221,8 @@
     "writeAnswer": "Écrire ma réponse",
     "yourAnswer": "Ta réponse",
     "correctAnswer": "Bonne réponse",
-    "writeAnswerPlaceholder": "Écris ta réponse ici..."
+    "writeAnswerPlaceholder": "Écris ta réponse ici...",
+    "editCard": "Modifier la carte"
   },
   "quiz": {
     "title": "Quiz",
@@ -240,6 +241,9 @@
     "completed": "Quiz Terminé !",
     "noQuestions": "Aucune question pour cette synthèse",
     "questionOf": "Question {{current}} sur {{total}}",
+    "editQuestion": "Modifier la question",
+    "questionLabel": "Question",
+    "explanationLabel": "Explication",
     "messages": {
       "zero": [
         "Retourne t'entrainer",
@@ -500,6 +504,17 @@
       "quizDesc": "Création des questions",
       "saving": "Sauvegarde",
       "savingDesc": "Enregistrement"
+    },
+    "difficulty": {
+      "title": "Niveau de difficulté du quiz",
+      "subtitle": "Choisir la difficulté des questions générées",
+      "easy": "Facile",
+      "easyDesc": "Questions directes, mauvaises réponses clairement fausses",
+      "medium": "Moyen",
+      "mediumDesc": "Compréhension requise, distracteurs plausibles",
+      "hard": "Difficile",
+      "hardDesc": "Analyse et déduction, pièges subtils",
+      "confirm": "Générer le quiz"
     }
   },
   "profile": {
@@ -516,7 +531,17 @@
     "createFolderHint": "Créez un dossier pour organiser vos synthèses",
     "settings": "Paramètres",
     "xpToLevel": "{{xp}} XP vers le Niveau {{level}}",
-    "upgradePremium": "Passer Premium"
+    "upgradePremium": "Passer Premium",
+    "shareAndReferral": "Partage & Parrainage",
+    "shareCode": "Code de partage",
+    "referralLink": "Lien de parrainage",
+    "referral": "filleul",
+    "referrals": "filleuls",
+    "premiumWeeks": "sem. premium",
+    "coinsEarned": "pièces gagnées",
+    "referralDescPart1": "1ère inscription via ton lien →",
+    "referralDescPart2": "· Suivantes →",
+    "referralDescPart3": "· Eux reçoivent"
   },
   "folders": {
     "create": "Créer un dossier",
@@ -541,7 +566,18 @@
     "createFolder": "Créer le dossier",
     "createError": "Erreur lors de la création",
     "noSynthesisFound": "Aucune synthèse trouvée",
-    "allSynthesesInFolder": "Toutes vos synthèses sont déjà dans ce dossier"
+    "allSynthesesInFolder": "Toutes vos synthèses sont déjà dans ce dossier",
+    "subjects": {
+      "mathematics": "Mathématiques",
+      "french": "Français",
+      "physics": "Physique",
+      "chemistry": "Chimie",
+      "biology": "Biologie",
+      "history": "Histoire",
+      "geography": "Géographie",
+      "english": "Anglais",
+      "dutch": "Néerlandais"
+    }
   },
   "collection": {
     "title": "Ma Collection",
@@ -610,7 +646,8 @@
     "print": "Imprimer",
     "deleteConfirm": "Supprimer cette synthèse et tout son contenu ?",
     "deleteSynthesis": "Supprimer cette synthèse",
-    "premiumLabel": "Premium"
+    "premiumLabel": "Premium",
+    "editContent": "Modifier la synthèse"
   },
   "auth": {
     "login": "Se connecter",
@@ -776,6 +813,7 @@
   "assistant": {
     "title": "Aron",
     "subtitle": "Assistant pédagogique",
+    "tagline": "Boostons nos connaissances ensemble !",
     "myExercises": "Mes exercices",
     "inputPlaceholder": "Envoie un message...",
     "commandsHint": "Tape /exs pour le Monk Mode · /ana pour analyser une interro",
@@ -1036,6 +1074,7 @@
     "empty": "Aucun joueur classé pour le moment.",
     "you": "Vous",
     "seasonLabel": "{{name}}",
+    "seasonTitle": "Saison {{number}}",
     "endsIn": "Se termine dans {{time}}",
     "resetSoon": "Réinitialisation imminente !"
   },

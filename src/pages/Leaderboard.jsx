@@ -7,7 +7,7 @@ import UserProfileModal, { useUserProfileModal } from '../components/UI/UserProf
 import api from '../lib/api';
 
 const Leaderboard = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user: currentUser } = useAuth();
   const { openUserId, openProfile, closeProfile } = useUserProfileModal();
 
@@ -80,7 +80,7 @@ const Leaderboard = () => {
       {season ? (
         <div className="bg-surface/50 border border-white/8 rounded-2xl p-4 mb-6 flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold text-text-main">{season.name}</p>
+            <p className="text-sm font-semibold text-text-main">{(i18n.language === 'en' && season.name_en) ? season.name_en : season.name}</p>
             {timeLeft !== null ? (
               <p className={`text-xs mt-0.5 ${timeLeft.totalMs < 3600000 ? 'text-orange-400' : 'text-text-muted'}`}>
                 {timeLeft.totalMs < 3600000
