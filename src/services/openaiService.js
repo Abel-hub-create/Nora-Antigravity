@@ -305,7 +305,7 @@ export async function generateQuizQuestions(content, count = 4) {
  * @param {string|null} subject - Matière sélectionnée (optionnel, ex: 'mathematics')
  * @returns {Promise<Object>} - { title, summary, flashcards, quizQuestions }
  */
-export async function generateComplete(content, specificInstructions = null, subject = null) {
+export async function generateComplete(content, specificInstructions = null, subject = null, difficulty = null) {
   try {
     const payload = { content };
 
@@ -317,6 +317,11 @@ export async function generateComplete(content, specificInstructions = null, sub
     // Ajouter la matière si présente
     if (subject) {
       payload.subject = subject;
+    }
+
+    // Ajouter la difficulté si présente (premium/school uniquement)
+    if (difficulty && ['easy', 'medium', 'hard'].includes(difficulty)) {
+      payload.difficulty = difficulty;
     }
 
     const data = await api.post('/ai/generate-content', payload, { timeout: 120000 });

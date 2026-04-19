@@ -1,7 +1,7 @@
 import api from '../../../lib/api';
 
-export const register = async ({ email, password, name, language }) => {
-  const data = await api.post('/auth/register', { email, password, name, language });
+export const register = async ({ email, password, name, language, refCode }) => {
+  const data = await api.post('/auth/register', { email, password, name, language, ...(refCode ? { refCode } : {}) });
 
   // Save only the token (user data comes from DB on each load)
   if (data.accessToken) {

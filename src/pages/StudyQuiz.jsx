@@ -20,9 +20,11 @@ function shuffleArray(arr) {
     return a;
 }
 
-function shuffleQuizQuestions(questions) {
+const QUIZ_DISPLAY_COUNT = 4;
+
+function selectRandomQuestions(questions, count = QUIZ_DISPLAY_COUNT) {
     const shuffled = shuffleArray(questions);
-    return shuffled.map(q => {
+    return shuffled.slice(0, Math.min(count, shuffled.length)).map(q => {
         const options = Array.isArray(q.options) ? [...q.options] : JSON.parse(q.options);
         const correctOption = options[q.correct_answer];
         const shuffledOptions = shuffleArray(options);
@@ -92,7 +94,7 @@ const StudyQuiz = () => {
                 const response = await syntheseService.getQuizQuestions(id);
                 const raw = response.questions || [];
                 setRawQuestions(raw);
-                setQuestions(shuffleQuizQuestions(raw));
+                setQuestions(selectRandomQuestions(raw));
                 setSyntheseTitle(response.syntheseTitle || 'Quiz');
             } catch (error) {
                 console.error('Error loading quiz:', error);
@@ -228,7 +230,7 @@ const StudyQuiz = () => {
                         </Link>
                         <button
                             onClick={() => {
-                                setQuestions(shuffleQuizQuestions(rawQuestions));
+                                setQuestions(selectRandomQuestions(rawQuestions));
                                 setCurrentQuestion(0);
                                 setSelectedOption(null);
                                 setScore(0);

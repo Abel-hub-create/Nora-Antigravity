@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voix Aron — NORA</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      background: #020408;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: #fff;
+      padding: 24px;
+    }
+    .card {
+      background: rgba(10, 18, 35, 0.6);
+      border: 1.5px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      padding: 40px;
+      width: 100%;
+      max-width: 480px;
+      backdrop-filter: blur(32px);
+      box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    }
+    .logo {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: #38bdf8;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+      opacity: 0.7;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: #6b7d96;
+      margin-bottom: 36px;
+    }
+    .voice-row {
+      margin-bottom: 20px;
+    }
+    .voice-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .flag { font-size: 18px; }
+    .voice-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+    .voice-id {
+      font-size: 11px;
+      color: #6b7d96;
+      font-family: monospace;
+    }
+    audio {
+      width: 100%;
+      height: 36px;
+      accent-color: #38bdf8;
+      border-radius: 8px;
+    }
+    .divider {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      margin: 24px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <p class="logo">NORA · Aron</p>
+    <h1>Voix de l'assistant</h1>
+    <p class="subtitle">Écoute les deux voix et choisis celles que tu préfères.</p>
+
+    <div class="voice-row">
+      <div class="voice-label">
+        <span class="flag">🇫🇷</span>
+        <div>
+          <p class="voice-name">Adam — Français</p>
+          <p class="voice-id">pNInz6obpgDQGcFmaJgB</p>
+        </div>
+      </div>
+      <audio controls src="/aron-fr.mp3"></audio>
+    </div>
+
+    <hr class="divider">
+
+    <div class="voice-row">
+      <div class="voice-label">
+        <span class="flag">🇬🇧</span>
+        <div>
+          <p class="voice-name">Harry — English</p>
+          <p class="voice-id">SOYHLrjzK2X1ezoPC6cr</p>
+        </div>
+      </div>
+      <audio controls src="/aron-en.mp3"></audio>
+    </div>
+  </div>
+</body>
+</html>

@@ -36,6 +36,24 @@ export const updateTitle = async (id, userId, title) => {
   return result.affectedRows > 0;
 };
 
+export const updateContent = async (id, userId, summaryContent) => {
+  const sql = `UPDATE syntheses SET summary_content = ?, updated_at = NOW() WHERE id = ? AND user_id = ?`;
+  const result = await query(sql, [summaryContent, id, userId]);
+  return result.affectedRows > 0;
+};
+
+export const updateFlashcard = async (flashcardId, syntheseId, { front, back }) => {
+  const sql = `UPDATE flashcards SET front = ?, back = ? WHERE id = ? AND synthese_id = ?`;
+  const result = await query(sql, [front, back, flashcardId, syntheseId]);
+  return result.affectedRows > 0;
+};
+
+export const updateQuizQuestion = async (questionId, syntheseId, { question, options, correctAnswer, explanation }) => {
+  const sql = `UPDATE quiz_questions SET question = ?, options = ?, correct_answer = ?, explanation = ? WHERE id = ? AND synthese_id = ?`;
+  const result = await query(sql, [question, JSON.stringify(options), correctAnswer, explanation, questionId, syntheseId]);
+  return result.affectedRows > 0;
+};
+
 export const archive = async (id, userId) => {
   const sql = `UPDATE syntheses SET is_archived = 1, updated_at = NOW() WHERE id = ? AND user_id = ?`;
   const result = await query(sql, [id, userId]);
@@ -124,6 +142,38 @@ export const getCompleteSynthese = async (id, userId) => {
     flashcards,
     quizQuestions
   };
+};
+
+// Copie complète d'une synthèse vers un autre user (partage)
+export const copyToUser = async (syntheseId, fromUserId, toUserId) => {
+  const source = await query(`SELECT * FROM syntheses WHERE id = ? AND is_archived = 0`, [syntheseId]);
+  if (!source[0]) return null;
+  const s = source[0];
+
+  const res = await query(
+    `INSERT INTO syntheses (user_id, title, original_content, summary_content, source_type, subject, specific_instructions, shared_from_user_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [toUserId, s.title, s.original_content, s.summary_content, s.source_type, s.subject, s.specific_instructions, fromUserId]
+  );
+  const newId = res.insertId;
+
+  const flashcards = await query(`SELECT front, back, difficulty FROM flashcards WHERE synthese_id = ?`, [syntheseId]);
+  if (flashcards.length) {
+    const fVals = flashcards.map(f => [newId, f.front, f.back, f.difficulty || 'medium']);
+    await query(`INSERT INTO flashcards (synthese_id, front, back, difficulty) VALUES ?`, [fVals]);
+  }
+
+  const questions = await query(`SELECT question, options, correct_answer, explanation FROM quiz_questions WHERE synthese_id = ?`, [syntheseId]);
+  if (questions.length) {
+    const qVals = questions.map(q => [
+      newId, q.question,
+      typeof q.options === 'string' ? q.options : JSON.stringify(q.options),
+      q.correct_answer, q.explanation || null
+    ]);
+    await query(`INSERT INTO quiz_questions (synthese_id, question, options, correct_answer, explanation) VALUES ?`, [qVals]);
+  }
+
+  return newId;
 };
 
 // Stats

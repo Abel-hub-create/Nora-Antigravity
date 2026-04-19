@@ -74,6 +74,58 @@ cd /var/www/mirora.cloud/backend && PORT=5000 pm2 start ecosystem.config.cjs --o
 pm2 save
 ```
 
+## Changelog — 2026-04-19 (TTS fallback + quiz 4 questions + impression + panel admin)
+
+### 🎙️ TTS — Fallback ElevenLabs → OpenAI
+
+**Fichier :** `backend/src/services/assistantService.js`
+
+`generateTTS()` essaie ElevenLabs (Harry, `SOYHLrjzK2X1ezoPC6cr`, `eleven_multilingual_v2`) en priorité. Si quota dépassé ou erreur → fallback automatique sur OpenAI (`tts-1-hd`, voix `fable`, vitesse `1.15x`).
+
+**Voix Harry configurée pour FR et EN** (même voice ID `SOYHLrjzK2X1ezoPC6cr` — modèle multilingue).
+
+**Quota ElevenLabs** : se recharge mensuellement. Aucune intervention manuelle nécessaire, le switch est automatique.
+
+### 🧠 Quiz — 4 questions aléatoires depuis un pool de 20
+
+**Fichier :** `src/pages/StudyQuiz.jsx`
+
+- `QUIZ_DISPLAY_COUNT = 4` — toujours 4 questions affichées
+- `selectRandomQuestions(pool, 4)` — pioche 4 questions aléatoires à chaque load et retry
+- Les 20 questions stockées en DB servent de pool ; free users en ont 4 (toutes montrées), premium jusqu'à 20 (4 aléatoires à chaque fois)
+- Remplacement de `shuffleQuizQuestions` qui affichait toutes les questions
+
+### 🖨️ Impression exercices — template A4 (ExerciseDetail + /ana)
+
+**Fichier :** `src/pages/ExerciseDetail.jsx`
+
+`handlePrint()` génère un blob URL HTML avec :
+- `@page { size: A4 portrait; margin: 14mm 12mm; }`
+- Header NORA avec emoji matière + date
+- Sections par type : QCM (cercles A/B/C/D), ouvertes (3 lignes réponse), pratiques (bloc pointillé)
+- Footer `mirora.cloud · NORA`
+- Desktop : auto-print ; Mobile : nouvel onglet
+
+### 🔧 Panel admin — sauvegarde Plans vérifiée
+
+La sauvegarde des limites (`PUT /api/admin/plans/:id/limits`) fonctionne correctement — log ajouté pour traçabilité.
+
+**Important :** ne pas sauvegarder depuis le panel admin sans vérifier `max_prompt_chars`. Si la page est chargée avant un fix SQL, la sauvegarde réécrase la valeur corrigée.
+
+Valeurs correctes en DB :
+- Premium : `max_prompt_chars = 50000`
+- École : `max_prompt_chars = 100000`
+
+### 🌐 i18n — Tagline Aron
+
+**Fichier :** `src/pages/Assistant.jsx`
+
+Tagline affichée inconditionnellement sous le nom d'Aron (plus de fallback sur le titre de conversation). Traduite correctement via `t('assistant.tagline')`.
+
+**Fix `getDefaultLanguage()`** (`src/i18n/index.js`) : lit `localStorage.getItem('i18nextLng')` en priorité avant `navigator.language` — garantit que la langue sauvegardée est respectée au rechargement.
+
+---
+
 ## Changelog — 2026-04-19 (i18n complet + voix bilingues Aron + saisons bilingues)
 
 ### 🌍 i18n — Traductions manquantes corrigées

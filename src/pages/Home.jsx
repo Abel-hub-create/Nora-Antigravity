@@ -50,7 +50,7 @@ const Home = () => {
                         <AnimatedNumber value={user.winstreak ?? 1} duration={600} className="text-sm font-bold text-text-main" />
                     </div>
                     <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-surface/80 border border-amber-500/20 rounded-full">
-                        <span className="text-sm leading-none">🪙</span>
+                        <Coins size={14} className="text-amber-400" />
                         <AnimatedNumber value={user.coins ?? 0} duration={600} className="text-sm font-bold text-amber-300" />
                     </div>
                 </div>

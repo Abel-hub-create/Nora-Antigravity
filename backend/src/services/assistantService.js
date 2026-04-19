@@ -480,38 +480,66 @@ RÈGLES ABSOLUES :
 // ─── TTS — Synthèse vocale (ElevenLabs) ──────────────────────────────────────
 
 const ELEVENLABS_VOICES = {
-  fr: 'pNInz6obpgDQGcFmaJgB', // Adam — voix française
-  en: 'SOYHLrjzK2X1ezoPC6cr', // Harry — voix anglaise US
+  fr: 'SOYHLrjzK2X1ezoPC6cr', // Harry — multilingue (FR + EN)
+  en: 'SOYHLrjzK2X1ezoPC6cr', // Harry — multilingue (FR + EN)
 };
 
 export async function generateTTS(text, lang = 'fr') {
-  const voiceId = ELEVENLABS_VOICES[lang] || ELEVENLABS_VOICES.fr;
-  const response = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
-    {
-      method: 'POST',
-      headers: {
-        'xi-api-key': process.env.ELEVENLABS_API_KEY,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: text.substring(0, 5000),
-        model_id: 'eleven_multilingual_v2',
-        voice_settings: {
-          stability: 0.55,
-          similarity_boost: 0.75,
-          style: 0.1,
-          use_speaker_boost: true,
-          speed: 1.1,
-        },
-      }),
+  // Try ElevenLabs first, fall back to OpenAI if quota exceeded or unavailable
+  if (process.env.ELEVENLABS_API_KEY) {
+    try {
+      const voiceId = ELEVENLABS_VOICES[lang] || ELEVENLABS_VOICES.fr;
+      const response = await fetch(
+        `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+        {
+          method: 'POST',
+          headers: {
+            'xi-api-key': process.env.ELEVENLABS_API_KEY,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text: text.substring(0, 5000),
+            model_id: 'eleven_multilingual_v2',
+            voice_settings: {
+              stability: 0.55,
+              similarity_boost: 0.75,
+              style: 0.1,
+              use_speaker_boost: true,
+              speed: 1.1,
+            },
+          }),
+        }
+      );
+      if (response.ok) {
+        const buffer = Buffer.from(await response.arrayBuffer());
+        return buffer.toString('base64');
+      }
+      const errBody = await response.text();
+      console.warn(`[TTS] ElevenLabs failed (${response.status}), falling back to OpenAI:`, errBody.slice(0, 200));
+    } catch (err) {
+      console.warn('[TTS] ElevenLabs error, falling back to OpenAI:', err.message);
     }
-  );
-  if (!response.ok) {
-    const errBody = await response.text();
-    throw new Error(`ElevenLabs TTS error: ${response.status} — ${errBody}`);
   }
-  const buffer = Buffer.from(await response.arrayBuffer());
+
+  // OpenAI TTS fallback
+  const openaiRes = await fetch('https://api.openai.com/v1/audio/speech', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'tts-1-hd',
+      input: text.substring(0, 4096),
+      voice: 'fable',
+      speed: 1.15,
+    }),
+  });
+  if (!openaiRes.ok) {
+    const errBody = await openaiRes.text();
+    throw new Error(`OpenAI TTS error: ${openaiRes.status} — ${errBody}`);
+  }
+  const buffer = Buffer.from(await openaiRes.arrayBuffer());
   return buffer.toString('base64');
 }
 

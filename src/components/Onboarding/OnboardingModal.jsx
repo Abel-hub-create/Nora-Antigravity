@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Camera, ArrowRight, Upload, Loader2, Moon, Sun, Globe, CameraIcon, BookOpen, Bot } from 'lucide-react';
+import { Camera, ArrowRight, Upload, Loader2, Moon, Sun, Globe, CameraIcon, BookOpen, Bot, Share2, Users } from 'lucide-react';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 
 // Liste des langues disponibles
@@ -24,7 +24,7 @@ const SUBJECTS = [
     { id: 'dutch', icon: '🌷' }
 ];
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 
 const OnboardingModal = () => {
     const { t, i18n } = useTranslation();
@@ -109,12 +109,17 @@ const OnboardingModal = () => {
         setStep(5);
     };
 
-    // Step 5: Aron intro
+    // Step 5: Import method info
     const handleStep5Continue = () => {
         setStep(6);
     };
 
-    // Step 6: Complete
+    // Step 6: Share & Referral
+    const handleStep6Continue = () => {
+        setStep(7);
+    };
+
+    // Step 7: Complete
     const handleComplete = async () => {
         setIsLoading(true);
         try {
@@ -456,10 +461,63 @@ const OnboardingModal = () => {
                         </motion.div>
                     )}
 
-                    {/* Step 6: Aron & Monk Mode intro (last step) */}
+                    {/* Step 6: Share & Referral */}
                     {step === 6 && (
                         <motion.div
                             key="step6"
+                            variants={stepVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            transition={{ duration: 0.2 }}
+                        >
+                            <div className="flex justify-center mb-6">
+                                <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center">
+                                    <Users size={40} className="text-primary" />
+                                </div>
+                            </div>
+                            <h2 className="text-2xl font-bold text-text-main text-center mb-2">
+                                {t('onboarding.step6.title')}
+                            </h2>
+                            <p className="text-text-muted text-center mb-6 text-sm">
+                                {t('onboarding.step6.message')}
+                            </p>
+
+                            <div className={`${selectedTheme === 'dark' ? 'bg-white/5' : 'bg-black/5'} rounded-2xl p-4 mb-6 space-y-4`}>
+                                <div className="flex items-start gap-3">
+                                    <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                                        <Share2 size={16} className="text-primary" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-text-main">{t('onboarding.step6.shareTitle')}</p>
+                                        <p className="text-xs text-text-muted mt-0.5">{t('onboarding.step6.shareDesc')}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <div className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                                        <Users size={16} className="text-amber-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-text-main">{t('onboarding.step6.referralTitle')}</p>
+                                        <p className="text-xs text-text-muted mt-0.5">{t('onboarding.step6.referralDesc')}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={handleStep6Continue}
+                                className="w-full p-4 rounded-xl bg-primary text-white font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
+                            >
+                                {t('onboarding.step6.button')}
+                                <ArrowRight size={18} />
+                            </button>
+                        </motion.div>
+                    )}
+
+                    {/* Step 7: Aron & Monk Mode intro (last step) */}
+                    {step === 7 && (
+                        <motion.div
+                            key="step7"
                             variants={stepVariants}
                             initial="hidden"
                             animate="visible"
@@ -472,25 +530,25 @@ const OnboardingModal = () => {
                                 </div>
                             </div>
                             <h2 className="text-2xl font-bold text-text-main text-center mb-4">
-                                {t('onboarding.step6.title')}
+                                {t('onboarding.step7.title')}
                             </h2>
                             <p className="text-text-muted text-center mb-6 text-sm leading-relaxed">
-                                {t('onboarding.step6.message')}
+                                {t('onboarding.step7.message')}
                             </p>
 
                             <div className={`${selectedTheme === 'dark' ? 'bg-white/5' : 'bg-black/5'} rounded-2xl p-4 mb-6 space-y-3`}>
                                 <div className="flex items-start gap-3">
                                     <span className="text-lg shrink-0">🧘</span>
                                     <div>
-                                        <p className="text-sm font-semibold text-text-main">{t('onboarding.step6.monkTitle')}</p>
-                                        <p className="text-xs text-text-muted mt-0.5">{t('onboarding.step6.monkDesc')}</p>
+                                        <p className="text-sm font-semibold text-text-main">{t('onboarding.step7.monkTitle')}</p>
+                                        <p className="text-xs text-text-muted mt-0.5">{t('onboarding.step7.monkDesc')}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-3">
                                     <span className="text-lg shrink-0">📸</span>
                                     <div>
-                                        <p className="text-sm font-semibold text-text-main">{t('onboarding.step6.anaTitle')}</p>
-                                        <p className="text-xs text-text-muted mt-0.5">{t('onboarding.step6.anaDesc')}</p>
+                                        <p className="text-sm font-semibold text-text-main">{t('onboarding.step7.anaTitle')}</p>
+                                        <p className="text-xs text-text-muted mt-0.5">{t('onboarding.step7.anaDesc')}</p>
                                     </div>
                                 </div>
                             </div>
@@ -508,7 +566,7 @@ const OnboardingModal = () => {
                                     <Loader2 size={20} className="animate-spin" />
                                 ) : (
                                     <>
-                                        {t('onboarding.step6.button')}
+                                        {t('onboarding.step7.button')}
                                         <ArrowRight size={18} />
                                     </>
                                 )}

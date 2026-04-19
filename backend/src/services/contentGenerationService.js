@@ -128,13 +128,37 @@ Tu dois respecter une FIDELITE ABSOLUE au contenu du cours fourni :
 - Reponds TOUJOURS dans la MEME LANGUE que le contenu original
 - Ne melange jamais les langues`;
 
+const DIFFICULTY_RULES = {
+  easy: `
+▌ DIFFICULTÉ QUIZ : FACILE
+- Questions : faits directs du cours ("Qu'est-ce que X ?", "Quel est le nom de Y ?")
+- Distracteurs (3 mauvaises réponses) : clairement fausses, faciles à éliminer
+- Pas de piège, pas d'ambiguïté
+`,
+  medium: `
+▌ DIFFICULTÉ QUIZ : MOYEN
+- Questions : compréhension ou application ("Dans quel cas utilise-t-on X ?", "Pourquoi Y se produit-il ?")
+- Distracteurs : plausibles mais distinguables si le cours est bien compris
+- Quelques nuances, mais la bonne réponse reste identifiable avec les connaissances du cours
+`,
+  hard: `
+▌ DIFFICULTÉ QUIZ : DIFFICILE
+- Questions : analyse ou déduction ("Pourquoi X ne fonctionne pas dans ce cas ?", "Lequel des scénarios suivants illustre Y ?")
+- Distracteurs : très proches de la bonne réponse, avec des nuances subtiles ou pièges courants
+- Le candidat doit maîtriser le cours en profondeur pour distinguer la bonne réponse
+`
+};
+
 /**
  * Prompt utilisateur pour la generation complete
  * @param {string} content - Le contenu du cours
  * @param {string|null} specificInstructions - Instructions specifiques de l'utilisateur
  * @param {string|null} subject - Matière sélectionnée par l'utilisateur (ex: 'mathematics')
+ * @param {string} lang - Langue de génération
+ * @param {string|null} difficulty - Difficulté du quiz ('easy'|'medium'|'hard'), null = moyen par défaut
+ * @param {number} quizCount - Nombre de questions à générer (4 ou 20)
  */
-const buildUserPrompt = (content, specificInstructions = null, subject = null, lang = 'fr') => {
+const buildUserPrompt = (content, specificInstructions = null, subject = null, lang = 'fr', difficulty = null, quizCount = 4) => {
   const langInstruction = lang === 'en'
     ? 'You MUST generate ALL content (title, summary, flashcards, quiz) in ENGLISH. Do NOT use French or any other language.'
     : 'Tu DOIS generer TOUT le contenu (titre, synthese, flashcards, quiz) en FRANCAIS. Ne traduis PAS en anglais ou autre langue.';
@@ -170,25 +194,8 @@ Tu dois generer un JSON avec exactement cette structure :
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "correctAnswer": 0,
       "explanation": "Explication de pourquoi cette reponse est correcte"
-    },
-    {
-      "question": "...",
-      "options": ["...", "...", "...", "..."],
-      "correctAnswer": 0,
-      "explanation": "..."
-    },
-    {
-      "question": "...",
-      "options": ["...", "...", "...", "..."],
-      "correctAnswer": 0,
-      "explanation": "..."
-    },
-    {
-      "question": "...",
-      "options": ["...", "...", "...", "..."],
-      "correctAnswer": 0,
-      "explanation": "..."
     }
+    // Repete exactement ${quizCount} fois — genere ${quizCount} questions distinctes couvrant differents aspects du cours
   ]
 }
 
@@ -358,11 +365,12 @@ ${subject ? buildSubjectGuidelines(subject) : '(Aucune matiere specifiee - utili
 ===== REGLES POUR FLASHCARDS ET QUIZ =====
 
 1. Exactement 6 flashcards : 2 easy, 3 medium, 1 hard
-2. Exactement 4 questions quiz avec 4 options chacune
+2. Exactement ${quizCount} questions quiz avec 4 options chacune
 3. correctAnswer est l'index (0, 1, 2 ou 3) de la bonne reponse
 4. Les flashcards et le quiz doivent etre bases UNIQUEMENT sur le contenu du cours
 5. Retourne UNIQUEMENT le JSON, sans texte avant ou apres
 6. RAPPEL LANGUE : Respecte la langue indiquee au debut.
+${difficulty && DIFFICULTY_RULES[difficulty] ? DIFFICULTY_RULES[difficulty] : ''}
 
 ===== RAPPEL FINAL CRITIQUE =====
 
@@ -422,8 +430,10 @@ REGLE #3 - FIDELITE AU COURS :
 
 /**
  * Parse et valide la reponse JSON de l'API
+ * @param {string} text - Réponse brute de l'API
+ * @param {number} quizCount - Nombre de questions attendu (4 ou 20)
  */
-function parseAndValidateResponse(text) {
+function parseAndValidateResponse(text, quizCount = 4) {
   // Nettoyer les eventuels marqueurs markdown
   let cleaned = text
     .replace(/```json\n?/g, '')
@@ -460,8 +470,9 @@ function parseAndValidateResponse(text) {
     throw new Error(`Nombre de flashcards insuffisant: ${parsed.flashcards?.length || 0}/6`);
   }
 
-  if (!Array.isArray(parsed.quizQuestions) || parsed.quizQuestions.length < 3) {
-    throw new Error(`Nombre de questions insuffisant: ${parsed.quizQuestions?.length || 0}/4`);
+  const minQuiz = quizCount >= 20 ? 10 : 3;
+  if (!Array.isArray(parsed.quizQuestions) || parsed.quizQuestions.length < minQuiz) {
+    throw new Error(`Nombre de questions insuffisant: ${parsed.quizQuestions?.length || 0}/${quizCount}`);
   }
 
   // Normaliser et valider les flashcards (accepte 3-6, prend les 6 premières valides)
@@ -478,11 +489,11 @@ function parseAndValidateResponse(text) {
     throw new Error(`Flashcards valides insuffisantes après filtrage: ${flashcards.length}`);
   }
 
-  // Normaliser et valider les questions quiz (prendre les 4 premières valides)
+  // Normaliser et valider les questions quiz (prendre jusqu'à quizCount questions valides)
   const quizQuestions = parsed.quizQuestions
     .filter(q => q.question && Array.isArray(q.options) && q.options.length >= 4)
-    .slice(0, 4)
-    .map((q, index) => {
+    .slice(0, quizCount)
+    .map((q) => {
       const correctAnswer = typeof q.correctAnswer === 'number' ? q.correctAnswer : 0;
       return {
         question: String(q.question).trim(),
@@ -492,8 +503,8 @@ function parseAndValidateResponse(text) {
       };
     });
 
-  if (quizQuestions.length < 3) {
-    throw new Error(`Questions quiz insuffisantes après filtrage: ${quizQuestions.length}/4`);
+  if (quizQuestions.length < minQuiz) {
+    throw new Error(`Questions quiz insuffisantes après filtrage: ${quizQuestions.length}/${quizCount}`);
   }
 
   return {
@@ -512,10 +523,10 @@ function parseAndValidateResponse(text) {
  * @param {string|null} subject - Matiere selectionnee par l'utilisateur (optionnel, ex: 'mathematics')
  * @returns {Promise<Object>} - { title, summary, flashcards, quizQuestions }
  */
-async function callOpenAI(trimmedContent, specificInstructions, subject, lang = 'fr', userId = null) {
+async function callOpenAI(trimmedContent, specificInstructions, subject, lang = 'fr', userId = null, difficulty = null, quizCount = 4) {
   const messages = [
     { role: 'system', content: SYSTEM_PROMPT },
-    { role: 'user', content: buildUserPrompt(trimmedContent, specificInstructions, subject, lang) }
+    { role: 'user', content: buildUserPrompt(trimmedContent, specificInstructions, subject, lang, difficulty, quizCount) }
   ];
 
   let rawContent;
@@ -542,10 +553,10 @@ async function callOpenAI(trimmedContent, specificInstructions, subject, lang = 
 
   if (!rawContent) throw new Error('Reponse vide de l\'API');
 
-  return parseAndValidateResponse(rawContent);
+  return parseAndValidateResponse(rawContent, quizCount);
 }
 
-export async function generateEducationalContent(content, specificInstructions = null, subject = null, lang = 'fr', userId = null) {
+export async function generateEducationalContent(content, specificInstructions = null, subject = null, lang = 'fr', userId = null, difficulty = null, quizCount = 4) {
   if (!content || typeof content !== 'string') {
     throw new Error('Contenu invalide');
   }
@@ -559,12 +570,12 @@ export async function generateEducationalContent(content, specificInstructions =
     throw new Error('Contenu trop long (maximum 100000 caracteres)');
   }
 
-  console.log('[ContentGen] Generation en cours...', subject ? `(matiere: ${subject})` : '');
+  console.log('[ContentGen] Generation en cours...', subject ? `(matiere: ${subject})` : '', difficulty ? `(difficulte: ${difficulty})` : '', `(${quizCount} questions)`);
   const startTime = Date.now();
 
   // Tentative 1
   try {
-    const result = await callOpenAI(trimmedContent, specificInstructions, subject, lang, userId);
+    const result = await callOpenAI(trimmedContent, specificInstructions, subject, lang, userId, difficulty, quizCount);
     console.log(`[ContentGen] Succes en ${Date.now() - startTime}ms`);
     return result;
   } catch (firstError) {
@@ -581,7 +592,7 @@ export async function generateEducationalContent(content, specificInstructions =
     await new Promise(r => setTimeout(r, 3000));
 
     try {
-      const result = await callOpenAI(trimmedContent, specificInstructions, subject, lang, userId);
+      const result = await callOpenAI(trimmedContent, specificInstructions, subject, lang, userId, difficulty, quizCount);
       console.log(`[ContentGen] Succes (retry) en ${Date.now() - startTime}ms`);
       return result;
     } catch (secondError) {

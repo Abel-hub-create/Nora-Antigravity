@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { User, Mail, Lock, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -26,8 +26,15 @@ const Register = () => {
 
   const { register, loginWithGoogle, loginWithApple, error: authError, errorCode, clearError } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [refCode, setRefCode] = useState('');
   const [googleError, setGoogleError] = useState(null);
   const [appleError, setAppleError] = useState(null);
+
+  useEffect(() => {
+    const ref = searchParams.get('ref') || localStorage.getItem('nora_ref_code') || '';
+    if (ref) { setRefCode(ref); localStorage.setItem('nora_ref_code', ref); }
+  }, []);
 
   // Show resend button when email is already used (verified or not)
   const isEmailAlreadyUsed = errorCode === 'EMAIL_NOT_VERIFIED' || errorCode === 'EMAIL_ALREADY_VERIFIED';
@@ -107,9 +114,10 @@ const Register = () => {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        language: i18n.language
+        language: i18n.language,
+        refCode: refCode || undefined,
       });
-      // Redirect to verification pending page
+      localStorage.removeItem('nora_ref_code');
       navigate('/verify-email-sent', { state: { email: formData.email } });
     } catch {
       // Error handled by AuthContext

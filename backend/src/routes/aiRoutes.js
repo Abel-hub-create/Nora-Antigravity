@@ -153,12 +153,13 @@ router.post('/ocr', authenticate, express.json({ limit: '120mb' }), async (req, 
  */
 router.post('/generate-content', authenticate, express.json({ limit: '10mb' }), async (req, res) => {
   try {
-    const { content, specificInstructions, subject } = req.body;
+    const { content, specificInstructions, subject, difficulty } = req.body;
     const lang = (req.headers['accept-language'] || 'fr').split(',')[0].split('-')[0];
 
-    // Check max_prompt_chars from user's plan
+    // Check max_prompt_chars from user's plan + determine quizCount
+    let quizCount = 4;
     if (content && req.user?.id) {
-      const { limits } = await getUserPlanLimits(req.user.id);
+      const { plan, limits } = await getUserPlanLimits(req.user.id);
       const maxChars = limits.max_prompt_chars;
       if (maxChars && content.length > maxChars) {
         return res.status(403).json({
@@ -168,9 +169,15 @@ router.post('/generate-content', authenticate, express.json({ limit: '10mb' }), 
           current: content.length
         });
       }
+      // 20 questions pour les plans payants
+      if (plan === 'premium' || plan === 'school') quizCount = 20;
     }
 
-    const result = await generateEducationalContent(content, specificInstructions, subject, lang, req.user?.id);
+    // Valider la difficulté (seulement pour les plans premium/school, ignoré sinon)
+    const validDifficulties = ['easy', 'medium', 'hard'];
+    const resolvedDifficulty = validDifficulties.includes(difficulty) ? difficulty : null;
+
+    const result = await generateEducationalContent(content, specificInstructions, subject, lang, req.user?.id, resolvedDifficulty, quizCount);
     res.json(result);
   } catch (error) {
     console.error('Erreur generation contenu:', error);

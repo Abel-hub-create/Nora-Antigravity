@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Package, Sparkles, Lock, RefreshCw } from 'lucide-react';
+import { ShoppingBag, Package, Sparkles, Lock, RefreshCw, Coins } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useUser } from '../context/UserContext';
 import AnimatedNumber from '../components/UI/AnimatedNumber';
@@ -32,7 +32,7 @@ const PackCard = ({ labelKey, descKey, price, emoji }) => {
         <p className="text-xs text-text-muted mt-0.5">{t(descKey)}</p>
       </div>
       <div className="flex items-center gap-1.5 bg-amber-500/15 border border-amber-500/30 rounded-full px-3 py-1">
-        <span className="text-amber-400 text-xs">🪙</span>
+        <Coins size={12} className="text-amber-400" />
         <span className="text-amber-300 text-xs font-bold">{price}</span>
       </div>
       {/* Bientôt disponible overlay */}
@@ -71,7 +71,7 @@ const Shop = () => {
   ];
 
   const REAL_MONEY_OFFERS = [
-    { id: 'offer_3',  price: '3 €',  coins: 100,  emoji: '🪙', popular: false },
+    { id: 'offer_3',  price: '3 €',  coins: 100,  emoji: '💰', popular: false },
     { id: 'offer_5',  price: '5 €',  coins: 220,  emoji: '💰', popular: true  },
     { id: 'offer_10', price: '10 €', coins: 800,  emoji: '💎', popular: false },
   ];
@@ -85,7 +85,7 @@ const Shop = () => {
           <p className="text-sm text-text-muted mt-0.5">{t('shop.subtitle')}</p>
         </div>
         <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/25 rounded-full px-4 py-2">
-          <span className="text-base">🪙</span>
+          <Coins size={16} className="text-amber-400" />
           <AnimatedNumber value={user.coins ?? 0} duration={600} className="text-sm font-bold text-amber-300" />
         </div>
       </header>

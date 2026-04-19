@@ -3,9 +3,10 @@ import * as hashService from './hashService.js';
 import * as tokenService from './tokenService.js';
 import * as emailService from './emailService.js';
 import { createSubjectFolders } from './folderRepository.js';
+import { findByShareCode } from './userRepository.js';
 import crypto from 'crypto';
 
-export const register = async ({ email, password, name, language = 'fr' }) => {
+export const register = async ({ email, password, name, language = 'fr', refCode = null }) => {
   // Check if user exists
   const existingUser = await userRepository.findByEmail(email);
   if (existingUser) {
@@ -27,6 +28,13 @@ export const register = async ({ email, password, name, language = 'fr' }) => {
   const verificationToken = crypto.randomBytes(32).toString('hex');
   const verificationExpires = new Date(Date.now() + 3600000); // 1 hour
 
+  // Résoudre le code parrain si fourni
+  let referredBy = null;
+  if (refCode) {
+    const referrer = await findByShareCode(refCode);
+    if (referrer) referredBy = referrer.id;
+  }
+
   // Create user with verification token
   const user = await userRepository.createWithVerificationToken({
     email,
@@ -34,7 +42,8 @@ export const register = async ({ email, password, name, language = 'fr' }) => {
     name,
     language,
     verificationToken,
-    verificationExpires
+    verificationExpires,
+    referredBy,
   });
 
   // Send verification email in the selected language

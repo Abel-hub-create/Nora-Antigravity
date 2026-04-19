@@ -210,6 +210,7 @@ export default function ExerciseDetail() {
 
   const handlePrint = () => {
     if (!exercise) return;
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const subjectEmoji = SUBJECT_EMOJIS[exercise.subject] ?? '📖';
     const localeMap = { fr: 'fr-FR', en: 'en-US' };
     const locale = localeMap[i18n.language] || 'en-US';
@@ -217,107 +218,223 @@ export default function ExerciseDetail() {
       day: 'numeric', month: 'long', year: 'numeric'
     });
 
-    // Grouper par type
     const byType = {};
     exercise.items.forEach(item => {
       if (!byType[item.type]) byType[item.type] = [];
       byType[item.type].push(item);
     });
 
-    let md = `# ${subjectEmoji} ${exercise.title}\n`;
-    md += `**Date :** ${date}\n\n`;
-    md += `---\n\n`;
-
     const typeLabels = {
       qcm: t('exercises.type.qcm'),
       open: t('exercises.type.open'),
       practical: t('exercises.type.practical')
     };
-    const printType = (type, items) => {
-      md += `## ${TYPE_ICONS[type]} ${typeLabels[type]}\n\n`;
-      items.forEach((item, i) => {
-        md += `**${i + 1}.** ${item.question}\n\n`;
-        if (type === 'qcm' && item.options) {
-          item.options.forEach((opt, idx) => {
-            md += `   ${String.fromCharCode(65 + idx)}) ${opt}\n`;
-          });
-          md += '\n';
-        } else {
-          md += `_${t('exercises.printAnswer')}_ _______________________________________________\n\n`;
-          if (type === 'practical') {
-            md += `_${t('exercises.printDevelopment')}_\n\n\n\n`;
-          }
-        }
-        md += '\n';
-      });
-    };
 
-    ['qcm', 'open', 'practical'].forEach(type => {
-      if (byType[type]) printType(type, byType[type]);
-    });
-
-    // Ouvrir une fenêtre d'impression
-    const win = window.open('', '_blank');
-    win.document.write(`
-      <html>
-      <head>
-        <title>${exercise.title}</title>
-        <style>
-          * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { font-family: 'Georgia', serif; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #1a1a1a; line-height: 1.7; }
-          h1 { font-size: 24px; margin-bottom: 6px; }
-          h2 { font-size: 18px; margin: 28px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #e5e5e5; }
-          p { margin-bottom: 10px; }
-          .meta { color: #666; font-size: 13px; margin-bottom: 20px; }
-          .separator { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
-          .question { margin-bottom: 24px; page-break-inside: avoid; }
-          .question-title { font-weight: bold; margin-bottom: 8px; }
-          .option { margin: 4px 0 4px 20px; }
-          .answer-line { border-bottom: 1px solid #999; margin: 8px 0 16px; min-height: 24px; }
-          .answer-block { border: 1px solid #ccc; border-radius: 4px; min-height: 80px; margin: 8px 0 16px; }
-          @media print { body { margin: 0; } }
-        </style>
-      </head>
-      <body>
-        <h1>${subjectEmoji} ${exercise.title}</h1>
-        <p class="meta">Date : ${date}</p>
-        <hr class="separator"/>
-        ${renderPrintHTML(byType)}
-      </body>
-      </html>
-    `);
-    win.document.close();
-    win.print();
-  };
-
-  const renderPrintHTML = (byType) => {
-    const typeLabels = {
-      qcm: t('exercises.type.qcm'),
-      open: t('exercises.type.open'),
-      practical: t('exercises.type.practical')
-    };
-    let html = '';
+    let sectionsHTML = '';
     const renderSection = (type, items) => {
-      html += `<h2>${TYPE_ICONS[type]} ${typeLabels[type]}</h2>`;
+      sectionsHTML += `<div class="section">`;
+      sectionsHTML += `<h2><span class="section-icon">${TYPE_ICONS[type]}</span> ${typeLabels[type]}</h2>`;
       items.forEach((item, i) => {
-        html += `<div class="question">`;
-        html += `<p class="question-title">${i + 1}. ${item.question.replace(/</g, '&lt;')}</p>`;
+        const q = item.question.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        sectionsHTML += `<div class="question">`;
+        sectionsHTML += `<p class="question-num">${i + 1}.</p><p class="question-text">${q}</p>`;
         if (type === 'qcm' && item.options) {
+          sectionsHTML += `<div class="options">`;
           item.options.forEach((opt, idx) => {
-            html += `<p class="option">&#9675; ${String.fromCharCode(65 + idx)}) ${opt.replace(/</g, '&lt;')}</p>`;
+            const o = opt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            sectionsHTML += `<p class="option"><span class="option-letter">${String.fromCharCode(65 + idx)}</span>${o}</p>`;
           });
+          sectionsHTML += `</div>`;
         } else if (type === 'open') {
-          html += `<p style="color:#666;font-size:13px;">Réponse :</p><div class="answer-line"></div>`;
+          sectionsHTML += `<div class="answer-lines"><div class="line"></div><div class="line"></div><div class="line"></div></div>`;
         } else {
-          html += `<p style="color:#666;font-size:13px;">Développement :</p><div class="answer-block"></div>`;
+          sectionsHTML += `<div class="answer-block"></div>`;
         }
-        html += `</div>`;
+        sectionsHTML += `</div>`;
       });
+      sectionsHTML += `</div>`;
     };
     ['qcm', 'open', 'practical'].forEach(type => {
       if (byType[type]) renderSection(type, byType[type]);
     });
-    return html;
+
+    const htmlContent = `<!DOCTYPE html>
+<html lang="${i18n.language}">
+<head>
+  <meta charset="UTF-8">
+  <title>${exercise.title}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    @page { size: A4 portrait; margin: 14mm 12mm; }
+
+    body {
+      background: #fff;
+      font-family: Georgia, 'Times New Roman', serif;
+      color: #111;
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 6mm;
+      padding-bottom: 4mm;
+      border-bottom: 2px solid #111;
+    }
+    .header-left h1 {
+      font-size: 18pt;
+      font-weight: bold;
+      letter-spacing: -0.01em;
+    }
+    .header-left .subtitle {
+      font-size: 9pt;
+      color: #555;
+      margin-top: 2px;
+      font-family: Arial, sans-serif;
+    }
+    .header-right {
+      text-align: right;
+      font-size: 8.5pt;
+      color: #777;
+      font-family: Arial, sans-serif;
+      line-height: 1.8;
+    }
+    .header-right .brand {
+      font-weight: bold;
+      color: #111;
+      font-size: 10pt;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    /* ── Sections ── */
+    .section { margin-bottom: 8mm; }
+    .section h2 {
+      font-size: 12pt;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3mm 4mm;
+      background: #f5f5f5;
+      border-left: 3px solid #111;
+      border-radius: 0 4px 4px 0;
+      margin-bottom: 4mm;
+      font-family: Arial, sans-serif;
+      letter-spacing: 0.03em;
+    }
+    .section-icon { font-size: 13pt; }
+
+    /* ── Questions ── */
+    .question {
+      display: flex;
+      align-items: flex-start;
+      gap: 5mm;
+      margin-bottom: 5mm;
+      page-break-inside: avoid;
+    }
+    .question-num {
+      font-size: 10pt;
+      font-weight: bold;
+      color: #888;
+      min-width: 6mm;
+      padding-top: 1px;
+      font-family: Arial, sans-serif;
+    }
+    .question-text {
+      font-size: 10.5pt;
+      font-weight: bold;
+      flex: 1;
+    }
+
+    /* ── QCM options ── */
+    .options { margin: 2mm 0 0 11mm; }
+    .option {
+      display: flex;
+      align-items: baseline;
+      gap: 3mm;
+      font-size: 10pt;
+      margin-bottom: 1.5mm;
+    }
+    .option-letter {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 5mm;
+      height: 5mm;
+      border: 1.5px solid #555;
+      border-radius: 50%;
+      font-size: 8pt;
+      font-weight: bold;
+      font-family: Arial, sans-serif;
+      color: #333;
+      flex-shrink: 0;
+    }
+
+    /* ── Answer zones ── */
+    .answer-lines { margin: 2mm 0 0 11mm; }
+    .line {
+      border-bottom: 1px solid #bbb;
+      height: 7mm;
+      margin-bottom: 1mm;
+    }
+    .answer-block {
+      margin: 2mm 0 0 11mm;
+      border: 1.5px dashed #bbb;
+      border-radius: 6px;
+      min-height: 28mm;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      position: fixed;
+      bottom: 6mm;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 7.5pt;
+      font-family: Arial, sans-serif;
+      color: #bbb;
+      letter-spacing: 0.06em;
+    }
+
+    @media print {
+      .footer { position: fixed; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <h1>${subjectEmoji} ${exercise.title.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</h1>
+      <p class="subtitle">${date}</p>
+    </div>
+    <div class="header-right">
+      <p class="brand">NORA</p>
+      <p>${exercise.items.length} ${exercise.items.length > 1 ? 'exercices' : 'exercice'}</p>
+    </div>
+  </div>
+
+  ${sectionsHTML}
+
+  <div class="footer">mirora.cloud · NORA</div>
+
+  <script>window.onload = () => { if (!/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) { window.focus(); window.print(); } }<\/script>
+</body>
+</html>`;
+
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+
+    if (isMobile) {
+      const newTab = window.open(url, '_blank');
+      if (!newTab) window.location.href = url;
+    } else {
+      const win = window.open(url, '_blank');
+      if (win) win.onload = () => { win.focus(); win.print(); };
+    }
   };
 
   if (isLoading) {

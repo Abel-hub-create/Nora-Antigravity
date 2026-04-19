@@ -6,7 +6,7 @@ import AdminLayout from '../components/AdminLayout.jsx';
 const PLAN_COLORS = { free: 'gray', premium: 'amber', school: 'violet' };
 
 // Keys that are boolean (0/1)
-const BOOL_KEYS = new Set(['has_daily_goals', 'has_flashcards', 'has_folders', 'has_quiz', 'has_tts', 'ai_model']);
+const BOOL_KEYS = new Set(['has_daily_goals', 'has_flashcards', 'has_folders', 'has_quiz', 'has_tts', 'ai_model', 'has_share']);
 
 // Keys with enum values
 const ENUM_KEYS = {

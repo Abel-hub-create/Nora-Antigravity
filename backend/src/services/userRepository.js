@@ -1,9 +1,11 @@
 import { query } from '../config/database.js';
+import { generateUniqueCode } from './shareCodeService.js';
 
 export const create = async ({ email, password, name }) => {
-  const sql = 'INSERT INTO users (email, password, name) VALUES (?, ?, ?)';
-  const result = await query(sql, [email, password, name]);
-  return { id: result.insertId, email, name };
+  const shareCode = await generateUniqueCode();
+  const sql = 'INSERT INTO users (email, password, name, share_code) VALUES (?, ?, ?, ?)';
+  const result = await query(sql, [email, password, name, shareCode]);
+  return { id: result.insertId, email, name, shareCode };
 };
 
 export const findByEmail = async (email) => {
@@ -20,10 +22,10 @@ export const findByGoogleId = async (googleId) => {
 };
 
 export const createGoogleUser = async ({ googleId, email, name, picture }) => {
-  // Google users are auto-verified and use light theme by default, auto_folder OFF (free plan)
-  const sql = `INSERT INTO users (google_id, email, name, avatar, theme, language, auto_folder, is_verified, onboarding_completed)
-               VALUES (?, ?, ?, ?, 'light', 'fr', 0, TRUE, FALSE)`;
-  const result = await query(sql, [googleId, email, name, picture]);
+  const shareCode = await generateUniqueCode();
+  const sql = `INSERT INTO users (google_id, email, name, avatar, theme, language, auto_folder, is_verified, onboarding_completed, share_code)
+               VALUES (?, ?, ?, ?, 'light', 'fr', 0, TRUE, FALSE, ?)`;
+  const result = await query(sql, [googleId, email, name, picture, shareCode]);
   return { id: result.insertId, email, name, avatar: picture };
 };
 
@@ -54,9 +56,21 @@ export const linkAppleAccount = async (userId, appleId) => {
 export const findById = async (id) => {
   const sql = `SELECT id, email, name, avatar, theme, language, auto_folder, onboarding_completed,
                level, exp, next_level_exp, winstreak, coins, last_activity_date, timezone,
-               created_at, is_banned, banned_reason, plan_type, premium_expires_at, active_badge_id
+               created_at, is_banned, banned_reason, plan_type, premium_expires_at, active_badge_id, share_code
                FROM users WHERE id = ? AND is_active = 1`;
   const users = await query(sql, [id]);
+  const user = users[0] || null;
+  if (user && !user.share_code) {
+    const code = await generateUniqueCode();
+    await query('UPDATE users SET share_code = ? WHERE id = ?', [code, id]);
+    user.share_code = code;
+  }
+  return user;
+};
+
+export const findByShareCode = async (code) => {
+  const sql = `SELECT id, name, avatar, plan_type, share_code FROM users WHERE share_code = ? AND is_active = 1 AND is_banned = 0`;
+  const users = await query(sql, [code]);
   return users[0] || null;
 };
 
@@ -166,12 +180,12 @@ export const markPasswordResetUsed = async (token) => {
 };
 
 // Email verification management
-export const createWithVerificationToken = async ({ email, password, name, language = 'fr', verificationToken, verificationExpires }) => {
-  // Default preferences for new accounts: light theme, user's selected language, auto_folder OFF (free plan)
+export const createWithVerificationToken = async ({ email, password, name, language = 'fr', verificationToken, verificationExpires, referredBy = null }) => {
   const userLanguage = ['fr', 'en', 'es', 'zh'].includes(language) ? language : 'fr';
-  const sql = `INSERT INTO users (email, password, name, theme, language, auto_folder, is_verified, verification_token, verification_token_expires)
-               VALUES (?, ?, ?, 'light', ?, 0, FALSE, ?, ?)`;
-  const result = await query(sql, [email, password, name, userLanguage, verificationToken, verificationExpires]);
+  const shareCode = await generateUniqueCode();
+  const sql = `INSERT INTO users (email, password, name, theme, language, auto_folder, is_verified, verification_token, verification_token_expires, share_code, referred_by)
+               VALUES (?, ?, ?, 'light', ?, 0, FALSE, ?, ?, ?, ?)`;
+  const result = await query(sql, [email, password, name, userLanguage, verificationToken, verificationExpires, shareCode, referredBy]);
   return { id: result.insertId, email, name, theme: 'light', language: userLanguage };
 };
 

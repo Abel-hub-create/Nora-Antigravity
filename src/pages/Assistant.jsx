@@ -931,9 +931,6 @@ export default function Assistant() {
               <img src="/aronsbg.png" alt="Aron" className="w-full h-full object-contain" />
             </div>
             <h1 className="font-bold text-text-main text-base">{t('assistant.title')}</h1>
-            <p className="text-xs text-text-muted">
-              {conversations.find(c => c.id === activeConvId)?.title || t('assistant.subtitle')}
-            </p>
             <p className="text-xs text-text-muted italic">{t('assistant.tagline')}</p>
           </div>
         </div>

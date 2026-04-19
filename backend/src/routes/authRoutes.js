@@ -12,13 +12,15 @@ import { getUserPlanLimits } from '../services/planRepository.js';
 import { getXpConfigMap } from '../services/xpConfigService.js';
 import { checkAndUpdateWinstreak } from '../services/winstreakService.js';
 import { getUserBadges } from '../services/seasonRepository.js';
+import { processReferralReward, getReferralStats } from '../services/referralService.js';
 
 const router = express.Router();
 
 // Register (user must verify email before login)
 router.post('/register', registerLimiter, validate(validators.registerSchema), async (req, res, next) => {
   try {
-    const user = await authService.register(req.body);
+    const { refCode, ...rest } = req.body;
+    const user = await authService.register({ ...rest, refCode: refCode || null });
 
     // Don't generate tokens - user must verify email first
     res.status(201).json({
@@ -291,6 +293,20 @@ router.patch('/profile', authenticate, async (req, res, next) => {
   }
 });
 
+// Stats parrainage
+router.get('/referral/stats', authenticate, async (req, res, next) => {
+  try {
+    const stats = await getReferralStats(req.user.id);
+    res.json({
+      total: Number(stats.total),
+      premiumGiven: Number(stats.premium_given),
+      coinsEarned: Number(stats.coins_earned),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Complete onboarding (first-time setup)
 router.patch('/onboarding', authenticate, async (req, res, next) => {
   try {
@@ -308,6 +324,9 @@ router.patch('/onboarding', authenticate, async (req, res, next) => {
 
     // Complete onboarding (updates name, avatar if provided, and sets onboarding_completed = true)
     await userRepository.completeOnboarding(req.user.id, { name: name.trim(), avatar });
+
+    // Distribue les récompenses de parrainage si applicable (non bloquant)
+    processReferralReward(req.user.id).catch(() => {});
 
     // Get updated user
     const updatedUser = await userRepository.findById(req.user.id);
@@ -444,6 +463,7 @@ router.get('/users/:id/public', authenticate, async (req, res, next) => {
         plan_type: user.plan_type,
         winstreak: user.winstreak,
         active_badge_id: user.active_badge_id,
+        share_code: user.share_code || null,
       },
       badges,
       activeBadge,

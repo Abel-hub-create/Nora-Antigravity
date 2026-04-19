@@ -25,6 +25,21 @@ export const updateTitle = async (id, title) => {
   return response;
 };
 
+export const updateContent = async (id, summaryContent) => {
+  const response = await api.patch(`/syntheses/${id}/content`, { summaryContent });
+  return response;
+};
+
+export const updateFlashcard = async (syntheseId, flashcardId, { front, back }) => {
+  const response = await api.patch(`/syntheses/${syntheseId}/flashcards/${flashcardId}`, { front, back });
+  return response;
+};
+
+export const updateQuizQuestion = async (syntheseId, questionId, { question, options, correctAnswer, explanation }) => {
+  const response = await api.patch(`/syntheses/${syntheseId}/quiz/${questionId}`, { question, options, correctAnswer, explanation });
+  return response;
+};
+
 export const archiveSynthese = async (id) => {
   const response = await api.patch(`/syntheses/${id}/archive`);
   return response;

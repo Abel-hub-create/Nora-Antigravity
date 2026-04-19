@@ -104,6 +104,67 @@ router.post('/', validate(validators.createSyntheseSchema), async (req, res, nex
   }
 });
 
+// Helper: vérifier plan premium ou school
+async function requirePremiumOrSchool(userId, res) {
+  const { plan } = await getUserPlanLimits(userId);
+  if (plan !== 'premium' && plan !== 'school') {
+    res.status(403).json({ error: 'Fonctionnalité réservée aux plans Premium et School', code: 'PREMIUM_REQUIRED' });
+    return false;
+  }
+  return true;
+}
+
+// Edit synthese content (premium/school only)
+router.patch('/:id/content', async (req, res, next) => {
+  try {
+    if (!await requirePremiumOrSchool(req.user.id, res)) return;
+    const { summaryContent } = req.body;
+    if (!summaryContent || typeof summaryContent !== 'string') {
+      return res.status(400).json({ error: 'Contenu invalide' });
+    }
+    const updated = await syntheseRepo.updateContent(parseInt(req.params.id), req.user.id, summaryContent);
+    if (!updated) return res.status(404).json({ error: 'Synthèse non trouvée' });
+    res.json({ message: 'Contenu mis à jour' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Edit flashcard (premium/school only)
+router.patch('/:id/flashcards/:flashcardId', async (req, res, next) => {
+  try {
+    if (!await requirePremiumOrSchool(req.user.id, res)) return;
+    const { front, back } = req.body;
+    if (!front || !back) return res.status(400).json({ error: 'front et back requis' });
+    // Verify synthese belongs to user
+    const synthese = await syntheseRepo.findById(parseInt(req.params.id), req.user.id);
+    if (!synthese) return res.status(404).json({ error: 'Synthèse non trouvée' });
+    const updated = await syntheseRepo.updateFlashcard(parseInt(req.params.flashcardId), parseInt(req.params.id), { front, back });
+    if (!updated) return res.status(404).json({ error: 'Flashcard non trouvée' });
+    res.json({ message: 'Flashcard mise à jour' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Edit quiz question (premium/school only)
+router.patch('/:id/quiz/:questionId', async (req, res, next) => {
+  try {
+    if (!await requirePremiumOrSchool(req.user.id, res)) return;
+    const { question, options, correctAnswer, explanation } = req.body;
+    if (!question || !Array.isArray(options) || options.length !== 4 || typeof correctAnswer !== 'number') {
+      return res.status(400).json({ error: 'Données invalides' });
+    }
+    const synthese = await syntheseRepo.findById(parseInt(req.params.id), req.user.id);
+    if (!synthese) return res.status(404).json({ error: 'Synthèse non trouvée' });
+    const updated = await syntheseRepo.updateQuizQuestion(parseInt(req.params.questionId), parseInt(req.params.id), { question, options, correctAnswer, explanation: explanation || '' });
+    if (!updated) return res.status(404).json({ error: 'Question non trouvée' });
+    res.json({ message: 'Question mise à jour' });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Update synthese title
 router.patch('/:id/title', validate(validators.updateTitleSchema), async (req, res, next) => {
   try {

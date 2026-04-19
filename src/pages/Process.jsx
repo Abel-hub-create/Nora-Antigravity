@@ -4,14 +4,22 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Check, Loader2, AlertCircle, Sparkles, BookOpen, Brain, HelpCircle, Save, ArrowLeft, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useUser } from '../context/UserContext';
+import { useAuth } from '../features/auth/hooks/useAuth';
 import { createSynthese } from '../services/syntheseService';
 import { generateComplete, verifySubject, isMockMode } from '../services/openaiService';
+
+const DIFFICULTY_OPTIONS = [
+  { key: 'easy', labelKey: 'process.difficulty.easy', desc: 'process.difficulty.easyDesc', color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/30' },
+  { key: 'medium', labelKey: 'process.difficulty.medium', desc: 'process.difficulty.mediumDesc', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/30' },
+  { key: 'hard', labelKey: 'process.difficulty.hard', desc: 'process.difficulty.hardDesc', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/30' },
+];
 
 const Process = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { addNotification, awardXp } = useUser();
+  const { user } = useAuth();
 
   const STEPS = [
     { id: 'title', label: t('process.steps.title'), icon: Sparkles, description: t('process.steps.titleDesc') },
@@ -40,6 +48,11 @@ const Process = () => {
   const [forceGenerate, setForceGenerate] = useState(false);
   const [currentSubject, setCurrentSubject] = useState(subject);
 
+  // Sélection de difficulté (premium/school uniquement)
+  const isPremiumOrSchool = user?.plan_type === 'premium' || user?.plan_type === 'school';
+  const [showDifficultyModal, setShowDifficultyModal] = useState(isPremiumOrSchool);
+  const [selectedDifficulty, setSelectedDifficulty] = useState(null);
+
   // Rediriger si pas de contenu
   useEffect(() => {
     if (!content) {
@@ -53,6 +66,8 @@ const Process = () => {
   // Processus complet: verification puis generation
   useEffect(() => {
     if (!content) return;
+    // Attendre la sélection de difficulté pour les plans premium/school
+    if (isPremiumOrSchool && showDifficultyModal) return;
 
     // isMounted contrôle uniquement les setState — jamais les appels API
     // Ainsi, si l'user navigue ailleurs, la génération et la sauvegarde continuent en arrière-plan
@@ -98,7 +113,7 @@ const Process = () => {
 
       try {
         // Appel unique au backend qui genere tout — continue même si l'user navigue ailleurs
-        const { title, summary, flashcards, quizQuestions } = await generateComplete(content, specificInstructions, currentSubject);
+        const { title, summary, flashcards, quizQuestions } = await generateComplete(content, specificInstructions, currentSubject, selectedDifficulty);
 
         if (stepInterval) {
           clearInterval(stepInterval);
@@ -174,7 +189,7 @@ const Process = () => {
         clearInterval(stepInterval);
       }
     };
-  }, [content, sourceType, currentSubject, specificInstructions, forceGenerate, retryCount, navigate, addNotification, t]);
+  }, [content, sourceType, currentSubject, specificInstructions, forceGenerate, retryCount, navigate, addNotification, t, isPremiumOrSchool, showDifficultyModal, selectedDifficulty]);
 
   // Réessayer en cas d'erreur
   const handleRetry = () => {
@@ -444,6 +459,60 @@ const Process = () => {
           </p>
         </div>
       )}
+
+      {/* Modal sélection de difficulté (premium/school) */}
+      <AnimatePresence>
+        {showDifficultyModal && isPremiumOrSchool && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-surface rounded-2xl p-6 max-w-sm w-full"
+            >
+              <div className="flex justify-center mb-4">
+                <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center">
+                  <HelpCircle className="w-7 h-7 text-primary" />
+                </div>
+              </div>
+              <h3 className="text-text-main font-semibold text-lg text-center mb-1">
+                {t('process.difficulty.title')}
+              </h3>
+              <p className="text-text-muted text-sm text-center mb-5">
+                {t('process.difficulty.subtitle')}
+              </p>
+              <div className="space-y-3 mb-5">
+                {DIFFICULTY_OPTIONS.map(opt => (
+                  <button
+                    key={opt.key}
+                    onClick={() => setSelectedDifficulty(opt.key)}
+                    className={`w-full p-3 rounded-xl border text-left transition-all ${
+                      selectedDifficulty === opt.key
+                        ? opt.bg
+                        : 'bg-surface/50 border-white/10 hover:border-white/20'
+                    }`}
+                  >
+                    <span className={`font-medium text-sm ${opt.color}`}>{t(opt.labelKey)}</span>
+                    <p className="text-text-muted text-xs mt-0.5">{t(opt.desc)}</p>
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowDifficultyModal(false)}
+                disabled={!selectedDifficulty}
+                className="w-full py-3 bg-primary text-white rounded-xl font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+              >
+                {t('process.difficulty.confirm')}
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Modal de verification de matiere */}
       <AnimatePresence>

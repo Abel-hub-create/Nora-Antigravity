@@ -72,7 +72,9 @@ const MobileWrapper = ({ children }) => {
         { icon: Trophy,        labelKey: 'nav.leaderboard', path: '/leaderboard' },
         { icon: PlusCircle,    labelKey: 'nav.import',      path: '/import' },
         { icon: Bot,           labelKey: 'nav.assistant',   path: '/assistant' },
+        { icon: ShoppingBag,   labelKey: 'nav.shop',        path: '/shop' },
         { icon: User,          labelKey: 'nav.profile',     path: '/profile' },
+        { icon: Settings,      labelKey: 'nav.settings',    path: '/settings' },
     ];
     const isPremium = user?.plan_type && user.plan_type !== 'free';
 
@@ -140,11 +142,11 @@ const MobileWrapper = ({ children }) => {
 
                 {/* Content */}
                 {location.pathname === '/assistant' ? (
-                    <main className="flex flex-col" style={{height: 'calc(100dvh - env(safe-area-inset-bottom, 0px))', paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))'}}>
+                    <main className="flex flex-col" style={{height: 'calc(100dvh - env(safe-area-inset-bottom, 0px))', paddingBottom: 'calc(56px + env(safe-area-inset-bottom, 0px))'}}>
                         {children}
                     </main>
                 ) : (
-                    <main className="md:pb-6" style={{paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))'}}>
+                    <main className="md:pb-6" style={{paddingBottom: 'calc(56px + env(safe-area-inset-bottom, 0px))'}}>
                         <div className="max-w-3xl mx-auto">
                             {children}
                         </div>
@@ -152,7 +154,7 @@ const MobileWrapper = ({ children }) => {
                 )}
 
                 {/* Bottom Navigation - Mobile only */}
-                <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur-md border-t border-white/5 flex justify-around items-center px-1 z-50" style={{height:'64px', paddingBottom:'env(safe-area-inset-bottom)'}}>
+                <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur-md border-t border-white/5 flex justify-around items-center px-2 z-50" style={{height:'56px', paddingBottom:'env(safe-area-inset-bottom)'}}>
                     {bottomNavItems.map((item) => {
                         const isActive = location.pathname === item.path;
                         return (
@@ -168,20 +170,15 @@ const MobileWrapper = ({ children }) => {
                                         navigate(item.path);
                                     }
                                 }}
-                                className="flex flex-col items-center justify-center flex-1 h-full gap-0.5 group cursor-pointer"
+                                className="flex items-center justify-center flex-1 h-full cursor-pointer"
+                                title={t(item.labelKey)}
                             >
                                 <div className={clsx(
-                                    "p-1.5 rounded-xl transition-all duration-300",
-                                    isActive ? "bg-primary/20 text-primary" : "text-text-muted group-hover:text-text-main"
+                                    "p-2 rounded-xl transition-all duration-200",
+                                    isActive ? "bg-primary/20 text-primary" : "text-text-muted"
                                 )}>
-                                    <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                                    <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
                                 </div>
-                                <span className={clsx(
-                                    "text-[10px] font-medium transition-colors",
-                                    isActive ? "text-primary" : "text-text-muted"
-                                )}>
-                                    {t(item.labelKey)}
-                                </span>
                             </a>
                         );
                     })}

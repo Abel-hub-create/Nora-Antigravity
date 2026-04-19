@@ -378,7 +378,8 @@ router.patch('/plans/:id', authenticateAdmin, express.json(), async (req, res, n
 router.put('/plans/:id/limits', authenticateAdmin, express.json(), async (req, res, next) => {
   try {
     const planId = parseInt(req.params.id);
-    const { limits } = req.body; // [{ limit_key, limit_value, label }]
+    const { limits } = req.body;
+    console.log(`[Admin] PUT /plans/${planId}/limits — body:`, JSON.stringify(req.body).slice(0, 300));
     if (!Array.isArray(limits)) return res.status(400).json({ error: 'limits array required' });
     for (const l of limits) {
       await planRepo.updatePlanLimit(planId, l.limit_key, l.limit_value, l.label);
