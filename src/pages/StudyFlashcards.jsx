@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, RotateCw, ChevronRight, ChevronLeft, Loader2, PenLine, X, Printer } from 'lucide-react';
+import { ArrowLeft, RotateCw, ChevronRight, ChevronLeft, Loader2, PenLine, X, Printer, Check } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import useActiveTimer from '../hooks/useActiveTimer';
@@ -25,6 +26,13 @@ const StudyFlashcards = () => {
     const [userAnswers, setUserAnswers] = useState({});
     const [currentAnswer, setCurrentAnswer] = useState('');
     const textareaRef = useRef(null);
+
+    // Mode édition (premium/school)
+    const canEdit = user?.plan_type === 'premium' || user?.plan_type === 'school';
+    const [isEditingCard, setIsEditingCard] = useState(false);
+    const [editFront, setEditFront] = useState('');
+    const [editBack, setEditBack] = useState('');
+    const [isSavingCard, setIsSavingCard] = useState(false);
 
     useEffect(() => {
         const loadFlashcards = async () => {
@@ -122,6 +130,33 @@ const StudyFlashcards = () => {
         if (Math.abs(dx) < 50) return;
         if (dx < 0) handleNext();
         else handlePrev();
+    };
+
+    const handleEditCard = (e) => {
+        e.stopPropagation();
+        const card = cards[currentCardIndex];
+        setEditFront(card.front);
+        setEditBack(card.back);
+        setIsEditingCard(true);
+    };
+
+    const handleSaveCard = async () => {
+        if (!editFront.trim() || !editBack.trim()) return;
+        setIsSavingCard(true);
+        try {
+            await syntheseService.updateFlashcard(id, cards[currentCardIndex].id, {
+                front: editFront.trim(),
+                back: editBack.trim()
+            });
+            setCards(prev => prev.map((c, i) =>
+                i === currentCardIndex ? { ...c, front: editFront.trim(), back: editBack.trim() } : c
+            ));
+            setIsEditingCard(false);
+        } catch (err) {
+            console.error('Error saving flashcard:', err);
+        } finally {
+            setIsSavingCard(false);
+        }
     };
 
     const handlePrint = () => {
@@ -364,6 +399,15 @@ const StudyFlashcards = () => {
                     <h1 className="text-lg font-bold text-text-main truncate">{syntheseTitle}</h1>
                     <p className="text-xs text-text-muted">{t('flashcards.title')}</p>
                 </div>
+                {canEdit && (
+                    <button
+                        onClick={handleEditCard}
+                        className="p-2 text-text-muted hover:text-primary transition-colors"
+                        title={t('flashcards.editCard')}
+                    >
+                        <PenLine size={18} />
+                    </button>
+                )}
                 {canPrint && cards.length > 0 && (
                     <button
                         onClick={handlePrint}
@@ -374,6 +418,64 @@ const StudyFlashcards = () => {
                     </button>
                 )}
             </header>
+
+            {/* Modal édition carte (portal pour échapper au stacking context backdrop-filter) */}
+            {ReactDOM.createPortal(
+                <AnimatePresence>
+                    {isEditingCard && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black/70 flex items-center justify-center p-4"
+                            style={{ zIndex: 9999 }}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.92, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.92, opacity: 0 }}
+                                className="bg-surface rounded-2xl p-5 w-full max-w-sm"
+                                style={{ backdropFilter: 'none' }}
+                            >
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-semibold text-text-main">{t('flashcards.editCard')}</h3>
+                                    <button onClick={() => setIsEditingCard(false)} className="p-1 text-text-muted hover:text-text-main">
+                                        <X size={18} />
+                                    </button>
+                                </div>
+                                <div className="space-y-3 mb-4">
+                                    <div>
+                                        <label className="text-xs text-text-muted uppercase tracking-wider block mb-1">{t('flashcards.question')}</label>
+                                        <textarea
+                                            value={editFront}
+                                            onChange={e => setEditFront(e.target.value)}
+                                            className="w-full bg-background border border-white/10 rounded-xl p-3 text-sm text-text-main resize-none focus:outline-none focus:border-primary min-h-[72px]"
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-text-muted uppercase tracking-wider block mb-1">{t('flashcards.correctAnswer')}</label>
+                                        <textarea
+                                            value={editBack}
+                                            onChange={e => setEditBack(e.target.value)}
+                                            className="w-full bg-background border border-white/10 rounded-xl p-3 text-sm text-text-main resize-none focus:outline-none focus:border-primary min-h-[72px]"
+                                        />
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={handleSaveCard}
+                                    disabled={isSavingCard || !editFront.trim() || !editBack.trim()}
+                                    className="w-full py-2.5 bg-primary text-white rounded-xl font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+                                >
+                                    {isSavingCard ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
+                                    {t('common.save')}
+                                </button>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
 
             <div className="flex-1 flex flex-col items-center justify-center relative">
                 <div

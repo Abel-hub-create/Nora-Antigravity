@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
+import { Coins } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 import AnimatedNumber from '../UI/AnimatedNumber';
 
@@ -89,7 +90,7 @@ export default function CoinBagModal() {
 
   return ReactDOM.createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 backdrop-blur-xl"
+      className="preserve-colors fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 backdrop-blur-xl"
       style={{ touchAction: 'none' }}
     >
       <div className="flex flex-col items-center gap-6 px-8 select-none">
@@ -193,7 +194,7 @@ export default function CoinBagModal() {
                 transition={{ type: 'spring', stiffness: 260, damping: 18 }}
                 className="flex flex-col items-center gap-1"
               >
-                <span className="text-6xl">🪙</span>
+                <Coins size={64} className="text-amber-400" />
                 <div className="flex items-center gap-2">
                   <span className="text-3xl font-black text-amber-300">+</span>
                   <AnimatedNumber

@@ -82,7 +82,7 @@ export default function SubjectRadar({ scores = [] }) {
           key={ratio}
           points={polyPoints(SUBJECTS.map(() => ratio))}
           fill="none"
-          stroke="rgba(255,255,255,0.10)"
+          stroke="var(--radar-grid-color, rgba(255,255,255,0.10))"
           strokeWidth="1"
         />
       ))}
@@ -95,7 +95,7 @@ export default function SubjectRadar({ scores = [] }) {
             key={i}
             x1={CX} y1={CY}
             x2={tip.x} y2={tip.y}
-            stroke="rgba(255,255,255,0.10)"
+            stroke="var(--radar-axis-color, rgba(255,255,255,0.10))"
             strokeWidth="1"
           />
         );

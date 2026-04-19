@@ -33,18 +33,22 @@
   /* Light theme (default for new users) */
   :root,
   [data-theme="light"] {
-    --color-background: #f8fafc; /* Slate 50 */
-    --color-surface: #e2e8f0; /* Slate 200 */
+    --radar-grid-color: rgba(15, 23, 42, 0.14);
+    --radar-axis-color: rgba(15, 23, 42, 0.10);
+    --color-background: #f0f4f8; /* Slate 100 légèrement bleuté */
+    --color-surface: #dde4ee;   /* entre Slate 200 et 300 — cartes visibles */
     --color-primary: #0284c7; /* Sky 600 */
     --color-primary-dark: #0369a1; /* Sky 700 */
-    --color-secondary: #6366f1; /* Indigo 500 */
-    --color-accent: #ec4899; /* Pink 500 */
+    --color-secondary: #4f46e5; /* Indigo 600 — plus foncé pour contraste clair */
+    --color-accent: #db2777; /* Pink 600 — plus foncé */
     --color-text-main: #0f172a; /* Slate 900 - contrast 15.4:1 */
-    --color-text-muted: #64748b; /* Slate 500 - contrast 4.5:1 */
+    --color-text-muted: #475569; /* Slate 600 — 7:1 sur fond clair, plus lisible */
   }
 
   /* Dark theme */
   [data-theme="dark"] {
+    --radar-grid-color: rgba(255, 255, 255, 0.10);
+    --radar-axis-color: rgba(255, 255, 255, 0.10);
     --color-background: #020408;              /* noir profond */
     --color-surface: rgba(10, 18, 35, 0.32);  /* semi-transparent pour glassmorphism */
 
@@ -170,18 +174,18 @@
     box-shadow: none !important;
   }
 
-  /* CLAIR : verre dépoli renforcé */
+  /* CLAIR : verre dépoli — ombres très douces, pas de noir agressif */
   [data-theme="light"] .rounded-lg,
   [data-theme="light"] .rounded-xl,
   [data-theme="light"] .rounded-2xl,
   [data-theme="light"] .rounded-3xl {
     box-shadow:
-      0 0 0 1px rgba(0, 0, 0, 0.08),
-      inset var(--glass-inset-x, 0px) var(--glass-inset-y, -2px) 32px rgba(255, 255, 255, 0.96),
-      inset 0 1px 0 rgba(255, 255, 255, 1),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.05),
-      0 12px 40px rgba(0, 0, 0, 0.10),
-      0 2px 8px rgba(0, 0, 0, 0.06);
+      0 0 0 1px rgba(0, 0, 0, 0.06),
+      inset var(--glass-inset-x, 0px) var(--glass-inset-y, -2px) 32px rgba(255, 255, 255, 0.92),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.03),
+      0 2px 6px rgba(0, 0, 0, 0.04),
+      0 6px 20px rgba(2, 132, 199, 0.05);
   }
 
   /* bg-primary sélectionné clair */
@@ -292,6 +296,79 @@
   background-color: rgba(0, 0, 0, 0.08);
 }
 
+/* Light theme — overrides supplémentaires (bg, border, text semi-transparents) */
+:root .bg-white\/3,
+[data-theme="light"] .bg-white\/3 {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+:root .bg-white\/20,
+[data-theme="light"] .bg-white\/20 {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+:root .bg-white\/30,
+[data-theme="light"] .bg-white\/30 {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+:root .border-white\/20,
+[data-theme="light"] .border-white\/20 {
+  border-color: rgba(0, 0, 0, 0.18);
+}
+:root .border-white\/30,
+[data-theme="light"] .border-white\/30 {
+  border-color: rgba(0, 0, 0, 0.22);
+}
+/* text-white avec opacité → devient text-main teinté en clair */
+:root .text-white\/50,
+[data-theme="light"] .text-white\/50 {
+  color: rgba(15, 23, 42, 0.5) !important;
+}
+:root .text-white\/60,
+[data-theme="light"] .text-white\/60 {
+  color: rgba(15, 23, 42, 0.6) !important;
+}
+:root .text-white\/70,
+[data-theme="light"] .text-white\/70 {
+  color: rgba(15, 23, 42, 0.7) !important;
+}
+:root .text-white\/80,
+[data-theme="light"] .text-white\/80 {
+  color: rgba(15, 23, 42, 0.8) !important;
+}
+
+/* Light theme — jaunes/ambers trop clairs sur fond blanc → versions foncées */
+[data-theme="light"] .text-yellow-400 { color: #92400e !important; }
+[data-theme="light"] .text-yellow-300 { color: #a16207 !important; }
+[data-theme="light"] .text-amber-300  { color: #b45309 !important; }
+[data-theme="light"] .text-amber-400  { color: #92400e !important; }
+[data-theme="light"] .text-amber-500  { color: #78350f !important; }
+[data-theme="light"] .bg-amber-500\/15 { background-color: rgba(120, 53, 15, 0.10) !important; }
+[data-theme="light"] .border-amber-500\/30 { border-color: rgba(120, 53, 15, 0.30) !important; }
+[data-theme="light"] .border-yellow-400\/30 { border-color: rgba(146, 64, 14, 0.30) !important; }
+[data-theme="light"] .shadow-yellow-400\/20 { --tw-shadow-color: rgba(146, 64, 14, 0.20); }
+[data-theme="light"] .text-amber-400\/80 { color: rgba(120, 53, 15, 0.80) !important; }
+
+/* Exceptions — composants toujours sur fond sombre (modals, overlays dark forcés) */
+/* .preserve-colors annule les overrides amber/yellow pour les zones dark-on-dark */
+[data-theme="light"] .preserve-colors .text-yellow-400 { color: #facc15 !important; }
+[data-theme="light"] .preserve-colors .text-yellow-300 { color: #fde047 !important; }
+[data-theme="light"] .preserve-colors .text-amber-300  { color: #fcd34d !important; }
+[data-theme="light"] .preserve-colors .text-amber-400  { color: #fbbf24 !important; }
+[data-theme="light"] .preserve-colors .text-amber-500  { color: #f59e0b !important; }
+[data-theme="light"] .preserve-colors .text-amber-400\/80 { color: rgba(251,191,36,0.80) !important; }
+[data-theme="light"] .preserve-colors .border-amber-500\/30 { border-color: rgba(245,158,11,0.30) !important; }
+[data-theme="light"] .preserve-colors .bg-amber-500\/15 { background-color: rgba(245,158,11,0.15) !important; }
+
+/* Light theme — ombres Tailwind adoucies (shadow-lg/xl/2xl trop noires sur fond clair) */
+[data-theme="light"] .shadow-lg {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+[data-theme="light"] .shadow-xl {
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.07), 0 1px 4px rgba(0, 0, 0, 0.05) !important;
+}
+[data-theme="light"] .shadow-2xl {
+  box-shadow: 0 6px 24px rgba(2, 132, 199, 0.09), 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+}
+
 /* Dark theme: restore original white/X values */
 [data-theme="dark"] .bg-white\/5 {
   background-color: rgba(255, 255, 255, 0.05);
@@ -317,6 +394,15 @@
 [data-theme="dark"] .hover\:bg-white\/10:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
+[data-theme="dark"] .bg-white\/3  { background-color: rgba(255, 255, 255, 0.03); }
+[data-theme="dark"] .bg-white\/20 { background-color: rgba(255, 255, 255, 0.2); }
+[data-theme="dark"] .bg-white\/30 { background-color: rgba(255, 255, 255, 0.3); }
+[data-theme="dark"] .border-white\/20 { border-color: rgba(255, 255, 255, 0.2); }
+[data-theme="dark"] .border-white\/30 { border-color: rgba(255, 255, 255, 0.3); }
+[data-theme="dark"] .text-white\/50 { color: rgba(255, 255, 255, 0.5) !important; }
+[data-theme="dark"] .text-white\/60 { color: rgba(255, 255, 255, 0.6) !important; }
+[data-theme="dark"] .text-white\/70 { color: rgba(255, 255, 255, 0.7) !important; }
+[data-theme="dark"] .text-white\/80 { color: rgba(255, 255, 255, 0.8) !important; }
 
 /**
  * ANIMATION SYSTEM

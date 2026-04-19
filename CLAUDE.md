@@ -74,6 +74,46 @@ cd /var/www/mirora.cloud/backend && PORT=5000 pm2 start ecosystem.config.cjs --o
 pm2 save
 ```
 
+## Changelog — 2026-04-19 (Page de réservation + fixes thème clair)
+
+### 📅 Page de réservation standalone (`/booking.html`)
+**Fichier :** `public/booking.html` (copié dans `dist/booking.html` après chaque build)
+
+Page HTML standalone déployable sur n'importe quel hébergement statique. Zéro dépendance externe (sauf Google Fonts).
+
+**Design :** thème sombre luxe (`#060606`), accents dorés (`#c9a96e`), Cormorant Garamond + Outfit, orbe animé glassmorphism, fade-up staggeré.
+
+**Fonctionnalités :**
+- Calendrier custom pur JS (navigation mois/mois, jours passés désactivés, fenêtre 60 jours)
+- Créneaux selon le jour : Lun–Ven → 18:00/18:20/18:40 ; Sam–Dim → 13:00/13:30/16:00/16:30/17:00/17:30
+- Maximum 3 réservations par jour (vérification frontend + backend Apps Script)
+- Champs : Prénom & Nom, Email, Téléphone, Date, Créneau
+- Intégration Google Sheets via Apps Script (GET = disponibilité, POST = réservation)
+- Mode démo automatique si `APPS_SCRIPT_URL` est le placeholder
+- États : chargement créneaux, erreur CORS détaillée, succès (remplace le formulaire)
+
+**Apps Script lié :** Google Sheet avec feuille "Réservations" — colonnes : Nom | Email | Téléphone | Date | Heure | Soumis le
+
+**Important :** après chaque `npm run build`, toujours copier :
+```bash
+cp public/booking.html dist/booking.html
+cp public/planning.html dist/planning.html
+```
+
+**Fix timezone critique :** `new Date("YYYY-MM-DD")` parse en UTC → `.getDay()` décale d'un jour. Fix : `new Date(y, m-1, d)` (local). Toujours utiliser cette forme pour les dates venant de strings ISO.
+
+### 🎨 Fixes thème clair
+- Hexagone SubjectRadar invisible → CSS variables `--radar-grid-color` / `--radar-axis-color` dans SVG
+- Texte jaune/amber trop pâle → override `[data-theme="light"] .text-amber-*` dans `index.css`
+- Amber cassé dans CoinBagModal/PremiumGate (fond noir) → classe `.preserve-colors` sur le root div de ces composants
+- Glassmorphism sombre trop harsh → box-shadow allégé en light theme
+- Classe `.preserve-colors` : exempte un composant à fond sombre des overrides amber du thème clair
+
+### 🐛 Fixes modes édition
+- Synthèse : textarea blanc inutilisable → remplacé par `contentEditable` div + `useRef` pour curseur
+- Flashcards/Quiz : inputs non réactifs → `ReactDOM.createPortal` vers `document.body` (fix stacking context `backdrop-filter`)
+- Quiz : explications affichées sur mauvaise réponse → bloc supprimé
+
 ## Changelog — 2026-04-18 (Radar compétences enrichi + fix)
 
 ### 📊 Radar de compétences — sources enrichies

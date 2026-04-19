@@ -24,7 +24,7 @@ export const PremiumGate = ({ isOpen, onClose, featureName, featureDescription =
           <motion.div initial={{ opacity: 0, scale: 0.93, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.93 }} transition={{ type: 'spring', stiffness: 320, damping: 28 }}
             className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none">
-            <div className="pointer-events-auto w-full max-w-sm bg-[#0d1117] border border-amber-500/30 rounded-3xl overflow-hidden shadow-2xl">
+            <div className="preserve-colors pointer-events-auto w-full max-w-sm bg-[#0d1117] border border-amber-500/30 rounded-3xl overflow-hidden shadow-2xl">
               {/* Header */}
               <div className="relative px-6 pt-6 pb-4 bg-gradient-to-br from-amber-500/15 to-orange-500/10">
                 <button onClick={onClose} className="absolute top-4 right-4 p-1.5 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-colors">

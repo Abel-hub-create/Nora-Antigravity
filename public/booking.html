@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consultation Privée — Réservation</title>
+  <link rel="icon" type="image/png" href="/noralogo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── Variables ─────────────────────────────────────── */
+    :root {
+      --gold:          #c9a96e;
+      --gold-light:    #e8d09a;
+      --gold-dim:      rgba(201,169,110,0.15);
+      --gold-dim2:     rgba(201,169,110,0.07);
+      --gold-glow:     rgba(201,169,110,0.10);
+      --cream:         #f5efe6;
+      --cream-60:      rgba(245,239,230,0.60);
+      --cream-35:      rgba(245,239,230,0.35);
+      --cream-20:      rgba(245,239,230,0.20);
+      --bg:            #060606;
+      --glass:         rgba(255,255,255,0.025);
+      --glass-border:  rgba(201,169,110,0.15);
+      --err:           rgba(239,68,68,0.12);
+      --err-border:    rgba(239,68,68,0.35);
+      --err-text:      #f87171;
+      --radius:        14px;
+      --font-d:        'Cormorant Garamond', Georgia, serif;
+      --font-b:        'Outfit', system-ui, sans-serif;
+      --ease:          cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ── Reset ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--cream);
+      font-family: var(--font-b);
+      font-weight: 300;
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ── Animated Orb ──────────────────────────────────── */
+    .orb {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb::before {
+      content: '';
+      position: absolute;
+      top: -30vh;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(90vw, 860px);
+      height: min(90vw, 860px);
+      border-radius: 50%;
+      background: radial-gradient(ellipse at 50% 40%,
+        rgba(201,169,110,0.14) 0%,
+        rgba(201,169,110,0.06) 35%,
+        rgba(201,169,110,0.02) 60%,
+        transparent 75%);
+      animation: orbPulse 7s ease-in-out infinite;
+    }
+    .orb::after {
+      content: '';
+      position: absolute;
+      bottom: -20vh;
+      right: -15vw;
+      width: min(60vw, 500px);
+      height: min(60vw, 500px);
+      border-radius: 50%;
+      background: radial-gradient(ellipse at center,
+        rgba(201,169,110,0.06) 0%,
+        transparent 65%);
+      animation: orbPulse 9s ease-in-out infinite reverse;
+    }
+    @keyframes orbPulse {
+      0%, 100% { transform: translateX(-50%) scale(1);    opacity: 0.75; }
+      50%       { transform: translateX(-50%) scale(1.10); opacity: 1;    }
+    }
+    .orb::after { transform: none; animation-name: orbPulse2; }
+    @keyframes orbPulse2 {
+      0%, 100% { transform: scale(1);    opacity: 0.6; }
+      50%       { transform: scale(1.15); opacity: 1;   }
+    }
+
+    /* ── Layout ────────────────────────────────────────── */
+    .page {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 64px 20px 80px;
+    }
+    .container {
+      width: 100%;
+      max-width: 520px;
+    }
+
+    /* ── Entry Animations ──────────────────────────────── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up.in {
+      animation: fadeUp 0.72s var(--ease) forwards;
+    }
+
+    /* ── Eyebrow ───────────────────────────────────────── */
+    .eyebrow {
+      font-family: var(--font-b);
+      font-weight: 500;
+      font-size: 10.5px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--gold);
+      text-align: center;
+      margin-bottom: 22px;
+    }
+
+    /* ── H1 ────────────────────────────────────────────── */
+    h1 {
+      font-family: var(--font-d);
+      font-weight: 300;
+      font-size: clamp(2.5rem, 7vw, 3.8rem);
+      line-height: 1.12;
+      text-align: center;
+      color: var(--cream);
+      margin-bottom: 18px;
+      letter-spacing: 0.01em;
+    }
+    h1 em {
+      font-style: italic;
+      color: var(--gold);
+    }
+
+    /* ── Subtitle ──────────────────────────────────────── */
+    .subtitle {
+      font-size: 14.5px;
+      color: var(--cream-60);
+      text-align: center;
+      max-width: 380px;
+      margin: 0 auto 40px;
+      line-height: 1.75;
+    }
+
+    /* ── Glass Card ────────────────────────────────────── */
+    .card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(20px) saturate(1.4);
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
+      border-radius: 22px;
+      padding: 40px 38px 36px;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.03) inset,
+        0 1px 0 rgba(255,255,255,0.06) inset,
+        0 24px 64px rgba(0,0,0,0.7),
+        0 0 80px var(--gold-glow);
+    }
+    @media (max-width: 480px) {
+      .card { padding: 28px 20px 28px; }
+    }
+
+    /* ── Section label ─────────────────────────────────── */
+    .sec-label {
+      display: block;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 14px;
+    }
+
+    /* ── Divider ───────────────────────────────────────── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(to right,
+        transparent,
+        rgba(201,169,110,0.22) 30%,
+        rgba(201,169,110,0.22) 70%,
+        transparent);
+      margin: 28px 0;
+    }
+
+    /* ── Inputs ────────────────────────────────────────── */
+    .field { margin-bottom: 18px; }
+    label {
+      display: block;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+    input[type="text"],
+    input[type="email"] {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(201,169,110,0.18);
+      border-radius: 10px;
+      padding: 13px 15px;
+      color: var(--cream);
+      font-family: var(--font-b);
+      font-weight: 300;
+      font-size: 14.5px;
+      outline: none;
+      transition: border-color .2s var(--ease), box-shadow .2s var(--ease), background .2s var(--ease);
+      -webkit-appearance: none;
+    }
+    input::placeholder { color: var(--cream-35); }
+    input:focus {
+      border-color: rgba(201,169,110,0.50);
+      background: rgba(255,255,255,0.06);
+      box-shadow: 0 0 0 3px rgba(201,169,110,0.09);
+    }
+
+    /* ── Calendar ──────────────────────────────────────── */
+    .cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .cal-nav {
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      background: none;
+      border: 1px solid rgba(201,169,110,0.22);
+      border-radius: 8px;
+      color: var(--gold);
+      cursor: pointer;
+      font-size: 16px;
+      transition: background .2s var(--ease), border-color .2s var(--ease);
+      line-height: 1;
+      padding: 0;
+    }
+    .cal-nav:hover:not([disabled]) {
+      background: rgba(201,169,110,0.10);
+      border-color: rgba(201,169,110,0.40);
+    }
+    .cal-nav[disabled] { opacity: 0.28; cursor: not-allowed; }
+    .cal-month-label {
+      font-family: var(--font-d);
+      font-weight: 400;
+      font-size: 19px;
+      letter-spacing: 0.04em;
+      color: var(--cream);
+    }
+
+    .cal-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+      margin-bottom: 5px;
+    }
+    .cal-wd {
+      text-align: center;
+      font-size: 9.5px;
+      font-weight: 500;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--cream-35);
+      padding: 4px 0;
+    }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+    .cal-cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 7px;
+      font-size: 12.5px;
+      font-weight: 300;
+      border: 1px solid transparent;
+      background: none;
+      cursor: pointer;
+      color: var(--cream);
+      transition: background .18s var(--ease), border-color .18s var(--ease), color .18s var(--ease);
+      position: relative;
+      font-family: var(--font-b);
+    }
+    .cal-cell.empty { cursor: default; background: none !important; }
+    .cal-cell.past,
+    .cal-cell.oor  { color: var(--cream-20); cursor: not-allowed; pointer-events: none; }
+    .cal-cell.full {
+      color: rgba(245,239,230,0.18);
+      cursor: not-allowed;
+      pointer-events: none;
+      text-decoration: line-through;
+      text-decoration-color: rgba(245,239,230,0.15);
+    }
+    .cal-cell.avail:hover {
+      background: rgba(201,169,110,0.10);
+      border-color: rgba(201,169,110,0.28);
+    }
+    .cal-cell.today:not(.selected) {
+      border-color: rgba(201,169,110,0.38);
+    }
+    .cal-cell.selected {
+      background: var(--gold) !important;
+      color: #060606 !important;
+      font-weight: 500;
+      border-color: var(--gold) !important;
+    }
+
+    /* ── Slots ─────────────────────────────────────────── */
+    #slotsWrap { min-height: 56px; }
+
+    .slots-hint {
+      font-size: 13px;
+      color: var(--cream-35);
+      font-style: italic;
+      text-align: center;
+      padding: 12px 0;
+    }
+
+    .slots-loading {
+      text-align: center;
+      font-size: 13px;
+      color: var(--cream-35);
+      letter-spacing: 0.06em;
+      padding: 12px 0;
+    }
+    .dot { display: inline-block; animation: blinkDot 1.3s infinite; }
+    .dot:nth-child(2) { animation-delay: .18s; }
+    .dot:nth-child(3) { animation-delay: .36s; }
+    @keyframes blinkDot {
+      0%,80%,100% { opacity: .2; }
+      40%          { opacity: 1;  }
+    }
+
+    .slots-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    @media (max-width: 360px) {
+      .slots-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .slot-btn {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(201,169,110,0.18);
+      border-radius: 10px;
+      padding: 12px 8px;
+      color: var(--cream);
+      font-family: var(--font-b);
+      font-size: 13.5px;
+      font-weight: 400;
+      cursor: pointer;
+      transition: background .18s var(--ease), border-color .18s var(--ease), color .18s var(--ease);
+      text-align: center;
+      letter-spacing: 0.03em;
+    }
+    .slot-btn:hover:not([disabled]):not(.taken) {
+      background: rgba(201,169,110,0.10);
+      border-color: rgba(201,169,110,0.40);
+    }
+    .slot-btn.selected {
+      background: rgba(201,169,110,0.14);
+      border-color: var(--gold);
+      color: var(--gold);
+      font-weight: 500;
+    }
+    .slot-btn[disabled],
+    .slot-btn.taken {
+      background: rgba(255,255,255,0.015);
+      border-color: rgba(255,255,255,0.05);
+      color: rgba(245,239,230,0.18);
+      cursor: not-allowed;
+      text-decoration: line-through;
+      text-decoration-color: rgba(245,239,230,0.15);
+    }
+
+    .slots-empty {
+      font-size: 13px;
+      color: var(--cream-35);
+      text-align: center;
+      padding: 12px 0;
+    }
+    .slots-error {
+      font-size: 13px;
+      color: var(--err-text);
+      text-align: center;
+      padding: 10px 12px;
+      background: var(--err);
+      border: 1px solid var(--err-border);
+      border-radius: 8px;
+    }
+
+    /* ── Error Banner ──────────────────────────────────── */
+    .err-banner {
+      background: var(--err);
+      border: 1px solid var(--err-border);
+      border-radius: 10px;
+      padding: 11px 15px;
+      color: var(--err-text);
+      font-size: 13px;
+      margin-bottom: 18px;
+      line-height: 1.5;
+      display: none;
+    }
+    .err-banner.on { display: block; }
+
+    /* ── Submit ────────────────────────────────────────── */
+    .btn-submit {
+      width: 100%;
+      margin-top: 6px;
+      padding: 16px;
+      background: linear-gradient(135deg, #d4b07a 0%, #b8904e 50%, #a07c40 100%);
+      border: none;
+      border-radius: 12px;
+      color: #0a0600;
+      font-family: var(--font-b);
+      font-weight: 500;
+      font-size: 12.5px;
+      letter-spacing: 0.17em;
+      text-transform: uppercase;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: opacity .2s var(--ease), transform .18s var(--ease);
+      box-shadow: 0 4px 20px rgba(201,169,110,0.22);
+    }
+    .btn-submit::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0);
+      transition: background .25s var(--ease);
+    }
+    .btn-submit:hover:not([disabled])::after { background: rgba(255,255,255,0.10); }
+    .btn-submit:active:not([disabled]) { transform: scale(0.985); }
+    .btn-submit[disabled] { opacity: 0.32; cursor: not-allowed; box-shadow: none; }
+    .btn-text { position: relative; z-index: 1; }
+    .btn-submit.loading .btn-text::after {
+      content: '';
+      display: inline-block;
+      width: 10px;
+      animation: ellipsis 1.2s infinite;
+    }
+    @keyframes ellipsis {
+      0%   { content: '.';   }
+      33%  { content: '..';  }
+      66%  { content: '...'; }
+      100% { content: '.';   }
+    }
+
+    /* ── Success ───────────────────────────────────────── */
+    .success-wrap {
+      display: none;
+      text-align: center;
+      padding: 12px 0 4px;
+    }
+    .success-wrap.on { display: block; }
+
+    .success-icon {
+      width: 66px; height: 66px;
+      border: 1.5px solid var(--gold);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 26px;
+      animation: popIn .55s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes popIn {
+      from { transform: scale(0); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    .success-icon svg {
+      width: 28px; height: 28px;
+      stroke: var(--gold);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .success-title {
+      font-family: var(--font-d);
+      font-weight: 300;
+      font-size: 2.15rem;
+      letter-spacing: 0.02em;
+      color: var(--cream);
+      margin-bottom: 14px;
+    }
+    .success-body {
+      font-size: 14px;
+      color: var(--cream-60);
+      line-height: 1.75;
+    }
+    .success-body strong {
+      color: var(--gold);
+      font-weight: 400;
+    }
+
+    /* ── Scrollbar (subtle) ────────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(201,169,110,0.25); border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<!-- Background orb -->
+<div class="orb" aria-hidden="true"></div>
+
+<main class="page">
+  <div class="container">
+
+    <!-- Eyebrow -->
+    <p class="eyebrow fade-up" data-delay="0">Offre de lancement exclusive</p>
+
+    <!-- Heading -->
+    <h1 class="fade-up" data-delay="120">
+      Réservez votre<br><em>consultation privée</em>
+    </h1>
+
+    <!-- Subtitle -->
+    <p class="subtitle fade-up" data-delay="240">
+      Un accompagnement sur-mesure, sans intermédiaire.<br>
+      Choisissez la date et le créneau qui vous conviennent.
+    </p>
+
+    <!-- Card -->
+    <div class="card fade-up" data-delay="380">
+
+      <!-- Error banner -->
+      <div class="err-banner" id="errBanner" role="alert">
+        <span id="errMsg"></span>
+      </div>
+
+      <!-- ── Success state ── -->
+      <div class="success-wrap" id="successWrap" aria-live="polite">
+        <div class="success-icon">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2 class="success-title">Rendez-vous confirmé</h2>
+        <p class="success-body" id="successBody"></p>
+      </div>
+
+      <!-- ── Form ── -->
+      <form id="form" novalidate>
+
+        <div class="field">
+          <label for="fName">Prénom &amp; Nom</label>
+          <input type="text"  id="fName"  placeholder="Marie Dupont"      autocomplete="name"  required>
+        </div>
+
+        <div class="field">
+          <label for="fEmail">Adresse e-mail</label>
+          <input type="email" id="fEmail" placeholder="marie@exemple.fr"  autocomplete="email" required>
+        </div>
+
+        <div class="field">
+          <label for="fPhone">Numéro de téléphone</label>
+          <input type="tel" id="fPhone" placeholder="+33 6 12 34 56 78" autocomplete="tel" required>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Calendar -->
+        <div class="field">
+          <span class="sec-label">Choisissez une date</span>
+          <div class="cal-header">
+            <button type="button" class="cal-nav" id="btnPrev" aria-label="Mois précédent">&#8249;</button>
+            <span class="cal-month-label" id="calLabel"></span>
+            <button type="button" class="cal-nav" id="btnNext" aria-label="Mois suivant">&#8250;</button>
+          </div>
+          <div class="cal-weekdays" aria-hidden="true">
+            <div class="cal-wd">Lu</div>
+            <div class="cal-wd">Ma</div>
+            <div class="cal-wd">Me</div>
+            <div class="cal-wd">Je</div>
+            <div class="cal-wd">Ve</div>
+            <div class="cal-wd">Sa</div>
+            <div class="cal-wd">Di</div>
+          </div>
+          <div class="cal-grid" id="calGrid" role="grid" aria-label="Calendrier de sélection"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Time slots -->
+        <div class="field">
+          <span class="sec-label">Choisissez un créneau</span>
+          <div id="slotsWrap">
+            <p class="slots-hint">Sélectionnez d'abord une date</p>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn-submit" id="btnSubmit" disabled aria-disabled="true">
+          <span class="btn-text">Confirmer ma réservation</span>
+        </button>
+
+      </form>
+    </div><!-- /card -->
+
+  </div><!-- /container -->
+</main>
+
+<!-- =========================================================
+     GOOGLE APPS SCRIPT — Code complet à déployer
+     =========================================================
+     1. Ouvrir script.google.com
+     2. Créer un nouveau projet lié à votre Google Sheet
+     3. La feuille doit s'appeler "Réservations"
+        (ou en créer une : le script la crée automatiquement)
+     4. Coller le code ci-dessous
+     5. Déployer > Nouveau déploiement > Web app
+        - Exécuter en tant que : Moi
+        - Qui peut accéder : Tout le monde
+     6. Copier l'URL et remplacer APPS_SCRIPT_URL ci-dessous
+     =========================================================
+
+function doGet(e) {
+  var date = e.parameter.date;
+  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Réservations") || ss.getSheets()[0];
+  var rows  = sheet.getDataRange().getValues();
+
+  var takenSlots = [];
+  var count = 0;
+
+  for (var i = 1; i < rows.length; i++) {
+    // La date est en colonne D (index 3) depuis l'ajout du téléphone
+    var rowDate = String(rows[i][3]).trim();
+    if (rowDate === date) {
+      takenSlots.push(String(rows[i][4]).trim());
+      count++;
+    }
+  }
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ takenSlots: takenSlots, count: count }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  var body  = JSON.parse(e.postData.contents);
+  var name  = (body.name  || '').trim();
+  var email = (body.email || '').trim();
+  var phone = (body.phone || '').trim();
+  var date  = (body.date  || '').trim();
+  var time  = (body.time  || '').trim();
+
+  // Validation basique
+  if (!name || !email || !date || !time) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ success: false, error: "Champs manquants" }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Réservations");
+
+  // Créer la feuille + en-têtes si elle n'existe pas
+  if (!sheet) {
+    sheet = ss.insertSheet("Réservations");
+    sheet.appendRow(["Nom", "Email", "Téléphone", "Date", "Heure", "Soumis le"]);
+    sheet.setFrozenRows(1);
+    sheet.getRange(1,1,1,6).setFontWeight("bold");
+  }
+
+  // Vérification côté serveur (anti-race condition)
+  var rows        = sheet.getDataRange().getValues();
+  var count       = 0;
+  var alreadyTaken = false;
+
+  for (var i = 1; i < rows.length; i++) {
+    var rowDate = String(rows[i][3]).trim();
+    var rowTime = String(rows[i][4]).trim();
+    if (rowDate === date) {
+      count++;
+      if (rowTime === time) alreadyTaken = true;
+    }
+  }
+
+  if (count >= 3) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ success: false, error: "Cette journée est complète." }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  if (alreadyTaken) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ success: false, error: "Ce créneau vient d'être pris. Choisissez-en un autre." }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // Enregistrement
+  var now = Utilities.formatDate(new Date(), "Europe/Brussels", "dd/MM/yyyy HH:mm:ss");
+  sheet.appendRow([name, email, phone, date, time, now]);
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ success: true }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+========================================================= -->
+
+<script>
+/* ── CONFIG ─────────────────────────────────────────────── */
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxLdj0_7xLtsAcPx6frKdDcpqiZ0-6cjL5ZVNFz_650XBmeDou6HaVZUW8v9GTnN68P/exec";
+
+const SLOTS = {
+  weekday: ["18:00", "18:20", "18:40"],
+  weekend: ["13:00", "13:30", "16:00", "16:30", "17:00", "17:30"],
+};
+const MAX_PER_DAY = 3;
+const MAX_DAYS    = 60;
+
+/* ── DEMO MODE ──────────────────────────────────────────── */
+// Activé automatiquement tant que l'URL n'est pas configurée.
+// Simule des réservations fictives pour tester l'UI.
+const IS_DEMO = APPS_SCRIPT_URL === "COLLER_VOTRE_URL_ICI";
+
+// Données fictives : J+1 a 1 créneau pris, J+4 est complet (3/3)
+const DEMO_DATA = (() => {
+  const d1 = new Date(); d1.setDate(d1.getDate() + 1);
+  const d4 = new Date(); d4.setDate(d4.getDate() + 4);
+  const f  = d => { const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; };
+  return {
+    [f(d1)]: { takenSlots: ["18:00"],              count: 1 },
+    [f(d4)]: { takenSlots: ["18:00","18:20","18:40"], count: 3 },
+  };
+})();
+
+/* ── STATE ──────────────────────────────────────────────── */
+const today = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
+const maxDay = (() => { const d = new Date(today); d.setDate(d.getDate() + MAX_DAYS); return d; })();
+
+let calYear  = today.getFullYear();
+let calMonth = today.getMonth();
+let selDate  = null;
+let selTime  = null;
+const fullDays   = {};
+const slotsCache = {};
+
+/* ── ENTRY ANIMATIONS ───────────────────────────────────── */
+document.querySelectorAll('.fade-up').forEach(el => {
+  const delay = parseInt(el.dataset.delay || 0, 10);
+  setTimeout(() => el.classList.add('in'), delay);
+});
+
+// Bandeau démo
+if (IS_DEMO) {
+  const banner = document.createElement('p');
+  banner.style.cssText = 'text-align:center;font-size:11px;letter-spacing:.1em;color:rgba(201,169,110,.55);margin-bottom:18px;text-transform:uppercase;';
+  banner.textContent = '⬡ Mode démo — données simulées';
+  document.getElementById('errBanner').insertAdjacentElement('beforebegin', banner);
+}
+
+/* ── HELPERS ────────────────────────────────────────────── */
+const fmt = d => {
+  const y  = d.getFullYear();
+  const m  = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dd}`;
+};
+
+// Parse YYYY-MM-DD en local (évite le décalage UTC → jour erroné)
+const parseDateLocal = str => {
+  const [y, m, d] = str.split('-').map(Number);
+  return new Date(y, m - 1, d);
+};
+const isWeekend = dateStr => {
+  const dow = parseDateLocal(dateStr).getDay();
+  return dow === 0 || dow === 6;
+};
+const slotsFor = dateStr => isWeekend(dateStr) ? SLOTS.weekend : SLOTS.weekday;
+
+const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin',
+                'Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const MONTH_NAMES = ['janvier','février','mars','avril','mai','juin',
+                     'juillet','août','septembre','octobre','novembre','décembre'];
+const DAY_NAMES   = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+
+/* ── CALENDAR ───────────────────────────────────────────── */
+function renderCal() {
+  document.getElementById('calLabel').textContent = `${MONTHS[calMonth]} ${calYear}`;
+
+  // Prev/Next nav limits
+  const btnPrev = document.getElementById('btnPrev');
+  const btnNext = document.getElementById('btnNext');
+  btnPrev.disabled = calYear === today.getFullYear() && calMonth === today.getMonth();
+  btnNext.disabled = calYear === maxDay.getFullYear() && calMonth === maxDay.getMonth();
+
+  const firstDow = new Date(calYear, calMonth, 1).getDay(); // 0=Sun
+  const offset   = firstDow === 0 ? 6 : firstDow - 1;      // Mon-first
+  const dim      = new Date(calYear, calMonth+1, 0).getDate();
+
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  // Empty leading cells
+  for (let i = 0; i < offset; i++) {
+    const c = document.createElement('div');
+    c.className = 'cal-cell empty';
+    c.setAttribute('role','gridcell');
+    grid.appendChild(c);
+  }
+
+  for (let d = 1; d <= dim; d++) {
+    const date   = new Date(calYear, calMonth, d);
+    const dStr   = fmt(date);
+    const btn    = document.createElement('button');
+    btn.type     = 'button';
+    btn.textContent = d;
+    btn.setAttribute('role', 'gridcell');
+    btn.setAttribute('aria-label', `${d} ${MONTHS[calMonth]} ${calYear}`);
+
+    if (date < today)       { btn.className = 'cal-cell past'; btn.setAttribute('aria-disabled','true'); }
+    else if (date > maxDay) { btn.className = 'cal-cell oor';  btn.setAttribute('aria-disabled','true'); }
+    else if (fullDays[dStr]){ btn.className = 'cal-cell full'; btn.setAttribute('aria-disabled','true'); btn.title = 'Journée complète'; }
+    else {
+      btn.className = 'cal-cell avail';
+      if (dStr === fmt(today))  btn.classList.add('today');
+      if (dStr === selDate)     btn.classList.add('selected');
+      btn.addEventListener('click', () => pickDate(dStr));
+    }
+
+    grid.appendChild(btn);
+  }
+}
+
+document.getElementById('btnPrev').addEventListener('click', () => {
+  if (--calMonth < 0) { calMonth = 11; calYear--; }
+  renderCal();
+});
+document.getElementById('btnNext').addEventListener('click', () => {
+  if (++calMonth > 11) { calMonth = 0; calYear++; }
+  renderCal();
+});
+
+/* ── DATE PICK ──────────────────────────────────────────── */
+async function pickDate(dStr) {
+  if (selDate === dStr) return;
+  selDate = dStr;
+  selTime = null;
+  renderCal();
+  checkReady();
+  await loadSlots(dStr);
+}
+
+/* ── SLOTS FETCH ────────────────────────────────────────── */
+async function loadSlots(dStr) {
+  const wrap = document.getElementById('slotsWrap');
+  wrap.innerHTML = `<p class="slots-loading">Chargement<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></p>`;
+
+  let takenSlots = [], count = 0;
+
+  if (slotsCache[dStr]) {
+    ({ takenSlots, count } = slotsCache[dStr]);
+
+  } else if (IS_DEMO) {
+    // Simule une latence réseau réaliste
+    await new Promise(r => setTimeout(r, 420));
+    const mock = DEMO_DATA[dStr] || { takenSlots: [], count: 0 };
+    takenSlots = mock.takenSlots;
+    count      = mock.count;
+    slotsCache[dStr] = { takenSlots, count };
+
+  } else {
+    try {
+      const r = await fetch(`${APPS_SCRIPT_URL}?date=${encodeURIComponent(dStr)}`, {
+        redirect: 'follow',
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const data = await r.json();
+      takenSlots = data.takenSlots || [];
+      count      = data.count      || 0;
+      slotsCache[dStr] = { takenSlots, count };
+    } catch (err) {
+      const isCors = err instanceof TypeError;
+      wrap.innerHTML = `<p class="slots-error">${
+        isCors
+          ? 'Erreur CORS — vérifiez que le script est déployé avec "Tout le monde" dans les autorisations.'
+          : `Impossible de charger les créneaux (${err.message}).`
+      }</p>`;
+      return;
+    }
+  }
+
+  if (count >= MAX_PER_DAY) {
+    fullDays[dStr] = true;
+    renderCal();
+    wrap.innerHTML = `<p class="slots-empty">Cette journée est complète.</p>`;
+    return;
+  }
+
+  paintSlots(slotsFor(dStr), takenSlots);
+}
+
+function paintSlots(all, taken) {
+  const wrap = document.getElementById('slotsWrap');
+  const grid = document.createElement('div');
+  grid.className = 'slots-grid';
+
+  all.forEach(t => {
+    const btn    = document.createElement('button');
+    btn.type     = 'button';
+    btn.textContent = t;
+
+    if (taken.includes(t)) {
+      btn.className = 'slot-btn taken';
+      btn.disabled  = true;
+      btn.setAttribute('aria-disabled','true');
+      btn.title = 'Créneau pris';
+    } else {
+      btn.className = 'slot-btn';
+      if (t === selTime) btn.classList.add('selected');
+      btn.addEventListener('click', () => {
+        selTime = t;
+        document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        checkReady();
+      });
+    }
+
+    grid.appendChild(btn);
+  });
+
+  wrap.innerHTML = '';
+  wrap.appendChild(grid);
+}
+
+/* ── VALIDATION ─────────────────────────────────────────── */
+function checkReady() {
+  const name  = document.getElementById('fName').value.trim();
+  const email = document.getElementById('fEmail').value.trim();
+  const phone = document.getElementById('fPhone').value.trim();
+  const ok    = name.length >= 2
+             && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+             && phone.replace(/[\s\-().+]/g, '').length >= 6
+             && selDate
+             && selTime;
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = !ok;
+  btn.setAttribute('aria-disabled', String(!ok));
+}
+
+document.getElementById('fName').addEventListener('input', checkReady);
+document.getElementById('fEmail').addEventListener('input', checkReady);
+document.getElementById('fPhone').addEventListener('input', checkReady);
+
+/* ── SUBMIT ─────────────────────────────────────────────── */
+document.getElementById('form').addEventListener('submit', async e => {
+  e.preventDefault();
+  hideErr();
+
+  const name  = document.getElementById('fName').value.trim();
+  const email = document.getElementById('fEmail').value.trim();
+  const phone = document.getElementById('fPhone').value.trim();
+  const btn   = document.getElementById('btnSubmit');
+  const bText = btn.querySelector('.btn-text');
+
+  btn.disabled = true;
+  btn.classList.add('loading');
+  bText.textContent = 'Envoi en cours';
+
+  try {
+    if (IS_DEMO) {
+      // Simule l'envoi
+      await new Promise(r => setTimeout(r, 900));
+      showSuccess(name, email, phone, selDate, selTime);
+      return;
+    }
+
+    const r = await fetch(APPS_SCRIPT_URL, {
+      method:   'POST',
+      redirect: 'follow',
+      headers:  { 'Content-Type': 'text/plain' }, // text/plain évite le preflight CORS OPTIONS
+      body:     JSON.stringify({ name, email, phone, date: selDate, time: selTime }),
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+
+    if (data.success) {
+      showSuccess(name, email, phone, selDate, selTime);
+    } else {
+      showErr(data.error || "Ce créneau n'est plus disponible.");
+      delete slotsCache[selDate];
+      selTime = null;
+      checkReady();
+      await loadSlots(selDate);
+      btn.disabled = false;
+    }
+  } catch (err) {
+    showErr(`Une erreur réseau est survenue (${err.message}). Réessayez.`);
+    btn.disabled = false;
+  } finally {
+    btn.classList.remove('loading');
+    bText.textContent = 'Confirmer ma réservation';
+  }
+});
+
+/* ── UI HELPERS ─────────────────────────────────────────── */
+function showErr(msg) {
+  const b = document.getElementById('errBanner');
+  document.getElementById('errMsg').textContent = msg;
+  b.classList.add('on');
+  b.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function hideErr() {
+  document.getElementById('errBanner').classList.remove('on');
+}
+
+function showSuccess(name, email, phone, dStr, time) {
+  const d        = new Date(dStr);
+  const dayName  = DAY_NAMES[d.getDay()];
+  const monName  = MONTH_NAMES[d.getMonth()];
+  const dateNice = `${dayName} ${d.getDate()} ${monName} ${d.getFullYear()}`;
+  const firstName = name.split(' ')[0];
+
+  document.getElementById('successBody').innerHTML =
+    `Merci <strong>${firstName}</strong>,<br>
+     votre séance du <strong>${dateNice}</strong> à <strong>${time}</strong> est enregistrée.<br>
+     Un récapitulatif vous sera envoyé à <strong>${email}</strong>
+     et une confirmation au <strong>${phone}</strong>.`;
+
+  document.getElementById('form').style.display = 'none';
+  document.getElementById('successWrap').classList.add('on');
+  document.getElementById('successWrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/* ── INIT ───────────────────────────────────────────────── */
+renderCal();
+</script>
+</body>
+</html>
