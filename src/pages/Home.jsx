@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import DailyProgress from '../components/Home/DailyProgress';
 import QuickActionCard from '../components/Home/QuickActionCard';
-import { Plus, BookOpen, ShoppingBag, MessageSquare, Crown, Coins } from 'lucide-react';
+import { Plus, BookOpen, ShoppingBag, MessageSquare, Crown, Trophy, LifeBuoy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import { useAuth } from '../features/auth/hooks/useAuth';
 import AnimatedNumber from '../components/UI/AnimatedNumber';
+import CoinIcon from '../components/UI/CoinIcon';
 
 const Home = () => {
     const { t } = useTranslation();
@@ -50,7 +51,7 @@ const Home = () => {
                         <AnimatedNumber value={user.winstreak ?? 1} duration={600} className="text-sm font-bold text-text-main" />
                     </div>
                     <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-surface/80 border border-amber-500/20 rounded-full">
-                        <Coins size={14} className="text-amber-400" />
+                        <CoinIcon size={14} />
                         <AnimatedNumber value={user.coins ?? 0} duration={600} className="text-sm font-bold text-amber-300" />
                     </div>
                 </div>
@@ -99,10 +100,24 @@ const Home = () => {
                 />
 
                 <QuickActionCard
+                    title={t('home.leaderboard')}
+                    subtitle={t('home.leaderboardSubtitle')}
+                    icon={Trophy}
+                    to="/leaderboard"
+                />
+
+                <QuickActionCard
                     title={t('home.feedback')}
                     subtitle={t('home.feedbackSubtitle')}
                     icon={MessageSquare}
                     to="/feedback"
+                />
+
+                <QuickActionCard
+                    title={t('support.title')}
+                    subtitle={t('support.subtitle')}
+                    icon={LifeBuoy}
+                    to="/support"
                 />
             </div>
         </div>

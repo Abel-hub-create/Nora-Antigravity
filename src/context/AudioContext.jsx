@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useRef, useState, useEffect, useCallback } from 'react';
 
 const DEFAULT_TRACKS = [
-  { id: 'outerwild', name: 'Outer Wild', src: '/sounds/outerwildnora.mp3', isDefault: true },
-  { id: 'nobatida', name: 'No Batida', src: '/sounds/nobatidaonora.mp3', isDefault: true },
+  { id: 'outerwild',   name: 'Outer Wild',     src: '/sounds/outerwildnora.mp3',  isDefault: true },
+  { id: 'nobatida',   name: 'No Batida',       src: '/sounds/nobatidaonora.mp3',  isDefault: true },
+  { id: 'ambiancejapon', name: 'Ambiance Japon', src: '/sounds/musiccalmnora.mp3', isDefault: true },
 ];
 
 const DB_NAME = 'nora_audio';

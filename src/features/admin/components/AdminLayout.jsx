@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Megaphone, LogOut, Menu, X, Shield, CreditCard, School, Ticket, Terminal, MessageSquare, Sliders, Zap, Trophy } from 'lucide-react';
+import { adminApi } from '../services/adminApiClient';
+import { LayoutDashboard, Users, Megaphone, LogOut, Menu, X, Shield, CreditCard, School, Ticket, Terminal, MessageSquare, Sliders, Zap, Trophy, LifeBuoy } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext.jsx';
 
 const NAV = [
@@ -14,6 +15,7 @@ const NAV = [
   { to: '/admin/announcements', icon: Megaphone, label: 'Annonces' },
   { to: '/admin/conversations', icon: MessageSquare, label: 'Conversations' },
   { to: '/admin/system-prompts', icon: Sliders, label: 'System Prompts' },
+  { to: '/admin/support', icon: LifeBuoy, label: 'Support' },
   { to: '/admin/debug', icon: Terminal, label: 'Debug IA' },
 ];
 
@@ -21,6 +23,13 @@ export default function AdminLayout({ children }) {
   const { adminUser, adminLogout } = useAdminAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [supportCount, setSupportCount] = useState(0);
+
+  useEffect(() => {
+    adminApi.get('/support/count')
+      .then(d => setSupportCount(d.count ?? 0))
+      .catch(() => {});
+  }, []);
 
   const handleLogout = async () => {
     await adminLogout();
@@ -48,7 +57,12 @@ export default function AdminLayout({ children }) {
             }
           >
             <Icon size={18} />
-            {label}
+            <span className="flex-1">{label}</span>
+            {to === '/admin/support' && supportCount > 0 && (
+              <span className="bg-amber-500/20 text-amber-400 text-xs font-bold px-1.5 py-0.5 rounded-full">
+                {supportCount}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>

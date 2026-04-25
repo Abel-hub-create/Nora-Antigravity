@@ -2,8 +2,8 @@ import React, { useState, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import { Coins } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
+import CoinIcon from '../UI/CoinIcon';
 import AnimatedNumber from '../UI/AnimatedNumber';
 
 // Positions fixes pour les particules (calculées une seule fois)
@@ -194,7 +194,7 @@ export default function CoinBagModal() {
                 transition={{ type: 'spring', stiffness: 260, damping: 18 }}
                 className="flex flex-col items-center gap-1"
               >
-                <Coins size={64} className="text-amber-400" />
+                <CoinIcon size={64} />
                 <div className="flex items-center gap-2">
                   <span className="text-3xl font-black text-amber-300">+</span>
                   <AnimatedNumber

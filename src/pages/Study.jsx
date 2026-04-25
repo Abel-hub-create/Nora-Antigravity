@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Search, FileText, Calendar, ChevronRight, Pencil, Check, X, Loader2, Trash2, Circle, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -40,57 +40,8 @@ const Study = () => {
     const [editingId, setEditingId] = useState(null);
     const [editTitle, setEditTitle] = useState('');
 
-    // Courbe de défilement (effet roulette)
-    const listRef = useRef(null);
-    const rafRef = useRef(null);
-    const cachedRef = useRef([]); // positions pré-calculées, zéro reflow au scroll
 
-    const cachePositions = useCallback(() => {
-        if (!listRef.current) return;
-        const scrollY = window.scrollY;
-        const items = listRef.current.querySelectorAll('[data-curve]');
-        // getBoundingClientRect uniquement ici (mount/resize), jamais dans le scroll
-        cachedRef.current = Array.from(items).map(el => {
-            const r = el.getBoundingClientRect();
-            return { el, top: r.top + scrollY, height: r.height };
-        });
-    }, []);
-
-    const applyFromCache = useCallback(() => {
-        const vh = window.innerHeight;
-        const centerY = window.scrollY + vh / 2;
-        cachedRef.current.forEach(({ el, top, height }) => {
-            const dist = (top + height / 2 - centerY) / (vh * 0.42);
-            const ratio = Math.max(-1, Math.min(1, dist));
-            const angle = ratio * 28;
-            const scale = 1 - Math.abs(ratio) * 0.12;
-            el.style.transform = `perspective(900px) rotateX(${angle}deg) scale(${scale})`;
-        });
-    }, []);
-
-    useEffect(() => {
-        // Désactivé sur desktop — le scroll JS casse la fluidité compositor-thread
-        const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
-        if (!isTouch) return;
-
-        const onScroll = () => {
-            if (rafRef.current) cancelAnimationFrame(rafRef.current);
-            rafRef.current = requestAnimationFrame(applyFromCache);
-        };
-        const onResize = () => { cachePositions(); applyFromCache(); };
-
-        window.addEventListener('scroll', onScroll, { passive: true });
-        window.addEventListener('resize', onResize, { passive: true });
-
-        const t = setTimeout(() => { cachePositions(); applyFromCache(); }, 250);
-
-        return () => {
-            window.removeEventListener('scroll', onScroll);
-            window.removeEventListener('resize', onResize);
-            clearTimeout(t);
-            if (rafRef.current) cancelAnimationFrame(rafRef.current);
-        };
-    }, [syntheses, cachePositions, applyFromCache]);
+    const canDelete = user?.plan_type === 'premium' || user?.plan_type === 'school';
 
     // États pour la sélection et suppression
     const [selectedIds, setSelectedIds] = useState(new Set());
@@ -225,8 +176,8 @@ const Study = () => {
                         </p>
                     </div>
 
-                    {/* Boutons de suppression */}
-                    {syntheses.length > 0 && (
+                    {/* Boutons de suppression (premium/school uniquement) */}
+                    {syntheses.length > 0 && canDelete && (
                         <div className="flex items-center gap-2">
                             {selectedIds.size > 0 && (
                                 <button
@@ -306,7 +257,7 @@ const Study = () => {
             )}
 
             {/* Syntheses List */}
-            <div ref={listRef}>
+            <div>
             <AnimatePresence mode="popLayout">
                 {!isLoading && syntheses.map((synthese, index) => (
                     <motion.div
@@ -317,7 +268,6 @@ const Study = () => {
                         transition={{ duration: 0.2 }}
                         className="mb-3"
                     >
-                        <div data-curve style={{ willChange: 'transform' }}>
                         <div className={`bg-surface rounded-2xl border border-white/5 overflow-hidden ${editingId !== synthese.id ? 'hover-lift' : ''}`}>
                             {/* Editing Mode */}
                             {editingId === synthese.id ? (
@@ -352,7 +302,8 @@ const Study = () => {
                                 /* Normal View */
                                 <div className="p-4">
                                     <div className="flex items-center gap-3">
-                                        {/* Cercle de sélection - toujours visible */}
+                                        {/* Cercle de sélection - premium/school uniquement */}
+                                        {canDelete && (
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -366,6 +317,7 @@ const Study = () => {
                                                 <Circle size={22} className="text-text-muted/40" />
                                             )}
                                         </button>
+                                        )}
 
                                         {/* Badge matière */}
                                         <span className="text-xl leading-none select-none shrink-0">
@@ -406,7 +358,6 @@ const Study = () => {
 
                                 </div>
                             )}
-                        </div>
                         </div>
                     </motion.div>
                 ))}

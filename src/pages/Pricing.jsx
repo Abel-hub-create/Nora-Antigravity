@@ -114,15 +114,17 @@ export default function Pricing() {
   const schoolLimits = schoolPlan ? getLimitsMap(schoolPlan) : {};
 
   const features = [
-    { key: 'ai_speed', label: t('pricing.features.aiSpeed'), free: t('pricing.features.slow'), premium: t('pricing.features.fast'), school: t('pricing.features.fast'), icon: Zap },
-    { key: 'ai_model', label: t('pricing.features.aiModel'), free: t('pricing.features.basic'), premium: 'GPT-4 / Gemini', school: 'GPT-4 / Gemini', icon: Brain },
-    { key: 'max_syntheses', label: t('pricing.features.syntheses'), free: `${freeLimits.max_syntheses || 3}`, premium: `${premiumLimits.max_syntheses || 20}`, school: `${schoolLimits.max_syntheses || 20}`, icon: Sparkles },
-    { key: 'max_chat', label: t('pricing.features.chatPerDay'), free: `${freeLimits.max_chat_per_day || 3}`, premium: `${premiumLimits.max_chat_per_day || 15}`, school: `${schoolLimits.max_chat_per_day || 20}`, icon: MessageSquare },
-    { key: 'max_ana', label: t('pricing.features.analysesPerDay'), free: `${freeLimits.max_ana_per_day || 3}`, premium: `${premiumLimits.max_ana_per_day || 3}`, school: `${schoolLimits.max_ana_per_day || 5}`, icon: Target },
-    { key: 'max_exs', label: t('pricing.features.exercisesPerDay'), free: `${freeLimits.max_exs_per_day || 3}`, premium: `${premiumLimits.max_exs_per_day || 3}`, school: `${schoolLimits.max_exs_per_day || 5}`, icon: Star },
-    { key: 'has_daily_goals', label: t('pricing.features.dailyGoals'), free: false, premium: true, school: true, icon: Target },
-    { key: 'has_folders', label: t('pricing.features.folders'), free: false, premium: true, school: true, icon: FolderOpen },
-    { key: 'has_flashcards', label: t('pricing.features.flashcardsQuiz'), free: false, premium: true, school: true, icon: Sparkles },
+    { key: 'has_daily_goals',  label: t('pricing.features.dailyGoals'),      free: false,                                        premium: true,                                        school: true,                                         icon: Target },
+    { key: 'max_syntheses',    label: t('pricing.features.syntheses'),        free: `${freeLimits.max_syntheses || 3}`,            premium: `${premiumLimits.max_syntheses || 20}`,      school: `${schoolLimits.max_syntheses || 20}`,         icon: Sparkles },
+    { key: 'has_flashcards',   label: t('pricing.features.flashcardsQuiz'),   free: false,                                        premium: true,                                        school: true,                                         icon: Sparkles },
+    { key: 'has_share',        label: t('pricing.features.shareSyntheses'),   free: false,                                        premium: true,                                        school: true,                                         icon: Star },
+    { key: 'ai_model',         label: t('pricing.features.aiModel'),          free: t('pricing.features.basic'),                  premium: 'GPT-4o',                                    school: 'GPT-4o',                                     icon: Brain },
+    { key: 'ai_speed',         label: t('pricing.features.aiSpeed'),          free: t('pricing.features.slow'),                   premium: t('pricing.features.fast'),                  school: t('pricing.features.fast'),                   icon: Zap },
+    { key: 'has_folders',      label: t('pricing.features.folders'),          free: false,                                        premium: true,                                        school: true,                                         icon: FolderOpen },
+    { key: 'has_music_import', label: t('pricing.features.musicImport'),      free: false,                                        premium: true,                                        school: true,                                         icon: Star },
+    { key: 'max_chat',         label: t('pricing.features.chatPerDay'),       free: `${freeLimits.max_chat_per_day || 3}`,         premium: `${premiumLimits.max_chat_per_day || 20}`,   school: `${schoolLimits.max_chat_per_day || 20}`,      icon: MessageSquare },
+    { key: 'max_exs',          label: t('pricing.features.exercisesPerDay'),  free: `${freeLimits.max_exs_per_day || 1}`,          premium: `${premiumLimits.max_exs_per_day || 5}`,     school: `${schoolLimits.max_exs_per_day || 5}`,        icon: Star },
+    { key: 'max_ana',          label: t('pricing.features.analysesPerDay'),   free: `${freeLimits.max_ana_per_day || 1}`,          premium: `${premiumLimits.max_ana_per_day || 5}`,     school: `${schoolLimits.max_ana_per_day || 5}`,        icon: Target },
   ];
 
   return (

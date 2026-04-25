@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactDOM from 'react-dom';
 import LiquidProgressBar from '../components/UI/LiquidProgressBar';
-import { Settings, Folder, Star, Plus, Loader2, Crown, Zap, Trophy, Timer, X, Copy, Check, Coins } from 'lucide-react';
+import { Settings, Folder, Star, Plus, Loader2, Crown, Zap, Trophy, Timer, X, Copy, Check } from 'lucide-react';
+import CoinIcon from '../components/UI/CoinIcon';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import * as folderService from '../services/folderService';
@@ -305,7 +306,7 @@ const Profile = () => {
                     {/* Pièces + winstreak */}
                     <div className="flex flex-col items-end gap-1.5 shrink-0">
                         <div className="bg-black/30 px-3 py-1 rounded-full border border-amber-500/20 flex items-center gap-1.5">
-                            <Coins size={14} className="text-amber-400" />
+                            <CoinIcon size={14} />
                             <AnimatedNumber value={user.coins} duration={800} className="text-sm font-bold text-amber-300" />
                         </div>
                         <div className="bg-black/30 px-3 py-1 rounded-full border border-orange-500/20 flex items-center gap-1.5">
@@ -396,7 +397,7 @@ const Profile = () => {
                             )}
                             {referralStats.coinsEarned > 0 && (
                                 <div className="flex-1 bg-black/20 rounded-xl px-3 py-2 text-center">
-                                    <p className="text-base font-bold text-amber-300 flex items-center justify-center gap-1"><Coins size={15} />{referralStats.coinsEarned}</p>
+                                    <p className="text-base font-bold text-amber-300 flex items-center justify-center gap-1"><CoinIcon size={15} />{referralStats.coinsEarned}</p>
                                     <p className="text-[10px] text-text-muted">{t('profile.coinsEarned')}</p>
                                 </div>
                             )}
@@ -404,7 +405,7 @@ const Profile = () => {
                     )}
 
                     <p className="text-[10px] text-text-muted leading-relaxed">
-                        {t('profile.referralDescPart1')} <span className="text-amber-400 font-semibold">1 {t('profile.premiumWeeks')}</span> {t('profile.referralDescPart2')} <span className="text-amber-300 font-semibold inline-flex items-center gap-0.5">20 <Coins size={10} /></span> {t('profile.referralDescPart3')} <span className="text-primary font-semibold inline-flex items-center gap-0.5">50 <Coins size={10} /></span>
+                        {t('profile.referralDescPart1')} <span className="text-amber-400 font-semibold">1 {t('profile.premiumWeeks')}</span> {t('profile.referralDescPart2')} <span className="text-amber-300 font-semibold inline-flex items-center gap-0.5">20 <CoinIcon size={10} /></span> {t('profile.referralDescPart3')} <span className="text-primary font-semibold inline-flex items-center gap-0.5">50 <CoinIcon size={10} /></span>
                     </p>
                 </div>
             )}

@@ -8,6 +8,7 @@ import * as adminRepo from '../services/adminRepository.js';
 import * as emailService from '../services/emailService.js';
 import * as planRepo from '../services/planRepository.js';
 import * as seasonRepo from '../services/seasonRepository.js';
+import * as supportRepo from '../services/supportRepository.js';
 import { awardXp } from '../services/xpService.js';
 import { getAllXpConfig, updateXpConfig } from '../services/xpConfigService.js';
 import { authenticateAdmin } from '../middlewares/adminAuth.js';
@@ -746,6 +747,40 @@ router.delete('/seasons/:id', authenticateAdmin, async (req, res, next) => {
     const id = parseInt(req.params.id, 10);
     await seasonRepo.deleteSeason(id);
     res.json({ success: true });
+  } catch (e) { next(e); }
+});
+
+// ─── Support tickets ─────────────────────────────────────────────────────────
+
+router.get('/support', authenticateAdmin, async (req, res, next) => {
+  try {
+    const tickets = await supportRepo.adminGetAll();
+    res.json({ tickets });
+  } catch (e) { next(e); }
+});
+
+router.get('/support/count', authenticateAdmin, async (req, res, next) => {
+  try {
+    const count = await supportRepo.adminGetUnansweredCount();
+    res.json({ count });
+  } catch (e) { next(e); }
+});
+
+router.post('/support/:id/reply', authenticateAdmin, async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const { reply } = req.body;
+    if (!reply?.trim()) return res.status(400).json({ error: 'La réponse est requise' });
+    await supportRepo.adminReply(id, reply.trim());
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+router.delete('/support/:id', authenticateAdmin, async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    await supportRepo.adminDelete(id);
+    res.json({ ok: true });
   } catch (e) { next(e); }
 });
 

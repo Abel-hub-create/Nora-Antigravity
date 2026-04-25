@@ -241,6 +241,23 @@ const EPICS = [
       {id:'9.6', name:'Thèmes (dark/light/midnight/forest/aurora, CSS vars)'},
     ]
   },
+  {
+    id:'E10', name:'Classeur de cartes & Échanges', color:'#c4b5fd',
+    subtasks:[
+      {id:'10.1', name:'Migration DB (card_trade_requests, source enum +trade)'},
+      {id:'10.2', name:'Backend — tradeRepository (createRequest, getInbox, acceptRequest tx)'},
+      {id:'10.3', name:'Backend — tradeRoutes + cardRoutes collection endpoint'},
+      {id:'10.4', name:'Card.jsx — long press (300ms, wasLong ref, onLongPress prop)'},
+      {id:'10.5', name:'CardBinder.jsx — 26 slots fixes, flip, badge ×N, inbox button'},
+      {id:'10.6', name:'CardDetailModal — agrandissement carte, bouton échange'},
+      {id:'10.7', name:'TradeRequestModal — envoi demande par share code'},
+      {id:'10.8', name:'TradeInbox — boîte de réception, accept/refuse'},
+      {id:'10.9', name:'TradeExchangeModal — split view, SendAnimation flying cards'},
+      {id:'10.10', name:'CardPickerModal — bottom-sheet, filtre rareté ±1, stock check'},
+      {id:'10.11', name:'i18n — 29 clés trade.* en fr + en'},
+      {id:'10.12', name:'Security — TOCTOU fix FOR UPDATE, rarity bypass fix server-side'},
+    ]
+  },
 ];
 
 let STATE = {};

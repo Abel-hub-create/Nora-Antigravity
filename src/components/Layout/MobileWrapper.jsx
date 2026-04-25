@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Home, GraduationCap, PlusCircle, User, ShoppingBag, Settings, Bot, Crown, Trophy } from 'lucide-react';
+import { Home, GraduationCap, PlusCircle, User, ShoppingBag, Settings, Bot, Crown, BookOpen } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
@@ -60,7 +60,7 @@ const MobileWrapper = ({ children }) => {
         { icon: Home,          labelKey: 'nav.home',        path: '/' },
         { icon: GraduationCap, labelKey: 'nav.study',       path: '/study' },
         { icon: ShoppingBag,   labelKey: 'nav.shop',        path: '/shop' },
-        { icon: Trophy,        labelKey: 'nav.leaderboard', path: '/leaderboard' },
+        { icon: BookOpen,      labelKey: 'nav.binder',      path: '/binder' },
         { icon: PlusCircle,    labelKey: 'nav.import',      path: '/import' },
         { icon: Bot,           labelKey: 'nav.assistant',   path: '/assistant' },
         { icon: User,          labelKey: 'nav.profile',     path: '/profile' },
@@ -69,7 +69,7 @@ const MobileWrapper = ({ children }) => {
     const bottomNavItems = [
         { icon: Home,          labelKey: 'nav.home',        path: '/' },
         { icon: GraduationCap, labelKey: 'nav.study',       path: '/study' },
-        { icon: Trophy,        labelKey: 'nav.leaderboard', path: '/leaderboard' },
+        { icon: BookOpen,      labelKey: 'nav.binder',      path: '/binder' },
         { icon: PlusCircle,    labelKey: 'nav.import',      path: '/import' },
         { icon: Bot,           labelKey: 'nav.assistant',   path: '/assistant' },
         { icon: ShoppingBag,   labelKey: 'nav.shop',        path: '/shop' },

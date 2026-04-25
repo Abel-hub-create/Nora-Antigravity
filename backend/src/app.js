@@ -22,6 +22,9 @@ import seasonRoutes from './routes/seasonRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
 import shareRoutes from './routes/shareRoutes.js';
 import planningRoutes from './routes/planningRoutes.js';
+import cardRoutes from './routes/cardRoutes.js';
+import tradeRoutes from './routes/tradeRoutes.js';
+import supportRoutes from './routes/supportRoutes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
 dotenv.config();
@@ -64,6 +67,9 @@ app.use('/api/seasons', seasonRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/share', shareRoutes);
 app.use('/api/planning', planningRoutes);
+app.use('/api/cards', cardRoutes);
+app.use('/api/trades', tradeRoutes);
+app.use('/api/tickets', supportRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

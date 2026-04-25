@@ -788,7 +788,7 @@ body{background:#020408;min-height:100vh;display:flex;flex-direction:column;alig
                             </button>
                         </div>
                     </div>
-                ) : (
+                ) : canEdit && (
                     <button
                         onClick={() => setShowDeleteConfirm(true)}
                         className="w-full py-3 text-error/70 hover:text-error flex items-center justify-center gap-2 transition-colors"

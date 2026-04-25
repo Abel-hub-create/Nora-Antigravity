@@ -40,6 +40,7 @@
     "settings": "Settings",
     "assistant": "Assistant",
     "leaderboard": "Leaderboard",
+    "binder": "Binder",
     "tagline": "Learn effortlessly"
   },
   "activities": {
@@ -59,6 +60,8 @@
     "shopSubtitle": "Rewards and offers",
     "newImport": "New Import",
     "textOrVoice": "Take a photo",
+    "leaderboard": "Leaderboard",
+    "leaderboardSubtitle": "See the top 50",
     "feedback": "Feedback & Ideas",
     "feedbackSubtitle": "Share your thoughts",
     "premiumBanner": {
@@ -153,7 +156,8 @@
     "musicVolume": "Volume",
     "musicTracks": "Active track",
     "trackOuterwild": "Outer Wild",
-    "trackNobatida": "No Batidao",
+    "trackNobatida": "No Batida",
+    "trackAmbiancejapon": "Ambiance Japon",
     "importTrack": "Import a track",
     "importTrackPremium": "Premium and School plans only",
     "importTrackLimit": "5 tracks max — delete a track to add another",
@@ -434,7 +438,6 @@
     "startDictation": "Dictate",
     "stopDictation": "Stop dictation"
   },
-
   "photo": {
     "takePhoto": "Take a photo",
     "fromGallery": "From gallery",
@@ -596,7 +599,12 @@
     "incredible": "Incredible!",
     "awesome": "Awesome!",
     "inDevelopment": "Under Development",
-    "inDevelopmentHint": "This feature is coming soon. Stay tuned!"
+    "inDevelopmentHint": "This feature is coming soon. Stay tuned!",
+    "cardsOwned": "cards owned",
+    "sets": "Sets",
+    "filterAll": "All",
+    "filterOwned": "Owned",
+    "empty": "No cards in this category"
   },
   "rarities": {
     "rare": "Rare",
@@ -1008,7 +1016,9 @@
       "flashcardsQuiz": "Flashcards & Quiz",
       "slow": "Slow",
       "fast": "Fast",
-      "basic": "Basic"
+      "basic": "Basic",
+      "shareSyntheses": "Share summaries",
+      "musicImport": "Background music import"
     }
   },
   "premiumGate": {
@@ -1050,7 +1060,7 @@
     "soon": "Coming Soon",
     "popular": "Popular",
     "stripeNotice": "Stripe payments — coming soon",
-    "aronMessage": "Welcome to my shop! The best items are coming soon. 🎁",
+    "aronMessage": "Hey, how are you? This is where you can spend your coins, treat yourself!",
     "cardPacks": "Card Packs",
     "dailyCards": "Daily Cards",
     "dailyRotation": "Daily rotation",
@@ -1062,7 +1072,31 @@
     "rarePackDesc": "3 cards, increased chances",
     "legendPack": "Legendary Pack",
     "legendPackDesc": "3 guaranteed premium cards",
-    "coinsLabel": "{{coins}} coins"
+    "coinsLabel": "{{coins}} coins",
+    "packRevealTitle": "Your cards!",
+    "packRevealClose": "Add to my collection",
+    "notEnoughCoins": "Not enough coins",
+    "owned": "Already owned",
+    "cardAdded": "Card added to your collection!",
+    "boosters": "Boosters",
+    "boosterOne": "1 Booster",
+    "boosterOneDesc": "3 random cards",
+    "boosterFive": "5 Boosters",
+    "boosterFiveDesc": "15 random cards",
+    "boosterTen": "10 Boosters",
+    "boosterTenDesc": "30 random cards",
+    "tapToOpen": "Tap to open",
+    "revealNext": "Next card",
+    "seeResult": "See result",
+    "nextBooster": "Next booster ({{n}} left)",
+    "nextBoosterPlural": "Next booster ({{n}} left)"
+  },
+  "binder": {
+    "title": "Card Binder",
+    "comingSoon": "Soon",
+    "prevPage": "Previous",
+    "nextPage": "Next",
+    "hint": "Your collected cards will appear here. Open boosters to fill your binder!"
   },
   "leaderboard": {
     "title": "Leaderboard",
@@ -1101,5 +1135,66 @@
     },
     "winstreak": "{{count}}-day streak",
     "viewProfile": "View profile"
+  },
+  "trade": {
+    "exchange": "Trade",
+    "copies": "copies",
+    "sendRequest": "Trade Request",
+    "shareCodeLabel": "Recipient's share code",
+    "shareCodePlaceholder": "e.g. ABC123",
+    "sendBtn": "Send request",
+    "requestSent": "✅ Request sent!",
+    "inbox": "Inbox",
+    "inboxEmpty": "No pending requests",
+    "proposesExchange": "wants to trade with you",
+    "pickCard": "Pick a card",
+    "pickCardHint": "Select a card of the same rarity or ±1 rarity",
+    "noEligibleCards": "No eligible cards for this trade",
+    "exchangeTitle": "Trade in progress",
+    "yourCard": "Your card",
+    "clickToPick": "Tap to pick your card",
+    "change": "Change",
+    "confirmExchange": "Confirm trade",
+    "errors": {
+      "receiverNotFound": "No user found with this share code",
+      "cannotTradeSelf": "You cannot trade with yourself",
+      "cardNotOwned": "You don't own this card",
+      "alreadyPending": "A request is already pending for this card",
+      "initiatorStockFull": "This person already has too many copies of this card",
+      "receiverStockFull": "You already have too many copies of this card",
+      "cardGone": "Card no longer available"
+    }
+  },
+  "support": {
+    "title": "Support",
+    "subtitle": "Ask a question",
+    "newTicket": "New ticket",
+    "myTickets": "My tickets",
+    "category": "Category",
+    "categoryBug": "Bug",
+    "categoryBilling": "Billing",
+    "categoryQuestion": "Question",
+    "categoryOther": "Other",
+    "subject": "Subject",
+    "subjectPlaceholder": "Summarize your issue in a few words",
+    "message": "Message",
+    "messagePlaceholder": "Describe your issue in detail...",
+    "send": "Send",
+    "sending": "Sending...",
+    "sentTitle": "Ticket sent!",
+    "sentSubtitle": "We'll get back to you as soon as possible.",
+    "newTicketBtn": "New ticket",
+    "noTickets": "No tickets yet",
+    "noTicketsHint": "Your history will appear here.",
+    "answered": "Answered",
+    "pending": "Pending",
+    "adminReply": "Team reply",
+    "contactSupport": "Contact support",
+    "unbanHint": "Think your ban was a mistake?",
+    "unbanContact": "Contact us",
+    "emailLabel": "Your email",
+    "emailPlaceholder": "So we can get back to you",
+    "unbanSentTitle": "Message sent",
+    "unbanSentSubtitle": "We'll review your request as soon as possible."
   }
 }

@@ -25,21 +25,30 @@ SYNTHÈSE — MATHÉMATIQUES :
 - Ne jamais fusionner deux formules distinctes dans une même phrase. Chaque formule a sa propre ligne, isolée visuellement.
 - Si le cours contient une démonstration, la conserver intégralement dans "### Démonstration" — ne jamais la supprimer silencieusement.
 - Inclure TOUJOURS les domaines de définition et les restrictions (ex : "valable pour x > 0") — ce sont des points de pénalité en examen.
-- Les cas particuliers et exceptions ont chacun leur propre point distinct, jamais fusionnés.`,
+- Les cas particuliers et exceptions ont chacun leur propre point distinct, jamais fusionnés.
+- SIGNES OBLIGATOIRES — utiliser UNIQUEMENT ces caractères simples dans les formules et exemples, JAMAIS de notation LaTeX (pas de \\(...\\), pas de $...$, pas de \\frac, pas de \\cdot, etc.) :
+  • Moins : -
+  • Plus : +
+  • Diviser : :
+  • Fois : .
+  • Espace entre termes : (espace simple)
+  Exemple correct : "2 . x + 3 : y - 4"  — Exemple INTERDIT : "\\(2x + \\frac{3}{y} - 4\\)"`,
 
     flashcardRules: `
 FLASHCARDS — MATHÉMATIQUES :
 - Face = "Comment calculer [grandeur] ?" ou "Quelle est la formule de [théorème] ?" → Dos = formule complète en unicode + description des variables + exemple numérique minimal.
 - Créer une carte distincte par cas particulier ou exception identifiée dans le cours.
 - Ne jamais mettre deux formules sur la même carte.
-- Inclure des cartes sur les conditions de validité : face = nom de la formule → dos = conditions d'application.`,
+- Inclure des cartes sur les conditions de validité : face = nom de la formule → dos = conditions d'application.
+- SIGNES OBLIGATOIRES dans toutes les formules : moins → "-", plus → "+", diviser → ":", fois → ".", espace → " ". Jamais de LaTeX (\\(...\\), $...$, etc.).`,
 
     quizRules: `
 QUIZ — MATHÉMATIQUES :
 - Questions de type calcul guidé : donner des valeurs numériques précises, demander d'identifier la bonne réponse parmi 4 résultats chiffrés.
 - Distracteurs : erreurs d'exposant, confusion entre formules proches (ex : périmètre vs aire), oubli d'une condition de validité.
 - Ne pas créer de questions de mémorisation pure — les maths s'évaluent par l'application.
-- Une question par concept-clé du cours ; ne pas regrouper deux notions dans une seule question.`,
+- Une question par concept-clé du cours ; ne pas regrouper deux notions dans une seule question.
+- SIGNES OBLIGATOIRES dans toutes les formules : moins → "-", plus → "+", diviser → ":", fois → ".", espace → " ". Jamais de LaTeX (\\(...\\), $...$, etc.).`,
 
     emphasis: 'Rigueur : formule + conditions + exemple. Chaque notion est une unité autonome.'
   },

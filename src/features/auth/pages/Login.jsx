@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, RefreshCw } from 'lucide-react';
+import { Mail, Lock, RefreshCw, LifeBuoy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../hooks/useAuth';
@@ -23,6 +23,12 @@ const Login = () => {
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState('');
   const [resendSuccess, setResendSuccess] = useState(false);
+  const [showUnbanForm, setShowUnbanForm] = useState(false);
+  const [unbanEmail, setUnbanEmail] = useState('');
+  const [unbanSubject, setUnbanSubject] = useState('');
+  const [unbanMessage, setUnbanMessage] = useState('');
+  const [unbanSending, setUnbanSending] = useState(false);
+  const [unbanSent, setUnbanSent] = useState(false);
 
   const { login, loginWithGoogle, loginWithApple, error: authError, errorCode, clearError } = useAuth();
   const [googleError, setGoogleError] = useState(null);
@@ -39,6 +45,23 @@ const Login = () => {
   // Check if error is about email not verified
   const isEmailNotVerified = errorCode === 'EMAIL_NOT_VERIFIED';
   const isBanned = errorCode === 'ACCOUNT_BANNED';
+
+  const handleUnbanSubmit = async (e) => {
+    e.preventDefault();
+    if (!unbanEmail.trim() || !unbanSubject.trim() || !unbanMessage.trim()) return;
+    setUnbanSending(true);
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const res = await fetch(`${API_URL}/tickets/unban-request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: unbanEmail.trim(), subject: unbanSubject.trim(), message: unbanMessage.trim() }),
+      });
+      if (res.ok) setUnbanSent(true);
+    } catch { /* silent */ } finally {
+      setUnbanSending(false);
+    }
+  };
 
   const handleResendVerification = async () => {
     if (!formData.email || isResending) return;
@@ -141,6 +164,56 @@ const Login = () => {
                 <p className="font-medium">{t('errors.accountBanned')}</p>
                 {(banReason || (isBanned && authError)) && (
                   <p className="text-red-400/80 opacity-80">{banReason || authError}</p>
+                )}
+                {!showUnbanForm && !unbanSent && (
+                  <button
+                    type="button"
+                    onClick={() => setShowUnbanForm(true)}
+                    className="mt-2 flex items-center gap-1.5 text-red-300 hover:text-red-200 text-xs font-medium transition-colors"
+                  >
+                    <LifeBuoy size={13} />
+                    {t('support.unbanContact')}
+                  </button>
+                )}
+                {showUnbanForm && !unbanSent && (
+                  <form onSubmit={handleUnbanSubmit} className="mt-3 space-y-2 border-t border-red-500/20 pt-3">
+                    <input
+                      type="email"
+                      value={unbanEmail}
+                      onChange={e => setUnbanEmail(e.target.value)}
+                      placeholder={t('support.emailPlaceholder')}
+                      className="w-full bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-xs text-red-200 placeholder-red-400/50 outline-none"
+                      required
+                    />
+                    <input
+                      type="text"
+                      value={unbanSubject}
+                      onChange={e => setUnbanSubject(e.target.value)}
+                      placeholder={t('support.subjectPlaceholder')}
+                      maxLength={200}
+                      className="w-full bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-xs text-red-200 placeholder-red-400/50 outline-none"
+                      required
+                    />
+                    <textarea
+                      value={unbanMessage}
+                      onChange={e => setUnbanMessage(e.target.value)}
+                      placeholder={t('support.messagePlaceholder')}
+                      rows={3}
+                      maxLength={5000}
+                      className="w-full bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-xs text-red-200 placeholder-red-400/50 outline-none resize-none"
+                      required
+                    />
+                    <button
+                      type="submit"
+                      disabled={unbanSending}
+                      className="w-full py-2 rounded-lg text-xs font-semibold bg-red-500/20 hover:bg-red-500/30 text-red-200 transition-colors disabled:opacity-50"
+                    >
+                      {unbanSending ? t('support.sending') : t('support.send')}
+                    </button>
+                  </form>
+                )}
+                {unbanSent && (
+                  <p className="mt-2 text-xs text-green-400 font-medium">{t('support.unbanSentTitle')} — {t('support.unbanSentSubtitle')}</p>
                 )}
               </motion.div>
             )}

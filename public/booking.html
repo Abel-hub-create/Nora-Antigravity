@@ -1036,9 +1036,7 @@ function showSuccess(name, email, phone, dStr, time) {
 
   document.getElementById('successBody').innerHTML =
     `Merci <strong>${firstName}</strong>,<br>
-     votre séance du <strong>${dateNice}</strong> à <strong>${time}</strong> est enregistrée.<br>
-     Un récapitulatif vous sera envoyé à <strong>${email}</strong>
-     et une confirmation au <strong>${phone}</strong>.`;
+     votre réservation du <strong>${dateNice}</strong> à <strong>${time}</strong> est bien confirmée.`;
 
   document.getElementById('form').style.display = 'none';
   document.getElementById('successWrap').classList.add('on');

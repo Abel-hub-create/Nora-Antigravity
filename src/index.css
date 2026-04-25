@@ -647,3 +647,32 @@ input, textarea, select {
 [data-theme="aurora"] .text-primary {
   text-shadow: 0 0 5px rgba(192, 132, 252, 0.22), 0 0 12px rgba(192, 132, 252, 0.08);
 }
+
+/* ── Card System ── */
+@keyframes card-shine {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes card-glow-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.9; }
+}
+@keyframes card-border-spin {
+  0%   { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+.card-shine {
+  background: linear-gradient(
+    105deg,
+    transparent 20%,
+    rgba(255,255,255,0.06) 35%,
+    rgba(255,255,255,0.18) 50%,
+    rgba(255,255,255,0.06) 65%,
+    transparent 80%
+  );
+  background-size: 200% 100%;
+  animation: card-shine 3s linear infinite;
+  z-index: 10;
+  pointer-events: none;
+}

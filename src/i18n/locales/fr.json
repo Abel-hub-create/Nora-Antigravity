@@ -40,6 +40,7 @@
     "settings": "Paramètres",
     "assistant": "Assistant",
     "leaderboard": "Classement",
+    "binder": "Classeur",
     "tagline": "Apprendre sans effort"
   },
   "activities": {
@@ -59,6 +60,8 @@
     "shopSubtitle": "Récompenses et offres",
     "newImport": "Nouvel Import",
     "textOrVoice": "Prendre en photo",
+    "leaderboard": "Classement",
+    "leaderboardSubtitle": "Voir le top 50",
     "feedback": "Bug & Suggestions",
     "feedbackSubtitle": "Signale un bug",
     "premiumBanner": {
@@ -153,7 +156,8 @@
     "musicVolume": "Volume",
     "musicTracks": "Piste active",
     "trackOuterwild": "Outer Wild",
-    "trackNobatida": "No Batidao",
+    "trackNobatida": "No Batida",
+    "trackAmbiancejapon": "Ambiance Japon",
     "importTrack": "Importer une piste",
     "importTrackPremium": "Réservé aux plans Premium et École",
     "importTrackLimit": "5 pistes max — supprime une piste pour en ajouter",
@@ -595,7 +599,12 @@
     "incredible": "Incroyable !",
     "awesome": "Génial !",
     "inDevelopment": "En cours de développement",
-    "inDevelopmentHint": "Cette fonctionnalité arrive bientôt. Reste connecté !"
+    "inDevelopmentHint": "Cette fonctionnalité arrive bientôt. Reste connecté !",
+    "cardsOwned": "cartes obtenues",
+    "sets": "Sets",
+    "filterAll": "Toutes",
+    "filterOwned": "Obtenues",
+    "empty": "Aucune carte dans cette catégorie"
   },
   "rarities": {
     "rare": "Rare",
@@ -1007,7 +1016,9 @@
       "flashcardsQuiz": "Flashcards & Quiz",
       "slow": "Lente",
       "fast": "Rapide",
-      "basic": "Basique"
+      "basic": "Basique",
+      "shareSyntheses": "Partage de synthèses",
+      "musicImport": "Import de musiques de fond"
     }
   },
   "premiumGate": {
@@ -1049,7 +1060,7 @@
     "soon": "Bientôt",
     "popular": "Populaire",
     "stripeNotice": "Paiements Stripe — disponibles prochainement",
-    "aronMessage": "Bienvenue dans ma boutique ! Les meilleurs articles arrivent bientôt. 🎁",
+    "aronMessage": "Comment tu vas ?? Bah c'est ici que tu vas pouvoir dépenser tes pièces, fais toi plaisir",
     "cardPacks": "Packs de cartes",
     "dailyCards": "Cartes du jour",
     "dailyRotation": "Rotation quotidienne",
@@ -1061,7 +1072,31 @@
     "rarePackDesc": "3 cartes, chances augmentées",
     "legendPack": "Pack Légendaire",
     "legendPackDesc": "3 cartes premium garanties",
-    "coinsLabel": "{{coins}} pièces"
+    "coinsLabel": "{{coins}} pièces",
+    "packRevealTitle": "Tes cartes !",
+    "packRevealClose": "Ajouter à ma collection",
+    "notEnoughCoins": "Pas assez de pièces",
+    "owned": "Déjà obtenue",
+    "cardAdded": "Carte ajoutée à ta collection !",
+    "boosters": "Boosters",
+    "boosterOne": "1 Booster",
+    "boosterOneDesc": "3 cartes aléatoires",
+    "boosterFive": "5 Boosters",
+    "boosterFiveDesc": "15 cartes aléatoires",
+    "boosterTen": "10 Boosters",
+    "boosterTenDesc": "30 cartes aléatoires",
+    "tapToOpen": "Appuie pour ouvrir",
+    "revealNext": "Carte suivante",
+    "seeResult": "Voir le résultat",
+    "nextBooster": "Booster suivant ({{n}} restant)",
+    "nextBoosterPlural": "Booster suivant ({{n}} restants)"
+  },
+  "binder": {
+    "title": "Classeur de cartes",
+    "comingSoon": "Bientôt",
+    "prevPage": "Précédent",
+    "nextPage": "Suivant",
+    "hint": "Tes cartes collectionnées apparaîtront ici. Ouvre des boosters pour remplir ton classeur !"
   },
   "leaderboard": {
     "title": "Classement",
@@ -1100,5 +1135,66 @@
     },
     "winstreak": "Série de {{count}} jours",
     "viewProfile": "Voir le profil"
+  },
+  "trade": {
+    "exchange": "Échanger",
+    "copies": "exemplaires",
+    "sendRequest": "Demande d'échange",
+    "shareCodeLabel": "Code de partage du destinataire",
+    "shareCodePlaceholder": "EX: ABC123",
+    "sendBtn": "Envoyer la demande",
+    "requestSent": "✅ Demande envoyée !",
+    "inbox": "Boîte de réception",
+    "inboxEmpty": "Aucune demande en attente",
+    "proposesExchange": "te propose un échange",
+    "pickCard": "Choisir une carte",
+    "pickCardHint": "Sélectionne une carte de rareté identique ou à ±1 rareté",
+    "noEligibleCards": "Aucune carte éligible pour cet échange",
+    "exchangeTitle": "Échange en cours",
+    "yourCard": "Ta carte",
+    "clickToPick": "Clique pour choisir ta carte",
+    "change": "Changer",
+    "confirmExchange": "Confirmer l'échange",
+    "errors": {
+      "receiverNotFound": "Aucun utilisateur avec ce code de partage",
+      "cannotTradeSelf": "Tu ne peux pas échanger avec toi-même",
+      "cardNotOwned": "Tu ne possèdes pas cette carte",
+      "alreadyPending": "Une demande est déjà en attente pour cette carte",
+      "initiatorStockFull": "Cette personne a déjà trop d'exemplaires de cette carte",
+      "receiverStockFull": "Tu as déjà trop d'exemplaires de cette carte",
+      "cardGone": "La carte n'est plus disponible"
+    }
+  },
+  "support": {
+    "title": "Support",
+    "subtitle": "Poser une question",
+    "newTicket": "Nouveau ticket",
+    "myTickets": "Mes tickets",
+    "category": "Catégorie",
+    "categoryBug": "Bug",
+    "categoryBilling": "Facturation",
+    "categoryQuestion": "Question",
+    "categoryOther": "Autre",
+    "subject": "Sujet",
+    "subjectPlaceholder": "Résumez votre problème en quelques mots",
+    "message": "Message",
+    "messagePlaceholder": "Décrivez votre problème en détail...",
+    "send": "Envoyer",
+    "sending": "Envoi...",
+    "sentTitle": "Ticket envoyé !",
+    "sentSubtitle": "Nous répondrons dès que possible.",
+    "newTicketBtn": "Nouveau ticket",
+    "noTickets": "Aucun ticket pour l'instant",
+    "noTicketsHint": "Ton historique apparaîtra ici.",
+    "answered": "Répondu",
+    "pending": "En attente",
+    "adminReply": "Réponse de l'équipe",
+    "contactSupport": "Contacter le support",
+    "unbanHint": "Tu penses que ton ban est une erreur ?",
+    "unbanContact": "Nous contacter",
+    "emailLabel": "Ton email",
+    "emailPlaceholder": "Pour que l'on puisse te répondre",
+    "unbanSentTitle": "Message envoyé",
+    "unbanSentSubtitle": "Nous examinerons ta demande dès que possible."
   }
 }

@@ -202,9 +202,10 @@ router.patch('/:id/archive', async (req, res, next) => {
   }
 });
 
-// Delete synthese permanently
+// Delete synthese permanently (premium/school only)
 router.delete('/:id', async (req, res, next) => {
   try {
+    if (!await requirePremiumOrSchool(req.user.id, res)) return;
     const deleted = await syntheseRepo.remove(
       parseInt(req.params.id),
       req.user.id
