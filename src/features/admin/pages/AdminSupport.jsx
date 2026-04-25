@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import { adminApi } from '../services/adminApiClient';
-import { LifeBuoy, MessageSquare, Clock, CheckCircle, X, Send, Trash2 } from 'lucide-react';
+import { LifeBuoy, MessageSquare, CheckCircle, X, Send, Trash2, Mail, RefreshCw } from 'lucide-react';
 
-const CATEGORY_LABELS = { bug: 'Bug', billing: 'Facturation', question: 'Question', other: 'Autre' };
+const CATEGORY_LABELS = { bug: 'Bug', billing: 'Facturation', question: 'Question', other: 'Autre', unban: 'Déban' };
 const CATEGORY_COLORS = {
   bug: 'bg-red-500/15 text-red-400',
   billing: 'bg-amber-500/15 text-amber-400',
   question: 'bg-sky-500/15 text-sky-400',
   other: 'bg-gray-500/15 text-gray-400',
+  unban: 'bg-orange-500/15 text-orange-400',
 };
 
 function ReplyModal({ ticket, onClose, onReplied }) {
@@ -37,6 +38,15 @@ function ReplyModal({ ticket, onClose, onReplied }) {
           <div>
             <h3 className="text-white font-bold">Répondre au ticket</h3>
             <p className="text-gray-400 text-sm mt-0.5 truncate">{ticket.subject}</p>
+            {(ticket.user_email || ticket.email) && (
+              <a
+                href={`mailto:${ticket.user_email ?? ticket.email}`}
+                className="inline-flex items-center gap-1 mt-1 text-xs text-sky-400 hover:text-sky-300 transition-colors"
+              >
+                <Mail size={11} />
+                {ticket.user_email ?? ticket.email}
+              </a>
+            )}
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
             <X size={18} />
@@ -84,7 +94,7 @@ function TicketRow({ ticket, onReply, onDelete }) {
   const date = new Date(ticket.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3 hover:border-gray-700 transition-colors">
+    <div className={`bg-gray-900 border rounded-xl p-4 space-y-3 hover:border-gray-700 transition-colors ${ticket.category === 'unban' ? 'border-orange-500/40' : 'border-gray-800'}`}>
       <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -97,11 +107,21 @@ function TicketRow({ ticket, onReply, onDelete }) {
             <span className="text-gray-500 text-xs">{date}</span>
           </div>
           <p className="text-white font-semibold text-sm mt-1.5">{ticket.subject}</p>
-          <p className="text-gray-400 text-xs mt-0.5">
-            {ticket.user_name
-              ? `${ticket.user_name} (${ticket.user_email ?? '—'})`
-              : ticket.email ?? 'Utilisateur anonyme'}
-          </p>
+          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+            <span className="text-gray-400 text-xs">
+              {ticket.user_name ?? 'Utilisateur anonyme'}
+            </span>
+            {(ticket.user_email || ticket.email) && (
+              <a
+                href={`mailto:${ticket.user_email ?? ticket.email}`}
+                className="inline-flex items-center gap-1 text-xs text-sky-400 hover:text-sky-300 transition-colors"
+                onClick={e => e.stopPropagation()}
+              >
+                <Mail size={11} />
+                {ticket.user_email ?? ticket.email}
+              </a>
+            )}
+          </div>
         </div>
         <div className="flex gap-1 shrink-0">
           {!answered && (
@@ -141,16 +161,21 @@ export default function AdminSupport() {
   const [filter, setFilter] = useState('all');
   const [replyTicket, setReplyTicket] = useState(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const { tickets: data } = await adminApi.get('/support');
-      setTickets(data);
+      setTickets(data ?? []);
     } catch { /* silent */ } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+    const interval = setInterval(() => load(true), 30000);
+    return () => clearInterval(interval);
+  }, [load]);
 
   const handleDelete = async (id) => {
     if (!window.confirm('Supprimer ce ticket ?')) return;
@@ -166,7 +191,12 @@ export default function AdminSupport() {
   };
 
   const unansweredCount = tickets.filter(t => !t.admin_reply).length;
-  const displayed = filter === 'unanswered' ? tickets.filter(t => !t.admin_reply) : tickets;
+  const unbanCount = tickets.filter(t => t.category === 'unban').length;
+  const displayed = filter === 'unanswered'
+    ? tickets.filter(t => !t.admin_reply)
+    : filter === 'unban'
+      ? tickets.filter(t => t.category === 'unban')
+      : tickets;
 
   return (
     <AdminLayout>
@@ -180,18 +210,28 @@ export default function AdminSupport() {
               <p className="text-gray-400 text-sm">{tickets.length} ticket{tickets.length !== 1 ? 's' : ''} au total</p>
             </div>
           </div>
-          {unansweredCount > 0 && (
-            <span className="bg-amber-500/15 text-amber-400 text-sm font-bold px-3 py-1 rounded-full">
-              {unansweredCount} en attente
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {unansweredCount > 0 && (
+              <span className="bg-amber-500/15 text-amber-400 text-sm font-bold px-3 py-1 rounded-full">
+                {unansweredCount} en attente
+              </span>
+            )}
+            <button
+              onClick={() => load()}
+              title="Rafraîchir"
+              className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+            >
+              <RefreshCw size={15} />
+            </button>
+          </div>
         </div>
 
         {/* Filter tabs */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {[
             { id: 'all', label: 'Tous' },
             { id: 'unanswered', label: 'Non répondus' },
+            { id: 'unban', label: `Déban${unbanCount > 0 ? ` (${unbanCount})` : ''}` },
           ].map(({ id, label }) => (
             <button
               key={id}

@@ -109,7 +109,7 @@ router.post('/google', loginLimiter, async (req, res, next) => {
 
     // 3.5. Check if account is banned
     if (user.is_banned) {
-      return res.status(403).json({ error: 'Ton compte a été suspendu.', code: 'ACCOUNT_BANNED' });
+      return res.status(403).json({ error: 'Ton compte a été suspendu.', code: 'ACCOUNT_BANNED', reason: user.banned_reason || null });
     }
 
     // 4. Set refresh token cookie (30 days)

@@ -74,6 +74,53 @@ cd /var/www/mirora.cloud/backend && PORT=5000 pm2 start ecosystem.config.cjs --o
 pm2 save
 ```
 
+## Changelog — 2026-04-25 (Sous-agents correction + Ban UX + Support unban)
+
+### 🤖 Sous-agents de correction Aron (/exs et /ana)
+
+**Nouveau fichier :** `backend/src/services/correctionAgents.js`
+
+3 sous-agents GPT spécialisés, sélectionnés automatiquement selon le type d'exercice :
+
+| Agent | Type | Tokens | Spécificité |
+|---|---|---|---|
+| `correctQCMAgent` | QCM | 350 | Explique pourquoi la réponse choisie est fausse + pourquoi la bonne est correcte |
+| `correctOpenAgent` | Ouvertes | 500 | Évalue exactitude, complétude, terminologie selon la matière |
+| `correctPracticalAgent` | Pratiques | 600 | Vérifie la démarche étape par étape (bon résultat + mauvaise méthode = isPartial) |
+
+`dispatchCorrectionAgent({ type, ... })` sélectionne le bon agent selon `item.type`.
+
+**`subjectPrompts.js`** — champ `correctionRules` ajouté pour les 9 matières. Critères injectés dans chaque prompt de correction (ex : physique → unités obligatoires, histoire → date incorrecte = isCorrect: false, néerlandais → de/het toujours évalué).
+
+**`assistantService.js`** :
+- `correctSingleItem()` → délègue au dispatcher (plus de prompt inline).
+- `correctExercises()` (batch `/correct`) → enrichi avec `correctionRules` + critères par type.
+
+**`assistantRoutes.js`** → passe `options` et `correct_answer` à `correctSingleItem` pour le QCM agent.
+
+### 🔴 Ban — message plus visible
+
+**`Login.jsx`** — bannière de ban : fond `bg-red-600` solide (plus de transparence `/10`), `border-2 border-red-500`, texte blanc, `backdropFilter: none + boxShadow: none` pour supprimer le glow glassmorphism.
+
+**`authRoutes.js`** — route `/login` retourne maintenant `reason: user.banned_reason` (était absent, seul le middleware le retournait).
+
+**`AuthContext.jsx`** — `loginWithGoogle` utilise aussi la `reason` du ban si présente.
+
+**`Login.jsx`** — le sous-titre de raison ne s'affiche que si différent du message générique (évite la duplication de texte quand pas de raison).
+
+### 📬 Support — demandes de déban
+
+**`support_tickets.category`** — ENUM étendu avec `'unban'`.
+
+**`supportRoutes.js`** — endpoint `/tickets/unban-request` : ticket toujours créé (plus de vérification silencieuse email/banned). Si l'email matche un compte banni → lie le ticket au `user_id`. Sinon → stocke l'email anonymement. `category: 'unban'` systématique.
+
+**`AdminSupport.jsx`** :
+- Rafraîchissement automatique toutes les 30 secondes + bouton manuel.
+- Onglet filtre **"Déban (N)"** pour isoler les demandes de débannissement.
+- Badge orange + bordure orange sur les tickets `category = 'unban'`.
+
+---
+
 ## Changelog — 2026-04-19 (TTS fallback + quiz 4 questions + impression + panel admin)
 
 ### 🎙️ TTS — Fallback ElevenLabs → OpenAI

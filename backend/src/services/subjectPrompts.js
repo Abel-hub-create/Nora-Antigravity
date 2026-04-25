@@ -50,6 +50,13 @@ QUIZ — MATHÉMATIQUES :
 - Une question par concept-clé du cours ; ne pas regrouper deux notions dans une seule question.
 - SIGNES OBLIGATOIRES dans toutes les formules : moins → "-", plus → "+", diviser → ":", fois → ".", espace → " ". Jamais de LaTeX (\\(...\\), $...$, etc.).`,
 
+    correctionRules: `
+CORRECTION — MATHÉMATIQUES :
+- Identifier l'étape précise de la démarche qui est incorrecte, pas seulement signaler que c'est faux.
+- Résultat final correct mais démarche incorrecte → isPartial: true.
+- Unité manquante ou incorrecte → isPartial: true (jamais isCorrect).
+- Formule incorrecte utilisée → nommer la bonne formule et expliquer pourquoi elle s'applique ici.
+- Condition de validité non respectée → signaler quel domaine/restriction a été ignoré.`,
     emphasis: 'Rigueur : formule + conditions + exemple. Chaque notion est une unité autonome.'
   },
 
@@ -84,6 +91,12 @@ QUIZ — FRANÇAIS :
 - Littérature : relier une citation à son auteur/œuvre parmi 4 options issues du cours.
 - Ne jamais créer une question dont la réponse dépend d'une connaissance extérieure au cours.`,
 
+    correctionRules: `
+CORRECTION — FRANÇAIS :
+- Citation reformulée ou approximative → isPartial: true même si le sens est juste.
+- Distinguer si l'erreur porte sur la règle théorique ou sur son application.
+- Analyse littéraire sans ancrage textuel (argument hors cours) → isPartial ou isCorrect: false.
+- Nom propre, titre d'œuvre ou terme-clé mal orthographié → mentionner explicitement dans le feedback.`,
     emphasis: 'Citations intactes, distinction notions/texte, règles + exemples du cours uniquement.'
   },
 
@@ -118,6 +131,12 @@ QUIZ — PHYSIQUE :
 - Question sur les unités : "Quelle est l'unité de [grandeur] ?" avec distracteurs = unités proches mais incorrectes.
 - Ne jamais créer une question de physique sans unités dans les options de réponse.`,
 
+    correctionRules: `
+CORRECTION — PHYSIQUE :
+- Formule correcte mais sans unités → isPartial: true.
+- Résultat numérique correct sans unité → isPartial: true, signaler l'unité manquante.
+- Identifier quelle étape de la démarche (identification des grandeurs, application de la loi, calcul) est incorrecte.
+- Condition de validité de la loi ignorée → mentionner explicitement quelle restriction n'a pas été respectée.`,
     emphasis: 'Formule + unités + conditions : toujours les trois ensemble. Les unités ne sont pas optionnelles.'
   },
 
@@ -153,6 +172,12 @@ QUIZ — CHIMIE :
 - Erreur d'état physique comme distracteur (ex : H₂O(l) vs H₂O(g)).
 - Ne jamais inclure de réactions non présentes dans le cours.`,
 
+    correctionRules: `
+CORRECTION — CHIMIE :
+- Équation non équilibrée → isCorrect: false même si les bons réactifs/produits sont identifiés.
+- États physiques (s), (l), (g), (aq) manquants → isPartial: true si le cours les requiert.
+- Nomenclature incorrecte (nom ou formule du composé) → citer la règle exacte et la forme correcte.
+- Coefficient stœchiométrique erroné → pointer l'erreur et expliquer comment équilibrer.`,
     emphasis: 'Équations exactes avec états, nomenclature complète, aucune correction silencieuse des formules OCR.'
   },
 
@@ -188,6 +213,12 @@ QUIZ — BIOLOGIE :
 - Identification de termes : "Quel terme désigne [description fonctionnelle] ?" parmi 4 termes du cours.
 - Données chiffrées : "Quel est le pH de [milieu] selon le cours ?" avec distracteurs = valeurs plausibles mais incorrectes.`,
 
+    correctionRules: `
+CORRECTION — BIOLOGIE :
+- Terme scientifique remplacé par un synonyme courant → isPartial: true, donner le terme exact.
+- Processus décrit sans ordre d'étapes ou dans le mauvais ordre → isPartial: true.
+- Donnée chiffrée (pH, durée, température) absente alors qu'elle est centrale → pointer l'oubli.
+- Lien structure/fonction absent alors qu'il est la clé de la réponse → isPartial: true.`,
     emphasis: 'Processus en étapes numérotées, termes scientifiques exacts, structure → fonction toujours liés.'
   },
 
@@ -224,6 +255,12 @@ QUIZ — HISTOIRE :
 - Distracteurs : dates proches mais incorrectes, noms de personnages confondables, causes secondaires présentées comme principales.
 - Ne jamais créer de question d'opinion ou d'interprétation sans ancrage dans le cours.`,
 
+    correctionRules: `
+CORRECTION — HISTOIRE :
+- Date incorrecte ou approximative → isCorrect: false, donner la date exacte du cours.
+- Cause confondue avec une conséquence (ou inversement) → expliquer la distinction clairement.
+- Nom propre mal orthographié (personnage, traité, bataille) → mentionner l'orthographe exacte.
+- Événement sans sa date alors que la question l'implique → isPartial: true.`,
     emphasis: 'Date + Causes + Faits + Conséquences : chaque événement est une unité complète et datée.'
   },
 
@@ -260,6 +297,12 @@ QUIZ — GÉOGRAPHIE :
 - Distracteurs : pays/régions géographiquement proches, données chiffrées proches de la réalité mais incorrectes selon le cours.
 - Ne jamais créer une question sur un lieu non mentionné dans le cours.`,
 
+    correctionRules: `
+CORRECTION — GÉOGRAPHIE :
+- Nom géographique approximatif ou incomplet → isPartial: true, donner le nom exact.
+- Donnée chiffrée sans unité → isPartial: true.
+- Localisation vague ("en Europe") au lieu de précise ("en France, région X") → pointer l'imprécision.
+- Relation spatiale centrale à la réponse absente → mentionner ce qui manque.`,
     emphasis: 'Aucun nom géographique omis. Données avec unités et dates. Localisation précise toujours.'
   },
 
@@ -295,6 +338,12 @@ QUIZ — ENGLISH:
 - Distractors: grammatically plausible but incorrect forms, near-synonyms with different usage.
 - Never create cultural general knowledge questions unrelated to course content.`,
 
+    correctionRules: `
+CORRECTION — ENGLISH :
+- Grammar rule incorrectly applied → identify the specific rule and give the correct form.
+- Vocabulary used in wrong context → explain the nuance and the correct usage from the course.
+- Course example rephrased or altered → isPartial: true, give the exact course version.
+- Irregular verb form wrong → give the full paradigm (base form, past simple, past participle).`,
     emphasis: 'Rules + exact course examples always together. Never drop vocabulary items, never rephrase examples.'
   },
 
@@ -330,6 +379,12 @@ QUIZ — NÉERLANDAIS :
 - Distracteurs : mots phonétiquement proches, erreurs d'accord fréquentes, confusion de/het.
 - Ne jamais inclure de vocabulaire ou règles non présents dans le cours.`,
 
+    correctionRules: `
+CORRECTION — NÉERLANDAIS :
+- Article de/het incorrect → isCorrect: false, c'est une erreur fondamentale à corriger explicitement.
+- Forme d'un verbe irrégulier incorrecte → donner les trois formes correctes (infinitif, passé, participe).
+- Verbe séparable mal positionné ou non séparé → expliquer la règle de séparation.
+- Genre absent sur un mot de vocabulaire → rappeler systématiquement l'article de/het correct.`,
     emphasis: 'Article de/het systématique, exceptions complètes, listes de vocabulaire intégrales sans exception.'
   }
 };

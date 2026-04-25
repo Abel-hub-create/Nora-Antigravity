@@ -98,7 +98,7 @@ export const AuthProvider = ({ children }) => {
       const code = err.response?.data?.code;
       let message;
       if (code === 'ACCOUNT_BANNED') {
-        message = i18n.t('errors.accountBanned');
+        message = err.response?.data?.reason || i18n.t('errors.accountBanned');
       } else {
         message = err.response?.data?.error || i18n.t('errors.googleLoginFailed');
       }

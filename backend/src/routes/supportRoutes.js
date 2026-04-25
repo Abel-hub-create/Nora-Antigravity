@@ -1,10 +1,21 @@
 import express from 'express';
 import { z } from 'zod';
+import rateLimit from 'express-rate-limit';
 import { authenticate } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validation.js';
 import * as supportRepo from '../services/supportRepository.js';
+import { query } from '../config/database.js';
 
 const router = express.Router();
+
+const unbanLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3,
+  message: { error: 'Trop de demandes, réessayez dans une heure' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for']?.split(',')[0] || req.ip,
+});
 
 const createTicketSchema = z.object({
   body: z.object({
@@ -23,11 +34,21 @@ const unbanRequestSchema = z.object({
 });
 
 // Public — accessible for banned users who can't log in
-router.post('/unban-request', validate(unbanRequestSchema), async (req, res, next) => {
+router.post('/unban-request', unbanLimiter, validate(unbanRequestSchema), async (req, res, next) => {
   try {
     const { email, subject, message } = req.body;
-    const id = await supportRepo.createTicket({ userId: null, email, category: 'other', subject, message });
-    res.json({ ok: true, id });
+    const [bannedUser] = await query(
+      'SELECT id FROM users WHERE email = ? AND is_banned = 1',
+      [email.toLowerCase().trim()]
+    );
+    await supportRepo.createTicket({
+      userId: bannedUser?.id ?? null,
+      email: bannedUser ? null : email,
+      category: 'unban',
+      subject,
+      message,
+    });
+    res.json({ ok: true });
   } catch (e) { next(e); }
 });
 

@@ -46,10 +46,13 @@ const Login = () => {
   const isEmailNotVerified = errorCode === 'EMAIL_NOT_VERIFIED';
   const isBanned = errorCode === 'ACCOUNT_BANNED';
 
+  const [unbanError, setUnbanError] = useState('');
+
   const handleUnbanSubmit = async (e) => {
     e.preventDefault();
     if (!unbanEmail.trim() || !unbanSubject.trim() || !unbanMessage.trim()) return;
     setUnbanSending(true);
+    setUnbanError('');
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
       const res = await fetch(`${API_URL}/tickets/unban-request`, {
@@ -57,8 +60,15 @@ const Login = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: unbanEmail.trim(), subject: unbanSubject.trim(), message: unbanMessage.trim() }),
       });
-      if (res.ok) setUnbanSent(true);
-    } catch { /* silent */ } finally {
+      if (res.ok) {
+        setUnbanSent(true);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setUnbanError(data?.error ?? t('errors.generic'));
+      }
+    } catch {
+      setUnbanError(t('errors.generic'));
+    } finally {
       setUnbanSending(false);
     }
   };
@@ -159,30 +169,32 @@ const Login = () => {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-sm space-y-1"
+                className="bg-red-600 border-2 border-red-500 rounded-xl p-4 text-white text-sm space-y-1"
+                style={{ backdropFilter: 'none', boxShadow: 'none' }}
               >
-                <p className="font-medium">{t('errors.accountBanned')}</p>
-                {(banReason || (isBanned && authError)) && (
-                  <p className="text-red-400/80 opacity-80">{banReason || authError}</p>
+                <p className="font-bold text-base">{t('errors.accountBanned')}</p>
+                {(banReason || (isBanned && authError && authError !== t('errors.accountBanned'))) && (
+                  <p className="text-red-100 opacity-90 mt-1">{banReason || authError}</p>
                 )}
                 {!showUnbanForm && !unbanSent && (
                   <button
                     type="button"
                     onClick={() => setShowUnbanForm(true)}
-                    className="mt-2 flex items-center gap-1.5 text-red-300 hover:text-red-200 text-xs font-medium transition-colors"
+                    className="mt-2 flex items-center gap-1.5 text-red-100 hover:text-white text-xs font-medium transition-colors underline underline-offset-2"
                   >
                     <LifeBuoy size={13} />
                     {t('support.unbanContact')}
                   </button>
                 )}
                 {showUnbanForm && !unbanSent && (
-                  <form onSubmit={handleUnbanSubmit} className="mt-3 space-y-2 border-t border-red-500/20 pt-3">
+                  <form onSubmit={handleUnbanSubmit} className="mt-3 space-y-2 border-t border-red-400/40 pt-3">
                     <input
                       type="email"
                       value={unbanEmail}
                       onChange={e => setUnbanEmail(e.target.value)}
                       placeholder={t('support.emailPlaceholder')}
-                      className="w-full bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-xs text-red-200 placeholder-red-400/50 outline-none"
+                      className="w-full bg-red-800/60 border border-red-400/50 rounded-lg px-3 py-2 text-xs text-white placeholder-red-200/60 outline-none"
+                      style={{ backdropFilter: 'none', boxShadow: 'none' }}
                       required
                     />
                     <input
@@ -191,7 +203,8 @@ const Login = () => {
                       onChange={e => setUnbanSubject(e.target.value)}
                       placeholder={t('support.subjectPlaceholder')}
                       maxLength={200}
-                      className="w-full bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-xs text-red-200 placeholder-red-400/50 outline-none"
+                      className="w-full bg-red-800/60 border border-red-400/50 rounded-lg px-3 py-2 text-xs text-white placeholder-red-200/60 outline-none"
+                      style={{ backdropFilter: 'none', boxShadow: 'none' }}
                       required
                     />
                     <textarea
@@ -200,13 +213,18 @@ const Login = () => {
                       placeholder={t('support.messagePlaceholder')}
                       rows={3}
                       maxLength={5000}
-                      className="w-full bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-xs text-red-200 placeholder-red-400/50 outline-none resize-none"
+                      className="w-full bg-red-800/60 border border-red-400/50 rounded-lg px-3 py-2 text-xs text-white placeholder-red-200/60 outline-none resize-none"
+                      style={{ backdropFilter: 'none', boxShadow: 'none' }}
                       required
                     />
+                    {unbanError && (
+                      <p className="text-xs text-white bg-red-800/80 rounded-lg px-2 py-1">{unbanError}</p>
+                    )}
                     <button
                       type="submit"
                       disabled={unbanSending}
-                      className="w-full py-2 rounded-lg text-xs font-semibold bg-red-500/20 hover:bg-red-500/30 text-red-200 transition-colors disabled:opacity-50"
+                      className="w-full py-2 rounded-lg text-xs font-semibold bg-red-800 hover:bg-red-700 text-white border border-red-400/50 transition-colors disabled:opacity-50"
+                      style={{ backdropFilter: 'none', boxShadow: 'none' }}
                     >
                       {unbanSending ? t('support.sending') : t('support.send')}
                     </button>

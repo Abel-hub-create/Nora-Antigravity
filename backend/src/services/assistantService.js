@@ -13,6 +13,7 @@
 import OpenAI from 'openai';
 import { chatCompletion } from './aiModelService.js';
 import { query } from '../config/database.js';
+import { dispatchCorrectionAgent } from './correctionAgents.js';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const MODEL = 'gpt-4o-mini';
@@ -545,79 +546,64 @@ export async function generateTTS(text, lang = 'fr') {
 
 // ─── /correct — Correction commentée ─────────────────────────────────────────
 
-export async function correctSingleItem({ subject, question, userAnswer, expectedAnswer, type, lang = 'fr' }) {
-  const subjectName = getSubjectName(subject, lang);
-  const langInstruction = getLangInstruction(lang);
-  const typeLabel = type === 'open' ? 'Open question' : 'Practical exercise';
-
-  const prompt = `LANGUAGE RULE (mandatory): ${langInstruction} All feedback and tips MUST be written in this language exclusively.
-
-You are a supportive teacher in ${subjectName}. Evaluate this student's answer.
-
-Type: ${typeLabel}
-Question: ${question}
-Expected answer: ${expectedAnswer || 'N/A'}
-Student's answer: ${userAnswer}
-
-Evaluate and respond ONLY in valid JSON:
-{
-  "isCorrect": true or false,
-  "isPartial": true or false,
-  "feedback": "if WRONG or PARTIAL — explain precisely WHY: what was misunderstood, what the correct reasoning is (2-4 sentences). If CORRECT — confirm what is right in 1-2 sentences.",
-  "tip": "one concrete actionable tip to help the student improve or not repeat this mistake"
-}`;
-
-  const response = await openai.chat.completions.create({
-    model: MODEL,
-    messages: [{ role: 'user', content: prompt }],
-    response_format: { type: 'json_object' },
-    max_tokens: 400,
-    temperature: 0.4
-  });
-
-  return JSON.parse(response.choices[0].message.content);
+export async function correctSingleItem({ subject, question, userAnswer, expectedAnswer, type, options, correctAnswer, lang = 'fr' }) {
+  return dispatchCorrectionAgent({ type, subject, question, options, correctAnswer, expectedAnswer, userAnswer, lang });
 }
 
 export async function correctExercises({ subject, items, lang = 'fr' }) {
   const subjectName = getSubjectName(subject, lang);
   const langInstruction = getLangInstruction(lang);
+  const correctionRules = (await import('./subjectPrompts.js')).SUBJECT_PROMPTS[subject]?.correctionRules?.trim() || '';
+
+  const TYPE_LABELS = { qcm: 'QCM', open: 'Question ouverte', practical: 'Exercice pratique' };
+  const TYPE_CRITERIA = {
+    qcm: `Pour les QCM : expliquer pourquoi la réponse choisie est fausse ET pourquoi la bonne réponse est correcte.`,
+    open: `Pour les questions ouvertes : évaluer l'exactitude, la complétude et la précision terminologique.`,
+    practical: `Pour les exercices pratiques : évaluer la DÉMARCHE étape par étape. Un résultat correct avec mauvaise méthode = isPartial: true.`
+  };
 
   const exercisesText = items.map((item, i) => {
-    const num = i + 1;
-    const typeLabel = item.type === 'qcm' ? 'MCQ' : item.type === 'open' ? 'Open question' : 'Practical exercise';
-    let text = `--- Exercise ${num} (${typeLabel}) ---\n`;
-    text += `Question: ${item.question}\n`;
+    const typeLabel = TYPE_LABELS[item.type] || item.type;
+    let text = `--- Exercice ${i + 1} (${typeLabel}) ---\n`;
+    text += `Question : ${item.question}\n`;
     if (item.type === 'qcm' && item.options) {
-      text += `Options: ${item.options.map((o, idx) => `${String.fromCharCode(65+idx)}) ${o}`).join(' | ')}\n`;
-      text += `Expected answer: ${String.fromCharCode(65 + (item.correct_answer ?? 0))}\n`;
+      text += `Options : ${item.options.map((o, idx) => `${String.fromCharCode(65 + idx)}) ${o}`).join(' | ')}\n`;
+      text += `Bonne réponse : ${String.fromCharCode(65 + (item.correct_answer ?? 0))}\n`;
     } else {
-      text += `Expected answer: ${item.expected_answer || 'N/A'}\n`;
+      text += `Réponse attendue : ${item.expected_answer || 'Non spécifiée'}\n`;
     }
-    text += `Student's answer: ${item.user_answer || '(no answer)'}\n`;
+    text += `Réponse de l'élève : ${item.user_answer || '(sans réponse)'}\n`;
     return text;
   }).join('\n');
 
+  const typeCriteriaBlock = [...new Set(items.map(i => i.type))]
+    .map(t => TYPE_CRITERIA[t]).filter(Boolean).join('\n');
+
   const prompt = `LANGUAGE RULE (mandatory): ${langInstruction} All feedback, comments and tips MUST be written in this language exclusively.
 
-You are a supportive teacher in ${subjectName}. Grade the following exercises and give personalized, encouraging feedback for each answer.
+Tu es un professeur de ${subjectName}, rigoureux et bienveillant. Corrige les exercices suivants et donne un feedback personnalisé pour chaque réponse.
+
+${correctionRules ? `CRITÈRES D'ÉVALUATION SPÉCIFIQUES À ${subjectName.toUpperCase()} :\n${correctionRules}\n` : ''}
+CRITÈRES PAR TYPE :
+${typeCriteriaBlock}
 
 ${exercisesText}
 
-For each exercise:
-- Evaluate if the answer is correct, partially correct, or incorrect
-- "feedback": if WRONG or PARTIAL — explain precisely WHY it is wrong: what concept was misunderstood, what the correct reasoning is, and what the student should have written. Be clear and educational, 2-4 sentences. If CORRECT — confirm what is right and why in 1-2 sentences.
-- "tip": a concrete, actionable advice to help the student not make this mistake again (1-2 sentences)
+Pour chaque exercice :
+- "isCorrect": true uniquement si la réponse est fondamentalement juste et suffisamment complète.
+- "isPartial": true si l'élève a la bonne idée mais il manque des éléments-clés, des unités, une précision, ou la démarche est incomplète.
+- "feedback": si FAUX ou PARTIEL — explique précisément POURQUOI : quel concept a été mal compris, quel est le bon raisonnement, ce qu'il aurait fallu écrire (2-4 phrases). Si CORRECT — confirme ce qui est juste et pourquoi (1-2 phrases).
+- "tip": un conseil concret et actionnable pour progresser (1-2 phrases).
 
-${langInstruction}
-Respond ONLY in valid JSON:
+Réponds UNIQUEMENT en JSON valide :
 {
   "corrections": [
     {
       "exerciseIndex": 0,
       "isCorrect": true,
       "isPartial": false,
-      "feedback": "Explanation of why the answer is right or wrong",
-      "tip": "Concrete tip to remember or improve"
+      "feedback": "...",
+      "tip": "..."
     }
   ]
 }`;
@@ -627,7 +613,7 @@ Respond ONLY in valid JSON:
     messages: [{ role: 'user', content: prompt }],
     response_format: { type: 'json_object' },
     max_tokens: 3000,
-    temperature: 0.5
+    temperature: 0.4
   });
 
   return JSON.parse(response.choices[0].message.content);

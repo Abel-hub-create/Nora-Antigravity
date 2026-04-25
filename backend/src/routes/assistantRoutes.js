@@ -245,6 +245,8 @@ router.post('/correct-item', express.json({ limit: '50kb' }), async (req, res, n
       question: item.question,
       userAnswer: item.user_answer,
       expectedAnswer: item.expected_answer,
+      options: item.options,
+      correctAnswer: item.correct_answer,
       type: item.type,
       lang
     });
