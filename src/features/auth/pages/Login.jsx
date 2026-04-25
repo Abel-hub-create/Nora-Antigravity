@@ -48,8 +48,7 @@ const Login = () => {
 
   const [unbanError, setUnbanError] = useState('');
 
-  const handleUnbanSubmit = async (e) => {
-    e.preventDefault();
+  const handleUnbanSubmit = async () => {
     if (!unbanEmail.trim() || !unbanSubject.trim() || !unbanMessage.trim()) return;
     setUnbanSending(true);
     setUnbanError('');
@@ -187,7 +186,7 @@ const Login = () => {
                   </button>
                 )}
                 {showUnbanForm && !unbanSent && (
-                  <form onSubmit={handleUnbanSubmit} className="mt-3 space-y-2 border-t border-red-400/40 pt-3">
+                  <div className="mt-3 space-y-2 border-t border-red-400/40 pt-3">
                     <input
                       type="email"
                       value={unbanEmail}
@@ -195,7 +194,6 @@ const Login = () => {
                       placeholder={t('support.emailPlaceholder')}
                       className="w-full bg-red-800/60 border border-red-400/50 rounded-lg px-3 py-2 text-xs text-white placeholder-red-200/60 outline-none"
                       style={{ backdropFilter: 'none', boxShadow: 'none' }}
-                      required
                     />
                     <input
                       type="text"
@@ -205,7 +203,6 @@ const Login = () => {
                       maxLength={200}
                       className="w-full bg-red-800/60 border border-red-400/50 rounded-lg px-3 py-2 text-xs text-white placeholder-red-200/60 outline-none"
                       style={{ backdropFilter: 'none', boxShadow: 'none' }}
-                      required
                     />
                     <textarea
                       value={unbanMessage}
@@ -215,20 +212,20 @@ const Login = () => {
                       maxLength={5000}
                       className="w-full bg-red-800/60 border border-red-400/50 rounded-lg px-3 py-2 text-xs text-white placeholder-red-200/60 outline-none resize-none"
                       style={{ backdropFilter: 'none', boxShadow: 'none' }}
-                      required
                     />
                     {unbanError && (
                       <p className="text-xs text-white bg-red-800/80 rounded-lg px-2 py-1">{unbanError}</p>
                     )}
                     <button
-                      type="submit"
-                      disabled={unbanSending}
+                      type="button"
+                      onClick={handleUnbanSubmit}
+                      disabled={unbanSending || !unbanEmail.trim() || !unbanSubject.trim() || !unbanMessage.trim()}
                       className="w-full py-2 rounded-lg text-xs font-semibold bg-red-800 hover:bg-red-700 text-white border border-red-400/50 transition-colors disabled:opacity-50"
                       style={{ backdropFilter: 'none', boxShadow: 'none' }}
                     >
                       {unbanSending ? t('support.sending') : t('support.send')}
                     </button>
-                  </form>
+                  </div>
                 )}
                 {unbanSent && (
                   <p className="mt-2 text-xs text-green-400 font-medium">{t('support.unbanSentTitle')} — {t('support.unbanSentSubtitle')}</p>
