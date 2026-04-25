@@ -74,6 +74,14 @@ cd /var/www/mirora.cloud/backend && PORT=5000 pm2 start ecosystem.config.cjs --o
 pm2 save
 ```
 
+## Changelog — 2026-04-25 (fix: formulaire déban — form imbriquée)
+
+### 🐛 Formulaire déban — soumissions silencieusement ignorées
+
+**`Login.jsx`** — le formulaire déban était un `<form>` imbriqué à l'intérieur du `<form>` de login. HTML interdit les formulaires imbriqués : les navigateurs ignorent le formulaire intérieur, donc cliquer "Envoyer" déclenchait le submit du login au lieu d'envoyer la demande de déban. **Fix :** remplacé le `<form>` intérieur par un `<div>`, bouton `type="button"` avec `onClick={handleUnbanSubmit}`, désactivé si les champs sont vides.
+
+---
+
 ## Changelog — 2026-04-25 (Sous-agents correction + Ban UX + Support unban)
 
 ### 🤖 Sous-agents de correction Aron (/exs et /ana)
