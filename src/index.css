@@ -261,6 +261,8 @@
   @apply bg-surface rounded-full;
 }
 
+.card-scroll-hidden::-webkit-scrollbar { display: none; }
+
 /* Theme-aware utility overrides */
 /* Light theme (default): white/X becomes black/X for visibility */
 :root .bg-white\/5,

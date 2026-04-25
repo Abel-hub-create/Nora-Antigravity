@@ -89,6 +89,7 @@ export default function Card({ card, scale = 1, onClick, onLongPress, showFlipHi
       onPointerDown={handlePointerDown}
       onPointerUp={cancelLong}
       onPointerLeave={cancelLong}
+      onPointerCancel={cancelLong}
       title={card?.card_name}
     >
       <div style={{
@@ -146,12 +147,16 @@ export default function Card({ card, scale = 1, onClick, onLongPress, showFlipHi
             display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
             background:'rgba(0,0,0,0.55)',
             borderTop:`1px solid ${cfg.color}30`,
+            padding: `0 ${pad}px`,
+            overflow:'hidden',
           }}>
             <span style={{
               fontSize: textSz(10), fontWeight:800,
               color: cfg.color,
               letterSpacing:'.06em', textTransform:'uppercase',
               textShadow:`0 0 12px ${cfg.color}99`,
+              maxWidth:'100%', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
+              display:'block',
             }}>{card?.author}</span>
             {showFlipHint && (
               <span style={{ fontSize: textSz(6.5), color:'rgba(255,255,255,0.35)', marginTop: 2, letterSpacing:'.04em' }}>
@@ -162,20 +167,28 @@ export default function Card({ card, scale = 1, onClick, onLongPress, showFlipHi
         </div>
 
         {/* ── VERSO ── */}
-        <div style={{ ...faceBase, transform:'rotateY(180deg)', display:'flex', flexDirection:'column', justifyContent:'center', padding: Math.round(14*scale) }}>
+        <div style={{ ...faceBase, transform:'rotateY(180deg)', display:'flex', flexDirection:'column', padding: Math.round(10*scale) }}>
           {cfg.stars && <Stars n={Math.round(8*scale)} color={cfg.color} />}
 
-          <p style={{ fontSize:textSz(8.5), fontStyle:'italic', color:'#fff', textAlign:'center', lineHeight:1.55, marginBottom:Math.round(10*scale) }}>
-            "{card?.quote}"
-          </p>
+          {/* Scrollable content — hidden scrollbar */}
+          <div className="card-scroll-hidden" style={{
+            flex:1, minHeight:0,
+            overflowY:'auto', overflowX:'hidden',
+            display:'flex', flexDirection:'column',
+            scrollbarWidth:'none', msOverflowStyle:'none',
+          }}>
+            <p style={{ fontSize:textSz(8.5), fontStyle:'italic', color:'#fff', textAlign:'center', lineHeight:1.55, marginBottom:Math.round(8*scale), flexShrink:0 }}>
+              "{card?.quote}"
+            </p>
 
-          <div style={{ height:1, background:`linear-gradient(to right,transparent,${cfg.color}80,transparent)`, marginBottom:Math.round(10*scale) }} />
+            <div style={{ height:1, flexShrink:0, background:`linear-gradient(to right,transparent,${cfg.color}80,transparent)`, marginBottom:Math.round(8*scale) }} />
 
-          <p style={{ fontSize:textSz(7), color:'rgba(255,255,255,0.55)', textAlign:'center', lineHeight:1.45 }}>
-            {card?.explanation}
-          </p>
+            <p style={{ fontSize:textSz(7), color:'rgba(255,255,255,0.55)', textAlign:'center', lineHeight:1.45, flexShrink:0 }}>
+              {card?.explanation}
+            </p>
+          </div>
 
-          <p style={{ fontSize:textSz(7), color:cfg.color, textAlign:'center', marginTop:Math.round(12*scale), opacity:.65, letterSpacing:'.08em' }}>
+          <p style={{ fontSize:textSz(7), color:cfg.color, textAlign:'center', paddingTop:Math.round(6*scale), flexShrink:0, opacity:.65, letterSpacing:'.08em' }}>
             {SYMBOL[card?.rarity]} {cfg.label}
           </p>
         </div>
