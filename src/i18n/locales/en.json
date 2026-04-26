@@ -1096,7 +1096,8 @@
     "comingSoon": "Soon",
     "prevPage": "Previous",
     "nextPage": "Next",
-    "hint": "Your collected cards will appear here. Open boosters to fill your binder!"
+    "hint": "Your collected cards will appear here. Open boosters to fill your binder!",
+    "longPressHint": "Long press a card to view it"
   },
   "leaderboard": {
     "title": "Leaderboard",
@@ -1196,5 +1197,21 @@
     "emailPlaceholder": "So we can get back to you",
     "unbanSentTitle": "Message sent",
     "unbanSentSubtitle": "We'll review your request as soon as possible."
+  },
+  "share": {
+    "title": "Share summary",
+    "placeholder": "Recipient's code (e.g. SleepyBadger)",
+    "sent": "Summary sent successfully!",
+    "sendBtn": "Send summary",
+    "synthesesCount": "summaries",
+    "errors": {
+      "userNotFound": "No user found with this code.",
+      "notPremiumSender": "Sharing is reserved for Premium and School members.",
+      "quotaFull": "This member has reached their summary limit.",
+      "selfShare": "You can't send a summary to yourself.",
+      "generic": "An error occurred. Please try again."
+    },
+    "recipientQuotaFull": "{{name}} has reached their summary limit ({{max}}).",
+    "recipientNotPremium": "{{name}} is not a Premium or School member."
   }
 }

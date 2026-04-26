@@ -14,11 +14,14 @@ const POOL_HIGH    = { rare: 30, epique: 20, mythique: 10, legendaire: 5, dot: 1
 // For daily card generation (full spectrum)
 const POOL_DAILY = { commun: 70, chill: 60, rare: 40, epique: 20, mythique: 10, legendaire: 5, dot: 1 };
 
-// Pack definitions: { boosters, cost }
+// Pack definitions: { boosters, cost, set }
 const PACKS = {
-  one:  { boosters: 1,  cost: 100 },
-  five: { boosters: 5,  cost: 400 },
-  ten:  { boosters: 10, cost: 800 },
+  'mh-one':  { boosters: 1,  cost: 100, set: 'Mascarade humaine' },
+  'mh-five': { boosters: 5,  cost: 400, set: 'Mascarade humaine' },
+  'mh-ten':  { boosters: 10, cost: 800, set: 'Mascarade humaine' },
+  'ds-one':  { boosters: 1,  cost: 100, set: 'Domination Silencieuse' },
+  'ds-five': { boosters: 5,  cost: 400, set: 'Domination Silencieuse' },
+  'ds-ten':  { boosters: 10, cost: 800, set: 'Domination Silencieuse' },
 };
 
 // Daily prices per rarity
@@ -64,6 +67,19 @@ function buildBooster(cardsByRarity) {
   ];
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+async function getSlotNumberMap() {
+  const ordered = await query("SELECT id, set_abbr FROM cards ORDER BY FIELD(set_abbr,'MH','DS'), rarity_order, id");
+  const counters = {};
+  const map = {};
+  for (const c of ordered) {
+    counters[c.set_abbr] = (counters[c.set_abbr] ?? 0) + 1;
+    map[c.id] = counters[c.set_abbr];
+  }
+  return map;
+}
+
 // ── Exports ───────────────────────────────────────────────────────────────────
 
 export async function getAllCards() {
@@ -88,7 +104,7 @@ export async function openPack(userId, packType) {
   const packDef = PACKS[packType];
   if (!packDef) throw new Error('Pack inconnu');
 
-  const allCards = await query('SELECT * FROM cards');
+  const allCards = await query('SELECT * FROM cards WHERE set_name = ?', [packDef.set]);
   const byRarity = groupByRarity(allCards);
 
   // Build all boosters
@@ -118,17 +134,27 @@ export async function openPack(userId, packType) {
     const copyCounts = {};
     for (const row of countRows) copyCounts[row.card_id] = Number(row.cnt);
 
+    let skipped = 0;
     for (const card of allPulled) {
       const current = copyCounts[card.id] ?? 0;
-      if (current >= maxCopies) continue; // already at max, skip silently
+      if (current >= maxCopies) { skipped++; continue; }
       await conn.query(
         'INSERT INTO user_cards (user_id, card_id, source) VALUES (?, ?, ?)',
         [userId, card.id, 'pack']
       );
       copyCounts[card.id] = current + 1;
     }
+    // Proportional refund for slots skipped due to copy cap
+    if (skipped > 0) {
+      const refund = Math.round(packDef.cost * skipped / allPulled.length);
+      if (refund > 0) {
+        await conn.query('UPDATE users SET coins = coins + ? WHERE id = ?', [refund, userId]);
+      }
+    }
     await conn.commit(); conn.release();
-    return { packs, cost: packDef.cost };
+    const slotMap = await getSlotNumberMap();
+    const packsWithSlots = packs.map(booster => booster.map(c => ({ ...c, slot_number: slotMap[c.id] ?? null })));
+    return { packs: packsWithSlots, cost: packDef.cost, skipped };
   } catch (err) {
     await conn.rollback(); conn.release();
     throw err;
@@ -147,21 +173,24 @@ export async function getDailyCards(userId) {
   if (existing.length >= 6) {
     dailyCardIds = existing.map(r => r.card_id);
   } else {
-    const allCards = await query('SELECT * FROM cards');
-    const byRarity = groupByRarity(allCards);
+    const pickSet = async (setName, n) => {
+      const setCards = await query('SELECT * FROM cards WHERE set_name = ?', [setName]);
+      const byR = groupByRarity(setCards);
+      const counts = {}, chosen = [];
+      let attempts = 0;
+      while (chosen.length < n && attempts < 200) {
+        attempts++;
+        const card = pickCard(byR, POOL_DAILY);
+        if ((counts[card.id] ?? 0) >= 2) continue;
+        counts[card.id] = (counts[card.id] ?? 0) + 1;
+        chosen.push(card);
+      }
+      return chosen;
+    };
 
-    // Generate 6 cards weighted by POOL_DAILY, max 3 identical
-    const counts = {};
-    const chosen = [];
-    let attempts = 0;
-
-    while (chosen.length < 6 && attempts < 200) {
-      attempts++;
-      const card = pickCard(byRarity, POOL_DAILY);
-      if ((counts[card.id] ?? 0) >= 3) continue;
-      counts[card.id] = (counts[card.id] ?? 0) + 1;
-      chosen.push(card);
-    }
+    const mhCards = await pickSet('Mascarade humaine', 3);
+    const dsCards = await pickSet('Domination Silencieuse', 3);
+    const chosen = [...mhCards, ...dsCards];
 
     await query('DELETE FROM shop_daily_cards WHERE user_id = ? AND valid_date != ?', [userId, today]);
     for (let i = 0; i < chosen.length; i++) {
@@ -170,7 +199,12 @@ export async function getDailyCards(userId) {
         [userId, i + 1, chosen[i].id, today]
       );
     }
-    dailyCardIds = chosen.map(c => c.id);
+    // Re-SELECT to get what's actually persisted (INSERT IGNORE may have skipped on race/partial state)
+    const stored = await query(
+      'SELECT card_id FROM shop_daily_cards WHERE user_id = ? AND valid_date = ? ORDER BY card_slot',
+      [userId, today]
+    );
+    dailyCardIds = stored.map(r => r.card_id);
   }
 
   if (!dailyCardIds.length) return [];
@@ -224,16 +258,20 @@ export async function buyDailyCard(userId, cardId) {
   }
 }
 
-// Full catalogue with user's copy count (for binder — 26 fixed slots)
+// Full catalogue with user's copy count (for binder — grouped by set, slot per set)
 export async function getUserCollection(userId) {
-  const allCards = await query('SELECT * FROM cards ORDER BY rarity_order, id');
+  const allCards = await query("SELECT * FROM cards ORDER BY FIELD(set_abbr,'MH','DS'), rarity_order, id");
   const counts = await query(
     'SELECT card_id, COUNT(*) AS cnt FROM user_cards WHERE user_id = ? GROUP BY card_id',
     [userId]
   );
   const countMap = {};
   for (const row of counts) countMap[row.card_id] = Number(row.cnt);
-  return allCards.map(c => ({ ...c, count: countMap[c.id] ?? 0 }));
+  const setCounters = {};
+  return allCards.map(c => {
+    setCounters[c.set_abbr] = (setCounters[c.set_abbr] ?? 0) + 1;
+    return { ...c, slot_number: setCounters[c.set_abbr], count: countMap[c.id] ?? 0 };
+  });
 }
 
 export async function getSetProgress(userId) {

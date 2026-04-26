@@ -59,7 +59,7 @@ export async function getInbox(userId) {
   return query(
     `SELECT
        r.id, r.created_at, r.status,
-       c.id AS card_id, c.card_name, c.author, c.image, c.rarity, c.rarity_order, c.quote, c.explanation,
+       c.id AS card_id, c.card_name, c.set_name, c.set_abbr, c.author, c.image, c.rarity, c.rarity_order, c.quote, c.explanation,
        u.id AS initiator_id, u.name AS initiator_name, u.level AS initiator_level, u.avatar AS initiator_avatar
      FROM card_trade_requests r
      JOIN cards c ON c.id = r.offered_card_id
@@ -212,11 +212,19 @@ export async function acceptRequest(requestId, receiverId, requestedCardId) {
       'DELETE FROM user_cards WHERE user_id = ? AND card_id = ? LIMIT 1',
       [initiator_id, offered_card_id]
     );
+    if (delInit.affectedRows !== 1) {
+      await conn.rollback(); conn.release();
+      return { error: 'INITIATOR_CARD_GONE' };
+    }
     // Remove 1 copy: receiver loses requested card
-    await conn.query(
+    const [delRecv] = await conn.query(
       'DELETE FROM user_cards WHERE user_id = ? AND card_id = ? LIMIT 1',
       [receiverId, requestedCardId]
     );
+    if (delRecv.affectedRows !== 1) {
+      await conn.rollback(); conn.release();
+      return { error: 'RECEIVER_CARD_GONE' };
+    }
 
     // Receiver gains offered card
     await conn.query(

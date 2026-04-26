@@ -52,8 +52,8 @@ function CardItem({ card, onSelect, onStockFull }) {
           </div>
         )}
       </div>
-      <span style={{ fontSize: 8, color: cfg.color, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', maxWidth: 72, textAlign: 'center', lineHeight: 1.2 }}>
-        {card.card_name}
+      <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.4)', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', maxWidth: 72, textAlign: 'center', lineHeight: 1.2 }}>
+        {card.set_abbr === 'MH' ? 'MH' : card.set_abbr === 'DS' ? 'DS' : ''}
       </span>
     </motion.div>
   );

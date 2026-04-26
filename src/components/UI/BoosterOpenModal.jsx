@@ -17,7 +17,7 @@ function preloadPackImages(pack) {
   });
 }
 
-export default function BoosterOpenModal({ packs, onClose }) {
+export default function BoosterOpenModal({ packs, setKey, frontImg, backImg, fallbackImg, setColor = '#a78bfa', onClose }) {
   const { t } = useTranslation();
   const [packIndex, setPackIndex] = useState(0);
   const [stage, setStage]         = useState('ready');
@@ -101,9 +101,10 @@ export default function BoosterOpenModal({ packs, onClose }) {
             style={{ cursor: 'pointer' }}
           >
             <motion.img
-              src="/boosternorafront.png"
+              src={frontImg || '/boosternorafront.png'}
               alt="Booster"
-              style={{ width: 160, height: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 0 30px rgba(168,139,250,0.5))' }}
+              onError={e => { e.target.src = fallbackImg || '/boosternorafront.png'; }}
+              style={{ width: 160, height: 'auto', objectFit: 'contain', filter: `drop-shadow(0 0 30px ${setColor}80)` }}
               animate={{ y: [0, -12, 0] }}
               transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
             />
@@ -142,7 +143,7 @@ export default function BoosterOpenModal({ packs, onClose }) {
                 transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
                 className="flex flex-col items-center"
               >
-                <Card card={currentPack[cardIndex]} scale={1.35} showFlipHint />
+                <Card card={currentPack[cardIndex]} scale={1.35} showFlipHint slotNumber={currentPack[cardIndex]?.slot_number} />
               </motion.div>
             </AnimatePresence>
 
@@ -193,7 +194,7 @@ export default function BoosterOpenModal({ packs, onClose }) {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.08 }}
                 >
-                  <Card card={card} scale={1.0} showFlipHint />
+                  <Card card={card} scale={1.0} showFlipHint slotNumber={card?.slot_number} />
                 </motion.div>
               ))}
             </div>

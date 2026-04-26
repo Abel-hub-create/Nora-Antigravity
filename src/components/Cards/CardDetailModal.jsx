@@ -51,13 +51,13 @@ export default function CardDetailModal({ card, count, onClose, onTrade }) {
 
           {/* Card at 1.5x scale */}
           <div style={{ filter: `drop-shadow(0 0 32px ${cfg.color}55)` }}>
-            <Card card={card} scale={1.5} showFlipHint />
+            <Card card={card} scale={1.5} showFlipHint slotNumber={card.slot_number} />
           </div>
 
           {/* Card info */}
           <div className="text-center">
-            <p style={{ color: cfg.color, fontWeight: 800, fontSize: 15, letterSpacing: '.06em', textTransform: 'uppercase' }}>
-              {card.card_name}
+            <p style={{ color: 'rgba(255,255,255,0.55)', fontWeight: 700, fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase' }}>
+              {card.set_abbr === 'MH' ? 'SET 1 · MH' : card.set_abbr === 'DS' ? 'SET 2 · DS' : card.set_name ?? ''}
             </p>
             <p className="text-text-muted text-xs mt-1">{card.author}</p>
           </div>

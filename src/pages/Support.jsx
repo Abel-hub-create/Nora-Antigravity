@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, LifeBuoy, CheckCircle, Clock, Send } from 'lucide-react';
+import { ArrowLeft, LifeBuoy, CheckCircle, Clock, Send, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supportService } from '../services/supportService';
@@ -59,6 +59,7 @@ export default function Support() {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [sendError, setSendError] = useState('');
   const [tickets, setTickets] = useState([]);
   const [loadingTickets, setLoadingTickets] = useState(false);
 
@@ -74,19 +75,27 @@ export default function Support() {
 
   useEffect(() => {
     if (tab === 'history') loadTickets();
-  }, [tab]);
+  }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!subject.trim() || !message.trim()) return;
+    if (subject.trim().length < 3) { setSendError('Le sujet doit faire au moins 3 caractères.'); return; }
+    if (message.trim().length < 10) { setSendError('Le message doit faire au moins 10 caractères.'); return; }
     setSending(true);
+    setSendError('');
     try {
       await supportService.createTicket(category, subject.trim(), message.trim());
       setSent(true);
       setSubject('');
       setMessage('');
       setCategory('question');
-    } catch { /* silent */ } finally {
+    } catch (err) {
+      const details = err?.response?.data?.details;
+      const msg = (Array.isArray(details) && details[0]?.message)
+        || err?.response?.data?.error
+        || t('errors.generic');
+      setSendError(msg);
+    } finally {
       setSending(false);
     }
   };
@@ -134,13 +143,22 @@ export default function Support() {
                   <p className="text-text-main font-bold text-lg">{t('support.sentTitle')}</p>
                   <p className="text-text-muted text-sm mt-1">{t('support.sentSubtitle')}</p>
                 </div>
-                <button
-                  onClick={() => setSent(false)}
-                  className="mt-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-                  style={{ background: 'rgba(56,189,248,0.15)', color: '#38bdf8' }}
-                >
-                  {t('support.newTicketBtn')}
-                </button>
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => setSent(false)}
+                    className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                    style={{ background: 'rgba(56,189,248,0.15)', color: '#38bdf8' }}
+                  >
+                    {t('support.newTicketBtn')}
+                  </button>
+                  <button
+                    onClick={() => { setSent(false); setTab('history'); }}
+                    className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                    style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--color-text-muted)' }}
+                  >
+                    {t('support.myTickets')}
+                  </button>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -193,9 +211,14 @@ export default function Support() {
                   />
                 </div>
 
+                {sendError && (
+                  <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171' }}>
+                    {sendError}
+                  </div>
+                )}
                 <button
                   type="submit"
-                  disabled={sending || !subject.trim() || !message.trim()}
+                  disabled={sending || subject.trim().length < 3 || message.trim().length < 10}
                   className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-opacity disabled:opacity-50"
                   style={{ background: 'linear-gradient(135deg, #38bdf8, #6366f1)', color: '#fff' }}
                 >
@@ -211,6 +234,16 @@ export default function Support() {
           </motion.div>
         ) : (
           <motion.div key="history" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-3">
+            <div className="flex justify-end">
+              <button
+                onClick={loadTickets}
+                disabled={loadingTickets}
+                className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-main transition-colors disabled:opacity-50"
+              >
+                <RefreshCw size={13} className={loadingTickets ? 'animate-spin' : ''} />
+                Actualiser
+              </button>
+            </div>
             {loadingTickets ? (
               <div className="flex justify-center py-12">
                 <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />

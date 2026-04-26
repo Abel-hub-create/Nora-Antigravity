@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, BookOpen, Inbox } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,7 +11,12 @@ import { cardService } from '../services/cardService';
 const CARDS_PER_HALF = 4;
 const FLIP_MS = 900;
 
-// ── Empty slot ─────────────────────────────────────────────────────────────
+const SET_COLORS = { MH: '#a78bfa', DS: '#f87171' };
+const SET_NAMES  = { MH: 'Mascarade Humaine', DS: 'Domination Silencieuse' };
+const SET_LABELS = { MH: 'SET 1 · MH', DS: 'SET 2 · DS' };
+const SET_EMOJI  = { MH: '🎭', DS: '👁️' };
+
+// ── Empty slot ──────────────────────────────────────────────────────────────
 
 function EmptySlot({ slotNumber }) {
   return (
@@ -30,23 +35,21 @@ function EmptySlot({ slotNumber }) {
   );
 }
 
-// ── Slot with badge ────────────────────────────────────────────────────────
+// ── Card slot ───────────────────────────────────────────────────────────────
 
 function CardSlot({ card, onLongPress }) {
   const rarityColors = {
-    commun:'#9ca3af', chill:'#4ade80', rare:'#60a5fa',
-    epique:'#a78bfa', mythique:'#f87171', legendaire:'#fbbf24', dot:'#c4b5fd',
+    commun: '#9ca3af', chill: '#4ade80', rare: '#60a5fa',
+    epique: '#a78bfa', mythique: '#f87171', legendaire: '#fbbf24', dot: '#c4b5fd',
   };
   const color = rarityColors[card.rarity] ?? '#fff';
-
   return (
     <div className="relative inline-block">
-      <Card card={card} scale={0.66} onLongPress={onLongPress} />
+      <Card card={card} scale={0.66} onLongPress={onLongPress} slotNumber={card.slot_number} />
       {card.count > 1 && (
         <div style={{
           position: 'absolute', top: 4, left: 4, zIndex: 20,
-          background: 'rgba(0,0,0,0.82)',
-          border: `1px solid ${color}`,
+          background: 'rgba(0,0,0,0.82)', border: `1px solid ${color}`,
           borderRadius: 8, padding: '2px 6px',
           fontSize: 9, fontWeight: 800, color,
           letterSpacing: '.04em', lineHeight: 1.4,
@@ -59,7 +62,7 @@ function CardSlot({ card, onLongPress }) {
   );
 }
 
-// ── Page half ─────────────────────────────────────────────────────────────
+// ── Normal page half ────────────────────────────────────────────────────────
 
 function PageFace({ cards: slots, startSlot, side, onLongPress }) {
   const isLeft = side === 'left';
@@ -72,7 +75,6 @@ function PageFace({ cards: slots, startSlot, side, onLongPress }) {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '24px 18px', position: 'relative',
     }}>
-      {/* Lined paper effect */}
       <div style={{
         position: 'absolute', inset: 0, opacity: 0.04, pointerEvents: 'none',
         backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(255,255,255,1) 28px,rgba(255,255,255,1) 29px)',
@@ -86,61 +88,99 @@ function PageFace({ cards: slots, startSlot, side, onLongPress }) {
           const slotNum = startSlot + i + 1;
           if (!card) return <EmptySlot key={i} slotNumber={slotNum} />;
           if (card.count === 0) return <EmptySlot key={card.id} slotNumber={slotNum} />;
-          return (
-            <CardSlot
-              key={card.id}
-              card={card}
-              onLongPress={onLongPress}
-            />
-          );
+          return <CardSlot key={card.id} card={card} onLongPress={onLongPress} />;
         })}
       </div>
     </div>
   );
 }
 
-// ── Main component ─────────────────────────────────────────────────────────
+// ── Separator half page ─────────────────────────────────────────────────────
+
+function SeparatorFace({ side, setKey }) {
+  const isLeft = side === 'left';
+  const color  = SET_COLORS[setKey] ?? '#a78bfa';
+  const label  = SET_LABELS[setKey] ?? '';
+  const name   = SET_NAMES[setKey] ?? '';
+
+  return (
+    <div style={{
+      width: '100%', height: '100%',
+      background: isLeft
+        ? `linear-gradient(to right, #1a1630, #231f38)`
+        : `linear-gradient(to left, ${color}18, #231f38)`,
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center', gap: 16,
+      padding: '24px 18px', position: 'relative',
+    }}>
+      {/* Glow */}
+      <div style={{
+        position: 'absolute', inset: 0, opacity: 0.06,
+        background: `radial-gradient(ellipse at ${isLeft ? '80%' : '20%'} 50%, ${color} 0%, transparent 70%)`,
+        pointerEvents: 'none',
+      }} />
+
+      {isLeft ? (
+        /* Left: fin MH */
+        <div style={{ textAlign: 'center', opacity: 0.45 }}>
+          <div style={{ fontSize: 48, marginBottom: 10 }}>{SET_EMOJI.MH}</div>
+          <p style={{ fontSize: 10, color: SET_COLORS.MH, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase' }}>SET 1 · MH</p>
+          <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', marginTop: 4, letterSpacing: '.06em' }}>Mascarade Humaine</p>
+          <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 8 }}>11 cartes</p>
+        </div>
+      ) : (
+        /* Right: début DS */
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 48, marginBottom: 10 }}>{SET_EMOJI.DS}</div>
+          <div style={{ fontSize: 11, color, fontWeight: 800, letterSpacing: '.16em', textTransform: 'uppercase', marginBottom: 8 }}>{label}</div>
+          <p style={{ fontSize: 16, fontWeight: 900, color: '#fff', letterSpacing: '.04em', lineHeight: 1.2 }}>{name}</p>
+          <div style={{ width: 40, height: 2, background: color, borderRadius: 2, margin: '10px auto', opacity: 0.7 }} />
+          <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: '.08em' }}>15 cartes</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main component ──────────────────────────────────────────────────────────
 
 const BINDER_W = 580;
 const BINDER_H = 440;
-const NAV_H = 96;
+const NAV_H    = 96;
 
 export default function CardBinder() {
   const { t } = useTranslation();
-  const [cards, setCards]         = useState([]);       // 26 cards with count
-  const [loading, setLoading]     = useState(true);
-  const [spread, setSpread]       = useState(0);
+  const [cards, setCards]           = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [spread, setSpread]         = useState(0);
   const [binderScale, setBinderScale] = useState(1);
-  const [flipState, setFlipState] = useState(null);
+  const [flipState, setFlipState]   = useState(null);
   const [flipActive, setFlipActive] = useState(false);
   const flipPageRef = useRef(null);
   const timerRef    = useRef(null);
 
-  // Modals
-  const [detailCard, setDetailCard]   = useState(null); // card being viewed
-  const [tradeCard, setTradeCard]     = useState(null); // card being traded
-  const [showInbox, setShowInbox]     = useState(false);
-  const [inboxCount, setInboxCount]   = useState(0);
-  const [tradeSent, setTradeSent]     = useState(false);
+  const [detailCard, setDetailCard] = useState(null);
+  const [tradeCard, setTradeCard]   = useState(null);
+  const [showInbox, setShowInbox]   = useState(false);
+  const [inboxCount, setInboxCount] = useState(0);
+  const [tradeSent, setTradeSent]   = useState(false);
+
   useEffect(() => {
     if (!tradeSent) return;
     const timer = setTimeout(() => setTradeSent(false), 2000);
     return () => clearTimeout(timer);
   }, [tradeSent]);
 
-  // Load collection + inbox count
   useEffect(() => {
     cardService.getCollection()
       .then(res => setCards(Array.isArray(res) ? res : (res.cards ?? [])))
       .catch(() => {})
       .finally(() => setLoading(false));
-
     cardService.getInboxCount()
       .then(res => setInboxCount(res?.count ?? 0))
       .catch(() => {});
   }, []);
 
-  // Responsive scale
   useEffect(() => {
     const update = () => {
       const avail = Math.min(window.innerWidth - 16, BINDER_W);
@@ -151,12 +191,21 @@ export default function CardBinder() {
     return () => window.removeEventListener('resize', update);
   }, []);
 
-  const totalSpreads = Math.max(1, Math.ceil(cards.length / (CARDS_PER_HALF * 2)));
+  // Split cards by set
+  const mhCards = cards.filter(c => c.set_abbr === 'MH');
+  const dsCards = cards.filter(c => c.set_abbr === 'DS');
+  const mhSpreads   = Math.max(1, Math.ceil(mhCards.length / (CARDS_PER_HALF * 2)));
+  const dsSpreads   = Math.max(1, Math.ceil(dsCards.length / (CARDS_PER_HALF * 2)));
+  const sepSpread   = mhSpreads; // index of the separator spread
+  const totalSpreads = mhSpreads + 1 + dsSpreads;
 
-  const idx = (s) => ({
-    left:  s * CARDS_PER_HALF * 2,
-    right: s * CARDS_PER_HALF * 2 + CARDS_PER_HALF,
-  });
+  // Determine what to show for a given spread index
+  const spreadInfo = (s) => {
+    if (s < mhSpreads) return { type: 'cards', cards: mhCards, leftStart: s * 8, rightStart: s * 8 + 4 };
+    if (s === sepSpread) return { type: 'separator' };
+    const dsIdx = s - sepSpread - 1;
+    return { type: 'cards', cards: dsCards, leftStart: dsIdx * 8, rightStart: dsIdx * 8 + 4 };
+  };
 
   useEffect(() => {
     if (!flipState) return;
@@ -177,14 +226,30 @@ export default function CardBinder() {
     setFlipState({ from: spread, to: next, dir });
   };
 
-  const cur  = idx(flipState ? flipState.from : spread);
-  const dest = flipState ? idx(flipState.to) : null;
-
   const flipTransform = flipActive
     ? (flipState?.dir === 1 ? 'rotateY(-180deg)' : 'rotateY(180deg)')
     : 'rotateY(0deg)';
 
   const ownedCount = cards.filter(c => c.count > 0).length;
+
+  // Render a page half given a spread index and side
+  const renderHalf = (s, side, onLongPress) => {
+    const info = spreadInfo(s);
+    if (info.type === 'separator') {
+      return <SeparatorFace side={side} setKey="DS" />;
+    }
+    const startSlot = side === 'left' ? info.leftStart : info.rightStart;
+    return <PageFace cards={info.cards} startSlot={startSlot} side={side} onLongPress={onLongPress} />;
+  };
+
+  const cur  = flipState ? flipState.from : spread;
+  const dest = flipState ? flipState.to   : null;
+
+  // Set label for current spread (shown in navigation area)
+  const curInfo = spreadInfo(spread);
+  const currentSet = curInfo.type === 'cards'
+    ? (curInfo.cards === mhCards ? 'MH' : 'DS')
+    : null;
 
   return (
     <div className="flex flex-col items-center px-2"
@@ -193,7 +258,6 @@ export default function CardBinder() {
         minHeight: '100dvh',
         overflow: 'hidden',
         paddingBottom: '80px',
-        // Desktop: push down a bit for better visual balance
         paddingTop: 'clamp(16px, 5vh, 48px)',
       }}
     >
@@ -214,8 +278,6 @@ export default function CardBinder() {
             {ownedCount} / {cards.length}
           </span>
         )}
-
-        {/* Inbox button */}
         <motion.button
           whileTap={{ scale: 0.93 }}
           onClick={() => setShowInbox(true)}
@@ -225,8 +287,7 @@ export default function CardBinder() {
           <Inbox size={16} className="text-text-muted" />
           {inboxCount > 0 && (
             <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
+              initial={{ scale: 0 }} animate={{ scale: 1 }}
               className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold"
               style={{ background: '#f87171', color: '#fff' }}
             >
@@ -240,9 +301,7 @@ export default function CardBinder() {
       <AnimatePresence>
         {tradeSent && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
             className="fixed top-6 left-1/2 -translate-x-1/2 z-[8000] px-4 py-2 rounded-xl text-sm font-medium"
             style={{ background: 'rgba(74,222,128,0.92)', color: '#fff' }}
           >
@@ -277,19 +336,19 @@ export default function CardBinder() {
                   {!flipState ? (
                     <>
                       <div style={{ flex: 1, height: '100%', borderRadius: '18px 0 0 18px', overflow: 'hidden' }}>
-                        <PageFace cards={cards} startSlot={cur.left}  side="left"  onLongPress={setDetailCard} />
+                        {renderHalf(cur, 'left', setDetailCard)}
                       </div>
                       <div style={{ flex: 1, height: '100%', borderRadius: '0 18px 18px 0', overflow: 'hidden' }}>
-                        <PageFace cards={cards} startSlot={cur.right} side="right" onLongPress={setDetailCard} />
+                        {renderHalf(cur, 'right', setDetailCard)}
                       </div>
                     </>
                   ) : flipState.dir === 1 ? (
                     <>
                       <div style={{ flex: 1, height: '100%', borderRadius: '18px 0 0 18px', overflow: 'hidden' }}>
-                        <PageFace cards={cards} startSlot={cur.left}   side="left"  onLongPress={setDetailCard} />
+                        {renderHalf(cur, 'left', setDetailCard)}
                       </div>
                       <div style={{ flex: 1, height: '100%', borderRadius: '0 18px 18px 0', overflow: 'hidden' }}>
-                        <PageFace cards={cards} startSlot={dest.right} side="right" onLongPress={setDetailCard} />
+                        {renderHalf(dest, 'right', setDetailCard)}
                       </div>
                       <div ref={flipPageRef} style={{
                         position: 'absolute', left: '50%', top: 0, width: '50%', height: '100%',
@@ -299,11 +358,11 @@ export default function CardBinder() {
                         zIndex: 10,
                       }}>
                         <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', borderRadius: '0 18px 18px 0', overflow: 'hidden' }}>
-                          <PageFace cards={cards} startSlot={cur.right} side="right" onLongPress={setDetailCard} />
+                          {renderHalf(cur, 'right', setDetailCard)}
                           {flipActive && <div className="flip-shadow" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(to right, rgba(0,0,0,0.65), rgba(0,0,0,0.15))' }} />}
                         </div>
                         <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(180deg)', borderRadius: '18px 0 0 18px', overflow: 'hidden' }}>
-                          <PageFace cards={cards} startSlot={dest.left} side="left" onLongPress={setDetailCard} />
+                          {renderHalf(dest, 'left', setDetailCard)}
                           {flipActive && <div className="flip-shadow" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(to left, rgba(0,0,0,0.65), rgba(0,0,0,0.15))' }} />}
                         </div>
                       </div>
@@ -311,10 +370,10 @@ export default function CardBinder() {
                   ) : (
                     <>
                       <div style={{ flex: 1, height: '100%', borderRadius: '18px 0 0 18px', overflow: 'hidden' }}>
-                        <PageFace cards={cards} startSlot={dest.left}  side="left"  onLongPress={setDetailCard} />
+                        {renderHalf(dest, 'left', setDetailCard)}
                       </div>
                       <div style={{ flex: 1, height: '100%', borderRadius: '0 18px 18px 0', overflow: 'hidden' }}>
-                        <PageFace cards={cards} startSlot={cur.right}  side="right" onLongPress={setDetailCard} />
+                        {renderHalf(cur, 'right', setDetailCard)}
                       </div>
                       <div ref={flipPageRef} style={{
                         position: 'absolute', left: 0, top: 0, width: '50%', height: '100%',
@@ -324,11 +383,11 @@ export default function CardBinder() {
                         zIndex: 10,
                       }}>
                         <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', borderRadius: '18px 0 0 18px', overflow: 'hidden' }}>
-                          <PageFace cards={cards} startSlot={cur.left} side="left" onLongPress={setDetailCard} />
+                          {renderHalf(cur, 'left', setDetailCard)}
                           {flipActive && <div className="flip-shadow" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(to left, rgba(0,0,0,0.65), rgba(0,0,0,0.15))' }} />}
                         </div>
                         <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(180deg)', borderRadius: '0 18px 18px 0', overflow: 'hidden' }}>
-                          <PageFace cards={cards} startSlot={dest.right} side="right" onLongPress={setDetailCard} />
+                          {renderHalf(dest, 'right', setDetailCard)}
                           {flipActive && <div className="flip-shadow" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(to right, rgba(0,0,0,0.65), rgba(0,0,0,0.15))' }} />}
                         </div>
                       </div>
@@ -338,17 +397,36 @@ export default function CardBinder() {
                   {/* Spine */}
                   <div style={{
                     position: 'absolute', left: '50%', top: 0, bottom: 0, width: 4,
-                    background: 'linear-gradient(to bottom, rgba(167,139,250,0.40), rgba(139,92,246,0.28), rgba(167,139,250,0.40))',
+                    background: currentSet
+                      ? `linear-gradient(to bottom, ${SET_COLORS[currentSet]}66, ${SET_COLORS[currentSet]}44, ${SET_COLORS[currentSet]}66)`
+                      : 'linear-gradient(to bottom, rgba(167,139,250,0.40), rgba(139,92,246,0.28), rgba(167,139,250,0.40))',
                     transform: 'translateX(-50%)', zIndex: 20,
                     boxShadow: '3px 0 10px rgba(0,0,0,0.5), -3px 0 10px rgba(0,0,0,0.5)',
                     pointerEvents: 'none',
+                    transition: 'background 0.4s',
                   }} />
 
+                  {/* Set label — top left */}
+                  {currentSet && (
+                    <div style={{
+                      position: 'absolute', top: 10, left: 14, zIndex: 30, pointerEvents: 'none',
+                      display: 'flex', alignItems: 'center', gap: 5,
+                    }}>
+                      <div style={{ width: 3, height: 14, borderRadius: 2, background: SET_COLORS[currentSet] }} />
+                      <span style={{ fontSize: 9, color: SET_COLORS[currentSet], fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase' }}>
+                        {SET_NAMES[currentSet]}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Page number */}
                   <div style={{
                     position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)',
-                    fontSize: 10, color: 'rgba(255,255,255,0.30)', letterSpacing: '.12em', zIndex: 30, pointerEvents: 'none',
+                    zIndex: 30, pointerEvents: 'none',
                   }}>
-                    {spread + 1} / {totalSpreads}
+                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.30)', letterSpacing: '.12em' }}>
+                      {spread + 1} / {totalSpreads}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -364,17 +442,26 @@ export default function CardBinder() {
                 </button>
 
                 <div className="flex gap-2 items-center">
-                  {Array.from({ length: totalSpreads }).map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => { if (!flipState && i !== spread) setSpread(i); }}
-                      style={{
-                        width: i === spread ? 20 : 7, height: 7, borderRadius: 4, border: 'none', cursor: 'pointer',
-                        transition: 'all .25s',
-                        background: i === spread ? 'var(--color-primary)' : 'rgba(255,255,255,0.2)',
-                      }}
-                    />
-                  ))}
+                  {Array.from({ length: totalSpreads }).map((_, i) => {
+                    const isSep = i === sepSpread;
+                    const isDS  = i > sepSpread;
+                    const dotColor = isSep ? '#6b7280' : isDS ? '#f87171' : '#a78bfa';
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => { if (!flipState && i !== spread) setSpread(i); }}
+                        style={{
+                          width: i === spread ? 20 : 7,
+                          height: 7,
+                          borderRadius: 4,
+                          border: 'none',
+                          cursor: 'pointer',
+                          transition: 'all .25s',
+                          background: i === spread ? dotColor : 'rgba(255,255,255,0.2)',
+                        }}
+                      />
+                    );
+                  })}
                 </div>
 
                 <button
@@ -387,6 +474,16 @@ export default function CardBinder() {
               </div>
             </div>
           </div>
+
+          {/* Long press hint */}
+          {ownedCount > 0 && (
+            <div className="flex items-center gap-2 mt-4 px-3 py-1.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}>
+              <span style={{ fontSize: 14 }}>👆</span>
+              <span className="text-xs text-text-muted" style={{ opacity: 0.75 }}>
+                {t('binder.longPressHint')}
+              </span>
+            </div>
+          )}
 
           {/* Empty hint */}
           {ownedCount === 0 && (
@@ -406,7 +503,6 @@ export default function CardBinder() {
           onTrade={() => { setTradeCard(detailCard); setDetailCard(null); }}
         />
       )}
-
       {tradeCard && (
         <TradeRequestModal
           card={tradeCard}
@@ -414,7 +510,6 @@ export default function CardBinder() {
           onSent={() => { setTradeCard(null); setTradeSent(true); }}
         />
       )}
-
       {showInbox && (
         <TradeInbox
           onClose={() => setShowInbox(false)}

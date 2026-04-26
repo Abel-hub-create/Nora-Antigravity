@@ -10,7 +10,8 @@ export const RARITY_CONFIG = {
   dot:        { label: '.',          color: '#c4b5fd', bg: 'linear-gradient(160deg,#06041c 0%,#030212 100%)', shine: true,  stars: true  },
 };
 
-const SYMBOL = { commun:'◆', chill:'◈', rare:'✦', epique:'❋', mythique:'⬟', legendaire:'★', dot:'✦' };
+const SYMBOL   = { commun:'◆', chill:'◈', rare:'✦', epique:'❋', mythique:'⬟', legendaire:'★', dot:'✦' };
+const SET_EMOJI = { MH: '🎭', DS: '👁️' };
 
 const GLOW = { commun:0, chill:6, rare:12, epique:14, mythique:16, legendaire:20, dot:24 };
 
@@ -32,7 +33,7 @@ function Stars({ n, color }) {
   );
 }
 
-export default function Card({ card, scale = 1, onClick, onLongPress, showFlipHint = false }) {
+export default function Card({ card, scale = 1, onClick, onLongPress, showFlipHint = false, slotNumber }) {
   const [flipped, setFlipped] = useState(false);
   const cfg = RARITY_CONFIG[card?.rarity] ?? RARITY_CONFIG.commun;
   const pressTimer = useRef(null);
@@ -106,10 +107,10 @@ export default function Card({ card, scale = 1, onClick, onLongPress, showFlipHi
           )}
           {cfg.stars && <Stars n={Math.round(10*scale)} color={cfg.color} />}
 
-          {/* Header — rareté haut-gauche seulement */}
+          {/* Header — rareté haut-gauche, numéro haut-droite */}
           <div style={{
             height: headerH,
-            display:'flex', alignItems:'center',
+            display:'flex', alignItems:'center', justifyContent:'space-between',
             padding: `0 ${pad}px`,
             background:'rgba(0,0,0,0.5)',
             borderBottom:`1px solid ${cfg.color}30`,
@@ -124,6 +125,15 @@ export default function Card({ card, scale = 1, onClick, onLongPress, showFlipHi
             }}>
               {SYMBOL[card?.rarity]} {cfg.label}
             </span>
+            {slotNumber != null && (
+              <span style={{
+                fontSize: textSz(7.5), fontWeight:700,
+                color: 'rgba(255,255,255,0.40)',
+                letterSpacing:'.05em',
+              }}>
+                #{slotNumber}
+              </span>
+            )}
           </div>
 
           {/* Image */}
@@ -141,7 +151,7 @@ export default function Card({ card, scale = 1, onClick, onLongPress, showFlipHi
             }} />
           </div>
 
-          {/* Footer — auteur centré */}
+          {/* Footer — auteur centré, emoji bas-droite */}
           <div style={{
             height: footerH,
             display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
@@ -149,6 +159,7 @@ export default function Card({ card, scale = 1, onClick, onLongPress, showFlipHi
             borderTop:`1px solid ${cfg.color}30`,
             padding: `0 ${pad}px`,
             overflow:'hidden',
+            position:'relative',
           }}>
             <span style={{
               fontSize: textSz(10), fontWeight:800,
@@ -161,6 +172,14 @@ export default function Card({ card, scale = 1, onClick, onLongPress, showFlipHi
             {showFlipHint && (
               <span style={{ fontSize: textSz(6.5), color:'rgba(255,255,255,0.35)', marginTop: 2, letterSpacing:'.04em' }}>
                 ↺ retourner
+              </span>
+            )}
+            {card?.set_abbr && SET_EMOJI[card.set_abbr] && (
+              <span style={{
+                position:'absolute', bottom: Math.round(3*scale), right: Math.round(4*scale),
+                fontSize: textSz(14), lineHeight:1, opacity:0.85,
+              }}>
+                {SET_EMOJI[card.set_abbr]}
               </span>
             )}
           </div>
@@ -177,15 +196,17 @@ export default function Card({ card, scale = 1, onClick, onLongPress, showFlipHi
             display:'flex', flexDirection:'column',
             scrollbarWidth:'none', msOverflowStyle:'none',
           }}>
-            <p style={{ fontSize:textSz(8.5), fontStyle:'italic', color:'#fff', textAlign:'center', lineHeight:1.55, marginBottom:Math.round(8*scale), flexShrink:0 }}>
-              "{card?.quote}"
-            </p>
+            <div style={{ margin:'auto 0', display:'flex', flexDirection:'column', gap: Math.round(8*scale) }}>
+              <p style={{ fontSize:textSz(8.5), fontStyle:'italic', color:'#fff', textAlign:'center', lineHeight:1.55 }}>
+                "{card?.quote}"
+              </p>
 
-            <div style={{ height:1, flexShrink:0, background:`linear-gradient(to right,transparent,${cfg.color}80,transparent)`, marginBottom:Math.round(8*scale) }} />
+              <div style={{ height:1, background:`linear-gradient(to right,transparent,${cfg.color}80,transparent)` }} />
 
-            <p style={{ fontSize:textSz(7), color:'rgba(255,255,255,0.55)', textAlign:'center', lineHeight:1.45, flexShrink:0 }}>
-              {card?.explanation}
-            </p>
+              <p style={{ fontSize:textSz(7), color:'rgba(255,255,255,0.55)', textAlign:'center', lineHeight:1.45 }}>
+                {card?.explanation}
+              </p>
+            </div>
           </div>
 
           <p style={{ fontSize:textSz(7), color:cfg.color, textAlign:'center', paddingTop:Math.round(6*scale), flexShrink:0, opacity:.65, letterSpacing:'.08em' }}>

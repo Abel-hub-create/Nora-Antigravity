@@ -1096,7 +1096,8 @@
     "comingSoon": "Bientôt",
     "prevPage": "Précédent",
     "nextPage": "Suivant",
-    "hint": "Tes cartes collectionnées apparaîtront ici. Ouvre des boosters pour remplir ton classeur !"
+    "hint": "Tes cartes collectionnées apparaîtront ici. Ouvre des boosters pour remplir ton classeur !",
+    "longPressHint": "Appuie longtemps sur une carte pour l'afficher"
   },
   "leaderboard": {
     "title": "Classement",
@@ -1196,5 +1197,21 @@
     "emailPlaceholder": "Pour que l'on puisse te répondre",
     "unbanSentTitle": "Message envoyé",
     "unbanSentSubtitle": "Nous examinerons ta demande dès que possible."
+  },
+  "share": {
+    "title": "Partager la synthèse",
+    "placeholder": "Code du destinataire (ex: SleepyBadger)",
+    "sent": "Synthèse envoyée avec succès !",
+    "sendBtn": "Envoyer la synthèse",
+    "synthesesCount": "synthèses",
+    "errors": {
+      "userNotFound": "Aucun utilisateur avec ce code.",
+      "notPremiumSender": "Le partage est réservé aux membres Premium et École.",
+      "quotaFull": "Ce membre a atteint sa limite de synthèses.",
+      "selfShare": "Tu ne peux pas t'envoyer une synthèse à toi-même.",
+      "generic": "Une erreur est survenue. Réessaie."
+    },
+    "recipientQuotaFull": "{{name}} a atteint sa limite de synthèses ({{max}}).",
+    "recipientNotPremium": "{{name}} n'est pas membre Premium ou École."
   }
 }

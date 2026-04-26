@@ -72,7 +72,7 @@ export default function ShareModal({ syntheseId, syntheseTitle, onClose }) {
           {/* Header */}
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h3 className="text-base font-bold text-text-main">Partager la synthèse</h3>
+              <h3 className="text-base font-bold text-text-main">{t('share.title')}</h3>
               <p className="text-xs text-text-muted mt-0.5 truncate max-w-[220px]">{syntheseTitle}</p>
             </div>
             <button onClick={onClose} className="no-hover p-1.5 rounded-xl text-text-muted hover:text-text-main hover:bg-white/10 transition-colors">
@@ -87,7 +87,7 @@ export default function ShareModal({ syntheseId, syntheseTitle, onClose }) {
               value={code}
               onChange={e => { setCode(e.target.value); setLookupResult(null); setLookupError(null); setSent(false); }}
               onKeyDown={e => e.key === 'Enter' && handleLookup()}
-              placeholder="Code du destinataire (ex: SleepyBadger)"
+              placeholder={t('share.placeholder')}
               className="flex-1 bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:outline-none focus:border-primary/50"
             />
             <button
@@ -106,7 +106,7 @@ export default function ShareModal({ syntheseId, syntheseTitle, onClose }) {
                 className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/20 rounded-2xl"
               >
                 <CheckCircle2 size={18} className="text-green-400 shrink-0" />
-                <p className="text-sm text-green-300">Synthèse envoyée avec succès !</p>
+                <p className="text-sm text-green-300">{t('share.sent')}</p>
               </motion.div>
             )}
 
@@ -116,11 +116,11 @@ export default function ShareModal({ syntheseId, syntheseTitle, onClose }) {
               >
                 <AlertCircle size={18} className="text-red-400 shrink-0" />
                 <p className="text-sm text-red-300">
-                  {lookupError === 'user_not_found'     && 'Aucun utilisateur avec ce code.'}
-                  {lookupError === 'not_premium_sender' && 'Le partage est réservé aux membres Premium et École.'}
-                  {lookupError === 'quota_full'         && 'Ce membre a atteint sa limite de synthèses.'}
-                  {lookupError === 'self_share'         && 'Tu ne peux pas t\'envoyer une synthèse à toi-même.'}
-                  {lookupError === 'generic'            && 'Une erreur est survenue. Réessaie.'}
+                  {lookupError === 'user_not_found'     && t('share.errors.userNotFound')}
+                  {lookupError === 'not_premium_sender' && t('share.errors.notPremiumSender')}
+                  {lookupError === 'quota_full'         && t('share.errors.quotaFull')}
+                  {lookupError === 'self_share'         && t('share.errors.selfShare')}
+                  {lookupError === 'generic'            && t('share.errors.generic')}
                 </p>
               </motion.div>
             )}
@@ -147,7 +147,7 @@ export default function ShareModal({ syntheseId, syntheseTitle, onClose }) {
                         </span>
                       )}
                       <span className="text-[10px] text-text-muted">
-                        {lookupResult.synthesesCount}/{lookupResult.maxSyntheses} synthèses
+                        {lookupResult.synthesesCount}/{lookupResult.maxSyntheses} {t('share.synthesesCount')}
                       </span>
                     </div>
                   </div>
@@ -159,8 +159,8 @@ export default function ShareModal({ syntheseId, syntheseTitle, onClose }) {
                     <AlertCircle size={15} className="text-orange-400 shrink-0" />
                     <p className="text-xs text-orange-300">
                       {lookupResult.reason === 'QUOTA_FULL'
-                        ? `${lookupResult.recipient.name} a atteint sa limite de synthèses (${lookupResult.maxSyntheses}).`
-                        : `${lookupResult.recipient.name} n'est pas membre Premium ou École.`}
+                        ? t('share.recipientQuotaFull', { name: lookupResult.recipient.name, max: lookupResult.maxSyntheses })
+                        : t('share.recipientNotPremium', { name: lookupResult.recipient.name })}
                     </p>
                   </div>
                 ) : (
@@ -171,7 +171,7 @@ export default function ShareModal({ syntheseId, syntheseTitle, onClose }) {
                   >
                     {isSending
                       ? <Loader2 size={16} className="animate-spin" />
-                      : <><Send size={15} /> Envoyer la synthèse</>
+                      : <><Send size={15} /> {t('share.sendBtn')}</>
                     }
                   </button>
                 )}

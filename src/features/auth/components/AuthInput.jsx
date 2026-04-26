@@ -44,7 +44,7 @@ const AuthInput = ({
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors"
+            className="no-hover absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors"
           >
             {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
           </button>

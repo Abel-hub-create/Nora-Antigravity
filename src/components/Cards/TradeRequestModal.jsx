@@ -78,7 +78,9 @@ export default function TradeRequestModal({ card, onClose, onSent }) {
           <div className="flex items-center gap-4 p-3 rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
             <Card card={card} scale={0.5} />
             <div>
-              <p className="font-bold text-sm text-text-main">{card?.card_name}</p>
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase' }}>
+                {card?.set_abbr === 'MH' ? 'SET 1 · MH' : card?.set_abbr === 'DS' ? 'SET 2 · DS' : ''}
+              </p>
               <p style={{ color: cfg.color, fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase' }}>
                 {cfg.label}
               </p>

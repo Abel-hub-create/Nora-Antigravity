@@ -51,7 +51,9 @@ function RequestCard({ req, onAccept, onRefuse }) {
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-text-main text-sm font-semibold truncate">{req.card_name}</p>
+        <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 9, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase' }}>
+          {req.set_abbr === 'MH' ? 'SET 1 · MH' : req.set_abbr === 'DS' ? 'SET 2 · DS' : ''}
+        </p>
         <p style={{ color: cfg.color, fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase' }}>{cfg.label}</p>
         <p className="text-text-muted text-xs mt-1 truncate">
           <span className="text-text-main font-medium">{req.initiator_name}</span>
