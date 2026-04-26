@@ -74,6 +74,44 @@ cd /var/www/mirora.cloud/backend && PORT=5000 pm2 start ecosystem.config.cjs --o
 pm2 save
 ```
 
+## Changelog — 2026-04-26 (Système deux sets cartes MH/DS)
+
+### 🃏 Système de cartes — deux sets MH et DS
+
+#### Shop (`src/pages/Shop.jsx`)
+- `BOOSTER_SETS` contient maintenant deux sets : **Mascarade Humaine** (couleur `#a78bfa`) et **Domination Silencieuse** (couleur `#f87171`)
+- Images boosters : `boostermh2.png` (avant MH), `boosternoraback.png` (arrière MH), `boosterdsf2.png` (avant DS), `boosterdsb2.png` (arrière DS)
+- **Noms de fichiers avec "2"** : Cloudflare avait caché les 404 des anciens noms (`boostermh.png`, `boosterdsf.png`) → renommés avec suffixe `2` pour forcer un nouveau cache. Toujours utiliser de nouveaux noms lors d'un premier upload d'image.
+- Cartes du jour : scale mobile `0.58` vs desktop `0.88` (détection via `window.innerWidth < 768`)
+- `BoosterCard` : animation tilt bloquée après chargement → `rotate: { duration: 0 }` dans la transition Framer Motion pour un snap instantané
+
+#### BoosterOpenModal (`src/components/UI/BoosterOpenModal.jsx`)
+- Ajout props : `frontImg`, `backImg`, `fallbackImg`, `setColor`, `setKey`
+- Stage `ready` affiche **l'avant** du booster (`frontImg`), pas l'arrière
+- Glow dynamique selon la couleur du set (`setColor`)
+
+#### Card (`src/components/UI/Card.jsx`)
+- Constante `SET_EMOJI = { MH: '🎭', DS: '👁️' }` ajoutée
+- Emoji affiché en bas-droite du footer de chaque carte (position absolute, taille 14×scale, opacity 0.85)
+
+#### CardBinder (`src/pages/CardBinder.jsx`)
+- Label set déplacé du bas vers **haut-gauche** (position absolute, zIndex 30)
+- Affiche les **noms complets** : "Mascarade Humaine" / "Domination Silencieuse" (plus MH/DS seuls)
+- `SET_EMOJI` importé/défini localement — même constante que Card.jsx
+- Page séparatrice entre les deux sets : **émojis géants (48px)** pour identifier visuellement chaque set
+
+#### Nginx (`/etc/nginx/sites-available/mirora.cloud`)
+- Headers no-cache ajoutés sur les fichiers HTML :
+```nginx
+location ~* \.html$ {
+  add_header Cache-Control "no-cache, no-store, must-revalidate";
+  add_header Pragma "no-cache";
+  add_header Expires "0";
+}
+```
+
+---
+
 ## Changelog — 2026-04-25 (fix: formulaire déban — form imbriquée)
 
 ### 🐛 Formulaire déban — soumissions silencieusement ignorées
